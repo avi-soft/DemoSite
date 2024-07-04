@@ -43,10 +43,6 @@
         </dependency>
         <dependency>
             <groupId>org.broadleafcommerce</groupId>
-            <artifactId>broadleaf-admin-functional-tests</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.broadleafcommerce</groupId>
             <artifactId>broadleaf-contentmanagement-module</artifactId>
         </dependency>
         <dependency>
