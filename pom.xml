@@ -84,11 +84,6 @@
                 <artifactId>boot-community-demo-core</artifactId>
                 <version>${project.version}</version>
             </dependency>
-
-            <dependency>
-                <groupId>org.liquibase</groupId>
-                <artifactId>liquibase-core</artifactId>
-            </dependency>
         </dependencies>
     </dependencyManagement>
 
