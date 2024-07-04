@@ -39,5 +39,6 @@
     <logger name="com.community.admin.web.controller" level="DEBUG" />
 
     <logger name="org.hibernate.engine.internal.StatefulPersistenceContext" level="ERROR"/>
+    <logger name="org.hibernate.engine.jdbc.env.internal.LobCreatorBuilderImpl" level="WARN" />
 
 </configuration>
