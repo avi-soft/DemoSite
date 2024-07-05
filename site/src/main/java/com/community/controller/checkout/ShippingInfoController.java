@@ -107,6 +107,8 @@ public class ShippingInfoController extends BroadleafShippingInfoController {
         return super.saveMultishipAddAddress(request, response, model, addressForm, result);
     }
 
+
+
     @InitBinder
     protected void initBinder(HttpServletRequest request, ServletRequestDataBinder binder) throws Exception {
         super.initBinder(request, binder);
