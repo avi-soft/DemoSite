@@ -1,5 +1,5 @@
-package com.community.api.endpoint.avisoft;
-import com.broadleafcommerce.rest.api.endpoint.BaseEndpoint;
+package com.community.api.endpoint.avisoft.product;
+import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +19,7 @@ import javax.annotation.Resource;
         produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }
 )
 
-public class ProductEndPoint  {
+public class ProductEndPoint extends CatalogEndpoint {
 
     private static final Logger logger = LoggerFactory.getLogger(ProductEndPoint.class);
 

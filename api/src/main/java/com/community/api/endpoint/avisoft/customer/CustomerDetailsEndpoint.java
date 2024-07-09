@@ -1,4 +1,4 @@
-package com.community.api.endpoint.avisoft;
+package com.community.api.endpoint.avisoft.customer;
 
 import com.broadleafcommerce.rest.api.endpoint.BaseEndpoint;
 import com.broadleafcommerce.rest.api.wrapper.CustomerWrapper;

@@ -17,6 +17,8 @@
  */
 package com.community.api.configuration;
 
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
 import org.apache.catalina.connector.Connector;
 import org.broadleafcommerce.common.extensibility.context.merge.Merge;
 import org.springframework.beans.factory.annotation.Value;
