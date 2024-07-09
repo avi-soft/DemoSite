@@ -40,7 +40,9 @@ public class ContactUsController {
     protected EmailService emailService;
 
     @RequestMapping(value = "/contactus/success", method = RequestMethod.POST)
-    public String sendConfirmationEmail(@RequestParam("name") String name, @RequestParam("emailAddress") String emailAddress, @RequestParam("comments") String comments) {
+    public String sendConfirmationEmail(@RequestParam("name") String name,
+                                        @RequestParam("emailAddress") String emailAddress,
+                                        @RequestParam("comments") String comments) {
         HashMap<String, Object> vars = new HashMap<String, Object>();
         vars.put("name", name);
         vars.put("comments", comments);
@@ -67,7 +69,7 @@ public class ContactUsController {
 
     }
 
-    @RequestMapping(value = "/contactus")
+    @RequestMapping(value="/contactus")
     public String index() {
         return "contactus/contactus";
     }
