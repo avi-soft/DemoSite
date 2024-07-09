@@ -10,7 +10,7 @@
  * the Broadleaf End User License Agreement (EULA), Version 1.1
  * (the "Commercial License" located at http://license.broadleafcommerce.org/commercial_license-1.1.txt)
  * shall apply.
- * 
+ *
  * Alternatively, the Commercial License may be replaced with a mutually agreed upon license (the "Custom License")
  * between you and Broadleaf Commerce. You may not use this file except in compliance with the applicable license.
  * #L%
@@ -26,6 +26,7 @@ import org.broadleafcommerce.core.web.controller.catalog.BroadleafProductControl
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.annotation.Resource;
@@ -40,27 +41,27 @@ import javax.servlet.http.HttpServletResponse;
 public class ProductController extends BroadleafProductController {
 
     protected static final String DEFAULT_PRODUCT_QUICKVIEW_PATH = "catalog/partials/productQuickView";
-    
+
     @Resource(name = "blCatalogService")
     protected CatalogService catalogService;
 
     @Resource(name = "blSystemPropertiesService")
     protected SystemPropertiesService systemPropertiesService;
-    
+
     @Override
     public ModelAndView handleRequest(HttpServletRequest request, HttpServletResponse response) throws Exception {
         return super.handleRequest(request, response);
     }
 
     @RequestMapping(value = "/product-quick-view", params = {"id"})
-    public ModelAndView getProductQuickView(final HttpServletRequest request, final HttpServletResponse response, 
+    public ModelAndView getProductQuickView(final HttpServletRequest request, final HttpServletResponse response,
                                             @RequestParam("id") final Long productId) throws Exception {
         final Product product = catalogService.findProductById(productId);
 
         request.setAttribute(ProductHandlerMapping.CURRENT_PRODUCT_ATTRIBUTE_NAME, product);
-        
+
         final ModelAndView modelAndView = super.handleRequest(request, response);
-        
+
         modelAndView.setViewName(getProductQuickViewTemplatePath());
 
         return modelAndView;
@@ -69,4 +70,6 @@ public class ProductController extends BroadleafProductController {
     protected String getProductQuickViewTemplatePath() {
         return systemPropertiesService.resolveSystemProperty("product.quickView.path", DEFAULT_PRODUCT_QUICKVIEW_PATH);
     }
+
+
 }
