@@ -7,21 +7,22 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
 import javax.annotation.PostConstruct;
+import java.io.FileInputStream;
 import java.io.IOException;
 
 @Configuration
 public class FirebaseConfig {
 
-    @Value("firebase.project-id")
-    private String projectId;
+    @Value("${firebase.config.path}") // Path to your service account JSON file
+    private String firebaseConfigPath;
 
     @PostConstruct
     public void initFirebase() {
         try {
-            GoogleCredentials credentials = GoogleCredentials.getApplicationDefault();
+            FileInputStream serviceAccount = new FileInputStream(firebaseConfigPath);
+
             FirebaseOptions options = new FirebaseOptions.Builder()
-                    .setCredentials(credentials)
-                    .setProjectId(projectId)
+                    .setCredentials(GoogleCredentials.fromStream(serviceAccount))
                     .build();
 
             FirebaseApp.initializeApp(options);

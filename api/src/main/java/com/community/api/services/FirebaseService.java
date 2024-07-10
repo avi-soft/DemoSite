@@ -1,7 +1,6 @@
 package com.community.api.services;
 
-import org.codehaus.jettison.json.JSONException;
-import org.codehaus.jettison.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -11,11 +10,17 @@ import org.springframework.web.client.RestTemplate;
 @Service
 public class FirebaseService {
 
-    @Value("${firebase.api.key}")
+    @Autowired
+    private ExceptionHandlingImplement exceptionHandling;
+
+    @Value("${firebase.api-key}")
     private String firebaseApiKey;
 
-    @Value("${firebase.api.url}")
-    private String firebaseApiUrl;
+    @Value("${firebase.send-otp-url}")
+    private String firebaseSendOtpUrl;
+
+    @Value("${firebase.verify-otp-url}")
+    private String firebaseVerifyOtpUrl;
 
     private final RestTemplate restTemplate;
 
@@ -33,32 +38,40 @@ public class FirebaseService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("Authorization", "Bearer " + firebaseApiKey);
 
-            JSONObject requestBody = new JSONObject();
-            requestBody.put("mobileNumber", mobileNumber);
+            String requestBody = "{\"phoneNumber\":\"" + mobileNumber + "\"}";
 
-            HttpEntity<String> request = new HttpEntity<>(requestBody.toString(), headers);
-            ResponseEntity<String> response = restTemplate.postForEntity(firebaseApiUrl + "/send-otp", request, String.class);
+            HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
 
+
+            System.out.println("Request URL: " + firebaseSendOtpUrl);
+            System.out.println("Request Headers: " + headers);
+            System.out.println("Request Body: " + requestBody);
+
+
+            ResponseEntity<String> response = restTemplate.postForEntity(
+                    firebaseSendOtpUrl, request, String.class);
+
+
+            System.out.println(" response: " + response);
             if (response.getStatusCode().is2xxSuccessful()) {
-                return response.getBody();
+                return "OTP sent successfully";
             } else {
-                handleHttpError(response);
-                return null; // or throw an exception based on your error handling strategy
+                exceptionHandling.handleHttpError(response);
+                return null;
             }
-        } catch (JSONException e) {
-            throw new RuntimeException("Failed to create JSON request", e);
         } catch (HttpClientErrorException e) {
-            handleHttpClientErrorException(e);
-            return null; // or throw an exception based on your error handling strategy
+            if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                throw new RuntimeException("Unauthorized access: Please check your API key", e);
+            } else {
+                exceptionHandling.handleHttpClientErrorException(e);
+                return null;
+            }
         }
     }
 
     public String verifyOtp(String mobileNumber, String otp) {
-        if (mobileNumber == null || mobileNumber.isEmpty()) {
-            throw new IllegalArgumentException("Mobile number cannot be null or empty");
-        }
-        if (otp == null || otp.isEmpty()) {
-            throw new IllegalArgumentException("OTP cannot be null or empty");
+        if (mobileNumber == null || mobileNumber.isEmpty() || otp == null || otp.isEmpty()) {
+            throw new IllegalArgumentException("Mobile number and OTP cannot be null or empty");
         }
 
         try {
@@ -66,36 +79,21 @@ public class FirebaseService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("Authorization", "Bearer " + firebaseApiKey);
 
-            JSONObject requestBody = new JSONObject();
-            requestBody.put("mobileNumber", mobileNumber);
-            requestBody.put("otp", otp);
+            String requestBody = "{\"phoneNumber\":\"" + mobileNumber + "\",\"code\":\"" + otp + "\"}";
 
-            HttpEntity<String> request = new HttpEntity<>(requestBody.toString(), headers);
-            ResponseEntity<String> response = restTemplate.postForEntity(firebaseApiUrl + "/verify-otp", request, String.class);
+            HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
+            ResponseEntity<String> response = restTemplate.postForEntity(
+                    firebaseVerifyOtpUrl, request, String.class);
 
             if (response.getStatusCode().is2xxSuccessful()) {
-                return response.getBody();
+                return "OTP verified successfully";
             } else {
-                handleHttpError(response);
-                return null; // or throw an exception based on your error handling strategy
+                exceptionHandling.handleHttpError(response);
+                return null;
             }
-        } catch (JSONException e) {
-            throw new RuntimeException("Failed to create JSON request", e);
         } catch (HttpClientErrorException e) {
-            handleHttpClientErrorException(e);
-            return null; // or throw an exception based on your error handling strategy
+            exceptionHandling.handleHttpClientErrorException(e);
+            return null;
         }
-    }
-
-    private void handleHttpError(ResponseEntity<String> response) {
-        HttpStatus statusCode = response.getStatusCode();
-        String responseBody = response.getBody(); // You can log or process the response body if needed
-        throw new RuntimeException("HTTP Error: " + statusCode + ", Response Body: " + responseBody);
-    }
-
-    private void handleHttpClientErrorException(HttpClientErrorException e) {
-        HttpStatus statusCode = e.getStatusCode();
-        String responseBody = e.getResponseBodyAsString(); // You can log or process the response body if needed
-        throw new RuntimeException("HTTP Client Error: " + statusCode + ", Response Body: " + responseBody, e);
     }
 }
