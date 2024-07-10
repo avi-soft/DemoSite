@@ -1,8 +1,10 @@
 package com.community.api.endpoint.avisoft;
 import com.broadleafcommerce.rest.api.endpoint.BaseEndpoint;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
+import org.broadleafcommerce.core.catalog.service.type.ProductType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +27,6 @@ public class ProductEndPoint  {
 
     @Resource(name = "blCatalogService")
     protected CatalogService catalogService;
-
     @RequestMapping(value = "getProducts/{productId}", method = RequestMethod.GET)
     public ResponseEntity<String> retrieveProductById(@PathVariable("productId") Long productId) {
         logger.debug("Retrieving product by ID: {}", productId);
@@ -38,9 +39,9 @@ public class ProductEndPoint  {
                 logger.error("Catalog service is not initialized.");
                 return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
             }
-    
+
             final Product product = catalogService.findProductById(productId);
-            
+
             if (product != null) {
                 return new ResponseEntity<>(product.getName(), HttpStatus.OK);
             } else {
