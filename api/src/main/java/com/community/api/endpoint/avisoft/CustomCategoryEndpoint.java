@@ -36,12 +36,17 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
     public CategoriesWrapper findCategories(HttpServletRequest request, @RequestParam(value = "limit",defaultValue = "20") int limit) {
         List categories = this.catalogService.findAllCategories();
 
-        CategoriesWrapper wrapper = (CategoriesWrapper)this.context.getBean(CategoriesWrapper.class.getName());
-        wrapper.wrapDetails(categories, request);
-        return wrapper;
+        if(categories.size() != 0){
+            CategoriesWrapper wrapper = (CategoriesWrapper)this.context.getBean(CategoriesWrapper.class.getName());
+            wrapper.wrapDetails(categories, request);
+            return wrapper;
+        }else{
+            logger.error("Category list is empty");
+            throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.categoryNotFound");
+        }
     }
 
-    @RequestMapping(value = "/categories", method = RequestMethod.GET, params = {"id"})
+    @RequestMapping(value = "", method = RequestMethod.GET, params = {"id"})
     public CategoryWrapper findCategoryById(HttpServletRequest request, @RequestParam("id") Long id, @RequestParam(value = "productLimit",defaultValue = "20") int productLimit, @RequestParam(value = "productOffset",defaultValue = "1") int productOffset, @RequestParam(value = "subcategoryLimit",defaultValue = "20") int subcategoryLimit, @RequestParam(value = "subcategoryOffset",defaultValue = "1") int subcategoryOffset) {
         Category cat = this.catalogService.findCategoryById(id);
         if (cat != null) {
@@ -53,7 +58,7 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
             wrapper.wrapDetails(cat, request);
             return wrapper;
         } else {
-            logger.info("Categories are empty");
+            logger.error("There is no category with this id");
             throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.categoryNotFound", id);
         }
     }
@@ -68,63 +73,38 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
             wrapper.wrapDetails(categories, request);
             return wrapper;
         } else {
+            logger.error("There is no category with this id to find subcategory");
             throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.categoryNotFound", id);
         }
     }
 
 
-    /*@RequestMapping(value = "/my_product", method = RequestMethod.POST, consumes = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE })
-    public ProductWrapper addCSDLProduct(HttpServletRequest request, @RequestBody ProductWrapper wrapper,
-                                         @RequestParam(value = "categoryName", required = true) String categoryName,
-                                         @RequestParam(value = "price", required = true) double price) {
-
-        Category category = null;
-        List<Category> categories = catalogService.findCategoriesByName( categoryName );
-        if ( categories != null && categories.size() > 0 ) {
-            category = categories.get(0);
+    @RequestMapping(value = "/remove/{id}", method = RequestMethod.DELETE)
+    public CategoryWrapper removeCategoryById(HttpServletRequest request, @PathVariable("id") Long id , @RequestParam(value = "productLimit",defaultValue = "20") int productLimit, @RequestParam(value = "productOffset",defaultValue = "1") int productOffset, @RequestParam(value = "subcategoryLimit",defaultValue = "20") int subcategoryLimit, @RequestParam(value = "subcategoryOffset",defaultValue = "1") int subcategoryOffset) {
+        Category category = this.catalogService.findCategoryById(id);
+        if (category != null) {
+            catalogService.removeCategory(category);
+            CategoryWrapper wrapper = (CategoryWrapper)this.context.getBean(CategoryWrapper.class.getName());
+            wrapper.wrapDetails(category, request);
+            return wrapper;
+        } else {
+            logger.error("There is no category with this id to delete");
+            throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.categoryNotFound", id);
         }
+    }
 
-        Sku defaultSku = catalogService.createSku();
-        ((Sku) defaultSku).setRetailPrice(new Money( price ));
-        defaultSku.setInventoryType( InventoryType.ALWAYS_AVAILABLE );
-        defaultSku.setName( wrapper.getName() );
-        defaultSku.setLongDescription( wrapper.getLongDescription() );
-        defaultSku.setDescription( wrapper.getDescription() );
-        defaultSku.setUrlKey( wrapper.getUrl() );
-        defaultSku.setActiveStartDate( new Date() );
-
-        Product product = catalogService.createProduct(ProductType.PRODUCT);
-        ((Product) product).setDefaultSku(defaultSku);
-        product.setUrl( wrapper.getUrl() );
-        product.setCategory(category);
-
-        List<ProductOptionXref> productOptionXrefs = new ArrayList<ProductOptionXref>();
-        List<ProductOption> allProductOptions = catalogService.readAllProductOptions();
-        if ( null != allProductOptions && allProductOptions.size() > 0 ) {
-            for ( ProductOption po : allProductOptions ) {
-                String current = po.getName();
-                if ( current.equalsIgnoreCase("Shirt Color") ) {
-                    ProductOptionXref productOptionXref = new ProductOptionXrefImpl();
-                    productOptionXref.setProductOption(po);
-                    productOptionXref.setProduct(product);
-                    productOptionXrefs.add(productOptionXref);
-                }
-            }
+    @RequestMapping(value = "/update/{id}", method = RequestMethod.PUT)
+    public CategoryWrapper updateCategoryById(HttpServletRequest request, @PathVariable("id") Long id , @RequestParam(value = "productLimit",defaultValue = "20") int productLimit, @RequestParam(value = "productOffset",defaultValue = "1") int productOffset, @RequestParam(value = "subcategoryLimit",defaultValue = "20") int subcategoryLimit, @RequestParam(value = "subcategoryOffset",defaultValue = "1") int subcategoryOffset) {
+        Category category = this.catalogService.findCategoryById(id);
+        if (category != null) {
+            category.setName("Clothing");
+            catalogService.saveCategory(category);
+            CategoryWrapper wrapper = (CategoryWrapper)this.context.getBean(CategoryWrapper.class.getName());
+            wrapper.wrapDetails(category, request);
+            return wrapper;
+        } else {
+            logger.error("There is no category with this id to update");
+            throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.categoryNotFound", id);
         }
-
-        product.setProductOptionXrefs(productOptionXrefs);
-
-        Product finalProduct = catalogService.saveProduct(product);
-        finalProduct.getDefaultSku().setDefaultProduct(finalProduct);
-        catalogService.saveSku(finalProduct.getDefaultSku());
-        Long newId = finalProduct.getId();
-
-        ProductWrapper response;
-        response = (ProductWrapper) context.getBean(ProductWrapper.class.getName());
-        response.wrapDetails(product, request);
-        response.setId(newId);
-
-        return response;
-    }*/
-
+    }
 }
