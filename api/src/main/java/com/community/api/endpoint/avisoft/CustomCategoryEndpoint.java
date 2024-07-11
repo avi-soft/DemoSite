@@ -5,21 +5,16 @@ import com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException;
 import com.broadleafcommerce.rest.api.wrapper.CategoriesWrapper;
 import com.broadleafcommerce.rest.api.wrapper.CategoryAttributeWrapper;
 import com.broadleafcommerce.rest.api.wrapper.CategoryWrapper;
-import com.broadleafcommerce.rest.api.wrapper.ProductWrapper;
-import org.broadleafcommerce.common.money.Money;
-import org.broadleafcommerce.core.catalog.domain.*;
+import org.broadleafcommerce.core.catalog.domain.Category;
+import org.broadleafcommerce.core.catalog.domain.CategoryAttribute;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
-import org.broadleafcommerce.core.catalog.service.type.ProductType;
-import org.broadleafcommerce.core.inventory.service.type.InventoryType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -35,12 +30,14 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
     protected CatalogService catalogService;
 
     @RequestMapping(value = "/categories", method = RequestMethod.GET)
-    public CategoriesWrapper findCategories(HttpServletRequest request, @RequestParam(value = "limit",defaultValue = "20") int limit) {
+    public CategoriesWrapper getCategories(HttpServletRequest request, @RequestParam(value = "limit",defaultValue = "20") int limit) {
         List categories = this.catalogService.findAllCategories();
 
         if(categories.size() != 0){
             CategoriesWrapper wrapper = (CategoriesWrapper)this.context.getBean(CategoriesWrapper.class.getName());
             wrapper.wrapDetails(categories, request);
+
+
             return wrapper;
         }else{
             logger.error("Category list is empty");
@@ -49,13 +46,14 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
     }
 
     @RequestMapping(value = "", method = RequestMethod.GET, params = {"categoryId"})
-    public CategoryWrapper findCategoryById(HttpServletRequest request, @RequestParam("categoryId") Long id, @RequestParam(value = "productLimit",defaultValue = "20") int productLimit, @RequestParam(value = "productOffset",defaultValue = "1") int productOffset, @RequestParam(value = "subcategoryLimit",defaultValue = "20") int subcategoryLimit, @RequestParam(value = "subcategoryOffset",defaultValue = "1") int subcategoryOffset) {
+    public CategoryWrapper getCategoryById(HttpServletRequest request, @RequestParam("categoryId") Long id, @RequestParam(value = "productLimit",defaultValue = "20") int productLimit, @RequestParam(value = "productOffset",defaultValue = "1") int productOffset, @RequestParam(value = "subcategoryLimit",defaultValue = "20") int subcategoryLimit, @RequestParam(value = "subcategoryOffset",defaultValue = "1") int subcategoryOffset) {
         Category cat = this.catalogService.findCategoryById(id);
         if (cat != null) {
             /*request.setAttribute("productLimit", productLimit);
             request.setAttribute("productOffset", productOffset);
             request.setAttribute("subcategoryLimit", subcategoryLimit);
             request.setAttribute("subcategoryOffset", subcategoryOffset);*/
+
             CategoryWrapper wrapper = (CategoryWrapper)this.context.getBean(CategoryWrapper.class.getName());
             wrapper.wrapDetails(cat, request);
             return wrapper;
@@ -66,7 +64,7 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
     }
 
     @RequestMapping(value = "/subcategories/{categoryId}", method = RequestMethod.GET)
-    public CategoriesWrapper findSubCategories(HttpServletRequest request, @PathVariable("categoryId") Long id ){
+    public CategoriesWrapper getSubCategories(HttpServletRequest request, @PathVariable("categoryId") Long id ){
         Category category = this.catalogService.findCategoryById(id);
         if (category != null) {
             CategoriesWrapper wrapper = (CategoriesWrapper)this.context.getBean(CategoriesWrapper.class.getName());
@@ -80,6 +78,18 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
         }
     }
 
+    @RequestMapping(value = "/add", method = RequestMethod.POST)
+    public Category addCategory(HttpServletRequest request){
+
+        Category category =  catalogService.createCategory();
+//        Long categoryId = new Long(500);
+        category.setId(500L);
+        category.setName("Grocery");
+        category.setUrl("/test-category4");
+
+        catalogService.saveCategory(category);
+        return category;
+    }
 
     @RequestMapping(value = "/remove/{categoryId}", method = RequestMethod.DELETE)
     public CategoryWrapper removeCategoryById(HttpServletRequest request, @PathVariable("categoryId") Long id , @RequestParam(value = "productLimit",defaultValue = "20") int productLimit, @RequestParam(value = "productOffset",defaultValue = "1") int productOffset, @RequestParam(value = "subcategoryLimit",defaultValue = "20") int subcategoryLimit, @RequestParam(value = "subcategoryOffset",defaultValue = "1") int subcategoryOffset) {
@@ -111,7 +121,7 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
     }
 
     @RequestMapping(value = "/attributes/{categoryId}", method = RequestMethod.GET)
-    public List<CategoryAttributeWrapper> findCategoryAttributes(HttpServletRequest request, @PathVariable("categoryId") Long categoryId) {
+    public List<CategoryAttributeWrapper> getCategoryAttributes(HttpServletRequest request, @PathVariable("categoryId") Long categoryId) {
         Category category = this.catalogService.findCategoryById(categoryId);
         if (category == null) {
             logger.error("There is no category with this id for finding the attributes");
@@ -128,7 +138,6 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
                     out.add(wrapper);
                 }
             }
-
             return out;
         }
     }
