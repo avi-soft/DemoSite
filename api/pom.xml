@@ -40,10 +40,11 @@
             <groupId>com.mycompany-community</groupId>
             <artifactId>boot-community-demo-core</artifactId>
         </dependency>
+
         <dependency>
-            <groupId>org.glassfish.jersey.core</groupId>
-            <artifactId>jersey-server</artifactId>
-            <version>${jersey.version}</version>
+            <groupId>com.google.firebase</groupId>
+            <artifactId>firebase-admin</artifactId>
+            <version>7.0.0</version>
         </dependency>
 
         <dependency>
