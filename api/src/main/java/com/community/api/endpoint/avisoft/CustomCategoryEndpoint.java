@@ -48,9 +48,9 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
 
                 return wrapper;
             }
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             logger.error("Error retrieving category");
-            throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+            throw BroadleafWebServicesException.build(404).addMessage("error occurred in findAllCategory method of CustomCategoryEndpoint" + e.getMessage());
         }
     }
 
@@ -77,9 +77,9 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
                 return wrapper;
             }
 
-        } catch (RuntimeException e) {
+        } catch (Exception e) {
             logger.error("Error retrieving category");
-            throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+            throw BroadleafWebServicesException.build(404).addMessage("error occurred in getCategoryById method of CustomCategoryEndpoint" + e.getMessage());
         }
     }
 
@@ -105,9 +105,9 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
                 return wrapper;
             }
 
-        } catch (RuntimeException e) {
-            logger.error("Error retrieving category");
-            throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+        } catch (Exception e) {
+            logger.error("Error retrieving subCategory");
+            throw BroadleafWebServicesException.build(404).addMessage("error occurred in getSubCategories method of CustomCategoryEndpoint" + e.getMessage());
         }
     }
 
@@ -132,9 +132,9 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
             wrapper.wrapDetails(category,request);
             return wrapper;
 
-        }catch (RuntimeException e) {
+        }catch (Exception e) {
             logger.error("Error adding category");
-            throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+            throw BroadleafWebServicesException.build(404).addMessage("error occurred in addCategory() method of CustomCategoryEndpoint" + e);
         }
     }
 
@@ -157,9 +157,9 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
                 logger.error("There is no category with this id to delete");
                 throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.categoryNotFound", id);
             }
-        }catch (RuntimeException e) {
+        } catch (Exception e) {
             logger.error("Error removing category");
-            throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+            throw BroadleafWebServicesException.build(404).addMessage("error occurred in removeCategory() method of CustomCategoryEndpoint" + e);
         }
     }
 
@@ -181,9 +181,9 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
                 logger.error("There is no category with this id to update");
                 throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.categoryNotFound", id);
             }
-        }catch (RuntimeException e) {
+        } catch (Exception e) {
             logger.error("Error updating category");
-            throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+            throw BroadleafWebServicesException.build(404).addMessage("error occurred in updatingCategory() method of CustomCategoryEndpoint" + e);
         }
     }
 
@@ -201,22 +201,22 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
                 logger.error("There is no category with this id for finding the attributes");
                 throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.categoryNotFound", categoryId);
             } else {
-                ArrayList<CategoryAttributeWrapper> out = new ArrayList();
+                ArrayList<CategoryAttributeWrapper> categoryAttributeWrapperList = new ArrayList();
                 if (category.getCategoryAttributesMap() != null) {
-                    Iterator var5 = category.getCategoryAttributesMap().keySet().iterator();
+                    Iterator categoryAttributeIterator = category.getCategoryAttributesMap().keySet().iterator();
 
-                    while(var5.hasNext()) {
-                        String key = (String)var5.next();
+                    while(categoryAttributeIterator.hasNext()) {
+                        String key = (String)categoryAttributeIterator.next();
                         CategoryAttributeWrapper wrapper = (CategoryAttributeWrapper)this.context.getBean(CategoryAttributeWrapper.class.getName());
                         wrapper.wrapSummary((CategoryAttribute)category.getCategoryAttributesMap().get(key), request);
-                        out.add(wrapper);
+                        categoryAttributeWrapperList.add(wrapper);
                     }
                 }
-                return out;
+                return categoryAttributeWrapperList;
             }
-        }catch (RuntimeException e) {
-            logger.error("Error fetching attributes of the category");
-            throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+        }catch (Exception e) {
+            logger.error("Error fetching attributes of a category");
+            throw BroadleafWebServicesException.build(404).addMessage("error occurred in getCategoryAttributes() method of CustomCategoryEndpoint" + e);
         }
 
     }
