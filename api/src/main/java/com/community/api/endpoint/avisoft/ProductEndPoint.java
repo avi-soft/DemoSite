@@ -1,26 +1,18 @@
 package com.community.api.endpoint.avisoft;
-import com.broadleafcommerce.rest.api.endpoint.BaseEndpoint;
 import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
 import com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException;
-import com.broadleafcommerce.rest.api.wrapper.ProductWrapper;
-import org.broadleafcommerce.common.money.Money;
 import org.broadleafcommerce.core.catalog.domain.*;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.broadleafcommerce.core.catalog.service.type.ProductType;
-import org.broadleafcommerce.core.inventory.service.type.InventoryType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
-import javax.servlet.http.HttpServletRequest;
-import javax.ws.rs.Path;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @RestController
