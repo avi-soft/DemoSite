@@ -10,15 +10,13 @@
  * the Broadleaf End User License Agreement (EULA), Version 1.1
  * (the "Commercial License" located at http://license.broadleafcommerce.org/commercial_license-1.1.txt)
  * shall apply.
- * 
+ *
  * Alternatively, the Commercial License may be replaced with a mutually agreed upon license (the "Custom License")
  * between you and Broadleaf Commerce. You may not use this file except in compliance with the applicable license.
  * #L%
  */
 package com.community.api.configuration;
 
-import com.google.firebase.FirebaseApp;
-import com.google.firebase.FirebaseOptions;
 import org.apache.catalina.connector.Connector;
 import org.broadleafcommerce.common.extensibility.context.merge.Merge;
 import org.springframework.beans.factory.annotation.Value;
@@ -52,6 +50,7 @@ public class ApiConfig {
      * In order to have both, we’ll need to configure one of them programmatically (HTTP).
      * Below is the recommended approach according to the Spring docs:
      * {@link https://github.com/spring-projects/spring-boot/blob/1.5.x/spring-boot-docs/src/main/asciidoc/howto.adoc#configure-ssl}
+     *
      * @param httpServerPort
      * @return EmbeddedServletContainerFactory
      */
@@ -61,7 +60,7 @@ public class ApiConfig {
         tomcat.addAdditionalTomcatConnectors(createStandardConnector(httpServerPort));
         return tomcat;
     }
-    
+
     @Merge("blMergedCacheConfigLocations")
     public List<String> adminOverrideCache() {
         return Collections.singletonList("classpath:bl-override-ehcache.xml");
