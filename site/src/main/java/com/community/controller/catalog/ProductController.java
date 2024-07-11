@@ -19,10 +19,14 @@
 package com.community.controller.catalog;
 
 import org.broadleafcommerce.common.config.service.SystemPropertiesService;
+import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.broadleafcommerce.core.web.catalog.ProductHandlerMapping;
 import org.broadleafcommerce.core.web.controller.catalog.BroadleafProductController;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.annotation.Resource;
@@ -36,7 +40,7 @@ import javax.servlet.http.HttpServletResponse;
 @Controller("blProductController")
 public class ProductController extends BroadleafProductController {
 
-   protected static final String DEFAULT_PRODUCT_QUICKVIEW_PATH = "catalog/partials/productQuickView";
+    protected static final String DEFAULT_PRODUCT_QUICKVIEW_PATH = "catalog/partials/productQuickView";
 
     @Resource(name = "blCatalogService")
     protected CatalogService catalogService;
