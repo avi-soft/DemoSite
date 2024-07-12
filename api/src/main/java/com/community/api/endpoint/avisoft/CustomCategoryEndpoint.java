@@ -12,6 +12,8 @@ import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
@@ -206,7 +208,7 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
     }
 
     @RequestMapping(value = "/attributes/{categoryId}", method = RequestMethod.GET)
-    public List<CategoryAttributeWrapper> getCategoryAttributes(HttpServletRequest request, @PathVariable("categoryId") Long categoryId) {
+    public ResponseEntity<?> getCategoryAttributes(HttpServletRequest request, @PathVariable("categoryId") Long categoryId) {
         try {
             if (catalogService == null) {
                 logger.error("Catalog service is not initialized.");
@@ -217,26 +219,25 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
 
             if (category == null) {
                 logger.error("There is no category with this id for finding the attributes");
-                throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.categoryNotFound", categoryId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body("Category not found with ID: " + categoryId);
             } else {
-                ArrayList<CategoryAttributeWrapper> categoryAttributeWrapperList = new ArrayList();
+                List<CategoryAttributeWrapper> categoryAttributeWrapperList = new ArrayList<>();
                 if (category.getCategoryAttributesMap() != null) {
-                    Iterator categoryAttributeIterator = category.getCategoryAttributesMap().keySet().iterator();
-
-                    while(categoryAttributeIterator.hasNext()) {
-                        String key = (String)categoryAttributeIterator.next();
-                        CategoryAttributeWrapper wrapper = (CategoryAttributeWrapper)this.context.getBean(CategoryAttributeWrapper.class.getName());
-                        wrapper.wrapSummary((CategoryAttribute)category.getCategoryAttributesMap().get(key), request);
+                    for (String key : category.getCategoryAttributesMap().keySet()) {
+                        CategoryAttributeWrapper wrapper = (CategoryAttributeWrapper) this.context.getBean(CategoryAttributeWrapper.class.getName());
+                        wrapper.wrapSummary((CategoryAttribute) category.getCategoryAttributesMap().get(key), request);
                         categoryAttributeWrapperList.add(wrapper);
                     }
                 }
-                return categoryAttributeWrapperList;
+                return ResponseEntity.ok(categoryAttributeWrapperList);
             }
-        }catch (Exception e) {
-            logger.error("Error fetching attributes of a category");
-            exceptionHandlingService.handleException(e);
-//            throw BroadleafWebServicesException.build(404).addMessage("error occurred in getCategoryAttributes() method of CustomCategoryEndpoint" + e);
+        } catch (Exception e) {
+            String errorMessage = exceptionHandlingService.handleException(e);
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMessage);
         }
-        return new ArrayList<CategoryAttributeWrapper>();
     }
+
+
 }
