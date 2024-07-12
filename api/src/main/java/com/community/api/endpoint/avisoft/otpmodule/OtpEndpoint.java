@@ -1,6 +1,8 @@
 package com.community.api.endpoint.avisoft.otpmodule;
 
+import com.community.api.services.ExceptionHandlingImplement;
 import com.community.api.services.TwilioService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -13,6 +15,9 @@ import java.util.regex.Pattern;
 @RestController
 @RequestMapping("/phone")
 public class OtpEndpoint {
+
+    @Autowired
+    private ExceptionHandlingImplement exceptionHandling;
 
     private final TwilioService twilioService;
 
@@ -69,4 +74,21 @@ public class OtpEndpoint {
             return ResponseEntity.badRequest().body("Invalid OTP");
         }
     }
+
+    @GetMapping("/catcherror")
+    public ResponseEntity<String> catcherror() {
+        try {
+            int x = 5 / 0;
+        } catch (Exception e) {
+
+            String errorMessage = exceptionHandling.handleException(e);
+
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMessage);
+
+        }
+        return ResponseEntity.ok("Success");
+
+    }
+
+
 }
