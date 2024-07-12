@@ -1,29 +1,33 @@
 package com.community.api.services;
 
 import com.twilio.exception.ApiException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 
 @Service
-public class ExceptionHandlingService implements ExceptionHandlingImplement{
+public class ExceptionHandlingService implements ExceptionHandlingImplement {
+    private static final Logger logger = LoggerFactory.getLogger(ExceptionHandlingService.class);
+
     @Override
-    public  void handleHttpError(ResponseEntity<String> response) {
+    public void handleHttpError(ResponseEntity<String> response) {
         HttpStatus statusCode = response.getStatusCode();
         String responseBody = response.getBody();
         throw new RuntimeException("HTTP Error: " + statusCode + ", Response Body: " + responseBody);
     }
 
     @Override
-        public void handleHttpClientErrorException(HttpClientErrorException e) {
+    public String handleHttpClientErrorException(HttpClientErrorException e) {
         HttpStatus statusCode = e.getStatusCode();
         String responseBody = e.getResponseBodyAsString();
         throw new RuntimeException("HTTP Client Error: " + statusCode + ", Response Body: " + responseBody, e);
     }
 
     @Override
-    public void handleApiException(ApiException e) {
+    public String handleApiException(ApiException e) {
         int errorCode = e.getCode();
         String errorMessage = e.getMessage();
 
@@ -37,14 +41,18 @@ public class ExceptionHandlingService implements ExceptionHandlingImplement{
 
     }
 
-@Override
-    public void handleException(Exception e) {
+    @Override
+    public String handleException(Exception e) {
+
+        logger.error("Exception occurred: ", e);
         if (e instanceof ApiException) {
-            handleApiException((ApiException) e);
+            return handleApiException((ApiException) e);
         } else if (e instanceof HttpClientErrorException) {
-            handleHttpClientErrorException((HttpClientErrorException) e);
+            return handleHttpClientErrorException((HttpClientErrorException) e);
         } else {
-            throw new RuntimeException("Unknown Error: " + e.getMessage(), e);
+            return "Something went wrong: " + e.getMessage();
         }
+
     }
+
 }
