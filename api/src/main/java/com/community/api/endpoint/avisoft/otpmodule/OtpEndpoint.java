@@ -1,66 +1,72 @@
 package com.community.api.endpoint.avisoft.otpmodule;
 
-import com.community.api.services.FirebaseService;
+import com.community.api.services.TwilioService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpSession;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.regex.Pattern;
 
 @RestController
-@RequestMapping("/otp")
+@RequestMapping("/phone")
 public class OtpEndpoint {
 
-    private final FirebaseService firebaseService;
+    private final TwilioService twilioService;
 
-    public OtpEndpoint(FirebaseService firebaseService) {
-        this.firebaseService = firebaseService;
+    public OtpEndpoint(TwilioService twilioService) {
+        this.twilioService = twilioService;
     }
 
-    @PostMapping("/send-otp")
-    public ResponseEntity<String> requestOtp(@RequestParam("mobileNumber") String mobileNumber) {
 
+    @GetMapping("/send-otp")
+    public ResponseEntity<String> requestOtp(@RequestParam("mobileNumber") String mobileNumber,
+                                             @RequestParam("countrycode") String countrycode,
+                                             HttpSession session) throws UnsupportedEncodingException {
         if (!isValidMobileNumber(mobileNumber)) {
             return ResponseEntity.badRequest().body("Invalid mobile number");
         }
 
-        String otpResponse = firebaseService.sendOtpToMobile(mobileNumber);
-        if (otpResponse != null) {
+        String encodedCountryCode = URLEncoder.encode(countrycode, "UTF-8");
+
+        String completeMobileNumber = encodedCountryCode + mobileNumber;
+
+        ResponseEntity<String> otpResponse = twilioService.sendOtpToMobile(completeMobileNumber);
+        System.out.println(otpResponse.getBody() + "  otpResponse  send-otp ");
+
+        if (otpResponse.getStatusCode() == HttpStatus.OK) {
+            session.setAttribute("expectedOtp", otpResponse.getBody());
+            // session.setAttribute("mobileNumber", mobileNumber);
+
             return ResponseEntity.ok("OTP sent successfully");
         } else {
             return ResponseEntity.internalServerError().body("Failed to send OTP");
         }
     }
 
+
     private boolean isValidMobileNumber(String mobileNumber) {
         String mobileNumberPattern = "^\\+?\\d{10,13}$";
         return Pattern.compile(mobileNumberPattern).matcher(mobileNumber).matches();
     }
 
-    @PostMapping("/verify-otp")
-    public ResponseEntity<String> verifyOtp(@RequestParam("mobileNumber") String mobileNumber, @RequestParam("otp") String otp) {
-        if (!isValidMobileNumber(mobileNumber)) {
-            return ResponseEntity.badRequest().body("Invalid mobile number");
-        }
+    @PostMapping("/verify")
+    public ResponseEntity<String> verifyOTP(@RequestParam("otpEntered") String otpEntered, HttpSession session) {
+        String expectedOtp = (String) session.getAttribute("expectedOtp");
+        /*     String mobileNumber = (String) session.getAttribute("mobileNumber");*/
 
-        if (otp == null || otp.trim().isEmpty()) {
+        if (otpEntered == null || otpEntered.trim().isEmpty()) {
             return ResponseEntity.badRequest().body("Invalid OTP");
         }
 
-        String verifyResponse = firebaseService.verifyOtp(mobileNumber, otp);
-        if (verifyResponse != null && verifyResponse.equals("success")) {
-
-            
+        if (otpEntered.equals(expectedOtp)) {
+            session.removeAttribute("expectedOtp");
+            session.removeAttribute("mobileNumber");
             return ResponseEntity.ok("OTP verified successfully");
         } else {
             return ResponseEntity.badRequest().body("Invalid OTP");
         }
-    }
-
-    private void logError(Exception e) {
-
-        System.err.println("Error: " + e.getMessage());
     }
 }
