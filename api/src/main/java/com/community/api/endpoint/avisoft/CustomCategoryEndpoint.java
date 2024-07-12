@@ -39,17 +39,14 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
     public ResponseEntity<?> getCategories(HttpServletRequest request, @RequestParam(value = "limit",defaultValue = "20") int limit) {
         try {
             if (catalogService == null) {
-                logger.error("Catalog service is not initialized.");
-                throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
             }
 
             List<Category> categories = this.catalogService.findAllCategories();
 
             if (categories.size() == 0) {
-                logger.error("Error retrieving category as There is no category in DB");
-                throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.categoryNotFound");
+                throw BroadleafWebServicesException.build(404).addMessage("Error retrieving category as There is no category in DB");
             }else{
-                logger.info("TILL HERE");
                 CategoriesWrapper wrapper = (CategoriesWrapper)this.context.getBean(CategoriesWrapper.class.getName());
                 wrapper.wrapDetails(categories, request);
 
@@ -64,19 +61,16 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
     public ResponseEntity<?> getCategoryById(HttpServletRequest request, @RequestParam("categoryId") Long id, @RequestParam(value = "productLimit",defaultValue = "20") int productLimit, @RequestParam(value = "productOffset",defaultValue = "1") int productOffset, @RequestParam(value = "subcategoryLimit",defaultValue = "20") int subcategoryLimit, @RequestParam(value = "subcategoryOffset",defaultValue = "1") int subcategoryOffset) {
         try {
             if (catalogService == null) {
-                logger.error("Catalog service is not initialized.");
-                throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
             }
 
             if(id == null){
-                logger.error("category Id is not provided in request headers.");
-                throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+                throw BroadleafWebServicesException.build(404).addMessage("category Id is not provided in request headers.");
             }
             Category cat = this.catalogService.findCategoryById(id);
 
             if (cat == null) {
-                logger.error("Error retrieving category as There is no category in DB with this Id");
-                throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.categoryNotFound");
+                throw BroadleafWebServicesException.build(404).addMessage("Error retrieving category as There is no category in DB with this Id");
             }else{
                 CategoryWrapper wrapper = (CategoryWrapper)this.context.getBean(CategoryWrapper.class.getName());
                 wrapper.wrapDetails(cat, request);
@@ -93,15 +87,13 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
 
         try {
             if (catalogService == null) {
-                logger.error("Catalog service is not initialized.");
-                throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
             }
 
             final Category category = this.catalogService.findCategoryById(id);
 
             if (category == null) {
-                logger.error("Error retrieving subcategory as There is no category in DB with this Id");
-                throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.categoryNotFound");
+                throw BroadleafWebServicesException.build(404).addMessage("Error retrieving subcategory as There is no category in DB with this Id");
             }else{
                 CategoriesWrapper wrapper = (CategoriesWrapper)this.context.getBean(CategoriesWrapper.class.getName());
                 List<Category> categories = this.catalogService.findAllSubCategories(category);
@@ -119,8 +111,7 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
     public ResponseEntity<?> addCategory(HttpServletRequest request){
         try {
             if (catalogService == null) {
-                logger.error("Catalog service is not initialized.");
-                throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
             }
 
             final Category category =  this.catalogService.createCategory();
@@ -145,7 +136,7 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
     public ResponseEntity<?> removeCategoryById(HttpServletRequest request, @PathVariable("categoryId") Long id , @RequestParam(value = "productLimit",defaultValue = "20") int productLimit, @RequestParam(value = "productOffset",defaultValue = "1") int productOffset, @RequestParam(value = "subcategoryLimit",defaultValue = "20") int subcategoryLimit, @RequestParam(value = "subcategoryOffset",defaultValue = "1") int subcategoryOffset) {
         try {
             if (catalogService == null) {
-                throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
             }
 
             final Category category = this.catalogService.findCategoryById(id);
@@ -156,7 +147,6 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
                 wrapper.wrapDetails(category, request);
                 return ResponseEntity.ok(wrapper);
             } else {
-                logger.error("There is no category with this id to delete");
                 throw BroadleafWebServicesException.build(404).addMessage("Product not available", id);
             }
         } catch (Exception e) {
@@ -168,8 +158,7 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
     public ResponseEntity<?> updateCategoryById(HttpServletRequest request, @PathVariable("categoryId") Long id , @RequestParam(value = "productLimit",defaultValue = "20") int productLimit, @RequestParam(value = "productOffset",defaultValue = "1") int productOffset, @RequestParam(value = "subcategoryLimit",defaultValue = "20") int subcategoryLimit, @RequestParam(value = "subcategoryOffset",defaultValue = "1") int subcategoryOffset) {
         try {
             if (catalogService == null) {
-                logger.error("Catalog service is not initialized.");
-                throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
             }
             final Category category = this.catalogService.findCategoryById(id);
             if (category != null) {
@@ -179,8 +168,7 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
                 wrapper.wrapDetails(category, request);
                 return ResponseEntity.ok(wrapper);
             } else {
-                logger.error("There is no category with this id to update");
-                throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.categoryNotFound", id);
+                throw BroadleafWebServicesException.build(404).addMessage("There is no category with this id to update", id);
             }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
@@ -191,15 +179,13 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
     public ResponseEntity<?> getCategoryAttributes(HttpServletRequest request, @PathVariable("categoryId") Long categoryId) {
         try {
             if (catalogService == null) {
-                throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
             }
 
             Category category = this.catalogService.findCategoryById(categoryId);
 
             if (category == null) {
-                logger.error("There is no category with this id for finding the attributes");
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body("Category not found with ID: " + categoryId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Category not found with ID: " + categoryId);
             } else {
                 List<CategoryAttributeWrapper> categoryAttributeWrapperList = new ArrayList<>();
                 if (category.getCategoryAttributesMap() != null) {
@@ -213,10 +199,7 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
             }
         } catch (Exception e) {
             String errorMessage = exceptionHandlingService.handleException(e);
-
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMessage);
         }
     }
-
-
 }

@@ -63,16 +63,14 @@ public class ProductEndPoint extends CatalogEndpoint {
 
         try {
             if (catalogService == null) {
-                logger.error("Catalog service is not initialized.");
-                throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
             }
 
             final List<Product> products = catalogService.findAllProducts();
             final List<ProductWrapper> wrappers = new ArrayList<>();
 
             if (products.size() == 0) {
-                logger.error("Error retrieving products as There is no product in DB");
-                throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+                throw BroadleafWebServicesException.build(404).addMessage("Error retrieving products as There is no product in DB");
             }
 
             for(Product pr: products){
@@ -82,8 +80,7 @@ public class ProductEndPoint extends CatalogEndpoint {
             }
             return wrappers;
         } catch (RuntimeException e) {
-            logger.error("Error retrieving product");
-            throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+            throw BroadleafWebServicesException.build(404).addMessage("Error retrieving product");
         }
     }
 
@@ -91,13 +88,11 @@ public class ProductEndPoint extends CatalogEndpoint {
     public ProductWrapper addProduct(HttpServletRequest request, @PathVariable("categoryId") Long id) {
         try {
             if (catalogService == null) {
-                logger.error("Catalog service is not initialized.");
-                throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
             }
 
             if(id == null){
-                logger.error("No Id is given in the Path");
-                throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+                throw BroadleafWebServicesException.build(404).addMessage("No Id is given in the Path");
             }
 
             Category category = catalogService.findCategoryById(id);
@@ -131,8 +126,7 @@ public class ProductEndPoint extends CatalogEndpoint {
             return wrapper;
 
         }catch (RuntimeException e) {
-            logger.error("Error adding category");
-            throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+            throw BroadleafWebServicesException.build(404).addMessage("Error adding category");
         }
     }
 
@@ -142,23 +136,20 @@ public class ProductEndPoint extends CatalogEndpoint {
         Product product = null;
         try {
             if (catalogService == null) {
-                logger.error("Catalog service is not initialized.");
-                throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
             }
 
             product = catalogService.findProductById(productId);
             catalogService.removeProduct(product);
 
             if (product == null) {
-                logger.error("Error deleting product as There is no product in DB with this Id");
-                throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+                throw BroadleafWebServicesException.build(404).addMessage("Error deleting product as There is no product in DB with this Id");
             }
             ProductWrapper wrapper = (ProductWrapper) this.context.getBean(ProductWrapper.class.getName());
             wrapper.wrapDetails(product,request);
             return wrapper;
         } catch (RuntimeException e) {
-            logger.error("Error deleting product");
-            throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+            throw BroadleafWebServicesException.build(404).addMessage("Error deleting product");
         }
     }
 
@@ -167,15 +158,13 @@ public class ProductEndPoint extends CatalogEndpoint {
         Product product = null;
         try {
             if (catalogService == null) {
-                logger.error("Catalog service is not initialized.");
-                throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
             }
 
             product = catalogService.findProductById(productId);
             catalogService.saveProduct(product);
             if (product == null) {
-                logger.error("Error updating products as There is no product in DB with this Id");
-                throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+                throw BroadleafWebServicesException.build(404).addMessage("Error updating products as There is no product in DB with this Id");
             }
             product.setName("Updated testProduct 5");
 
@@ -183,9 +172,7 @@ public class ProductEndPoint extends CatalogEndpoint {
             wrapper.wrapDetails(product,request);
             return wrapper;
         } catch (RuntimeException e) {
-            logger.error("Error updating product");
-            throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
+            throw BroadleafWebServicesException.build(404).addMessage("Error updating product");
         }
     }
-
 }
