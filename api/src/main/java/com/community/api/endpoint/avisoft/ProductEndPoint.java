@@ -2,6 +2,7 @@ package com.community.api.endpoint.avisoft;
 import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
 import com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException;
 import com.broadleafcommerce.rest.api.wrapper.ProductWrapper;
+import com.community.api.services.ExceptionHandlingService;
 import org.broadleafcommerce.core.catalog.domain.Category;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.catalog.domain.Sku;
@@ -9,6 +10,7 @@ import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.broadleafcommerce.core.catalog.service.type.ProductType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +27,10 @@ import java.util.List;
 )
 public class ProductEndPoint extends CatalogEndpoint {
 
-    private static final Logger logger = LoggerFactory.getLogger(ProductEndPoint.class);
+    private static final Logger logger = LoggerFactory.getLogger(CustomCategoryEndpoint.class);
+
+    @Autowired
+    protected ExceptionHandlingService exceptionHandlingService;
 
     @Resource(name = "blCatalogService")
     protected CatalogService catalogService;
@@ -38,7 +43,6 @@ public class ProductEndPoint extends CatalogEndpoint {
 
         try {
             if (catalogService == null) {
-                logger.error("Catalog service is not initialized.");
                 return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
@@ -50,7 +54,6 @@ public class ProductEndPoint extends CatalogEndpoint {
                 return new ResponseEntity<>(HttpStatus.NOT_FOUND);
             }
         } catch (RuntimeException e) {
-            logger.error("Error retrieving product: {}", e.getMessage(), e);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
