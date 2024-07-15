@@ -1,6 +1,5 @@
 package com.community.api.services;
 
-import com.twilio.rest.verify.v2.service.Verification;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +11,9 @@ import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
 import org.springframework.beans.factory.annotation.Value;
 
+import javax.servlet.http.HttpSession;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Random;
 
 @Service
@@ -39,12 +41,6 @@ public class TwilioService {
 
             String otp = generateOTP();
 
-/*           Verification verification = Verification.creator(
-                            "VAd5e75dc9685e345d58487cf645ab6f72",
-                            twilioPhoneNumber,
-                            "sms")
-                    .create();*/
-
           Message message = Message.creator(
                             new PhoneNumber(mobileNumber),
                             new PhoneNumber(twilioPhoneNumber),
@@ -68,6 +64,23 @@ public class TwilioService {
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error sending OTP: " + e.getMessage());
         }
+    }
+
+    public ResponseEntity<String> sendOTPFunction(String mobileNumber, String countryCode, HttpSession session) throws UnsupportedEncodingException {
+        String encodedCountryCode = URLEncoder.encode(countryCode, "UTF-8");
+        String completeMobileNumber = encodedCountryCode + mobileNumber;
+        System.out.println(completeMobileNumber + "  encodedCountryCode " +encodedCountryCode);
+        ResponseEntity<String> otpResponse = this.sendOtpToMobile(completeMobileNumber);
+        System.out.println(otpResponse.getBody() + "  otpResponse  send-otp ");
+
+
+        if (otpResponse.getStatusCode() == HttpStatus.OK) {
+            session.setAttribute("expectedOtp", otpResponse.getBody());
+            return ResponseEntity.ok("OTP has been sent on your number " + mobileNumber);
+        } else {
+            return ResponseEntity.internalServerError().body("Failed to send OTP on " + mobileNumber);
+        }
+
     }
 
 

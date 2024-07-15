@@ -2,6 +2,12 @@ package com.community.api.endpoint.avisoft.otpmodule;
 
 import com.community.api.services.ExceptionHandlingImplement;
 import com.community.api.services.TwilioService;
+import org.broadleafcommerce.profile.core.dao.PhoneDao;
+import org.broadleafcommerce.profile.core.domain.Customer;
+import org.broadleafcommerce.profile.core.domain.Phone;
+import org.broadleafcommerce.profile.core.service.CustomerPhoneService;
+import org.broadleafcommerce.profile.core.service.CustomerService;
+import org.broadleafcommerce.profile.core.service.PhoneService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,11 +25,19 @@ public class OtpEndpoint {
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
 
+    @Autowired
+    private CustomerService customerService;
+
+    @Autowired
+    private PhoneService phoneService;
+
+
     private final TwilioService twilioService;
 
     public OtpEndpoint(TwilioService twilioService) {
         this.twilioService = twilioService;
     }
+
 
 
     @GetMapping("/send-otp")
@@ -34,21 +48,8 @@ public class OtpEndpoint {
             return ResponseEntity.badRequest().body("Invalid mobile number");
         }
 
-        String encodedCountryCode = URLEncoder.encode(countrycode, "UTF-8");
+       return   twilioService.sendOTPFunction(mobileNumber,countrycode,session);
 
-        String completeMobileNumber = encodedCountryCode + mobileNumber;
-
-        ResponseEntity<String> otpResponse = twilioService.sendOtpToMobile(completeMobileNumber);
-        System.out.println(otpResponse.getBody() + "  otpResponse  send-otp ");
-
-        if (otpResponse.getStatusCode() == HttpStatus.OK) {
-            session.setAttribute("expectedOtp", otpResponse.getBody());
-            // session.setAttribute("mobileNumber", mobileNumber);
-
-            return ResponseEntity.ok("OTP sent successfully");
-        } else {
-            return ResponseEntity.internalServerError().body("Failed to send OTP");
-        }
     }
 
 
@@ -68,7 +69,7 @@ public class OtpEndpoint {
 
         if (otpEntered.equals(expectedOtp)) {
             session.removeAttribute("expectedOtp");
-            session.removeAttribute("mobileNumber");
+//            session.removeAttribute("mobileNumber");
             return ResponseEntity.ok("OTP verified successfully");
         } else {
             return ResponseEntity.badRequest().body("Invalid OTP");
@@ -82,7 +83,6 @@ public class OtpEndpoint {
         } catch (Exception e) {
 
             String errorMessage = exceptionHandling.handleException(e);
-
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMessage);
 
         }
@@ -90,5 +90,79 @@ public class OtpEndpoint {
 
     }
 
+
+/*    @GetMapping("/verifyandlogin")
+    public ResponseEntity<String> verifyandlogin(@RequestParam("identifier") String identifier,
+                                                 @RequestParam("countrycode") String countrycode,
+                                                 @RequestParam("otpOrPassword") String otpOrPassword,
+                                                 HttpSession session) throws UnsupportedEncodingException {
+        if (isValidMobileNumber(identifier)) {
+            return loginWithMobileNumber(identifier, countrycode, otpOrPassword, session);
+        } else {
+            return loginWithUsername(identifier, otpOrPassword, session);
+        }
+    }*/
+
+   /* private ResponseEntity<String> loginWithMobileNumber(String mobileNumber, String countrycode, String otpOrPassword, HttpSession session) throws UnsupportedEncodingException {
+        Customer customer = customerService.readCustomerByUsername(username);
+        User user = userRepository.findByMobileNumber(mobileNumber);
+        if (customer != null) {
+            if (!isValidMobileNumber(mobileNumber)) {
+                return ResponseEntity.badRequest().body("Invalid mobile number");
+            }
+
+            ResponseEntity<String> otpResponse = twilioService.sendOTPFunction(mobileNumber, countrycode, session);
+            if (otpResponse.getStatusCode() == HttpStatus.OK) {
+
+                if (user.getOtp().equals(otpOrPassword)) {
+
+                    return ResponseEntity.ok("Login successful");
+                } else {
+
+                    return ResponseEntity.badRequest().body("Invalid" +
+                            " OTP");
+                }
+            } else {
+
+                if (customerService.isPasswordValid().equals(otpOrPassword)) {
+
+                    return ResponseEntity.ok("Login successful");
+                } else {
+                    return ResponseEntity.badRequest().body("Invalid password");
+                }
+            }
+        } else {
+            return ResponseEntity.badRequest().body("Mobile number not found");
+        }
+    }
+
+    private ResponseEntity<String> loginWithUsername(String username, String otpOrPassword, HttpSession session) {
+        Customer customer = customerService.readCustomerByUsername(username);
+
+        if (customer != null) {
+                if (otpOrPassword != null && otpOrPassword.length() == 6) {
+
+                    if (customer.getOtp().equals(otpOrPassword)) {
+
+                        return ResponseEntity.ok("Login successful");
+                    } else {
+
+                        return ResponseEntity.badRequest().body("Invalid OTP");
+                    }
+                } else {
+
+                    if (customer.getPassword().equals(otpOrPassword)) {
+
+                        return ResponseEntity.ok("Login successful");
+                    } else {
+
+                        return ResponseEntity.badRequest().body("Invalid password");
+                    }
+                }
+
+        } else {
+            return ResponseEntity.badRequest().body("Username not found");
+        }
+    }*/
 
 }
