@@ -1,0 +1,8 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/v1__add_columns_to_bcl_product_table.sql
+  - include:
+      file: db/changelog/v1__add_constraint_to_bcl_product_table.sql
+  - include:
+      file: db/changelog/v1__add_constraint2_to_bcl_product_table.sql
+      

@@ -49,7 +49,6 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
                 logger.error("Error retrieving category as There is no category in DB");
                 throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.categoryNotFound");
             }else{
-                logger.info("TILL HERE");
                 CategoriesWrapper wrapper = (CategoriesWrapper)this.context.getBean(CategoriesWrapper.class.getName());
                 wrapper.wrapDetails(categories, request);
 
