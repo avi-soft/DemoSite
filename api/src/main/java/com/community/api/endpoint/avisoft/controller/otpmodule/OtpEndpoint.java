@@ -1,8 +1,7 @@
-package com.community.api.endpoint.avisoft.otpmodule;
+package com.community.api.endpoint.avisoft.controller.otpmodule;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.TwilioService;
-import com.twilio.rest.chat.v1.service.User;
-import org.broadleafcommerce.profile.core.domain.Customer;
+import org.apache.commons.math3.stat.descriptive.summary.Product;
 import org.broadleafcommerce.profile.web.core.service.login.LoginService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -11,9 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
 import java.io.UnsupportedEncodingException;
+import java.util.UUID;
 import java.util.regex.Pattern;
-
-import static org.apache.commons.lang.StringUtils.isNumeric;
 
 @RestController
 @RequestMapping("/phone")
@@ -24,16 +22,12 @@ public class OtpEndpoint {
 
     public static final String COUNTRY_CODE = "+91";
 
-
-
     private final TwilioService twilioService;
 
-    public OtpEndpoint(TwilioService twilioService) {
+    public OtpEndpoint( TwilioService twilioService) {
+
         this.twilioService = twilioService;
     }
-
-    @Resource(name="blLoginService")
-    protected LoginService loginService;
 
     @GetMapping("/send-otp")
     public ResponseEntity<String> sendtOtp(@RequestParam("mobileNumber") String mobileNumber, @RequestParam(value = "countryCode", required = false) String countryCode,
@@ -46,7 +40,7 @@ public class OtpEndpoint {
             countryCode = COUNTRY_CODE;
         }
 
-       return   twilioService.sendOTPFunction(mobileNumber,countryCode,session);
+       return twilioService.sendOTPFunction(mobileNumber,countryCode,session);
 
     }
 
@@ -68,24 +62,17 @@ public class OtpEndpoint {
         if (otpEntered.equals(expectedOtp)) {
             session.removeAttribute("expectedOtp");
 //            session.removeAttribute("mobileNumber");
+            
+            String sessionId = generateSessionId();
+            session.setAttribute("sessionId", sessionId);
             return ResponseEntity.ok("OTP verified successfully");
         } else {
             return ResponseEntity.badRequest().body("Invalid OTP");
         }
     }
 
-    @GetMapping("/catcherror")
-    public ResponseEntity<String> catcherror() {
-        try {
-            int x = 5 / 0;
-        } catch (Exception e) {
 
-            String errorMessage = exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMessage);
-
-        }
-        return ResponseEntity.ok("Success");
-
+    private String generateSessionId() {
+        return UUID.randomUUID().toString();
     }
-
 }
