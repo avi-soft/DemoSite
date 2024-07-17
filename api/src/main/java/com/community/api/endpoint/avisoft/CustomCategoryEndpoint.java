@@ -5,7 +5,7 @@ import com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException;
 import com.broadleafcommerce.rest.api.wrapper.CategoriesWrapper;
 import com.broadleafcommerce.rest.api.wrapper.CategoryAttributeWrapper;
 import com.broadleafcommerce.rest.api.wrapper.CategoryWrapper;
-import com.community.api.services.ExceptionHandlingService;
+import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.broadleafcommerce.core.catalog.domain.Category;
 import org.broadleafcommerce.core.catalog.domain.CategoryAttribute;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
@@ -28,7 +28,7 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
     private static final Logger logger = LoggerFactory.getLogger(CustomCategoryEndpoint.class);
 
     @Autowired
-    protected ExceptionHandlingService exceptionHandlingService;
+    private ExceptionHandlingImplement exceptionHandling;
 
     @Resource(name = "blCatalogService")
     protected CatalogService catalogService;
@@ -55,7 +55,7 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
             }
         } catch (Exception e) {
             logger.error("Error retrieving category");
-            exceptionHandlingService.handleException(e);
+            exceptionHandling.handleException(e);
 //           throw BroadleafWebServicesException.build(404).addMessage("error occurred in findAllCategory method of CustomCategoryEndpoint" + e.getMessage());
         }
 
@@ -87,7 +87,7 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
 
         } catch (Exception e) {
             logger.error("Error retrieving category");
-            exceptionHandlingService.handleException(e);
+            exceptionHandling.handleException(e);
 //            throw BroadleafWebServicesException.build(404).addMessage("error occurred in getCategoryById method of CustomCategoryEndpoint" + e.getMessage());
         }
         return new CategoryWrapper();
@@ -117,7 +117,7 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
 
         } catch (Exception e) {
             logger.error("Error retrieving subCategory");
-            exceptionHandlingService.handleException(e);
+            exceptionHandling.handleException(e);
 //            throw BroadleafWebServicesException.build(404).addMessage("error occurred in getSubCategories method of CustomCategoryEndpoint" + e.getMessage());
         }
         return new CategoriesWrapper();
@@ -146,7 +146,7 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
 
         }catch (Exception e) {
             logger.error("Error adding category");
-            exceptionHandlingService.handleException(e);
+            exceptionHandling.handleException(e);
 //            throw BroadleafWebServicesException.build(404).addMessage("error occurred in addCategory() method of CustomCategoryEndpoint" + e);
         }
         return new CategoryWrapper();
@@ -173,7 +173,7 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
             }
         } catch (Exception e) {
             logger.error("Error removing category");
-            exceptionHandlingService.handleException(e);
+            exceptionHandling.handleException(e);
 //            throw BroadleafWebServicesException.build(404).addMessage("error occurred in removeCategory() method of CustomCategoryEndpoint" + e);
         }
         return new CategoryWrapper();
@@ -199,7 +199,7 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
             }
         } catch (Exception e) {
             logger.error("Error updating category");
-            exceptionHandlingService.handleException(e);
+            exceptionHandling.handleException(e);
 //            throw BroadleafWebServicesException.build(404).addMessage("error occurred in updatingCategory() method of CustomCategoryEndpoint" + e);
         }
         return new CategoryWrapper();
@@ -234,7 +234,7 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
             }
         }catch (Exception e) {
             logger.error("Error fetching attributes of a category");
-            exceptionHandlingService.handleException(e);
+            exceptionHandling.handleException(e);
 //            throw BroadleafWebServicesException.build(404).addMessage("error occurred in getCategoryAttributes() method of CustomCategoryEndpoint" + e);
         }
         return new ArrayList<CategoryAttributeWrapper>();
