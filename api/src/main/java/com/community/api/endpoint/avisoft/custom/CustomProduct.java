@@ -19,40 +19,6 @@ public class CustomProduct extends ProductImpl {
         this.go_live_date = go_live_date;
     }*/
 
-    @Override
-    public String toString() {
-        return "CustomProduct{" +
-                "created_date=" + created_date +
-                ", expiration_date=" + expiration_date +
-                ", go_live_date=" + go_live_date +
-                ", id=" + id +
-                ", url='" + url + '\'' +
-                ", overrideGeneratedUrl=" + overrideGeneratedUrl +
-                ", urlKey='" + urlKey + '\'' +
-                ", displayTemplate='" + displayTemplate + '\'' +
-                ", model='" + model + '\'' +
-                ", manufacturer='" + manufacturer + '\'' +
-                ", isFeaturedProduct=" + isFeaturedProduct +
-                ", defaultSku=" + defaultSku +
-                ", canSellWithoutOptions=" + canSellWithoutOptions +
-                ", metaTitle='" + metaTitle + '\'' +
-                ", metaDescription='" + metaDescription + '\'' +
-                ", canonicalUrl='" + canonicalUrl + '\'' +
-                ", skus=" + skus +
-                ", promoMessage='" + promoMessage + '\'' +
-                ", crossSaleProducts=" + crossSaleProducts +
-                ", upSaleProducts=" + upSaleProducts +
-                ", additionalSkus=" + additionalSkus +
-                ", defaultCategory=" + defaultCategory +
-                ", allParentCategoryXrefs=" + allParentCategoryXrefs +
-                ", productAttributes=" + productAttributes +
-                ", productOptions=" + productOptions +
-                ", productOptionMap=" + productOptionMap +
-                ", allParentCategoryIds=" + allParentCategoryIds +
-                ", archiveStatus=" + archiveStatus +
-                '}';
-    }
-
     public CustomProduct(Product original, Date created_date, Date expiration_date, Date go_live_date) {
         this.id = original.getId();
         this.manufacturer = original.getManufacturer();
