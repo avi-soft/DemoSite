@@ -24,8 +24,10 @@
 
     <persistence-unit name="blPU" transaction-type="RESOURCE_LOCAL">
         <non-jta-data-source>jdbc/web</non-jta-data-source>
+
         <!-- Added this line -->
         <class>com.community.api.endpoint.avisoft.custom.CustomProduct</class>
+
         <exclude-unlisted-classes/>
     </persistence-unit>
     

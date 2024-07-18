@@ -7,10 +7,10 @@ import javax.persistence.Table;
 import java.util.Date;
 
 @Entity
-@Table(name = "EXT_PRODUCT")
+@Table(name = "ext_product")
 public class CustomProduct extends ProductImpl {
 
-    protected Date created_date;
+    private Date created_date;
     protected Date expiration_date;
     protected Date go_live_date;
 
@@ -18,8 +18,6 @@ public class CustomProduct extends ProductImpl {
     }
 
     public CustomProduct(Product original, Date created_date, Date expiration_date, Date go_live_date) {
-        this.id = original.getId();
-        this.manufacturer = original.getManufacturer();
         this.created_date = created_date;
         this.expiration_date = expiration_date;
         this.go_live_date = go_live_date;
