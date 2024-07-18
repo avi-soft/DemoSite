@@ -63,7 +63,6 @@
             <groupId>com.broadleafcommerce</groupId>
             <artifactId>broadleaf-boot-starter-solr</artifactId>
         </dependency>
-
         <dependency>
             <groupId>com.broadleafcommerce</groupId>
             <artifactId>broadleaf-rest-api</artifactId>
