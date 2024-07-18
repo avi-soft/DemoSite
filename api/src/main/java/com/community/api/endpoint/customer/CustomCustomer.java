@@ -16,10 +16,10 @@ import javax.persistence.*;
 @Setter
 public class CustomCustomer extends CustomerImpl
 {
-    @Column(name = "mobile_number", unique = true, nullable = false)
-    private Long mobileNumber;
-    @Column(name = "username", unique = true, nullable = false)
+    @Column(name = "country_code", unique = false)
+    private String countryCode;
+    @Column(name = "mobile_number", unique = true)
+    private String mobileNumber;
     private String username;
-    @Column(name = "password", nullable = false)
-    private String customerPassword;
+    private String password;
 }

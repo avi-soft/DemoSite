@@ -1,5 +1,6 @@
 package com.community.api.endpoint.customer;
 import com.community.api.services.ExceptionHandlingImplement;
+import com.community.api.services.TwilioService;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.slf4j.Logger;
@@ -10,13 +11,18 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import javax.persistence.EntityManager;
+import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
+import java.io.UnsupportedEncodingException;
+import java.util.regex.Pattern;
 
 @RestController
 @RequestMapping(value = "/customer-custom",
         produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }
 )
+
 public class CustomerEndpoint {
+    String phoneQuery = "SELECT c FROM CustomCustomer c WHERE c.mobileNumber = :mobileNumber";
     private static final Logger logger = LoggerFactory.getLogger(CustomerEndpoint.class);
     @Autowired
     private CustomerService customerService;
@@ -24,6 +30,9 @@ public class CustomerEndpoint {
     private ExceptionHandlingImplement exceptionHandling;
     @Autowired
     private EntityManager em;
+    @Autowired
+    private TwilioService twilioService;
+
     @RequestMapping(value = "getCustomer/{customerId}", method = RequestMethod.GET)
     public ResponseEntity<Object> retrieveCustomerById(@PathVariable Long customerId) {
         logger.debug("Retrieving customer by ID: {}", customerId);
@@ -46,41 +55,6 @@ public class CustomerEndpoint {
 
     }
     @Transactional
-    @RequestMapping(value = "login", method = RequestMethod.POST)
-    public ResponseEntity<Object> LoginForCustomer(@RequestBody CustomCustomer customerDetails) {
-        try {
-            if (customerService == null) {
-                logger.error("Customer service is not initialized.");
-                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
-            if (customerDetails.getMobileNumber() == null || customerDetails.getCustomerPassword() == null) {
-                return new ResponseEntity<>("Invalid mobile number or password", HttpStatus.BAD_REQUEST);
-            }
-
-            logger.debug("Mobile Number Provided: " + customerDetails.getMobileNumber());
-
-            CustomCustomer existingCustomer = em.createQuery("SELECT c FROM CustomCustomer c WHERE c.mobileNumber = :mobileNumber", CustomCustomer.class)
-                    .setParameter("mobileNumber", customerDetails.getMobileNumber())
-                    .getResultStream()
-                    .findFirst()
-                    .orElse(null);
-            if (existingCustomer != null) {
-                if (existingCustomer.getCustomerPassword().equals(customerDetails.getCustomerPassword())) {
-                    return new ResponseEntity<>("Log in Successfull",HttpStatus.OK);
-                } else {
-                    return new ResponseEntity<>("Incorrect Password", HttpStatus.UNAUTHORIZED);
-                }
-            } else {
-                return new ResponseEntity<>("Customer does not exist", HttpStatus.NOT_FOUND);
-            }
-        } catch (Exception e) {
-            logger.error("Error logging in", e);
-            exceptionHandling.handleException(e);
-            return new ResponseEntity<>("Error retrieving Customer", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-    @Transactional
     @RequestMapping(value = "register", method = RequestMethod.POST)
     public ResponseEntity<String> addCustomer(@RequestBody CustomCustomer customerDetails) {
         logger.debug("Adding Customer");
@@ -89,11 +63,14 @@ public class CustomerEndpoint {
                 logger.error("Customer service is not initialized.");
                 return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
+            if(!validateInput(customerDetails))
+                return new ResponseEntity<>("One or more inputs invalid", HttpStatus.UNPROCESSABLE_ENTITY);
+
             Customer customer = customerService.createCustomer();
-            long id = System.currentTimeMillis();
             customerDetails.setId(customerService.findNextCustomerId());
-            customerService.saveCustomer(customer);
-            em.merge(customerDetails);
+            /*customer.setUsername(customerDetails.getUsername());
+            customer.setPassword(customerDetails.getPassword());*/
+            em.persist(customerDetails);
             return new ResponseEntity<>("Customer Saved", HttpStatus.OK);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
@@ -101,5 +78,16 @@ public class CustomerEndpoint {
         }
     }
 
+    public Boolean validateInput(CustomCustomer customer) {
+        if (customer.getUsername().isEmpty() || customer.getUsername() == null || customer.getMobileNumber().isEmpty() || customer.getMobileNumber() == null || customer.getPassword() == null || customer.getPassword().isEmpty())
+            return false;
+        if(!isValidMobileNumber(customer.getMobileNumber()))
+            return false;
+        return true;
+    }
+    private boolean isValidMobileNumber(String mobileNumber) {
+        String mobileNumberPattern = "^\\+?\\d{10,13}$";
+        return Pattern.compile(mobileNumberPattern).matcher(mobileNumber).matches();
+    }
 
 }
