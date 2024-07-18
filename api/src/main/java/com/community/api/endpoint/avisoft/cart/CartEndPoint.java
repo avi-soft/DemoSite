@@ -1,4 +1,4 @@
-package com.community.api.endpoint.avisoft;
+package com.community.api.endpoint.avisoft.cart;
 import com.broadleafcommerce.rest.api.endpoint.BaseEndpoint;
 import com.broadleafcommerce.rest.api.endpoint.order.CartEndpoint;
 import org.broadleafcommerce.core.order.domain.Order;
