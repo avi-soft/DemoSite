@@ -1,4 +1,5 @@
 package com.community.api.endpoint.customer;
+import com.community.api.services.CustomCustomerService;
 import com.community.api.services.TwilioService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.broadleafcommerce.profile.core.domain.Customer;
@@ -11,18 +12,13 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import javax.persistence.EntityManager;
-import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
-import java.io.UnsupportedEncodingException;
-import java.util.regex.Pattern;
-
 @RestController
 @RequestMapping(value = "/customer-custom",
         produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }
 )
 
 public class CustomerEndpoint {
-    String phoneQuery = "SELECT c FROM CustomCustomer c WHERE c.mobileNumber = :mobileNumber";
     private static final Logger logger = LoggerFactory.getLogger(CustomerEndpoint.class);
     @Autowired
     private CustomerService customerService;
@@ -32,6 +28,8 @@ public class CustomerEndpoint {
     private EntityManager em;
     @Autowired
     private TwilioService twilioService;
+    @Autowired
+    private CustomCustomerService customCustomerService;
 
     @RequestMapping(value = "getCustomer/{customerId}", method = RequestMethod.GET)
     public ResponseEntity<Object> retrieveCustomerById(@PathVariable Long customerId) {
@@ -54,6 +52,7 @@ public class CustomerEndpoint {
         }
 
     }
+
     @Transactional
     @RequestMapping(value = "register", method = RequestMethod.POST)
     public ResponseEntity<String> addCustomer(@RequestBody CustomCustomer customerDetails) {
@@ -63,13 +62,11 @@ public class CustomerEndpoint {
                 logger.error("Customer service is not initialized.");
                 return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
-            if(!validateInput(customerDetails))
+            if (!customCustomerService.validateInput(customerDetails))
                 return new ResponseEntity<>("One or more inputs invalid", HttpStatus.UNPROCESSABLE_ENTITY);
 
             Customer customer = customerService.createCustomer();
             customerDetails.setId(customerService.findNextCustomerId());
-            /*customer.setUsername(customerDetails.getUsername());
-            customer.setPassword(customerDetails.getPassword());*/
             em.persist(customerDetails);
             return new ResponseEntity<>("Customer Saved", HttpStatus.OK);
         } catch (Exception e) {
@@ -77,17 +74,49 @@ public class CustomerEndpoint {
             return new ResponseEntity<>("Error saving", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-    public Boolean validateInput(CustomCustomer customer) {
-        if (customer.getUsername().isEmpty() || customer.getUsername() == null || customer.getMobileNumber().isEmpty() || customer.getMobileNumber() == null || customer.getPassword() == null || customer.getPassword().isEmpty())
-            return false;
-        if(!isValidMobileNumber(customer.getMobileNumber()))
-            return false;
-        return true;
+    @Transactional
+    @RequestMapping(value = "update/{customerId}", method = RequestMethod.PUT)
+     public ResponseEntity<String> updateCustomer(@RequestBody CustomCustomer customerDetails,@PathVariable Long customerId) {
+         try {
+             if (customerService == null) {
+                 return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
+             }
+             /*if(!customCustomerService.validateInput(customerDetails))
+                return new ResponseEntity<>("One or more inputs invalid", HttpStatus.UNPROCESSABLE_ENTITY);*/
+             CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
+             if (customerDetails.getMobileNumber() != null)
+             {
+                 if(customCustomerService.isValidMobileNumber(customerDetails.getMobileNumber())==false)
+                     return new ResponseEntity<>("Error updating ,mobile number invalid", HttpStatus.INTERNAL_SERVER_ERROR);
+             }
+            customerDetails.setId(customerId);
+            em.merge(customerDetails);
+            return new ResponseEntity<>("Customer Updated", HttpStatus.OK);
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return new ResponseEntity<>("Error updating", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
-    private boolean isValidMobileNumber(String mobileNumber) {
-        String mobileNumberPattern = "^\\+?\\d{10,13}$";
-        return Pattern.compile(mobileNumberPattern).matcher(mobileNumber).matches();
+    @Transactional
+    @RequestMapping(value = "delete/{customerId}", method = RequestMethod.DELETE)
+    public ResponseEntity<String> updateCustomer(@PathVariable Long customerId) {
+        try {
+            if (customerService == null) {
+                return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            Customer customer=customerService.readCustomerById(customerId);
+            if(customer!=null)
+            {
+                customerService.deleteCustomer(customerService.readCustomerById(customerId));
+                return new ResponseEntity<>("Record Deleted Successfully", HttpStatus.OK);
+            }
+            else
+            {
+                return new ResponseEntity<>("No Records found for this ID", HttpStatus.NO_CONTENT);
+            }
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return new ResponseEntity<>("Error deleting", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
-
 }
