@@ -1,4 +1,4 @@
-package com.community.api.services;
+package com.community.api.services.exception;
 
 import com.twilio.exception.ApiException;
 import org.springframework.http.ResponseEntity;
@@ -7,7 +7,7 @@ import org.springframework.web.client.HttpClientErrorException;
 
 public interface ExceptionHandlingImplement {
     void handleHttpError(ResponseEntity<String> response);
-     String handleHttpClientErrorException(HttpClientErrorException e);
+    String handleHttpClientErrorException(HttpClientErrorException e);
 
     String handleApiException(ApiException e);
 

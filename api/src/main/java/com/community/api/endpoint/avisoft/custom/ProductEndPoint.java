@@ -2,7 +2,7 @@ package com.community.api.endpoint.avisoft.custom;
 import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
 import com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException;
 import com.community.api.endpoint.avisoft.CustomCategoryEndpoint;
-import com.community.api.services.ExceptionHandlingService;
+import com.community.api.services.exception.ExceptionHandlingService;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

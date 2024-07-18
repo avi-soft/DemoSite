@@ -5,7 +5,7 @@ import com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException;
 import com.broadleafcommerce.rest.api.wrapper.CategoriesWrapper;
 import com.broadleafcommerce.rest.api.wrapper.CategoryAttributeWrapper;
 import com.broadleafcommerce.rest.api.wrapper.CategoryWrapper;
-import com.community.api.services.ExceptionHandlingService;
+import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.broadleafcommerce.core.catalog.domain.Category;
 import org.broadleafcommerce.core.catalog.domain.CategoryAttribute;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
@@ -30,7 +30,7 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
     private static final Logger logger = LoggerFactory.getLogger(CustomCategoryEndpoint.class);
 
     @Autowired
-    protected ExceptionHandlingService exceptionHandlingService;
+    private ExceptionHandlingImplement exceptionHandling;
 
     @Resource(name = "blCatalogService")
     protected CatalogService catalogService;
@@ -55,7 +55,13 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
                 return ResponseEntity.ok(wrapper);
             }
         } catch (Exception e) {
+<<<<<<< HEAD
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
+=======
+            logger.error("Error retrieving category");
+            exceptionHandling.handleException(e);
+//           throw BroadleafWebServicesException.build(404).addMessage("error occurred in findAllCategory method of CustomCategoryEndpoint" + e.getMessage());
+>>>>>>> 3cf0b3c0a7a8359f5c07928cfd10719daaa3045e
         }
     }
 
@@ -83,7 +89,13 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
             }
 
         } catch (Exception e) {
+<<<<<<< HEAD
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
+=======
+            logger.error("Error retrieving category");
+            exceptionHandling.handleException(e);
+//            throw BroadleafWebServicesException.build(404).addMessage("error occurred in getCategoryById method of CustomCategoryEndpoint" + e.getMessage());
+>>>>>>> 3cf0b3c0a7a8359f5c07928cfd10719daaa3045e
         }
     }
 
@@ -110,7 +122,13 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
             }
 
         } catch (Exception e) {
+<<<<<<< HEAD
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
+=======
+            logger.error("Error retrieving subCategory");
+            exceptionHandling.handleException(e);
+//            throw BroadleafWebServicesException.build(404).addMessage("error occurred in getSubCategories method of CustomCategoryEndpoint" + e.getMessage());
+>>>>>>> 3cf0b3c0a7a8359f5c07928cfd10719daaa3045e
         }
     }
 
@@ -136,7 +154,13 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
             return ResponseEntity.ok(wrapper);
 
         }catch (Exception e) {
+<<<<<<< HEAD
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
+=======
+            logger.error("Error adding category");
+            exceptionHandling.handleException(e);
+//            throw BroadleafWebServicesException.build(404).addMessage("error occurred in addCategory() method of CustomCategoryEndpoint" + e);
+>>>>>>> 3cf0b3c0a7a8359f5c07928cfd10719daaa3045e
         }
     }
 
@@ -159,7 +183,13 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
                 throw BroadleafWebServicesException.build(404).addMessage("Product not available", id);
             }
         } catch (Exception e) {
+<<<<<<< HEAD
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
+=======
+            logger.error("Error removing category");
+            exceptionHandling.handleException(e);
+//            throw BroadleafWebServicesException.build(404).addMessage("error occurred in removeCategory() method of CustomCategoryEndpoint" + e);
+>>>>>>> 3cf0b3c0a7a8359f5c07928cfd10719daaa3045e
         }
     }
 
@@ -182,7 +212,13 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
                 throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.categoryNotFound", id);
             }
         } catch (Exception e) {
+<<<<<<< HEAD
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
+=======
+            logger.error("Error updating category");
+            exceptionHandling.handleException(e);
+//            throw BroadleafWebServicesException.build(404).addMessage("error occurred in updatingCategory() method of CustomCategoryEndpoint" + e);
+>>>>>>> 3cf0b3c0a7a8359f5c07928cfd10719daaa3045e
         }
     }
 
@@ -213,7 +249,13 @@ public class CustomCategoryEndpoint extends CatalogEndpoint{
                 return ResponseEntity.ok(categoryAttributeWrapperList);
             }
         }catch (Exception e) {
+<<<<<<< HEAD
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
+=======
+            logger.error("Error fetching attributes of a category");
+            exceptionHandling.handleException(e);
+//            throw BroadleafWebServicesException.build(404).addMessage("error occurred in getCategoryAttributes() method of CustomCategoryEndpoint" + e);
+>>>>>>> 3cf0b3c0a7a8359f5c07928cfd10719daaa3045e
         }
     }
 }
