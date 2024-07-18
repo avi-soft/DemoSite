@@ -1,7 +1,7 @@
 package com.community.api.endpoint.avisoft.custom;
 import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
 import com.community.api.endpoint.avisoft.CustomCategoryEndpoint;
-import com.community.api.services.exception.ExceptionHandlingService;
+import com.community.api.services.ExceptionHandlingService;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.broadleafcommerce.core.catalog.service.type.ProductType;
@@ -47,7 +47,7 @@ public class ProductEndPoint extends CatalogEndpoint {
 
     @Transactional
     @RequestMapping(value = "/add/{categoryName}", method = RequestMethod.POST)
-    public ResponseEntity<String> addProduct(@RequestBody CustomProduct customProduct, @PathVariable("categoryName") String categoryName) throws ParseException {
+    public ResponseEntity<String> addProduct(@RequestBody CustomProduct customProduct, @RequestParam("categoryId") Long categoryId,@PathVariable("categoryName") String categoryName) throws ParseException {
 
         Product product = null;
         Category category = null;
