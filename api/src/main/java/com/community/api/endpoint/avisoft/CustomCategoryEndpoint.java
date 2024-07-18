@@ -23,14 +23,14 @@ import java.util.Iterator;
 import java.util.List;
 
 //, produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }
+
 @RestController
 @RequestMapping(value = "/category")
 public class CustomCategoryEndpoint extends CatalogEndpoint{
 
     private static final Logger logger = LoggerFactory.getLogger(CustomCategoryEndpoint.class);
 
-    @Autowired
-    protected ExceptionHandlingService exceptionHandlingService;
+    private ExceptionHandlingService exceptionHandlingService;
 
     @Resource(name = "blCatalogService")
     protected CatalogService catalogService;

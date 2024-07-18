@@ -1,22 +1,23 @@
 package com.community.api.endpoint.avisoft.custom;
 import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
 import com.community.api.endpoint.avisoft.CustomCategoryEndpoint;
-import com.community.api.services.ExceptionHandlingService;
-import org.broadleafcommerce.core.catalog.domain.Category;
+import com.community.api.services.exception.ExceptionHandlingService;
 import org.broadleafcommerce.core.catalog.domain.Product;
-import org.broadleafcommerce.core.catalog.domain.Sku;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.broadleafcommerce.core.catalog.service.type.ProductType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.Resource;
+import org.broadleafcommerce.core.catalog.domain.Category;
+import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
+import javax.transaction.Transactional;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.util.Date;
 
 @RestController
 @RequestMapping(value = "/productcustom",
@@ -29,100 +30,100 @@ public class ProductEndPoint extends CatalogEndpoint {
     @Autowired
     protected ExceptionHandlingService exceptionHandlingService;
 
-    @Resource(name = "blCatalogService")
-    protected CatalogService catalogService;
+    @Autowired
+    protected EntityManager entityManager;
 
     @Autowired
-    CustomProductService customProductService;
+    protected ExtProductService extProductService;
 
-    @RequestMapping(value = "/add/{categoryId}", method = RequestMethod.POST)
-    public String addProduct(HttpServletRequest request, @PathVariable("categoryId") Long id) throws ParseException {
+    @Autowired
+    protected CatalogService catalogService;
 
-        logger.info("TILL HERE1");
-        Category category = catalogService.findCategoryById(id);
-        if(category == null){
-            category =  catalogService.createCategory();
-//                Long categoryId = new Long(453510);
-            category.setId(id);
-            category.setName("test category4");
-            category.setUrl("/test-category4");
+    /*
 
-            catalogService.saveCategory(category);
+
+
+     */
+
+    @Transactional
+    @RequestMapping(value = "/add/{categoryName}", method = RequestMethod.POST)
+    public ResponseEntity<String> addProduct(@RequestBody CustomProduct customProduct, @PathVariable("categoryName") String categoryName) throws ParseException {
+
+        Product product = null;
+        Category category = null;
+
+        category = this.catalogService.createCategory();
+//        category.setName("CategoryName"); // REQUIRED FOR CATEGORY TO BE CREATED
+        category.setName(categoryName); // REQUIRED FOR CATEGORY TO BE CREATED
+        category = catalogService.saveCategory(category);
+
+        product = this.catalogService.createProduct(ProductType.PRODUCT);
+        product.setDefaultCategory(category);
+
+        product = catalogService.saveProduct(product);
+        Date created = customProduct.getCreated_date();
+
+        if (customProduct.getCreated_date() == null) {
+            customProduct.setCreated_date(new Date());
         }
+        extProductService.saveExtProduct(created, customProduct.getExpiration_date(), customProduct.getGo_live_date(), product.getId());
 
-        Product product =  catalogService.createProduct(ProductType.PRODUCT);
-
-//        Sku newSku = catalogService.createSku();
-//        Long skuId = new Long(695);
-//        newSku.setId(skuId);
-
-        Sku sku = catalogService.findSkuById(633L);
-        product.setDefaultSku(sku);
-        product.getDefaultSku().setDefaultProduct(product);
-
-        logger.info("TILL HERE2");
-        product.setName("test product5");
-        product.setUrl("/test-product5");
-        product.setCategory(category);
-
-        String createdDate = "2024-07-14";
-        String expirationDate = "2024-07-21";
-        String goLiveDate = "2024-07-18";
-
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-
-        logger.info("TILL HERE3");
-        CustomProduct customProduct = new CustomProduct( product, sdf.parse(createdDate),sdf.parse(expirationDate),sdf.parse(goLiveDate));
-        customProductService.save(customProduct);
-        return "added";
-//        try {
-//
-//            if (catalogService == null) {
-//                logger.error("Catalog service is not initialized.");
-//                throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
-//            }
-//
-//            if(id == null){
-//                logger.error("No Id is given in the Path");
-//                throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.productNotFound");
-//            }
-//
-//            Category category = catalogService.findCategoryById(id);
-//            if(category == null){
-//                category =  catalogService.createCategory();
-////                Long categoryId = new Long(453510);
-//                category.setId(id);
-//                category.setName("test category4");
-//                category.setUrl("/test-category4");
-//
-//                catalogService.saveCategory(category);
-//            }
-//
-//            Product product =  catalogService.createProduct(ProductType.PRODUCT);
-//
-//            //Sku newSku = catalogService.createSku();
-////        Long skuId = new Long(695);
-////        newSku.setId(skuId);*//*
-//
-//            Sku sku = catalogService.findSkuById(695L);
-//            product.setDefaultSku(sku);
-//            product.getDefaultSku().setDefaultProduct(product);
-//
-//            product.setName("test product5");
-//            product.setUrl("/test-product5");
-//            product.setCategory(category);
-//            catalogService.saveProduct(product);
-//
-//            ProductWrapper wrapper = (ProductWrapper) this.context.getBean(ProductWrapper.class.getName());
-//            wrapper.wrapDetails(product, request);
-//            return ResponseEntity.ok(wrapper);
-//
-//        } catch (Exception e) {
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
+//        else{
+//            product = catalogService.findProductById(customProduct.getId());
+//            extProductService.saveExtProduct(customProduct.getCreated_date(), customProduct.getExpiration_date(), customProduct.getGo_live_date(), product.getId());
 //        }
+
+//        Category category = null;
+//        if(customProduct.getDefaultCategory() == null){
+//            category =  this.catalogService.findCategoryById(customProduct.getDefaultCategory().getId());
+//            category.setName("New Grocery");
+//            category = catalogService.saveCategory(category);
+//        }else{
+//            category = customProduct.getDefaultCategory();
+//        }
+//
+//        Product product;
+//        if(customProduct.getId() == null){
+//            product = this.catalogService.createProduct(ProductType.PRODUCT);
+//            product.setName("NewProduct");
+//
+//        }else{
+//            product = catalogService.findProductById(customProduct.getId());
+//
+//        }
+//        product.setDefaultCategory(category);
+//        product = catalogService.saveProduct(product);
+//
+//        extProductService.saveExtProduct(customProduct.getCreated_date(), customProduct.getExpiration_date(), customProduct.getGo_live_date(), product.getId());
+
+        return ResponseEntity.ok("Data Successfully Added");
     }
 
-    /*@RequestMapping(value = "getProducts/{productId}", method = RequestMethod.GET)
+    @RequestMapping(value = "getProducts/{productId}", method = RequestMethod.GET)
+    public ResponseEntity<?> retrieveProductById(HttpServletRequest request, @PathVariable("productId") Long productId) {
+        CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
+        return ResponseEntity.ok(customProduct.getGo_live_date());
+    }
+
+
+
+    /*@Transactional
+    @RequestMapping(value = "/add", method = RequestMethod.POST)
+    public String addProduct(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime createdDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime expirationDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime goLiveDate,
+            @RequestParam Long productId
+    ){
+
+//        entityManager.merge(customProduct);
+
+        extProductService.saveExtProduct(createdDate, expirationDate, goLiveDate, productId);
+
+        return "added";
+    }
+
+    @RequestMapping(value = "getProducts/{productId}", method = RequestMethod.GET)
     public ResponseEntity<?> retrieveProductById(HttpServletRequest request, @PathVariable("productId") Long productId) {
 
         if (productId == null) {
@@ -135,148 +136,13 @@ public class ProductEndPoint extends CatalogEndpoint {
                 return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            final Product product = catalogService.findProductById(productId);
-
-            if (product != null) {
-                ProductWrapper wrapper = (ProductWrapper)this.context.getBean(ProductWrapper.class.getName());
-                wrapper.wrapDetails(product, request);
-                return ResponseEntity.ok(wrapper);
-            } else {
+            final CustomProduct customProduct = entityManager.find(CustomProduct.class,productId);
+            System.out.println(customProduct.getExpiration_date());
+            if (customProduct == null) {
                 logger.error("Error retrieving product as There is no product in DB with this Id");
                 throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.categoryNotFound");
             }
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
-        }
-    }
-
-    @RequestMapping(value = "/products", method = RequestMethod.GET)
-    public ResponseEntity<?> getAllProducts(HttpServletRequest request){
-
-        try {
-
-            if (catalogService == null) {
-                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
-            }
-
-            final List<Product> products = catalogService.findAllProducts();
-            final List<ProductWrapper> wrappers = new ArrayList<>();
-
-            if (products.size() == 0) {
-                throw BroadleafWebServicesException.build(404).addMessage("Error retrieving products as There is no product in DB");
-            }
-
-            for(Product pr: products){
-                ProductWrapper wrapper = (ProductWrapper) this.context.getBean(ProductWrapper.class.getName());
-                wrapper.wrapDetails(pr, request);
-                wrappers.add(wrapper);
-            }
-
-            return ResponseEntity.ok(wrappers);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
-        }
-    }
-
-    @RequestMapping(value = "/add/{categoryId}", method = RequestMethod.POST)
-    public ResponseEntity<?> addProduct(HttpServletRequest request, @PathVariable("categoryId") Long id) {
-
-        try {
-
-            if (catalogService == null) {
-                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
-            }
-
-            if(id == null){
-                throw BroadleafWebServicesException.build(404).addMessage("No Id is given in the Path");
-            }
-
-            Category category = catalogService.findCategoryById(id);
-            if(category == null){
-                category =  catalogService.createCategory();
-//                Long categoryId = new Long(453510);
-                category.setId(id);
-                category.setName("test category4");
-                category.setUrl("/test-category4");
-
-                catalogService.saveCategory(category);
-            }
-
-            Product product =  catalogService.createProduct(ProductType.PRODUCT);
-
-            *//*Sku newSku = catalogService.createSku();
-//        Long skuId = new Long(695);
-//        newSku.setId(skuId);*//*
-
-            Sku sku = catalogService.findSkuById(695L);
-            product.setDefaultSku(sku);
-            product.getDefaultSku().setDefaultProduct(product);
-
-            product.setName("test product5");
-            product.setUrl("/test-product5");
-            product.setCategory(category);
-            catalogService.saveProduct(product);
-
-            ProductWrapper wrapper = (ProductWrapper) this.context.getBean(ProductWrapper.class.getName());
-            wrapper.wrapDetails(product, request);
-            return ResponseEntity.ok(wrapper);
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
-        }
-    }
-
-
-    @RequestMapping(value = "/remove/{productId}", method = RequestMethod.DELETE)
-    public ResponseEntity<?> removeProduct(HttpServletRequest request, @PathVariable("productId") Long productId){
-
-        Product product = null;
-        try {
-
-            if (catalogService == null) {
-                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
-            }
-
-            product = catalogService.findProductById(productId);
-            catalogService.removeProduct(product);
-
-            if (product == null) {
-                throw BroadleafWebServicesException.build(404).addMessage("Error deleting product as There is no product in DB with this Id");
-            }
-
-            ProductWrapper wrapper = (ProductWrapper) this.context.getBean(ProductWrapper.class.getName());
-            wrapper.wrapDetails(product,request);
-
-            return ResponseEntity.ok(wrapper);
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
-        }
-    }
-
-    @RequestMapping(value = "/update/{productId}", method = RequestMethod.PUT)
-    public ResponseEntity<?> updateProduct(HttpServletRequest request, @PathVariable("productId") Long productId){
-
-        Product product = null;
-        try {
-
-            if (catalogService == null) {
-                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
-            }
-
-            product = catalogService.findProductById(productId);
-            catalogService.saveProduct(product);
-            if (product == null) {
-                throw BroadleafWebServicesException.build(404).addMessage("Error updating products as There is no product in DB with this Id");
-            }
-
-            product.setName("Updated testProduct 5");
-
-            ProductWrapper wrapper = (ProductWrapper) this.context.getBean(ProductWrapper.class.getName());
-            wrapper.wrapDetails(product,request);
-
-            return ResponseEntity.ok(wrapper);
+            return ResponseEntity.ok(customProduct);
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
