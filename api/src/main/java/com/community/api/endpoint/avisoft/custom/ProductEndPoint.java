@@ -47,7 +47,7 @@ public class ProductEndPoint extends CatalogEndpoint {
 
     @Transactional
     @RequestMapping(value = "/add/{categoryName}", method = RequestMethod.POST)
-    public ResponseEntity<String> addProduct(@RequestBody CustomProduct customProduct, @RequestParam("categoryId") Long categoryId,@PathVariable("categoryName") String categoryName) throws ParseException {
+    public ResponseEntity<String> addProduct(@RequestBody CustomProduct customProduct, @RequestParam("categoryId") Long categoryId, @PathVariable("categoryName") String categoryName) throws ParseException {
 
         Product product = null;
         Category category = null;
