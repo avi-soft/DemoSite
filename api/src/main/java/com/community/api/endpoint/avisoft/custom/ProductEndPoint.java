@@ -1,5 +1,6 @@
 package com.community.api.endpoint.avisoft.custom;
 import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
+import com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException;
 import com.community.api.endpoint.avisoft.CustomCategoryEndpoint;
 import com.community.api.services.ExceptionHandlingService;
 import org.broadleafcommerce.core.catalog.domain.Product;
@@ -8,6 +9,7 @@ import org.broadleafcommerce.core.catalog.service.type.ProductType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -46,57 +48,46 @@ public class ProductEndPoint extends CatalogEndpoint {
      */
 
     @Transactional
-    @RequestMapping(value = "/add/{categoryName}", method = RequestMethod.POST)
+    @RequestMapping(value = "/add/{categoryName}", method = RequestMethod.POST, params = {"categoryId"})
     public ResponseEntity<String> addProduct(@RequestBody CustomProduct customProduct, @RequestParam("categoryId") Long categoryId, @PathVariable("categoryName") String categoryName) throws ParseException {
 
         Product product = null;
         Category category = null;
 
-        category = this.catalogService.createCategory();
-//        category.setName("CategoryName"); // REQUIRED FOR CATEGORY TO BE CREATED
-        category.setName(categoryName); // REQUIRED FOR CATEGORY TO BE CREATED
-        category = catalogService.saveCategory(category);
+        try {
+            if (catalogService == null) {
+                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
+            }
 
-        product = this.catalogService.createProduct(ProductType.PRODUCT);
-        product.setDefaultCategory(category);
+            if(categoryId != null){
+                category = this.catalogService.findCategoryById(categoryId);
 
-        product = catalogService.saveProduct(product);
-        Date created = customProduct.getCreated_date();
+                if(category == null){
+                    throw BroadleafWebServicesException.build(404).addMessage("CategoryId not found in DB");
+                }
+            }else{
+                category = this.catalogService.createCategory();
+                //        category.setName("CategoryName"); // REQUIRED FOR CATEGORY TO BE CREATED
+                category.setName(categoryName); // REQUIRED FOR CATEGORY TO BE CREATED
+                category = catalogService.saveCategory(category);
+            }
 
-        if (customProduct.getCreated_date() == null) {
-            customProduct.setCreated_date(new Date());
+            product = this.catalogService.createProduct(ProductType.PRODUCT);
+            product.setDefaultCategory(category);
+
+            product = catalogService.saveProduct(product);
+            Date created = customProduct.getCreated_date();
+
+            if (customProduct.getCreated_date() == null) {
+                customProduct.setCreated_date(new Date());
+            }
+            extProductService.saveExtProduct(created, customProduct.getExpiration_date(), customProduct.getGo_live_date(), product.getId());
+
+            return ResponseEntity.ok("Data Successfully Added");
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
         }
-        extProductService.saveExtProduct(created, customProduct.getExpiration_date(), customProduct.getGo_live_date(), product.getId());
-
-//        else{
-//            product = catalogService.findProductById(customProduct.getId());
-//            extProductService.saveExtProduct(customProduct.getCreated_date(), customProduct.getExpiration_date(), customProduct.getGo_live_date(), product.getId());
-//        }
-
-//        Category category = null;
-//        if(customProduct.getDefaultCategory() == null){
-//            category =  this.catalogService.findCategoryById(customProduct.getDefaultCategory().getId());
-//            category.setName("New Grocery");
-//            category = catalogService.saveCategory(category);
-//        }else{
-//            category = customProduct.getDefaultCategory();
-//        }
-//
-//        Product product;
-//        if(customProduct.getId() == null){
-//            product = this.catalogService.createProduct(ProductType.PRODUCT);
-//            product.setName("NewProduct");
-//
-//        }else{
-//            product = catalogService.findProductById(customProduct.getId());
-//
-//        }
-//        product.setDefaultCategory(category);
-//        product = catalogService.saveProduct(product);
-//
-//        extProductService.saveExtProduct(customProduct.getCreated_date(), customProduct.getExpiration_date(), customProduct.getGo_live_date(), product.getId());
-
-        return ResponseEntity.ok("Data Successfully Added");
     }
 
     @RequestMapping(value = "getProducts/{productId}", method = RequestMethod.GET)
