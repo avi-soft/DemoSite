@@ -70,7 +70,6 @@ public class CustomerEndpoint {
     @Transactional
     @RequestMapping(value = "register", method = RequestMethod.POST)
     public ResponseEntity<String> addCustomer(@RequestBody CustomCustomer customerDetails) {
-        logger.debug("Adding Customer");
         try {
             if (customerService == null) {
                 logger.error("Customer service is not initialized.");
@@ -82,7 +81,7 @@ public class CustomerEndpoint {
             Customer customer = customerService.createCustomer();
             customerDetails.setId(customerService.findNextCustomerId());
             em.persist(customerDetails);
-            return new ResponseEntity<>("Customer Saved", HttpStatus.OK);
+            return new ResponseEntity<>("Customer Created succesfully", HttpStatus.OK);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return new ResponseEntity<>("Error saving", HttpStatus.INTERNAL_SERVER_ERROR);
