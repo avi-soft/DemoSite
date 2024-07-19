@@ -40,6 +40,7 @@ public class CustomerEndpoint {
                 return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
             }
             Customer customer = customerService.readCustomerById(customerId);
+
             if (customer == null) {
                 return new ResponseEntity<>("Customer with this ID does not exist", HttpStatus.NOT_FOUND);
             } else {
