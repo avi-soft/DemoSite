@@ -39,6 +39,7 @@ public class CustomerEndpoint {
             }
 
             Customer customer = customerService.readCustomerById(customerId);
+
             if (customer == null) {
                 return new ResponseEntity<>("Customer with this id " + customerId + "does not exist ", HttpStatus.NOT_FOUND);
             } else {

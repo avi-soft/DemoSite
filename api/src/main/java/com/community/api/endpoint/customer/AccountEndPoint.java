@@ -13,9 +13,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 
+
+import java.io.UnsupportedEncodingException;
 
 import static org.apache.commons.lang.StringUtils.isNumeric;
 
@@ -38,21 +38,37 @@ public class AccountEndPoint {
     @ResponseBody
     public ResponseEntity<String> verifyAndLogin(@RequestBody CustomCustomer customer, HttpSession session) {
         try {
+
+            System.out.println(customer + "customer");
             if (customer.getCountryCode() == null || customer.getCountryCode().isEmpty()) {
                 customer.setCountryCode(Constant.COUNTRY_CODE);
             }
             if (customer.getMobileNumber() != null) {
+                System.out.println(customer.getMobileNumber() + "customer.getMobileNumber()");
                 if (customCustomerService.isValidMobileNumber(customer.getMobileNumber()) && isNumeric(customer.getMobileNumber())) {
                     return loginWithPhoneOtp(customer, session);
                 } else {
                     return ResponseEntity.badRequest().body("Mobile number is not valid");
                 }
             } else {
+                System.out.println( "else");
                 return loginWithUsernameOtp(customer, session);
             }
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some issue in login: " + e.getMessage());
+        }
+    }
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(HttpSession session) {
+        String sessionId = (String) session.getAttribute("sessionId");
+
+        if (sessionId != null) {
+            session.removeAttribute("sessionId");
+            session.invalidate();
+            return ResponseEntity.ok("Logout successful");
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("No active session to logout");
         }
     }
 
@@ -115,7 +131,7 @@ public class AccountEndPoint {
 
     @RequestMapping(value = "username-otp", method = RequestMethod.POST)
     private ResponseEntity<String> loginWithUsernameOtp(
-            @RequestBody CustomCustomer customerDetails,HttpSession session) {
+            @RequestBody CustomCustomer customerDetails,HttpSession session) throws UnsupportedEncodingException {
         if (customerService == null) {
             return new ResponseEntity<>("customerService is null ",HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -123,12 +139,14 @@ public class AccountEndPoint {
         if(customer==null)
         {
 
-            return new ResponseEntity<>("No records found ", HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>("No records found  ",HttpStatus.NO_CONTENT);
+
         }
         CustomCustomer customCustomer=em.find(CustomCustomer.class,customer.getId());
         if(customCustomer!=null) {
+            twilioService.sendOtpToMobile(customCustomer.getMobileNumber(),Constant.COUNTRY_CODE);
+            return new ResponseEntity<>("OTP send successfully ", HttpStatus.OK);
 
-            return twilioService.sendOtpToMobile(customerDetails.getMobileNumber(),Constant.COUNTRY_CODE);
         }
         else {
 

@@ -1,4 +1,5 @@
 package com.community.api.endpoint.avisoft.controller.otpmodule;
+import com.community.api.services.CustomCustomerService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.TwilioService;
 import org.apache.commons.math3.stat.descriptive.summary.Product;
@@ -25,54 +26,64 @@ public class OtpEndpoint {
 
     private final TwilioService twilioService;
 
+    @Autowired
+    private CustomCustomerService customCustomerService;
+
     public OtpEndpoint( TwilioService twilioService) {
 
         this.twilioService = twilioService;
     }
 
+    @Autowired
+   private HttpSession httpSession;
+
     @GetMapping("/send-otp")
     public ResponseEntity<String> sendtOtp(@RequestParam("mobileNumber") String mobileNumber, @RequestParam(value = "countryCode", required = false) String countryCode,
 
                                              HttpSession session) throws UnsupportedEncodingException {
-        if (!isValidMobileNumber(mobileNumber)) {
+        if (!customCustomerService.isValidMobileNumber(mobileNumber)) {
             return ResponseEntity.badRequest().body("Invalid mobile number");
         }
         if (countryCode == null || countryCode.isEmpty()) {
             countryCode = COUNTRY_CODE;
         }
-       return twilioService.sendOTPFunction(mobileNumber,countryCode,session);
 
+        ResponseEntity<String> otpResponse = twilioService.sendOtpToMobile(mobileNumber, countryCode);
+        return otpResponse;
+/*        if (otpResponse.getStatusCode() == HttpStatus.OK) {
+            session.setAttribute("expectedOtp", httpSession.getAttribute("expectedOtp"));
+            return ResponseEntity.ok("OTP sent successfully");
+        } else {
+            return ResponseEntity.internalServerError().body("Failed to send OTP");
+        }*/
+       /* if (otpResponse.getStatusCode() == HttpStatus.OK) {
+            session.setAttribute("expectedOtp", otpResponse.getBody());
+
+            return ResponseEntity.ok("OTP sent successfully");
+        } else {
+            return ResponseEntity.internalServerError().body("Failed to send OTP");
+        }*/
     }
 
 
-    private boolean isValidMobileNumber(String mobileNumber) {
-        String mobileNumberPattern = "^\\+?\\d{10,13}$";
-        return Pattern.compile(mobileNumberPattern).matcher(mobileNumber).matches();
-    }
-
-    @PostMapping("/verify")
+    @PostMapping("/verify-otp")
     public ResponseEntity<String> verifyOTP(@RequestParam("otpEntered") String otpEntered, HttpSession session) {
+
         String expectedOtp = (String) session.getAttribute("expectedOtp");
-        /*     String mobileNumber = (String) session.getAttribute("mobileNumber");*/
+        System.out.println("Entered OTP: " + otpEntered + ", Expected OTP: " + expectedOtp);
 
         if (otpEntered == null || otpEntered.trim().isEmpty()) {
             return ResponseEntity.badRequest().body("Invalid OTP");
         }
 
+        System.out.println("Entered OTP: " + otpEntered + ", Expected OTP: " + expectedOtp + " session " + session.getAttribute("expectedOtp"));
+
         if (otpEntered.equals(expectedOtp)) {
             session.removeAttribute("expectedOtp");
-//            session.removeAttribute("mobileNumber");
-            
-            String sessionId = generateSessionId();
-            session.setAttribute("sessionId", sessionId);
             return ResponseEntity.ok("OTP verified successfully");
         } else {
-            return ResponseEntity.badRequest().body("Invalid OTP");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid OTP");
         }
     }
 
-
-    private String generateSessionId() {
-        return UUID.randomUUID().toString();
-    }
 }
