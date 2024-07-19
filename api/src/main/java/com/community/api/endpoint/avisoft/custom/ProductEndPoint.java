@@ -3,6 +3,7 @@ import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
 import com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException;
 import com.community.api.endpoint.avisoft.CustomCategoryEndpoint;
 import com.community.api.services.ExceptionHandlingService;
+import liquibase.pro.packaged.D;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.broadleafcommerce.core.catalog.service.type.ProductType;
@@ -49,7 +50,7 @@ public class ProductEndPoint extends CatalogEndpoint {
 
     @Transactional
     @RequestMapping(value = "/add/{categoryName}", method = RequestMethod.POST, params = {"categoryId"})
-    public ResponseEntity<String> addProduct(@RequestBody CustomProduct customProduct, @RequestParam("categoryId") Long categoryId, @PathVariable("categoryName") String categoryName) throws ParseException {
+    public ResponseEntity<String> addProduct(@RequestBody CustomProduct customProduct, @RequestParam(value = "categoryId", required = false, defaultValue = "0") Long categoryId, @PathVariable("categoryName") String categoryName) throws ParseException {
 
         Product product = null;
         Category category = null;
@@ -59,7 +60,7 @@ public class ProductEndPoint extends CatalogEndpoint {
                 throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
             }
 
-            if(categoryId != null){
+            if(categoryId != null && categoryId != 0){
                 category = this.catalogService.findCategoryById(categoryId);
 
                 if(category == null){
@@ -76,11 +77,8 @@ public class ProductEndPoint extends CatalogEndpoint {
             product.setDefaultCategory(category);
 
             product = catalogService.saveProduct(product);
-            Date created = customProduct.getCreated_date();
-
-            if (customProduct.getCreated_date() == null) {
-                customProduct.setCreated_date(new Date());
-            }
+            Date created = new Date();
+            customProduct.setCreated_date(created);
             extProductService.saveExtProduct(created, customProduct.getExpiration_date(), customProduct.getGo_live_date(), product.getId());
 
             return ResponseEntity.ok("Data Successfully Added");
