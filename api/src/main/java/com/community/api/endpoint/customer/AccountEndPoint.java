@@ -13,10 +13,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-
-
 import static org.apache.commons.lang.StringUtils.isNumeric;
 
 @RestController
