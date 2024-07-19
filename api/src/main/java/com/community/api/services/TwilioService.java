@@ -54,6 +54,7 @@ public class TwilioService {
                     .create();
 
             httpSession.setAttribute("expectedOtp",otp);
+            httpSession.setAttribute("mobileNumber",mobileNumber);
            System.out.println("OTP set in session: " + otp);
            return ResponseEntity.ok("OTP has been sent successfully");
 
