@@ -40,10 +40,7 @@ public class OtpEndpoint {
         if (countryCode == null || countryCode.isEmpty()) {
             countryCode = COUNTRY_CODE;
         }
-        String encodedCountryCode = URLEncoder.encode(countryCode, "UTF-8");
-        String completeMobileNumber = encodedCountryCode + mobileNumber;
-        System.out.println(completeMobileNumber+" completeMobileNumber");
-       return twilioService.sendOTPFunction(completeMobileNumber,countryCode,session);
+       return twilioService.sendOTPFunction(mobileNumber,countryCode,session);
 
     }
 
