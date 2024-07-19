@@ -1,6 +1,6 @@
 package com.community.api.endpoint.avisoft.controller;
 
-import com.community.api.services.ExceptionHandlingImplement;
+import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

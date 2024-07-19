@@ -2,8 +2,7 @@ package com.community.api.endpoint.avisoft.custom;
 import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
 import com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException;
 import com.community.api.endpoint.avisoft.CustomCategoryEndpoint;
-import com.community.api.services.ExceptionHandlingService;
-import liquibase.pro.packaged.D;
+import com.community.api.services.exception.ExceptionHandlingService;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.broadleafcommerce.core.catalog.service.type.ProductType;
@@ -21,6 +20,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/productcustom",
@@ -88,6 +89,29 @@ public class ProductEndPoint extends CatalogEndpoint {
         }
     }
 
+    @RequestMapping(value = "getProducts", method = RequestMethod.GET)
+    public ResponseEntity<?> retrieveProducts(HttpServletRequest request, @PathVariable("productId") Long productId) {
+        CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
+
+        if (customProduct == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Assuming CustomProduct has a direct reference to Product
+        Product product = catalogService.findProductById(productId);
+
+        // Construct a JSON response
+        Map<String, Object> response = new HashMap<>();
+        response.put("productId", product.getId());
+        response.put("productName", product.getName());
+        response.put("createdDate", customProduct.getCreated_date());
+        response.put("expirationDate", customProduct.getExpiration_date());
+        response.put("goLiveDate", customProduct.getGo_live_date());
+        // Add more fields as needed
+
+        return ResponseEntity.ok(response);
+    }
+
     @RequestMapping(value = "getProducts/{productId}", method = RequestMethod.GET)
     public ResponseEntity<?> retrieveProductById(HttpServletRequest request, @PathVariable("productId") Long productId) {
         CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
@@ -95,24 +119,7 @@ public class ProductEndPoint extends CatalogEndpoint {
     }
 
 
-
-    /*@Transactional
-    @RequestMapping(value = "/add", method = RequestMethod.POST)
-    public String addProduct(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime createdDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime expirationDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime goLiveDate,
-            @RequestParam Long productId
-    ){
-
-//        entityManager.merge(customProduct);
-
-        extProductService.saveExtProduct(createdDate, expirationDate, goLiveDate, productId);
-
-        return "added";
-    }
-
-    @RequestMapping(value = "getProducts/{productId}", method = RequestMethod.GET)
+    /*@RequestMapping(value = "getProducts/{productId}", method = RequestMethod.GET)
     public ResponseEntity<?> retrieveProductById(HttpServletRequest request, @PathVariable("productId") Long productId) {
 
         if (productId == null) {
@@ -139,3 +146,4 @@ public class ProductEndPoint extends CatalogEndpoint {
     }*/
 
 }
+

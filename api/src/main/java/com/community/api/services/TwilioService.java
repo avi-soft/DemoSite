@@ -1,5 +1,6 @@
 package com.community.api.services;
 
+import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.twilio.rest.verify.v2.service.Verification;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,7 +19,7 @@ import java.util.Random;
 public class TwilioService {
 
     @Autowired
-    private com.community.api.services.ExceptionHandlingImplement exceptionHandling;
+    private ExceptionHandlingImplement exceptionHandling;
 
     @Value("${twilio.accountSid}")
     private String accountSid;

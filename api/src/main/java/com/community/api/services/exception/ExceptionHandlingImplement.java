@@ -1,4 +1,4 @@
-package com.community.api.services;
+package com.community.api.services.exception;
 
 import com.twilio.exception.ApiException;
 import org.springframework.http.ResponseEntity;
