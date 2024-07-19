@@ -18,7 +18,7 @@ import java.util.Random;
 public class TwilioService {
 
     @Autowired
-    private ExceptionHandlingImplement exceptionHandling;
+    private com.community.api.services.ExceptionHandlingImplement exceptionHandling;
 
     @Value("${twilio.accountSid}")
     private String accountSid;
