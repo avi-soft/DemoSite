@@ -1,4 +1,5 @@
 package com.community.api.services;
+import com.community.api.component.Constant;
 import com.community.api.endpoint.customer.CustomCustomer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -9,7 +10,6 @@ import java.util.regex.Pattern;
 public class CustomCustomerService {
     @Autowired
     private EntityManager em;
-    String phoneQuery = "SELECT c FROM CustomCustomer c WHERE c.mobileNumber = :mobileNumber";
     public Boolean validateInput(CustomCustomer customer) {
         if (customer.getUsername().isEmpty() || customer.getUsername() == null || customer.getMobileNumber().isEmpty() || customer.getMobileNumber() == null || customer.getPassword() == null || customer.getPassword().isEmpty())
             return false;
@@ -23,7 +23,7 @@ public class CustomCustomerService {
     }
     public CustomCustomer findCustomCustomerByPhone(String mobileNumber)
     {
-        return em.createQuery(phoneQuery, CustomCustomer.class)
+        return em.createQuery(Constant.PHONE_QUERY, CustomCustomer.class)
                 .setParameter("mobileNumber", mobileNumber)
                 .getResultStream()
                 .findFirst()

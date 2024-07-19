@@ -32,18 +32,19 @@ public class TwilioService {
     @Value("${twilio.phoneNumber}")
     private String twilioPhoneNumber;
 
-    public ResponseEntity<String> sendOtpToMobile(String mobileNumber) {
+    public ResponseEntity<String> sendOtpToMobile(String mobileNumber,String countryCode) {
         if (mobileNumber == null || mobileNumber.isEmpty()) {
             throw new IllegalArgumentException("Mobile number cannot be null or empty");
         }
 
         try {
             Twilio.init(accountSid, authToken);
-
+            String encodedCountryCode = URLEncoder.encode(countryCode, "UTF-8");
+            String completeMobileNumber = encodedCountryCode + mobileNumber;
             String otp = generateOTP();
 
           Message message = Message.creator(
-                            new PhoneNumber(mobileNumber),
+                            new PhoneNumber(completeMobileNumber),
                             new PhoneNumber(twilioPhoneNumber),
                           otp)
                     .create();
@@ -68,12 +69,9 @@ public class TwilioService {
     }
 
     public ResponseEntity<String> sendOTPFunction(String mobileNumber, String countryCode, HttpSession session) throws UnsupportedEncodingException {
-        String encodedCountryCode = URLEncoder.encode(countryCode, "UTF-8");
-        String completeMobileNumber = encodedCountryCode + mobileNumber;
-        System.out.println(completeMobileNumber + "  encodedCountryCode " +encodedCountryCode);
-        ResponseEntity<String> otpResponse = this.sendOtpToMobile(completeMobileNumber);
-        System.out.println(otpResponse.getBody() + "  otpResponse  send-otp ");
 
+        ResponseEntity<String> otpResponse = this.sendOtpToMobile(mobileNumber,countryCode);
+        System.out.println(otpResponse.getBody() + "  otpResponse  send-otp ");
 
         if (otpResponse.getStatusCode() == HttpStatus.OK) {
             session.setAttribute("expectedOtp", otpResponse.getBody());
