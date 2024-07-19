@@ -39,12 +39,11 @@ public class AccountEndPoint {
     public ResponseEntity<String> verifyAndLogin(@RequestBody CustomCustomer customer, HttpSession session) {
         try {
 
-            System.out.println(customer + "customer");
             if (customer.getCountryCode() == null || customer.getCountryCode().isEmpty()) {
                 customer.setCountryCode(Constant.COUNTRY_CODE);
             }
             if (customer.getMobileNumber() != null) {
-                System.out.println(customer.getMobileNumber() + "customer.getMobileNumber()");
+                System.out.println(customer.getMobileNumber() + "customer__verifyAndLogin");
                 if (customCustomerService.isValidMobileNumber(customer.getMobileNumber()) && isNumeric(customer.getMobileNumber())) {
                     return loginWithPhoneOtp(customer, session);
                 } else {
