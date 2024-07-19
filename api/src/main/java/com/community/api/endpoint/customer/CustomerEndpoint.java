@@ -43,7 +43,19 @@ public class CustomerEndpoint {
             if (customer == null) {
                 return new ResponseEntity<>("Customer with this ID does not exist", HttpStatus.NOT_FOUND);
             } else {
-                return new ResponseEntity<>(customer, HttpStatus.OK);
+                CustomerDTO customerDTO=new CustomerDTO();
+                customerDTO.setFirstName(customer.getFirstName());
+                customerDTO.setLastName(customer.getLastName());
+                customerDTO.setEmail(customer.getEmailAddress());
+                CustomCustomer customCustomer =em.find(CustomCustomer.class,customer.getId());
+                if(customCustomer!=null) {
+                    customerDTO.setMobileNumber(customCustomer.getMobileNumber());
+                    return new ResponseEntity<>(customerDTO,HttpStatus.OK);
+                }
+                else
+                {
+                    return new ResponseEntity<>("Error fetching Customer Data",HttpStatus.NO_CONTENT);
+                }
             }
         } catch (Exception e) {
 
