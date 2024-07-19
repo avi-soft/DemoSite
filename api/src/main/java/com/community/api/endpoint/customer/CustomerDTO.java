@@ -10,5 +10,5 @@ import lombok.Setter;
 @Setter
 @Getter
 public class CustomerDTO {
-    private String firstName,lastName,email,mobileNumber;
+    private String firstName,lastName,email,mobileNumber,username;
 }

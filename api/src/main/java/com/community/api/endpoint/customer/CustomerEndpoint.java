@@ -47,6 +47,7 @@ public class CustomerEndpoint {
                 customerDTO.setFirstName(customer.getFirstName());
                 customerDTO.setLastName(customer.getLastName());
                 customerDTO.setEmail(customer.getEmailAddress());
+                customerDTO.setUsername(customer.getUsername());
                 CustomCustomer customCustomer =em.find(CustomCustomer.class,customer.getId());
                 if(customCustomer!=null) {
                     customerDTO.setMobileNumber(customCustomer.getMobileNumber());
