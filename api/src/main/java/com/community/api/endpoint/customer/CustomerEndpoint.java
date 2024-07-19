@@ -1,5 +1,4 @@
 package com.community.api.endpoint.customer;
-import com.community.api.services.TwilioService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
@@ -22,7 +21,6 @@ import java.util.regex.Pattern;
 )
 
 public class CustomerEndpoint {
-    String phoneQuery = "SELECT c FROM CustomCustomer c WHERE c.mobileNumber = :mobileNumber";
     private static final Logger logger = LoggerFactory.getLogger(CustomerEndpoint.class);
     @Autowired
     private CustomerService customerService;
@@ -30,20 +28,19 @@ public class CustomerEndpoint {
     private ExceptionHandlingImplement exceptionHandling;
     @Autowired
     private EntityManager em;
-    @Autowired
-    private TwilioService twilioService;
+
 
     @RequestMapping(value = "getCustomer/{customerId}", method = RequestMethod.GET)
     public ResponseEntity<Object> retrieveCustomerById(@PathVariable Long customerId) {
-        logger.debug("Retrieving customer by ID: {}", customerId);
+
         try {
             if (customerService == null) {
-                logger.error("Customer service is not initialized.");
-                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+                return new ResponseEntity<>("customerService is null ",HttpStatus.INTERNAL_SERVER_ERROR);
             }
+
             Customer customer = customerService.readCustomerById(customerId);
             if (customer == null) {
-                return new ResponseEntity<>("Customer with this ID does not exist", HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>("Customer with this id " + customerId + "does not exist ", HttpStatus.NOT_FOUND);
             } else {
                 return new ResponseEntity<>(customer, HttpStatus.OK);
             }
@@ -57,10 +54,9 @@ public class CustomerEndpoint {
     @Transactional
     @RequestMapping(value = "register", method = RequestMethod.POST)
     public ResponseEntity<String> addCustomer(@RequestBody CustomCustomer customerDetails) {
-        logger.debug("Adding Customer");
+
         try {
             if (customerService == null) {
-                logger.error("Customer service is not initialized.");
                 return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
             if(!validateInput(customerDetails))
@@ -68,10 +64,8 @@ public class CustomerEndpoint {
 
             Customer customer = customerService.createCustomer();
             customerDetails.setId(customerService.findNextCustomerId());
-            /*customer.setUsername(customerDetails.getUsername());
-            customer.setPassword(customerDetails.getPassword());*/
             em.persist(customerDetails);
-            return new ResponseEntity<>("Customer Saved", HttpStatus.OK);
+            return new ResponseEntity<>("Customer created successfully ", HttpStatus.OK);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return new ResponseEntity<>("Error saving", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -80,9 +74,13 @@ public class CustomerEndpoint {
 
     public Boolean validateInput(CustomCustomer customer) {
         if (customer.getUsername().isEmpty() || customer.getUsername() == null || customer.getMobileNumber().isEmpty() || customer.getMobileNumber() == null || customer.getPassword() == null || customer.getPassword().isEmpty())
+        {
             return false;
+        }
         if(!isValidMobileNumber(customer.getMobileNumber()))
+        {
             return false;
+        }
         return true;
     }
     private boolean isValidMobileNumber(String mobileNumber) {

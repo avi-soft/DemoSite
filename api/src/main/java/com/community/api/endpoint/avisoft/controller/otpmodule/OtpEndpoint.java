@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
 import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -39,8 +40,10 @@ public class OtpEndpoint {
         if (countryCode == null || countryCode.isEmpty()) {
             countryCode = COUNTRY_CODE;
         }
-
-       return twilioService.sendOTPFunction(mobileNumber,countryCode,session);
+        String encodedCountryCode = URLEncoder.encode(countryCode, "UTF-8");
+        String completeMobileNumber = encodedCountryCode + mobileNumber;
+        System.out.println(completeMobileNumber+" completeMobileNumber");
+       return twilioService.sendOTPFunction(completeMobileNumber,countryCode,session);
 
     }
 
