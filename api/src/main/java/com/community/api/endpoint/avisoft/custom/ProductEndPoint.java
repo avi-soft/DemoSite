@@ -4,6 +4,7 @@ import com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException;
 import com.community.api.endpoint.avisoft.CustomCategoryEndpoint;
 import com.community.api.services.exception.ExceptionHandlingService;
 import org.broadleafcommerce.core.catalog.domain.Product;
+import org.broadleafcommerce.core.catalog.domain.Sku;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.broadleafcommerce.core.catalog.service.type.ProductType;
 import org.slf4j.Logger;
@@ -19,9 +20,7 @@ import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.text.ParseException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping(value = "/productcustom",
@@ -45,13 +44,13 @@ public class ProductEndPoint extends CatalogEndpoint {
 
     /*
 
-
+            WHAT THIS CLASS DOES FOR EACH FUNCTION WE HAVE TO THAT.
 
      */
 
     @Transactional
     @RequestMapping(value = "/add/{categoryName}", method = RequestMethod.POST, params = {"categoryId"})
-    public ResponseEntity<String> addProduct(@RequestBody CustomProduct customProduct, @RequestParam(value = "categoryId", required = false, defaultValue = "0") Long categoryId, @PathVariable("categoryName") String categoryName) throws ParseException {
+    public ResponseEntity<String> addProduct(@RequestBody CustomProduct customProduct, @RequestParam(value = "categoryId", required = false, defaultValue = "0") Long categoryId, @RequestParam(value = "skuId", required = false, defaultValue = "0") Long skuId, @PathVariable("categoryName") String categoryName) throws ParseException {
 
         Product product = null;
         Category category = null;
@@ -67,15 +66,23 @@ public class ProductEndPoint extends CatalogEndpoint {
                 if(category == null){
                     throw BroadleafWebServicesException.build(404).addMessage("CategoryId not found in DB");
                 }
-            }else{
+            }
+
+            // If you want to add Category if no category is found with the current categoryId.
+            /*else{
                 category = this.catalogService.createCategory();
                 //        category.setName("CategoryName"); // REQUIRED FOR CATEGORY TO BE CREATED
                 category.setName(categoryName); // REQUIRED FOR CATEGORY TO BE CREATED
                 category = catalogService.saveCategory(category);
-            }
+            }*/
 
             product = this.catalogService.createProduct(ProductType.PRODUCT);
             product.setDefaultCategory(category);
+
+            Sku sku = catalogService.findSkuById(1L);
+            product.setDefaultSku(sku);
+
+            product.setMetaTitle(customProduct.getMetaTitle());
 
             product = catalogService.saveProduct(product);
             Date created = new Date();
@@ -89,61 +96,68 @@ public class ProductEndPoint extends CatalogEndpoint {
         }
     }
 
-    @RequestMapping(value = "getProducts", method = RequestMethod.GET)
-    public ResponseEntity<?> retrieveProducts(HttpServletRequest request, @PathVariable("productId") Long productId) {
-        CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
-
-        if (customProduct == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        // Assuming CustomProduct has a direct reference to Product
-        Product product = catalogService.findProductById(productId);
-
-        // Construct a JSON response
-        Map<String, Object> response = new HashMap<>();
-        response.put("productId", product.getId());
-        response.put("productName", product.getName());
-        response.put("createdDate", customProduct.getCreated_date());
-        response.put("expirationDate", customProduct.getExpiration_date());
-        response.put("goLiveDate", customProduct.getGo_live_date());
-        // Add more fields as needed
-
-        return ResponseEntity.ok(response);
-    }
-
-    @RequestMapping(value = "getProducts/{productId}", method = RequestMethod.GET)
+    @RequestMapping(value = "/getProducts/{productId}", method = RequestMethod.GET)
     public ResponseEntity<?> retrieveProductById(HttpServletRequest request, @PathVariable("productId") Long productId) {
-        CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
-        return ResponseEntity.ok(customProduct.getGo_live_date());
-    }
-
-
-    /*@RequestMapping(value = "getProducts/{productId}", method = RequestMethod.GET)
-    public ResponseEntity<?> retrieveProductById(HttpServletRequest request, @PathVariable("productId") Long productId) {
-
-        if (productId == null) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
 
         try {
 
-            if (catalogService == null) {
-                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
+
+            if (customProduct == null) {
+                return ResponseEntity.notFound().build();
             }
 
-            final CustomProduct customProduct = entityManager.find(CustomProduct.class,productId);
-            System.out.println(customProduct.getExpiration_date());
-            if (customProduct == null) {
-                logger.error("Error retrieving product as There is no product in DB with this Id");
-                throw BroadleafWebServicesException.build(404).addMessage("com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException.categoryNotFound");
-            }
-            return ResponseEntity.ok(customProduct);
+            // Assuming CustomProduct has a direct reference to Product
+            Product product = catalogService.findProductById(productId);
+
+            // Construct a JSON response
+            Map<String, Object> response = new HashMap<>();
+            response.put("productId", product.getId());
+            response.put("productName", product.getName());
+            response.put("metaTitle", product.getMetaTitle());
+            response.put("createdDate", customProduct.getCreated_date());
+            response.put("expirationDate", customProduct.getExpiration_date());
+            response.put("goLiveDate", customProduct.getGo_live_date());
+            // Add more fields as needed
+
+            return ResponseEntity.ok(response);
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
         }
-    }*/
+
+    }
+
+    @RequestMapping(value = "/getProducts", method = RequestMethod.GET)
+    public ResponseEntity<?> retrieveProducts() {
+        try {
+
+            List<Product> products = catalogService.findAllProducts();
+            if (products.size() == 0) {
+                throw BroadleafWebServicesException.build(404).addMessage("No product found in the DB");
+            }
+
+            List<Map<String, Object>> responses = new ArrayList<>();
+            for(Product product: products) {
+                CustomProduct customProduct = entityManager.find(CustomProduct.class, product.getId());
+                if (customProduct != null) {
+                    Map<String, Object> response = new HashMap<>();
+                    response.put("productId", product.getId());
+                    response.put("productName", product.getName());
+                    response.put("createdDate", customProduct.getCreated_date());
+                    response.put("metaTitle", product.getMetaTitle());
+                    response.put("expirationDate", customProduct.getExpiration_date());
+                    response.put("goLiveDate", customProduct.getGo_live_date());
+                    responses.add(response);
+                }
+            }
+
+            return ResponseEntity.ok(responses);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
+        }
+    }
 
 }
 

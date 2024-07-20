@@ -7,6 +7,7 @@ import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
 import java.util.Date;
 import java.sql.Timestamp;
+import java.util.List;
 
 @Service
 public class ExtProductService {
@@ -24,5 +25,13 @@ public class ExtProductService {
                 .setParameter("goLiveDate", goLiveDate != null ? new Timestamp(goLiveDate.getTime()) : null)
                 .setParameter("productId", productId)
                 .executeUpdate();
+    }
+
+    @Transactional
+    public List<CustomProduct> getExtProduct() {
+        String sql = "SELECT * FROM ext_product";
+
+        List<CustomProduct> extProducts = entityManager.createNativeQuery(sql, CustomProduct.class).getResultList();
+        return extProducts;
     }
 }
