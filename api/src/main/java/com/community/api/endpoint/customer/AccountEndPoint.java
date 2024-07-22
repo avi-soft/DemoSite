@@ -85,7 +85,7 @@ public class AccountEndPoint {
         }
         Customer customer = customerService.readCustomerById(customerRecords.getId());
         if (customer != null) {
-            twilioService.sendOtpToMobile(customerDetails.getMobileNumber(),Constant.COUNTRY_CODE);
+            twilioService.sendOtpToMobile(customerRecords.getMobileNumber(),Constant.COUNTRY_CODE);
             return new ResponseEntity<>("OTP Sent on " + customerDetails.getMobileNumber(), HttpStatus.OK);
         } else {
             return ResponseEntity.badRequest().body("Mobile number not found");
@@ -124,7 +124,7 @@ public class AccountEndPoint {
         CustomCustomer customCustomer=em.find(CustomCustomer.class,customer.getId());
         if(customCustomer!=null) {
 
-            return twilioService.sendOtpToMobile(customerDetails.getMobileNumber(),Constant.COUNTRY_CODE);
+            return twilioService.sendOtpToMobile(customCustomer.getMobileNumber(),Constant.COUNTRY_CODE);
         }
         else {
 
