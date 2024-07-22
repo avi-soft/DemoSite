@@ -1,6 +1,7 @@
 package com.community.api.services;
 
 import com.community.api.services.exception.ExceptionHandlingImplement;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -53,10 +54,11 @@ public class TwilioService {
                             otp)
                     .create();
 
-            httpSession.setAttribute("expectedOtp",otp);
-            httpSession.setAttribute("mobileNumber",mobileNumber);
-           System.out.println("OTP set in session: " + otp);
-           return ResponseEntity.ok("OTP has been sent successfully");
+          httpSession.setAttribute("expectedOtp_"+completeMobileNumber,otp);
+          httpSession.setAttribute("mobileNumber",mobileNumber);
+          httpSession.setAttribute("countryCode",countryCode);
+
+           return ResponseEntity.ok("OTP has been sent successfully " + otp);
 
 
         } catch (HttpClientErrorException e) {
@@ -75,13 +77,6 @@ public class TwilioService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error sending OTP: " + e.getMessage());
         }
     }
-
-    private Map<String, String> createErrorResponse(String errorMessage) {
-        Map<String, String> errorResponse = new HashMap<>();
-        errorResponse.put("error", errorMessage);
-        return errorResponse;
-    }
-
 
     private synchronized String generateOTP() {
         Random random = new Random();
