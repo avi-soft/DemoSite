@@ -1,10 +1,10 @@
 package com.community.api.endpoint.avisoft.controller.otpmodule;
+import com.community.api.component.Constant;
+import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.customer.CustomCustomer;
-import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.services.CustomCustomerService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.TwilioService;
-import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -23,13 +23,12 @@ public class OtpEndpoint {
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
 
-    public static final String COUNTRY_CODE = "+91";
-
     private final TwilioService twilioService;
 
     @Autowired
     private CustomCustomerService customCustomerService;
-
+    @Autowired
+    private JwtUtil jwtUtil;
     public OtpEndpoint( TwilioService twilioService) {
 
         this.twilioService = twilioService;
@@ -50,7 +49,7 @@ public class OtpEndpoint {
             return ResponseEntity.badRequest().body("Invalid mobile number");
         }
         if (countryCode == null || countryCode.isEmpty()) {
-            countryCode = COUNTRY_CODE;
+            countryCode = Constant.COUNTRY_CODE;
         }
 
         ResponseEntity<String> otpResponse = twilioService.sendOtpToMobile(mobileNumber, countryCode);
@@ -60,7 +59,7 @@ public class OtpEndpoint {
 
     @Transactional
     @PostMapping("/verify-otp")
-    public ResponseEntity<String> verifyOTP(@RequestParam("otpEntered") String otpEntered, HttpSession session) {
+    public ResponseEntity<?> verifyOTP(@RequestParam("otpEntered") String otpEntered, HttpSession session) {
 
         String expectedOtp = (String) session.getAttribute("expectedOtp");
         String mobileNumber = (String) session.getAttribute("mobileNumber");
@@ -89,8 +88,9 @@ public class OtpEndpoint {
                     System.out.println("customerDetails : " + customerDetails );
                     session.removeAttribute("mobileNumber");
                     entityManager.persist(customerDetails);
+
                 }
-                String token = jwtUtil.generateToken(mobileNumber);
+               String token = jwtUtil.generateToken(mobileNumber);
                 return ResponseEntity.ok(new AuthResponse(token));
 
             } catch (Exception e) {
@@ -101,6 +101,8 @@ public class OtpEndpoint {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid OTP");
         }
     }
+
+
     public static class AuthResponse {
         private String token;
 
@@ -112,4 +114,6 @@ public class OtpEndpoint {
             return token;
         }
     }
+
+
 }

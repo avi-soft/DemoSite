@@ -1,16 +1,23 @@
 package com.community.api.endpoint.avisoft.controller;
 
+import com.community.api.component.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import com.community.api.services.exception.ExceptionHandlingImplement;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
+@RequestMapping("/test")
 public class TestController {
 
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @GetMapping("/catcherror")
     public ResponseEntity<String> catcherror() {
@@ -24,6 +31,11 @@ public class TestController {
 
         }
         return ResponseEntity.ok("Success");
+    }
+
+    @GetMapping("/generate-token")
+    public String generateToken(@RequestParam String phoneNumber) {
+        return jwtUtil.generateToken(phoneNumber);
     }
 
 

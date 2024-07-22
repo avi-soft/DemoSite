@@ -1,44 +1,51 @@
 package com.community.api.component;
 
+import com.community.api.services.exception.ExceptionHandlingImplement;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-
 import javax.annotation.PostConstruct;
 import java.security.Key;
-import java.util.Base64;
 import java.util.Date;
 
 @Component
 public class JwtUtil {
 
     private Key secretKey;
-    private String base64Secret = "yourSecretKeyInBase64Format";
+
+    @Autowired
+    private ExceptionHandlingImplement exceptionHandling;
 
     @PostConstruct
     public void init() {
-        byte[] decodedKey = Base64.getDecoder().decode(base64Secret);
-        this.secretKey = Keys.hmacShaKeyFor(decodedKey);
+        this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
     }
 
     public String generateToken(String phoneNumber) {
         return Jwts.builder()
+                .setHeaderParam("typ", "JWT")
                 .setSubject(phoneNumber)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10)) // 10 hours
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
                 .signWith(secretKey, SignatureAlgorithm.HS256)
                 .compact();
     }
 
     public String extractPhoneNumber(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .getSubject();
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            throw new RuntimeException("Invalid JWT token", e);
+        }
     }
 
     public boolean validateToken(String token) {

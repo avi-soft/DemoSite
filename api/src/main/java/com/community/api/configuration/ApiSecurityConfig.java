@@ -17,6 +17,7 @@
  */
 package com.community.api.configuration;
 
+import com.community.api.component.JwtAuthenticationFilter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadleafcommerce.profile.web.core.security.RestApiCustomerStateFilter;
@@ -32,6 +33,7 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.channel.ChannelDecisionManagerImpl;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.rememberme.RememberMeAuthenticationFilter;
 
 import javax.servlet.Filter;
@@ -68,7 +70,7 @@ public class ApiSecurityConfig {
         );
     }
 
-    @Bean
+/*    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
                 .mvcMatcher("/api/**")
@@ -77,6 +79,7 @@ public class ApiSecurityConfig {
                 .csrf().disable()
                 .authorizeHttpRequests()
                 .requestMatchers("/api/**")
+                .requestMatchers("/otp/**", "/loginWithOtp/**").permitAll()
                 .authenticated()
                 .and()
                 .sessionManagement()
@@ -91,6 +94,32 @@ public class ApiSecurityConfig {
                 .and()
                 .addFilterAfter(apiCustomerStateFilter(), RememberMeAuthenticationFilter.class);
         return http.build();
+    }*/
+@Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http
+            .csrf().disable()
+            .sessionManagement()
+            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .and()
+            .authorizeRequests()
+            .requestMatchers("/otp/**", "/loginWithOtp/**").permitAll()
+            .requestMatchers("/api/**").authenticated()
+            .and()
+            .httpBasic()
+            .and()
+            .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+            .addFilterAfter(apiCustomerStateFilter(), RememberMeAuthenticationFilter.class)
+            .requiresChannel()
+            .anyRequest()
+            .requires(ChannelDecisionManagerImpl.ANY_CHANNEL);
+
+    return http.build();
+}
+
+    @Bean
+    public Filter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter();
     }
 
     @Bean
