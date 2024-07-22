@@ -18,34 +18,33 @@ public class CustomCustomerService {
             return false;
         if (!isValidMobileNumber(customer.getMobileNumber()))
             return false;
+
         return true;
     }
 
     public boolean isValidMobileNumber(String mobileNumber) {
-        String mobileNumberPattern = "^\\+?\\d{10,13}$";
+
+        String mobileNumberPattern = "^\\d{9,13}$";
         return Pattern.compile(mobileNumberPattern).matcher(mobileNumber).matches();
     }
 
-    public CustomCustomer findCustomCustomerByPhone(String mobileNumber) {
+    public CustomCustomer findCustomCustomerByPhone(String mobileNumber,String countryCode) {
         return em.createQuery(Constant.PHONE_QUERY, CustomCustomer.class)
                 .setParameter("mobileNumber", mobileNumber)
+                .setParameter("countryCode", countryCode)
                 .getResultStream()
                 .findFirst()
                 .orElse(null);
     }
 
-
         public String formatDate(String dateString) {
-            // Define the formatter for the input date string
+
             DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 
-            // Define the formatter for the desired output format
             DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("dd MMMM yyyy");
 
-            // Parse the date string into a LocalDateTime object
             LocalDateTime dateTime = LocalDateTime.parse(dateString, inputFormatter);
 
-            // Format the LocalDateTime object to the desired string format
             return dateTime.format(outputFormatter);
         }
     }
