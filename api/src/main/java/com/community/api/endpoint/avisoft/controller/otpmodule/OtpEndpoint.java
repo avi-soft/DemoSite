@@ -17,7 +17,7 @@ import javax.transaction.Transactional;
 import java.io.UnsupportedEncodingException;
 
 @RestController
-@RequestMapping("/phone")
+@RequestMapping("/otp")
 public class OtpEndpoint {
 
     @Autowired
@@ -58,7 +58,6 @@ public class OtpEndpoint {
 
     }
 
-
     @Transactional
     @PostMapping("/verify-otp")
     public ResponseEntity<String> verifyOTP(@RequestParam("otpEntered") String otpEntered, HttpSession session) {
@@ -90,12 +89,9 @@ public class OtpEndpoint {
                     System.out.println("customerDetails : " + customerDetails );
                     session.removeAttribute("mobileNumber");
                     entityManager.persist(customerDetails);
-                    return ResponseEntity.ok("OTP verified and Customer Created Successfully");
-                }else{
-                    System.out.println("customerDetailselse : "  );
-                    return ResponseEntity.ok("OTP verified Successfully");
                 }
-
+                String token = jwtUtil.generateToken(mobileNumber);
+                return ResponseEntity.ok(new AuthResponse(token));
 
             } catch (Exception e) {
                 exceptionHandling.handleException(e);
@@ -105,5 +101,15 @@ public class OtpEndpoint {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid OTP");
         }
     }
+    public static class AuthResponse {
+        private String token;
 
+        public AuthResponse(String token) {
+            this.token = token;
+        }
+
+        public String getToken() {
+            return token;
+        }
+    }
 }
