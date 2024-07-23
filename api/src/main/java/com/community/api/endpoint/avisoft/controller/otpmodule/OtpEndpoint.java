@@ -50,6 +50,7 @@ public class OtpEndpoint {
         if (mobileNumber.startsWith("0")) {
             mobileNumber = mobileNumber.substring(1);
         }
+
         if (!customCustomerService.isValidMobileNumber(mobileNumber)) {
             return ResponseEntity.badRequest().body("Invalid mobile number");
         }
@@ -111,7 +112,7 @@ public class OtpEndpoint {
                     entityManager.persist(customerDetails);
 
                 }
-               String token = jwtUtil.generateToken(mobileNumber);
+                String token = jwtUtil.generateToken(mobileNumber);
                 return ResponseEntity.ok(new AuthResponse(token));
 
             } catch (Exception e) {

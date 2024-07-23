@@ -50,7 +50,6 @@ public class AccountEndPoint {
                     return ResponseEntity.badRequest().body("Mobile number is not valid");
                 }
             } else {
-                System.out.println( "else");
                 return loginWithUsernameOtp(customer, session);
             }
         } catch (Exception e) {
@@ -104,11 +103,18 @@ public class AccountEndPoint {
 
             countryCode = encodedCountryCode;
         }
-        CustomCustomer customerRecords = customCustomerService.findCustomCustomerByPhone(customerDetails.getMobileNumber(),countryCode);
-        if (customerRecords == null) {
-
-            return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
+        String updated_mobile = null;
+        if (customerDetails.getMobileNumber().startsWith("0")) {
+            updated_mobile = customerDetails.getMobileNumber().substring(1);
+        }else{
+            updated_mobile = customerDetails.getMobileNumber();
         }
+        CustomCustomer customerRecords = customCustomerService.findCustomCustomerByPhone(updated_mobile,countryCode);
+        if (customerRecords != null) {
+
+            return new ResponseEntity<>("Data already exists", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
         if (customerService == null) {
             return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -116,7 +122,7 @@ public class AccountEndPoint {
         if (customer != null) {
             String expectedOtp = (String) session.getAttribute("expectedOtp");
 
-            twilioService.sendOtpToMobile(customerDetails.getMobileNumber(),Constant.COUNTRY_CODE);
+            twilioService.sendOtpToMobile(updated_mobile,Constant.COUNTRY_CODE);
             return new ResponseEntity<>("OTP Sent on " + customerDetails.getMobileNumber()  + " otp is " + expectedOtp, HttpStatus.OK);
         } else {
             return ResponseEntity.badRequest().body("Mobile number not found");

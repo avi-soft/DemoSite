@@ -96,6 +96,12 @@ public class CustomerEndpoint {
 
                 countryCode = encodedCountryCode;
             }
+            String updated_mobile = null;
+            if (customerDetails.getMobileNumber().startsWith("0")) {
+                 updated_mobile = customerDetails.getMobileNumber().substring(1);
+            }else{
+                updated_mobile = customerDetails.getMobileNumber();
+            }
             CustomCustomer customerRecords = customCustomerService.findCustomCustomerByPhone(customerDetails.getMobileNumber(),countryCode);
             if (customerRecords != null) {
 
@@ -104,6 +110,7 @@ public class CustomerEndpoint {
 
             Customer customer = customerService.createCustomer();
             customerDetails.setId(customerService.findNextCustomerId());
+            customerDetails.setMobileNumber(updated_mobile);
             customerDetails.setCountryCode(countryCode);
             em.persist(customerDetails);
             return new ResponseEntity<>("Customer Created succesfully " + customerDetails.getId(), HttpStatus.OK);
