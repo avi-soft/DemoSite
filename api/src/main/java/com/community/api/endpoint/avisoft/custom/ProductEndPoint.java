@@ -48,7 +48,7 @@ public class ProductEndPoint extends CatalogEndpoint {
 
 
     @Transactional
-    @RequestMapping(value = "/add", method = RequestMethod.POST, params = {"expirationDate", "goLiveDate", "skuId", "name", "description"})
+    @RequestMapping(value = "/add", method = RequestMethod.POST)
     public ResponseEntity<String> addProduct(@RequestBody ProductImpl productImpl,
                                              @RequestParam(value = "expirationDate", required = true) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date activeEndDate,
                                              @RequestParam(value = "goLiveDate", required = true) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date goLiveDate,
