@@ -13,8 +13,8 @@ import com.twilio.type.PhoneNumber;
 import org.springframework.beans.factory.annotation.Value;
 
 import javax.servlet.http.HttpSession;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 @Service
@@ -32,24 +32,32 @@ public class TwilioService {
     @Value("${twilio.phoneNumber}")
     private String twilioPhoneNumber;
 
-    public ResponseEntity<String> sendOtpToMobile(String mobileNumber,String countryCode) {
+    @Autowired
+    private HttpSession httpSession;
+    public ResponseEntity<String> sendOtpToMobile(String mobileNumber, String countryCode) {
+
         if (mobileNumber == null || mobileNumber.isEmpty()) {
             throw new IllegalArgumentException("Mobile number cannot be null or empty");
         }
 
         try {
             Twilio.init(accountSid, authToken);
-            String encodedCountryCode = URLEncoder.encode(countryCode, "UTF-8");
-            String completeMobileNumber = encodedCountryCode + mobileNumber;
+            String completeMobileNumber = countryCode + mobileNumber;
             String otp = generateOTP();
 
-          Message message = Message.creator(
+            System.out.println(completeMobileNumber + " completeMobileNumber");
+
+           Message message = Message.creator(
                             new PhoneNumber(completeMobileNumber),
                             new PhoneNumber(twilioPhoneNumber),
-                          otp)
+                            otp)
                     .create();
 
-            return ResponseEntity.ok(otp);
+            httpSession.setAttribute("expectedOtp",otp);
+            httpSession.setAttribute("mobileNumber",mobileNumber);
+           System.out.println("OTP set in session: " + otp);
+           return ResponseEntity.ok("OTP has been sent successfully "+otp);
+
 
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
@@ -66,20 +74,6 @@ public class TwilioService {
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error sending OTP: " + e.getMessage());
         }
-    }
-
-    public ResponseEntity<String> sendOTPFunction(String mobileNumber, String countryCode, HttpSession session) throws UnsupportedEncodingException {
-
-        ResponseEntity<String> otpResponse = this.sendOtpToMobile(mobileNumber,countryCode);
-        System.out.println(otpResponse.getBody() + "  otpResponse  send-otp ");
-
-        if (otpResponse.getStatusCode() == HttpStatus.OK) {
-            session.setAttribute("expectedOtp", otpResponse.getBody());
-            return ResponseEntity.ok("OTP has been sent on your number " + mobileNumber);
-        } else {
-            return ResponseEntity.internalServerError().body("Failed to send OTP on " + mobileNumber);
-        }
-
     }
 
 
