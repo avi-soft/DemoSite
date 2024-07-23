@@ -5,7 +5,6 @@ import com.community.api.endpoint.avisoft.CustomCategoryEndpoint;
 import com.community.api.services.exception.ExceptionHandlingService;
 import org.broadleafcommerce.core.catalog.domain.*;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
-import org.broadleafcommerce.core.catalog.service.type.ProductType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
-import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @RestController
@@ -48,38 +47,101 @@ public class ProductEndPoint extends CatalogEndpoint {
      */
 
 
-
     @Transactional
+    @RequestMapping(value = "/add", method = RequestMethod.POST, params = {"expirationDate", "goLiveDate", "skuId", "name", "description"})
+    public ResponseEntity<String> addProduct(@RequestBody ProductImpl productImpl,
+                                             @RequestParam(value = "expirationDate", required = true) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date activeEndDate,
+                                             @RequestParam(value = "goLiveDate", required = true) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date goLiveDate,
+                                             @RequestParam(value = "categoryId", required = false, defaultValue = "0") Long categoryId,
+                                             @RequestParam(value = "skuId", required = false, defaultValue = "0") Long skuId,
+                                             @RequestParam(value = "name", required = false, defaultValue = "demo Product") String name,
+                                             @RequestParam(value = "description", required = false, defaultValue = "demo Description") String description,
+                                             @RequestParam(value = "quantity", required = false, defaultValue = "0") int quantity ){
+        try {
+
+            if (catalogService == null) {
+                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
+            }
+
+            // Set default category if provided else default Category will be null(which is deprecated as well)
+            if (categoryId != null && categoryId != 0) {
+                Category category = catalogService.findCategoryById(categoryId);
+                if (category == null) {
+                    throw BroadleafWebServicesException.build(404).addMessage("CategoryId does not exist.");
+                }
+                productImpl.setDefaultCategory(category);
+            }
+
+            // Save or update the product with values from requestBody.
+            Product product = catalogService.saveProduct(productImpl);
+
+            // Find or create the SKU
+            Sku sku = catalogService.findSkuById(skuId);
+            if (sku == null) {
+                sku = catalogService.createSku();
+            }
+            sku.setName(name);
+            sku.setDescription(description);
+            sku.setQuantityAvailable(quantity);
+
+            // Set active start date to current date and time in "yyyy-MM-dd HH:mm:ss" format
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String formattedDate = dateFormat.format(new Date());
+            Date activeStartDate = dateFormat.parse(formattedDate); // Convert formatted date string back to Date
+
+            sku.setActiveStartDate(activeStartDate);
+            sku.setActiveEndDate(activeEndDate);
+            sku.setDefaultProduct(product);
+            catalogService.saveSku(sku);
+
+            // Set default SKU in the product
+            product.setDefaultSku(sku);
+
+            // Save external product with provided dates
+            extProductService.saveExtProduct(activeStartDate, activeEndDate, goLiveDate, product.getId());
+
+            return ResponseEntity.ok("Product added successfully");
+        }catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
+        }
+    }
+
+    /*@Transactional
     @RequestMapping(value = "/add", method = RequestMethod.POST, params = {"createdDate", "expirationDate", "goLiveDate", "skuId"})
     public ResponseEntity<String> addProduct(@RequestBody ProductImpl productImpl, @RequestParam("createdDate") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date createdDate,
                                              @RequestParam("expirationDate") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date expirationDate,
                                              @RequestParam("goLiveDate") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date goLiveDate,
                                              @RequestParam(value = "categoryId", required = false, defaultValue = "0") Long categoryId,
-                                             @RequestParam("skuId") Long skuId,
+                                             @RequestParam(value = "skuId", defaultValue = "0") Long skuId,
                                              @RequestParam("name") String name){
 
         if(categoryId != null && categoryId != 0){
             productImpl.setDefaultCategory(catalogService.findCategoryById(categoryId));
         }
+
+        Product product = catalogService.saveProduct(productImpl);
+
+        // Find or create the SKU
         Sku sku = catalogService.findSkuById(skuId);
-        if(sku == null){
+        if (sku == null) {
             sku = catalogService.createSku();
+            sku.setName(name);
+            sku.setDefaultProduct(product);
+            catalogService.saveSku(sku);
+        } else {
+            sku.setName(name);
+            sku.setDefaultProduct(product);
+            catalogService.saveSku(sku);
         }
+        product.setDefaultSku(sku);
 
-        sku.setName(name);
-        sku = catalogService.saveSku(sku);
-        productImpl.setDefaultSku(sku);
-        productImpl.getDefaultSku().setDefaultProduct(productImpl);
-
-        catalogService.saveSku(sku);
-        Product product = catalogService.saveProduct(productImpl); // issue here is the product is saved two times.
 
         extProductService.saveExtProduct(createdDate, expirationDate, goLiveDate, product.getId());
-        logger.info("hello" + product.getId());
+        logger.info("hello" + productImpl.getId());
         logger.info("hello2");
         return ResponseEntity.ok("good");
 
-    }
+    }*/
 
     /*This is the function of using productImpl request body when entering the data in the blc_product.*/
     /*@Transactional
