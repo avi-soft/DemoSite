@@ -15,7 +15,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityManager;
-import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -206,29 +205,38 @@ public class ProductEndPoint extends CatalogEndpoint {
 
 
     @RequestMapping(value = "/getProducts/{productId}", method = RequestMethod.GET)
-    public ResponseEntity<?> retrieveProductById(HttpServletRequest request, @PathVariable("productId") Long productId) {
+    public ResponseEntity<?> retrieveProductById(@PathVariable("productId") Long productId) {
 
         try {
 
+            if (catalogService == null) {
+                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
+            }
+
             CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
 
-            if (customProduct == null) {
-                return ResponseEntity.notFound().build();
+            if(customProduct == null){
+                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
             }
 
             // Assuming CustomProduct has a direct reference to Product
+
             Product product = catalogService.findProductById(productId);
 
             // Construct a JSON response
             Map<String, Object> response = new HashMap<>();
-            response.put("productId", product.getId());
-            response.put("productName", product.getName());
-            response.put("metaTitle", product.getMetaTitle());
-            response.put("createdDate", customProduct.getCreated_date());
-            response.put("expirationDate", customProduct.getExpiration_date());
+            response.put("productId", customProduct.getId());
+            response.put("productName", customProduct.getDefaultSku().getName());
+            response.put("archived", customProduct.getArchived());
+            response.put("metaTitle", customProduct.getMetaTitle());
+            response.put("description", customProduct.getDefaultSku().getDescription());
+            response.put("defaultCategoryId", customProduct.getDefaultCategory().getId());
+            response.put("categoryName", customProduct.getDefaultCategory().getName());
+            response.put("ActiveCreatedDate", customProduct.getDefaultSku().getActiveStartDate());
+            response.put("ActiveExpirationDate", customProduct.getDefaultSku().getActiveEndDate());
             response.put("goLiveDate", customProduct.getGo_live_date());
-            // Add more fields as needed
 
+            // Add more fields as needed
             return ResponseEntity.ok(response);
 
         } catch (Exception e) {
@@ -241,27 +249,79 @@ public class ProductEndPoint extends CatalogEndpoint {
     public ResponseEntity<?> retrieveProducts() {
         try {
 
+            if (catalogService == null) {
+                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
+            }
+
             List<Product> products = catalogService.findAllProducts();
+
             if (products.size() == 0) {
                 throw BroadleafWebServicesException.build(404).addMessage("No product found in the DB");
             }
 
             List<Map<String, Object>> responses = new ArrayList<>();
             for(Product product: products) {
+
                 CustomProduct customProduct = entityManager.find(CustomProduct.class, product.getId());
+
                 if (customProduct != null) {
+
                     Map<String, Object> response = new HashMap<>();
-                    response.put("productId", product.getId());
-                    response.put("productName", product.getName());
-                    response.put("createdDate", customProduct.getCreated_date());
-                    response.put("metaTitle", product.getMetaTitle());
-                    response.put("expirationDate", customProduct.getExpiration_date());
+                    response.put("productId", customProduct.getId());
+                    response.put("productName", customProduct.getDefaultSku().getName());
+                    response.put("archived", customProduct.getArchived());
+                    response.put("metaTitle", customProduct.getMetaTitle());
+                    response.put("description", customProduct.getDefaultSku().getDescription());
+                    response.put("defaultCategoryId", customProduct.getDefaultCategory().getId());
+                    response.put("categoryName", customProduct.getDefaultCategory().getName());
+                    response.put("ActiveCreatedDate", customProduct.getDefaultSku().getActiveStartDate());
+                    response.put("ActiveExpirationDate", customProduct.getDefaultSku().getActiveEndDate());
                     response.put("goLiveDate", customProduct.getGo_live_date());
+
                     responses.add(response);
                 }
             }
 
             return ResponseEntity.ok(responses);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
+        }
+    }
+
+
+    @RequestMapping(value = "/update/{productId}", method = RequestMethod.PUT)
+    public ResponseEntity<?> updateProduct(@PathVariable("productId") Long productId){
+
+        try {
+
+            return ResponseEntity.ok("Product Updated Successfully");
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
+        }
+
+    }
+
+
+
+    @RequestMapping(value = "/delete/{productId}", method = RequestMethod.DELETE)
+    public ResponseEntity<?> deleteProduct(@PathVariable("productId") Long productId) {
+        try {
+
+            if (catalogService == null) {
+                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
+            }
+
+            CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
+
+            if(customProduct == null){
+                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
+            }
+
+            catalogService.removeProduct(customProduct.getDefaultSku().getDefaultProduct());
+
+            return ResponseEntity.ok("Product Archived Successfully");
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
