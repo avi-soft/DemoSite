@@ -16,12 +16,10 @@ public class ExtProductService {
     private EntityManager entityManager;
 
     @Transactional
-    public void saveExtProduct(Date createdDate, Date expirationDate, Date goLiveDate, Long productId) {
-        String sql = "INSERT INTO ext_product (created_date, expiration_date, go_live_date, product_id) VALUES (:createdDate, :expirationDate, :goLiveDate, :productId)";
+    public void saveExtProduct(Date goLiveDate, Long productId) {
+        String sql = "INSERT INTO ext_product (golivedate, product_id) VALUES (:goLiveDate, :productId)";
 
         entityManager.createNativeQuery(sql)
-                .setParameter("createdDate", createdDate != null ? new Timestamp(createdDate.getTime()) : null)
-                .setParameter("expirationDate", expirationDate != null ? new Timestamp(expirationDate.getTime()) : null)
                 .setParameter("goLiveDate", goLiveDate != null ? new Timestamp(goLiveDate.getTime()) : null)
                 .setParameter("productId", productId)
                 .executeUpdate();
