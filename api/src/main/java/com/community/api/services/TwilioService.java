@@ -1,5 +1,6 @@
 package com.community.api.services;
 
+import com.community.api.endpoint.customer.CustomCustomer;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.type.PhoneNumber;
 import org.springframework.beans.factory.annotation.Value;
 
+import javax.persistence.EntityManager;
 import javax.servlet.http.HttpSession;
 import java.util.HashMap;
 import java.util.Map;
@@ -32,7 +34,10 @@ public class TwilioService {
 
     @Value("${twilio.phoneNumber}")
     private String twilioPhoneNumber;
-
+    @Autowired
+    private CustomCustomerService customCustomerService;
+    @Autowired
+    private EntityManager entityManager;
     @Autowired
     private HttpSession httpSession;
     public ResponseEntity<String> sendOtpToMobile(String mobileNumber, String countryCode) {
@@ -48,12 +53,11 @@ public class TwilioService {
 
             System.out.println(completeMobileNumber + " completeMobileNumber");
 
-           Message message = Message.creator(
+           /*Message message = Message.creator(
                             new PhoneNumber(completeMobileNumber),
                             new PhoneNumber(twilioPhoneNumber),
                             otp)
-                    .create();
-
+                    .create();*/
           httpSession.setAttribute("expectedOtp_"+completeMobileNumber,otp);
           httpSession.setAttribute("mobileNumber",mobileNumber);
           httpSession.setAttribute("countryCode",countryCode);
@@ -80,7 +84,7 @@ public class TwilioService {
 
     private synchronized String generateOTP() {
         Random random = new Random();
-        int otp = 100000 + random.nextInt(900000);
+        int otp = 1000 + random.nextInt(8999);
         return String.valueOf(otp);
     }
 

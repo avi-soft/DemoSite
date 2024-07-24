@@ -1,5 +1,4 @@
 package com.community.api.endpoint.customer;
-import com.community.api.component.Constant;
 import com.community.api.services.CustomCustomerService;
 import com.community.api.services.TwilioService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
@@ -13,13 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import javax.persistence.EntityManager;
-import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
-
-import static com.community.api.component.Constant.COUNTRY_CODE;
-
 @RestController
 @RequestMapping(value = "/customer-custom",
         produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }
@@ -40,15 +33,13 @@ public class CustomerEndpoint {
 
     @RequestMapping(value = "getCustomer/{customerId}", method = RequestMethod.GET)
     public ResponseEntity<Object> retrieveCustomerById(@PathVariable Long customerId) {
+        logger.debug("Retrieving customer by ID: {}", customerId);
         try {
             if (customerService == null) {
                 logger.error("Customer service is not initialized.");
                 return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
             }
-
             Customer customer = customerService.readCustomerById(customerId);
-
-
 
             if (customer == null) {
                 return new ResponseEntity<>("Customer with this ID does not exist", HttpStatus.NOT_FOUND);
@@ -58,7 +49,7 @@ public class CustomerEndpoint {
                 customerDTO.setLastName(customer.getLastName());
                 customerDTO.setEmail(customer.getEmailAddress());
                 customerDTO.setUsername(customer.getUsername());
-                customerDTO.setCustomerId(customerDTO.getCustomerId());
+                customerDTO.setCustomerId(customer.getId());
                 CustomCustomer customCustomer =em.find(CustomCustomer.class,customer.getId());
                 if(customCustomer!=null) {
                     customerDTO.setMobileNumber(customCustomer.getMobileNumber());
@@ -66,7 +57,7 @@ public class CustomerEndpoint {
                 }
                 else
                 {
-                    return new ResponseEntity<>("Error fetching Customer Data",HttpStatus.INTERNAL_SERVER_ERROR);
+                    return new ResponseEntity<>("Error fetching Customer Data",HttpStatus.NOT_FOUND);
                 }
             }
         } catch (Exception e) {
@@ -88,32 +79,17 @@ public class CustomerEndpoint {
             if (!customCustomerService.validateInput(customerDetails))
                 return new ResponseEntity<>("One or more inputs invalid", HttpStatus.UNPROCESSABLE_ENTITY);
 
-            String countryCode = null;
-            if (customerDetails.getCountryCode() == null || customerDetails.getCountryCode().isEmpty()) {
-                countryCode = Constant.COUNTRY_CODE;
-            }else{
-                String encodedCountryCode = URLEncoder.encode(customerDetails.getCountryCode(), "UTF-8");
-
-                countryCode = encodedCountryCode;
-            }
-            CustomCustomer customerRecords = customCustomerService.findCustomCustomerByPhone(customerDetails.getMobileNumber(),countryCode);
-            if (customerRecords != null) {
-
-                return new ResponseEntity<>("Data already exists", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
             Customer customer = customerService.createCustomer();
             customerDetails.setId(customerService.findNextCustomerId());
-            customerDetails.setCountryCode(countryCode);
             em.persist(customerDetails);
-            return new ResponseEntity<>("Customer Created succesfully " + customerDetails.getId(), HttpStatus.OK);
-        }  catch (Exception e) {
+            return new ResponseEntity<>("Customer Created succesfully with Id"+customer.getId(), HttpStatus.OK);
+        } catch (Exception e) {
             exceptionHandling.handleException(e);
             return new ResponseEntity<>("Error saving", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     @Transactional
-    @RequestMapping(value = "update/{customerId}", method = RequestMethod.PUT)
+    @RequestMapping(value = "update/{customerId}", method = RequestMethod.PATCH)
      public ResponseEntity<String> updateCustomer(@RequestBody CustomCustomer customerDetails,@PathVariable Long customerId) {
          try {
              if (customerService == null) {
@@ -125,9 +101,19 @@ public class CustomerEndpoint {
              if (customerDetails.getMobileNumber() != null)
              {
                  if(customCustomerService.isValidMobileNumber(customerDetails.getMobileNumber())==false)
-                     return new ResponseEntity<>("Error updating ,mobile number invalid", HttpStatus.INTERNAL_SERVER_ERROR);
+                     return new ResponseEntity<>("Cannot update phoneNumber", HttpStatus.INTERNAL_SERVER_ERROR);
+             }
+             if(!customerService.readCustomerByUsername(customerDetails.getUsername()).equals(null) && customerService.readCustomerByUsername(customerDetails.getUsername()).getId()!=(customerId))
+             {
+                 return new ResponseEntity<>("Username already exists",HttpStatus.BAD_REQUEST);
+             }
+             if(!customerService.readCustomerByEmail(customerDetails.getEmailAddress()).equals(null)&&customerDetails.getEmailAddress()!=null)
+             {
+                 if(customerService.readCustomerByEmail(customerDetails.getEmailAddress()).getId()!=(customerId))
+                     return new ResponseEntity<>("Email already exists",HttpStatus.BAD_REQUEST);
              }
             customerDetails.setId(customerId);
+             customerDetails.setMobileNumber(customCustomer.getMobileNumber());
             em.merge(customerDetails);
             return new ResponseEntity<>("Customer Updated", HttpStatus.OK);
         } catch (Exception e) {
@@ -150,59 +136,11 @@ public class CustomerEndpoint {
             }
             else
             {
-                return new ResponseEntity<>("No Records found for this ID", HttpStatus.INTERNAL_SERVER_ERROR);
+                return new ResponseEntity<>("No Records found for this ID", HttpStatus.NO_CONTENT);
             }
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return new ResponseEntity<>("Error deleting", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    @RequestMapping(value = "getCustomerbyphonenumber", method = RequestMethod.GET)
-    public ResponseEntity<Object> retrieveCustomerByPhonee(@RequestParam("mobileNumber") String mobileNumber, @RequestParam(value = "countryCode", required = false) String countryCode,
-
-                                                           HttpSession session) {
-        try {
-            if (customerService == null) {
-                logger.error("Customer service is not initialized.");
-                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
-            if (countryCode == null || countryCode.isEmpty()) {
-                countryCode = Constant.COUNTRY_CODE;
-            }else{
-                String encodedCountryCode = URLEncoder.encode(countryCode, "UTF-8");
-
-                countryCode = encodedCountryCode;
-            }
-
-            Customer customer = customCustomerService.findCustomCustomerByPhone(mobileNumber,countryCode);
-
-            if (customer == null) {
-                return new ResponseEntity<>("Customer with this ID does not exist", HttpStatus.NOT_FOUND);
-            } else {
-                CustomerDTO customerDTO=new CustomerDTO();
-                customerDTO.setFirstName(customer.getFirstName());
-                customerDTO.setLastName(customer.getLastName());
-                customerDTO.setEmail(customer.getEmailAddress());
-                customerDTO.setCustomerId(customerDTO.getCustomerId());
-                customerDTO.setUsername(customer.getUsername());
-                CustomCustomer customCustomer =em.find(CustomCustomer.class,customer.getId());
-                if(customCustomer!=null) {
-                    customerDTO.setMobileNumber(customCustomer.getMobileNumber());
-
-                    return new ResponseEntity<>(customerDTO,HttpStatus.OK);
-                }
-                else
-                {
-                    return new ResponseEntity<>("Error fetching Customer Data",HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-            }
-        } catch (Exception e) {
-
-            exceptionHandling.handleException(e);
-            return new ResponseEntity<>("Error retrieving Customer", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
     }
 }
