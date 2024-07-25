@@ -9,7 +9,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
+@RestController
 @RequestMapping("/test")
 public class TestController {
 
@@ -19,7 +21,7 @@ public class TestController {
     @Autowired
     private JwtUtil jwtUtil;
 
-    @GetMapping("/catcherror")
+    @GetMapping("/catch-error")
     public ResponseEntity<String> catcherror() {
         
         try {
