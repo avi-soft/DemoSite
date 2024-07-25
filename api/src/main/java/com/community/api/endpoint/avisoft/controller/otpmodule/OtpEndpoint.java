@@ -45,7 +45,6 @@ public class OtpEndpoint {
 
     @GetMapping("/send-otp")
     public ResponseEntity<String> sendtOtp(@RequestParam("mobileNumber") String mobileNumber, @RequestParam(value = "countryCode", required = false) String countryCode,
-
                                              HttpSession session) throws UnsupportedEncodingException {
 
         if (mobileNumber.startsWith("0")) {

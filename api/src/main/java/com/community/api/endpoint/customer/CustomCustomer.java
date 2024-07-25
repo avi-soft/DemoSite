@@ -18,8 +18,8 @@ public class CustomCustomer extends CustomerImpl
 {
     @Column(name = "country_code", unique = false)
     private String countryCode;
-    @Column(name = "mobile_number", unique = true)
+    @Column(name = "mobile_number", unique = false)
     private String mobileNumber;
-    private String username;
-    private String password;
+    @Column String otp;
+   // private int otp;
 }
