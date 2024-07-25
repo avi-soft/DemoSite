@@ -1,5 +1,7 @@
-package com.community.api.endpoint.customer;
+package com.community.api.endpoint.avisoft.controller;
+
 import com.community.api.component.Constant;
+import com.community.api.endpoint.customer.CustomCustomer;
 import com.community.api.services.CustomCustomerService;
 import com.community.api.services.TwilioService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
@@ -10,9 +12,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
+
 import static org.apache.commons.lang.StringUtils.isNumeric;
 
 @RestController
@@ -157,7 +161,7 @@ public class AccountEndPoint {
                 return new ResponseEntity<>("Invalid mobile number or password ", HttpStatus.BAD_REQUEST);
             }
 
-            CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(customerDetails.getMobileNumber(),customerDetails.getCountryCode());
+            CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(customerDetails.getMobileNumber(),customerDetails.getCountryCode()            );
             if (existingCustomer != null) {
                 Customer customer=customerService.readCustomerById(existingCustomer.getId());
                 if (customer.getPassword().equals(customerDetails.getPassword())) {

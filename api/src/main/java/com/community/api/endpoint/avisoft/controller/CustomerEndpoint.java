@@ -1,4 +1,7 @@
-package com.community.api.endpoint.customer;
+package com.community.api.endpoint.avisoft.controller;
+
+import com.community.api.endpoint.customer.CustomCustomer;
+import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.services.CustomCustomerService;
 import com.community.api.services.TwilioService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
@@ -11,8 +14,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
+
 @RestController
 @RequestMapping(value = "/customer-custom",
         produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }
