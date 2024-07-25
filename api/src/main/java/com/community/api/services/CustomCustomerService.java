@@ -26,6 +26,7 @@ public class CustomCustomerService {
     }
 
     public boolean isValidMobileNumber(String mobileNumber) {
+
         if (mobileNumber.startsWith("0")) {
             mobileNumber = mobileNumber.substring(1);
         }

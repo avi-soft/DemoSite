@@ -36,15 +36,13 @@ public class TwilioService {
 
     @Value("${twilio.phoneNumber}")
     private String twilioPhoneNumber;
-
+    @Autowired
+    private CustomCustomerService customCustomerService;
+    @Autowired
+    private EntityManager entityManager;
     @Autowired
     private HttpSession httpSession;
 
-    @Autowired
-    private CustomCustomerService customCustomerService;
-
-    @Autowired
-    private EntityManager entityManager;
 
     @Autowired
     private CustomerService customerService;
@@ -67,6 +65,7 @@ public class TwilioService {
                             new PhoneNumber(completeMobileNumber),
                             new PhoneNumber(twilioPhoneNumber),
                             otp)
+
                     .create();
 
 
@@ -84,6 +83,7 @@ public class TwilioService {
                 existingCustomer.setOtp(otp);
                 entityManager.merge(existingCustomer);
             }
+
 
            return ResponseEntity.ok("OTP has been sent successfully " + otp);
 
@@ -107,7 +107,7 @@ public class TwilioService {
 
     private synchronized String generateOTP() {
         Random random = new Random();
-        int otp = 100000 + random.nextInt(900000);
+        int otp = 1000 + random.nextInt(8999);
         return String.valueOf(otp);
     }
 

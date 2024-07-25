@@ -1,4 +1,4 @@
-package com.community.api.endpoint.avisoft;
+package com.community.api.endpoint.avisoft.controller.product;
 import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
 import com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException;
 import com.broadleafcommerce.rest.api.wrapper.ProductWrapper;

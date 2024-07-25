@@ -47,9 +47,7 @@ public class OtpEndpoint {
 
 
     @PostMapping("/send-otp")
-    public ResponseEntity<String> sendtOtp(@RequestBody CustomCustomer customerDetails,
-
-                                             HttpSession session) throws UnsupportedEncodingException {
+    public ResponseEntity<String> sendtOtp(@RequestBody CustomCustomer customerDetails,HttpSession session) throws UnsupportedEncodingException {
 
             try{
                 if (customerDetails.getMobileNumber().isEmpty() || customerDetails.getMobileNumber()==null)
