@@ -1,5 +1,6 @@
-package com.community.api.endpoint.avisoft.controller;
+package com.community.api.endpoint.avisoft.controller.Customer;
 
+import com.community.api.component.Constant;
 import com.community.api.endpoint.customer.CustomCustomer;
 import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.services.CustomCustomerService;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
+import java.net.URLEncoder;
 
 @RestController
 @RequestMapping(value = "/customer-custom",
@@ -84,8 +86,31 @@ public class CustomerEndpoint {
             if (!customCustomerService.validateInput(customerDetails))
                 return new ResponseEntity<>("One or more inputs invalid", HttpStatus.UNPROCESSABLE_ENTITY);
 
+            String countryCode = null;
+            if (customerDetails.getCountryCode() == null || customerDetails.getCountryCode().isEmpty()) {
+                countryCode = Constant.COUNTRY_CODE;
+            }else{
+                String encodedCountryCode = URLEncoder.encode(customerDetails.getCountryCode(), "UTF-8");
+
+                countryCode = encodedCountryCode;
+            }
+            String updated_mobile = null;
+            if (customerDetails.getMobileNumber().startsWith("0")) {
+                 updated_mobile = customerDetails.getMobileNumber().substring(1);
+            }else{
+                updated_mobile = customerDetails.getMobileNumber();
+            }
+            CustomCustomer customerRecords = customCustomerService.findCustomCustomerByPhone(customerDetails.getMobileNumber(),countryCode);
+            if (customerRecords != null) {
+
+                return new ResponseEntity<>("Data already exists", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
             Customer customer = customerService.createCustomer();
             customerDetails.setId(customerService.findNextCustomerId());
+            customerDetails.setMobileNumber(updated_mobile);
+            customerDetails.setCountryCode(countryCode);
+
             em.persist(customerDetails);
             return new ResponseEntity<>("Customer Created succesfully with Id"+customer.getId(), HttpStatus.OK);
         } catch (Exception e) {

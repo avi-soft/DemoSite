@@ -1,11 +1,14 @@
 package com.community.api.services;
 import com.community.api.component.Constant;
 import com.community.api.endpoint.customer.CustomCustomer;
+import org.apache.commons.collections4.CollectionUtils;
+import org.broadleafcommerce.profile.core.domain.Customer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import javax.persistence.EntityManager;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.regex.Pattern;
 
 @Service
@@ -32,6 +35,11 @@ public class CustomCustomerService {
     }
 
     public CustomCustomer findCustomCustomerByPhone(String mobileNumber,String countryCode) {
+
+        if (countryCode == null) {
+            countryCode = Constant.COUNTRY_CODE;
+        }
+
         return em.createQuery(Constant.PHONE_QUERY, CustomCustomer.class)
                 .setParameter("mobileNumber", mobileNumber)
                 .setParameter("countryCode", countryCode)
@@ -50,4 +58,9 @@ public class CustomCustomerService {
 
             return dateTime.format(outputFormatter);
         }
+
+/*    public Customer readCustomerByEmail(String phonenumber) {
+        List<Customer> customers = this.findCustomCustomerByPhone(phonenumber,null);
+        return CollectionUtils.isEmpty(customers) ? null : (Customer)customers.get(0);
+    }*/
     }

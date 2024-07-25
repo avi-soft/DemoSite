@@ -20,6 +20,7 @@ public class CustomCustomer extends CustomerImpl
     private String countryCode;
     @Column(name = "mobile_number", unique = false)
     private String mobileNumber;
-    @Column String otp;
-   // private int otp;
+    @Column(name = "otp", unique = true)
+    private String otp;
+
 }

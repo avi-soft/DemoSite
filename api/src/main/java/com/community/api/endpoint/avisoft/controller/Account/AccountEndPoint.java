@@ -1,4 +1,4 @@
-package com.community.api.endpoint.avisoft.controller;
+package com.community.api.endpoint.avisoft.controller.Account;
 
 import com.community.api.component.Constant;
 import com.community.api.endpoint.customer.CustomCustomer;
@@ -16,6 +16,9 @@ import org.springframework.web.bind.annotation.*;
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
+
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 
 import static org.apache.commons.lang.StringUtils.isNumeric;
 
@@ -79,28 +82,40 @@ public class AccountEndPoint {
         }
     }
     @RequestMapping(value = "phone-otp", method = RequestMethod.POST)
-    private ResponseEntity<String> loginWithPhoneOtp(@RequestBody CustomCustomer customerDetails, HttpSession session) {
-        try {
-            if (customerDetails.getCountryCode() == null)
-                customerDetails.setCountryCode(Constant.COUNTRY_CODE);
-            CustomCustomer customerRecords = customCustomerService.findCustomCustomerByPhone(customerDetails.getMobileNumber(), customerDetails.getCountryCode());
-            if (customerRecords == null) {
-                return new ResponseEntity<>("No records found for the provided mobile number.", HttpStatus.NOT_FOUND);
-            }
-            if (customerService == null) {
-                return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-            Customer customer = customerService.readCustomerById(customerRecords.getId());
-            if (customer != null) {
-                twilioService.sendOtpToMobile(customerRecords.getMobileNumber(), Constant.COUNTRY_CODE);
-                return new ResponseEntity<>("OTP Sent on " + customerDetails.getMobileNumber(), HttpStatus.OK);
-            } else {
-                return ResponseEntity.badRequest().body("Mobile number not found");
-            }
-        }catch (Exception e)
-        {
-            exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some issue in login: " + e.getMessage());
+    private ResponseEntity<String> loginWithPhoneOtp(@RequestBody CustomCustomer customerDetails, HttpSession session) throws UnsupportedEncodingException, UnsupportedEncodingException {
+
+        String countryCode = null;
+        if (customerDetails.getCountryCode() == null || customerDetails.getCountryCode().isEmpty()) {
+            countryCode = Constant.COUNTRY_CODE;
+        }else{
+            String encodedCountryCode = URLEncoder.encode(customerDetails.getCountryCode(), "UTF-8");
+
+            countryCode = encodedCountryCode;
+        }
+        String updated_mobile = null;
+        if (customerDetails.getMobileNumber().startsWith("0")) {
+            updated_mobile = customerDetails.getMobileNumber().substring(1);
+        }else{
+            updated_mobile = customerDetails.getMobileNumber();
+        }
+        CustomCustomer customerRecords = customCustomerService.findCustomCustomerByPhone(updated_mobile,countryCode);
+        if (customerRecords != null) {
+
+            return new ResponseEntity<>("Data already exists", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        if (customerService == null) {
+            return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        Customer customer = customerService.readCustomerById(customerRecords.getId());
+        if (customer != null) {
+            String expectedOtp = (String) session.getAttribute("expectedOtp");
+
+            twilioService.sendOtpToMobile(updated_mobile,Constant.COUNTRY_CODE);
+            return new ResponseEntity<>("OTP Sent on " + customerDetails.getMobileNumber()  + " otp is " + expectedOtp, HttpStatus.OK);
+        } else {
+            return ResponseEntity.badRequest().body("Mobile number not found");
+
         }
     }
 
