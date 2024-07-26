@@ -1,5 +1,7 @@
-package com.community.api.endpoint.customer;
+package com.community.api.endpoint.avisoft.controller.Account;
+
 import com.community.api.component.Constant;
+import com.community.api.endpoint.customer.CustomCustomer;
 import com.community.api.services.CustomCustomerService;
 import com.community.api.services.TwilioService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
@@ -10,12 +12,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-
 
 import static org.apache.commons.lang.StringUtils.isNumeric;
 
@@ -79,65 +82,92 @@ public class AccountEndPoint {
         }
     }
     @RequestMapping(value = "phone-otp", method = RequestMethod.POST)
-    private ResponseEntity<String> loginWithPhoneOtp(@RequestBody CustomCustomer customerDetails, HttpSession session) {
-        CustomCustomer customerRecords = customCustomerService.findCustomCustomerByPhone(customerDetails.getMobileNumber());
-        if (customerRecords == null) {
-            return new ResponseEntity<>("No records found", HttpStatus.NO_CONTENT);
+    private ResponseEntity<String> loginWithPhoneOtp(@RequestBody CustomCustomer customerDetails, HttpSession session) throws UnsupportedEncodingException, UnsupportedEncodingException {
+
+        String countryCode = null;
+        if (customerDetails.getCountryCode() == null || customerDetails.getCountryCode().isEmpty()) {
+            countryCode = Constant.COUNTRY_CODE;
+        }else{
+            String encodedCountryCode = URLEncoder.encode(customerDetails.getCountryCode(), "UTF-8");
+
+            countryCode = encodedCountryCode;
         }
+        String updated_mobile = null;
+        if (customerDetails.getMobileNumber().startsWith("0")) {
+            updated_mobile = customerDetails.getMobileNumber().substring(1);
+        }else{
+            updated_mobile = customerDetails.getMobileNumber();
+        }
+        CustomCustomer customerRecords = customCustomerService.findCustomCustomerByPhone(updated_mobile,countryCode);
+        if (customerRecords != null) {
+
+            return new ResponseEntity<>("Data already exists", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
         if (customerService == null) {
             return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
         Customer customer = customerService.readCustomerById(customerRecords.getId());
         if (customer != null) {
-            twilioService.sendOtpToMobile(customerDetails.getMobileNumber(),Constant.COUNTRY_CODE);
-            return new ResponseEntity<>("OTP Sent on " + customerDetails.getMobileNumber(), HttpStatus.OK);
+            String expectedOtp = (String) session.getAttribute("expectedOtp");
+
+            twilioService.sendOtpToMobile(updated_mobile,Constant.COUNTRY_CODE);
+            return new ResponseEntity<>("OTP Sent on " + customerDetails.getMobileNumber()  + " otp is " + expectedOtp, HttpStatus.OK);
         } else {
             return ResponseEntity.badRequest().body("Mobile number not found");
+
         }
     }
 
     @Transactional
     @RequestMapping(value = "login-with-username", method = RequestMethod.POST)
     private ResponseEntity<String> loginWithUsername(@RequestBody CustomCustomer customerDetails, HttpSession session) {
-        if (customerService == null) {
-            return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        Customer customer = customerService.readCustomerByUsername(customerDetails.getUsername());
-        if (customer == null) {
-            return new ResponseEntity<>("No records found", HttpStatus.NO_CONTENT);
-        }
-        if (customer.getPassword().equals(customerDetails.getPassword())) {
-            return ResponseEntity.ok("Login successful");
-        } else {
-            return ResponseEntity.badRequest().body("Invalid password");
+        try {
+            if (customerService == null) {
+                return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            Customer customer = customerService.readCustomerByUsername(customerDetails.getUsername());
+            if (customer == null) {
+                return new ResponseEntity<>("No records found for the provided username.", HttpStatus.NOT_FOUND);
+            }
+            if (customer.getPassword().equals(customerDetails.getPassword())) {
+                return ResponseEntity.ok("Login successful");
+            } else {
+                return ResponseEntity.badRequest().body("Invalid password");
+            }
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some issue in login: " + e.getMessage());
         }
     }
-
     @RequestMapping(value = "username-otp", method = RequestMethod.POST)
     private ResponseEntity<String> loginWithUsernameOtp(
             @RequestBody CustomCustomer customerDetails,HttpSession session) {
-        if (customerService == null) {
-            return new ResponseEntity<>("customerService is null ",HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        Customer customer=customerService.readCustomerByUsername(customerDetails.getUsername());
-        if(customer==null)
+        try {
+            if (customerService == null) {
+                return new ResponseEntity<>("customerService is null ", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            Customer customer = customerService.readCustomerByUsername(customerDetails.getUsername());
+            if (customer == null) {
+                return new ResponseEntity<>("No records found for the provided username.", HttpStatus.NOT_FOUND);
+            }
+            CustomCustomer customCustomer = em.find(CustomCustomer.class, customer.getId());
+            if (customCustomer != null) {
+                return twilioService.sendOtpToMobile(customCustomer.getMobileNumber(), Constant.COUNTRY_CODE);
+            } else {
+                return new ResponseEntity<>("No records found", HttpStatus.NO_CONTENT);
+            }
+        }catch (Exception e)
         {
-
-            return new ResponseEntity<>("No records found ", HttpStatus.NO_CONTENT);
-        }
-        CustomCustomer customCustomer=em.find(CustomCustomer.class,customer.getId());
-        if(customCustomer!=null) {
-
-            return twilioService.sendOtpToMobile(customerDetails.getMobileNumber(),Constant.COUNTRY_CODE);
-        }
-        else {
-
-            return new ResponseEntity<>("No records found", HttpStatus.NO_CONTENT);
+            exceptionHandling.handleException(e);
+            return new ResponseEntity<>("Some Error in login", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     @RequestMapping(value = "login-with-password", method = RequestMethod.POST)
     public ResponseEntity<String> loginWithCustomerPassword(@RequestBody CustomCustomer customerDetails,HttpSession session) {
         try {
+            if (customerDetails.getCountryCode() == null)
+                customerDetails.setCountryCode(Constant.COUNTRY_CODE);
             if (customerService == null) {
                 return new ResponseEntity<>("customerService is null ",HttpStatus.INTERNAL_SERVER_ERROR);
             }
@@ -146,7 +176,7 @@ public class AccountEndPoint {
                 return new ResponseEntity<>("Invalid mobile number or password ", HttpStatus.BAD_REQUEST);
             }
 
-            CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(customerDetails.getMobileNumber());
+            CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(customerDetails.getMobileNumber(),customerDetails.getCountryCode()            );
             if (existingCustomer != null) {
                 Customer customer=customerService.readCustomerById(existingCustomer.getId());
                 if (customer.getPassword().equals(customerDetails.getPassword())) {
