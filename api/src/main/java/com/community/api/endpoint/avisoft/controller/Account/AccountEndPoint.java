@@ -84,35 +84,34 @@ public class AccountEndPoint {
     @RequestMapping(value = "phone-otp", method = RequestMethod.POST)
     private ResponseEntity<String> loginWithPhoneOtp(@RequestBody CustomCustomer customerDetails, HttpSession session) throws UnsupportedEncodingException, UnsupportedEncodingException {
 
-        String countryCode = null;
+        String countryCode = Constant.COUNTRY_CODE;
         if (customerDetails.getCountryCode() == null || customerDetails.getCountryCode().isEmpty()) {
             countryCode = Constant.COUNTRY_CODE;
         }else{
-            String encodedCountryCode = URLEncoder.encode(customerDetails.getCountryCode(), "UTF-8");
 
-            countryCode = encodedCountryCode;
+            countryCode = customerDetails.getCountryCode();
         }
-        String updated_mobile = null;
+        String updated_mobile = customerDetails.getMobileNumber();
         if (customerDetails.getMobileNumber().startsWith("0")) {
             updated_mobile = customerDetails.getMobileNumber().substring(1);
         }else{
             updated_mobile = customerDetails.getMobileNumber();
         }
-        CustomCustomer customerRecords = customCustomerService.findCustomCustomerByPhone(updated_mobile,countryCode);
-        if (customerRecords != null) {
-
-            return new ResponseEntity<>("Data already exists", HttpStatus.INTERNAL_SERVER_ERROR);
+        CustomCustomer customerRecords = customCustomerService.findCustomCustomerByPhone(customerDetails.getMobileNumber(),customerDetails.getCountryCode());
+        if (customerRecords == null) {
+            return new ResponseEntity<>("No Records found", HttpStatus.NOT_FOUND);
         }
+
 
         if (customerService == null) {
             return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
         }
         Customer customer = customerService.readCustomerById(customerRecords.getId());
         if (customer != null) {
-            String expectedOtp = (String) session.getAttribute("expectedOtp");
+            twilioService.sendOtpToMobile(updated_mobile,countryCode);
 
-            twilioService.sendOtpToMobile(updated_mobile,Constant.COUNTRY_CODE);
-            return new ResponseEntity<>("OTP Sent on " + customerDetails.getMobileNumber()  + " otp is " + expectedOtp, HttpStatus.OK);
+            String storedOtp = customerRecords.getOtp();
+            return new ResponseEntity<>("OTP Sent on " + customerDetails.getMobileNumber() + " storedOtp is " + storedOtp, HttpStatus.OK);
         } else {
             return ResponseEntity.badRequest().body("Mobile number not found");
 
