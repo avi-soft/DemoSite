@@ -58,12 +58,25 @@ public class ExtProductService {
         return errors;
     }
 
-    @Transactional
     public List<CustomProduct> getExtProducts() {
         String sql = "SELECT * FROM ext_product";
 
         return entityManager.createNativeQuery(sql, CustomProduct.class).getResultList();
     }
+
+    @Transactional
+    public void removeCategoryProductFromCategoryProductRefTable(Long categoryId, Long productId) {
+        String sql = "DELETE FROM blc_category_product_xref WHERE product_id = :productId AND category_id = :categoryId";
+        try{
+            entityManager.createNativeQuery(sql)
+                    .setParameter("productId", productId)
+                    .setParameter("categoryId", categoryId)
+                    .executeUpdate();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to Delete Category_Product: " + e.getMessage(), e);
+        }
+    }
+
 
     /*@PersistenceContext
     private EntityManager entityManager;

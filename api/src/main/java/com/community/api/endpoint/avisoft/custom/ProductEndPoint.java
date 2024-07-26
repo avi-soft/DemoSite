@@ -245,8 +245,15 @@ public class ProductEndPoint extends CatalogEndpoint {
                     throw BroadleafWebServicesException.build(404).addMessage(CATEGORYNOTFOUND);
                 }
 
-                product.setDefaultCategory(category);
-                product.setCategory(category); // Little fuzzy here as how would i delete it from that table as well.
+                if(product.getDefaultCategory() != category){
+                    // here we will write a query to delete the previous data set from category_product_xref table and that will do the job.
+                    extProductService.removeCategoryProductFromCategoryProductRefTable(product.getDefaultCategory().getId(), productId);
+
+                    product.setDefaultCategory(category);
+                    product.setCategory(category); // Little fuzzy here as how would i delete it from that table as well.
+
+                }
+
             }
             if(activeEndDate != null){
                 product.getDefaultSku().setActiveEndDate(activeEndDate);
