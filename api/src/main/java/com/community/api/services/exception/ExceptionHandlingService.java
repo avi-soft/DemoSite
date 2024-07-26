@@ -55,4 +55,16 @@ public class ExceptionHandlingService implements ExceptionHandlingImplement {
 
     }
 
+    public String handleException(HttpStatus status, Exception e) {
+
+        if(status.equals(HttpStatus.BAD_REQUEST)){
+            return "Custom 404 Error: " + e.getMessage();
+        }else if(status.equals(HttpStatus.INTERNAL_SERVER_ERROR)){
+            return "Custom 500 Error: " + e.getMessage();
+        }else{
+            return "Something went wrong: " + e.getMessage();
+        }
+
+    }
+
 }

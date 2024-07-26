@@ -2,6 +2,7 @@ package com.community.api.endpoint.avisoft.custom;
 import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
 import com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException;
 import com.community.api.services.exception.ExceptionHandlingService;
+import org.broadleafcommerce.common.money.Money;
 import org.broadleafcommerce.core.catalog.domain.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -44,13 +45,15 @@ public class ProductEndPoint extends CatalogEndpoint {
     @Transactional
     @PostMapping("/add")
     public ResponseEntity<String> addProduct(@RequestBody ProductImpl productImpl,
-                                             @RequestParam(value = "expirationDate") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date activeEndDate, // if we don't give required field then it by default is true.
+                                             @RequestParam(value = "expirationDate") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date activeEndDate, // if we don't give required field then by default it sets to true.
                                              @RequestParam(value = "goLiveDate") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date goLiveDate,
+                                             @RequestParam(value = "priorityLevel", required = false, defaultValue = "1") Integer priorityLevel,
                                              @RequestParam(value = "categoryId", required = false, defaultValue = "0") Long categoryId,
                                              @RequestParam(value = "skuId", required = false, defaultValue = "0") Long skuId,
                                              @RequestParam(value = "name", required = false, defaultValue = "demo Product") String name,
                                              @RequestParam(value = "description", required = false, defaultValue = "demo Description") String description,
-                                             @RequestParam(value = "quantity", required = false, defaultValue = "100000") Integer quantity ){
+                                             @RequestParam(value = "quantity", required = false, defaultValue = "100000") Integer quantity,
+                                             @RequestParam(value = "cost", required = false, defaultValue = "100")Double cost){
         try {
 
             if (catalogService == null) {
@@ -65,7 +68,8 @@ public class ProductEndPoint extends CatalogEndpoint {
                     throw BroadleafWebServicesException.build(404).addMessage(CATEGORYNOTFOUND);
                 }
 
-                productImpl.setDefaultCategory(category);
+                productImpl.setDefaultCategory(category); // This is Deprecated.
+                productImpl.setCategory(category); // This will add both categoryId and productId to category_product_xref table.
 
             }
 
@@ -76,10 +80,11 @@ public class ProductEndPoint extends CatalogEndpoint {
             Sku sku = catalogService.findSkuById(skuId);
             if (sku == null) {
                 sku = catalogService.createSku();
+                sku.setName(name);
+                sku.setDescription(description);
+                sku.setCost(new Money(cost));
+                sku.setQuantityAvailable(quantity);
             }
-            sku.setName(name);
-            sku.setDescription(description);
-            sku.setQuantityAvailable(quantity);
 
             // Set active start date to current date and time in "yyyy-MM-dd HH:mm:ss" format
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -94,13 +99,13 @@ public class ProductEndPoint extends CatalogEndpoint {
             // Set default SKU in the product
             product.setDefaultSku(sku);
 
-            // Save external product with provided dates
-            extProductService.saveExtProduct(goLiveDate, product.getId());
+            // Save external product with provided dates and get status code
+            extProductService.saveExtProduct(goLiveDate, priorityLevel, product.getId());
 
             return ResponseEntity.ok("Product added successfully");
 
         }catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(HttpStatus.INTERNAL_SERVER_ERROR ,e));
         }
 
     }
@@ -130,11 +135,13 @@ public class ProductEndPoint extends CatalogEndpoint {
             response.put("archived", customProduct.getArchived());
             response.put("metaTitle", customProduct.getMetaTitle());
             response.put("description", customProduct.getDefaultSku().getDescription());
+            response.put("cost", customProduct.getDefaultSku().getCost().doubleValue());
             response.put("defaultCategoryId", customProduct.getDefaultCategory().getId());
             response.put("categoryName", customProduct.getDefaultCategory().getName());
             response.put("ActiveCreatedDate", customProduct.getDefaultSku().getActiveStartDate());
             response.put("ActiveExpirationDate", customProduct.getDefaultSku().getActiveEndDate());
             response.put("goLiveDate", customProduct.getGoLiveDate());
+            response.put("priorityLevel", customProduct.getPriorityLevel());
 
             return ResponseEntity.ok(response);
 
@@ -174,11 +181,13 @@ public class ProductEndPoint extends CatalogEndpoint {
                     response.put("archived", customProduct.getArchived());
                     response.put("metaTitle", customProduct.getMetaTitle());
                     response.put("description", customProduct.getDefaultSku().getDescription());
+                    response.put("cost", customProduct.getDefaultSku().getCost().doubleValue());
                     response.put("defaultCategoryId", customProduct.getDefaultCategory().getId());
                     response.put("categoryName", customProduct.getDefaultCategory().getName());
                     response.put("ActiveCreatedDate", customProduct.getDefaultSku().getActiveStartDate());
                     response.put("ActiveExpirationDate", customProduct.getDefaultSku().getActiveEndDate());
                     response.put("goLiveDate", customProduct.getGoLiveDate());
+                    response.put("priorityLevel", customProduct.getPriorityLevel());
 
                     responses.add(response);
                 }
@@ -196,9 +205,12 @@ public class ProductEndPoint extends CatalogEndpoint {
     public ResponseEntity<String> updateProduct(@RequestBody ProductImpl productImpl,
                                            @RequestParam(value = "expirationDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date activeEndDate,
                                            @RequestParam(value = "goLiveDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date goLiveDate,
+                                           @RequestParam(value = "priorityLevel", required = false) Integer priorityLevel,
+                                           @RequestParam(value = "categoryId", required = false, defaultValue = "0") Long categoryId,
                                            @RequestParam(value = "name", required = false) String name,
                                            @RequestParam(value = "description", required = false) String description,
                                            @RequestParam(value = "quantity", required = false) Integer quantity,
+                                           @RequestParam(value = "cost", required = false) Double cost,
                                            @PathVariable("productId") Long productId ) {
 
         try {
@@ -217,16 +229,33 @@ public class ProductEndPoint extends CatalogEndpoint {
             if(goLiveDate != null){
                 customProduct.setGoLiveDate(goLiveDate);
             }
+            if(priorityLevel != null) {
+                customProduct.setPriorityLevel(priorityLevel);
+            }
             entityManager.merge(customProduct);
 
             // now we will update the values of ProductImpl -> blc_product table.
             // Before that we will update the sku value if any in the
             Product product = catalogService.findProductById(productId);
+            if(categoryId != null && categoryId != 0){
+
+                Category category = catalogService.findCategoryById(categoryId);
+
+                if(category == null){
+                    throw BroadleafWebServicesException.build(404).addMessage(CATEGORYNOTFOUND);
+                }
+
+                product.setDefaultCategory(category);
+                product.setCategory(category); // Little fuzzy here as how would i delete it from that table as well.
+            }
             if(activeEndDate != null){
                 product.getDefaultSku().setActiveEndDate(activeEndDate);
             }
             if(name != null){
                 product.getDefaultSku().setName(name);
+            }
+            if(cost != null){
+                product.getDefaultSku().setCost(new Money(cost));
             }
             if(description != null){
                 product.getDefaultSku().setDescription(description);
@@ -249,7 +278,6 @@ public class ProductEndPoint extends CatalogEndpoint {
         }
 
     }
-
 
 
     @DeleteMapping("/delete/{productId}")
