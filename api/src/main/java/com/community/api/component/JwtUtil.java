@@ -1,6 +1,7 @@
 package com.community.api.component;
 
 import com.community.api.endpoint.customer.CustomCustomer;
+import com.community.api.services.CustomCustomerService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -15,26 +16,33 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    private Key secretKey;
 
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
     @Autowired
-    private CustomerService customerService;
+    private CustomCustomerService customCustomerService;
+
+    private Key secretKey;
+
     @PostConstruct
     public void init() {
         this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
     }
 
-    public String generateToken(String phoneNumber) {
+   public String generateToken(String phoneNumber, String countryCode) {
+
+        System.out.println(secretKey + " secretKey");
         return Jwts.builder()
                 .setHeaderParam("typ", "JWT")
+                .claim("phoneNumber", phoneNumber)
+                .claim("countryCode", countryCode)
                 .setSubject(phoneNumber)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
-                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .signWith(this.secretKey, SignatureAlgorithm.HS256)
                 .compact();
     }
+
 
     public String extractPhoneNumber(String token) {
         try {
@@ -50,22 +58,29 @@ public class JwtUtil {
         }
     }
 
-    public boolean validateToken(String token) {
+/*    public boolean validateToken(String token) {
         try {
             return extractPhoneNumber(token) != null && !isTokenExpired(token);
         } catch (Exception e) {
             return false;
         }
-    }
+    }*/
 
-   /* public Boolean validateToken(String token, CustomCustomer customCustomerService) {
+    public Boolean validateToken(String token, CustomCustomerService customCustomerService) {
         final String PhoneNumber = extractPhoneNumber(token);
+        System.out.println(PhoneNumber + " PhoneNumber");
         try{
-            return (PhoneNumber.equals(customCustomerService.findCustomCustomerByPhone(PhoneNumber,null)) && !isTokenExpired(token));
+
+           CustomCustomer existingcustomer = customCustomerService.findCustomCustomerByPhone(PhoneNumber,Constant.COUNTRY_CODE);
+            System.out.println(PhoneNumber + " PhoneNumber" + existingcustomer + " expired  " + isTokenExpired(token));
+           if(existingcustomer!=null){
+               return (PhoneNumber.equals(existingcustomer.getMobileNumber()) && !isTokenExpired(token));
+           }
+            return false;
         }catch (Exception e) {
             return false;
         }
-    }*/
+    }
 
     private boolean isTokenExpired(String token) {
         return Jwts.parserBuilder()

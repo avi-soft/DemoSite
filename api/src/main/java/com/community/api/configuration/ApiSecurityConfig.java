@@ -133,10 +133,10 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .authorizeRequests()
                 .antMatchers("/api/v1/account/**", "/api/v1/otp/**").permitAll()
-                .antMatchers("/api/v1/**").authenticated()  // Require authentication for all other /api/v1/** endpoints
+                .antMatchers("/api/v1/**").authenticated()
                 .and()
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(apiCustomerStateFilter(), RememberMeAuthenticationFilter.class)
+//                .addFilterAfter(apiCustomerStateFilter(), RememberMeAuthenticationFilter.class)
                 .requiresChannel().anyRequest().requires(ChannelDecisionManagerImpl.ANY_CHANNEL);
     }
 

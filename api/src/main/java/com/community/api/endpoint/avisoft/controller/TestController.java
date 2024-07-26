@@ -36,8 +36,8 @@ public class TestController {
     }
 
     @GetMapping("/generate-token")
-    public String generateToken(@RequestParam String phoneNumber) {
-        return jwtUtil.generateToken(phoneNumber);
+    public String generateToken(@RequestParam String phoneNumber,@RequestParam String countrycode) {
+        return jwtUtil.generateToken(phoneNumber,countrycode);
     }
 
 

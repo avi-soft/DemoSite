@@ -166,7 +166,7 @@ public class CustomerEndpoint {
             }
             else
             {
-                return new ResponseEntity<>("No Records found for this ID", HttpStatus.NO_CONTENT);
+                return new ResponseEntity<>("No Records found for this ID", HttpStatus.INTERNAL_SERVER_ERROR);
             }
         } catch (Exception e) {
             exceptionHandling.handleException(e);

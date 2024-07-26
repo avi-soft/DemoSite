@@ -5,20 +5,14 @@ import com.community.api.endpoint.customer.CustomCustomer;
 import com.community.api.services.CustomCustomerService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.TwilioService;
-import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import javax.cache.Cache;
-import javax.cache.CacheManager;
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpSession;
-import javax.transaction.Transactional;
 import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 
 @RestController
 @RequestMapping("/otp")
@@ -69,8 +63,7 @@ public class OtpEndpoint {
 
                     countryCode = Constant.COUNTRY_CODE;
                 }else{
-                    String encodedCountryCode = URLEncoder.encode(countryCode, "UTF-8");
-                    countryCode = encodedCountryCode;
+                    countryCode = customerDetails.getCountryCode();
 
                 }
                 twilioService.setotp(mobileNumber, countryCode);
@@ -95,13 +88,16 @@ public class OtpEndpoint {
             if (customerDetails.getMobileNumber().isEmpty() || customerDetails.getMobileNumber()==null)
                 return new ResponseEntity<>("Enter mobile number", HttpStatus.UNPROCESSABLE_ENTITY);
 
+            if (!customCustomerService.isValidMobileNumber(customerDetails.getMobileNumber())) {
+                return new ResponseEntity<>("Invalid mobile number", HttpStatus.NOT_FOUND);
 
+            }
 
             if (otpEntered == null || otpEntered.trim().isEmpty()) {
                 return ResponseEntity.badRequest().body("Invalid OTP");
             }
 
-            CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(customerDetails.getMobileNumber(), null);
+            CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(customerDetails.getMobileNumber(), customerDetails.getCountryCode());
 
             String storedOtp = existingCustomer.getOtp();
             System.out.println("Entered OTP: " + otpEntered + ", storedOtp OTP: " + storedOtp + " session " + customerDetails.getMobileNumber());
@@ -111,13 +107,18 @@ public class OtpEndpoint {
                         return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
                     }
 
-                   /* String token = jwtUtil.generateToken(customerDetails.getMobileNumber());
-                    return ResponseEntity.ok(new AuthResponse(token));*/
-                return ResponseEntity.ok("OTP verified successfully ");
+                 String token = jwtUtil.generateToken(customerDetails.getMobileNumber(),customerDetails.getCountryCode());
 
+                String extractedPhoneNumber = jwtUtil.extractPhoneNumber(token);
+                System.out.println("Extracted Phone Number: " + extractedPhoneNumber  + " token " + token);
 
+                Boolean isValid = jwtUtil.validateToken(token, customCustomerService);
+                System.out.println("Is Token Valid? " + isValid);
+                return ResponseEntity.ok(new AuthResponse(token));
+//                    return ResponseEntity.ok("OTP verified successfully ");
 
             } else {
+
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid OTP");
             }
         } catch (Exception e) {
