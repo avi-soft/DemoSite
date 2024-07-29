@@ -39,9 +39,12 @@ public class JwtTokenValidatorFilter extends OncePerRequestFilter {
     @Autowired
     private CustomCustomerService customCustomerService;
 
+/*    @Autowired
+    private JwtTokenValidatorFilter
+
     public JwtTokenValidatorFilter(JwtUtil jwtUtil) {
         this.jwtUtil = jwtUtil;
-    }
+    }*/
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
