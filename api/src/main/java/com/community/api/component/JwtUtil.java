@@ -57,14 +57,6 @@ public class JwtUtil {
         }
     }
 
-/*    public boolean validateToken(String token) {
-        try {
-            return extractPhoneNumber(token) != null && !isTokenExpired(token);
-        } catch (Exception e) {
-            return false;
-        }
-    }*/
-
     public Boolean validateToken(String token, CustomCustomerService customCustomerService) {
         final String PhoneNumber = extractPhoneNumber(token);
         try{

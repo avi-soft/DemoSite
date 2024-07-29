@@ -48,30 +48,19 @@ public class CustomCustomerService {
                 .orElse(null);
     }
 
-    public CustomCustomer findCustomCustomerByUsername(String username) {
+    public String formatDate(String dateString) {
 
+        DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 
+        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("dd MMMM yyyy");
 
-        return em.createQuery(Constant.PHONE_QUERY, CustomCustomer.class)
-                .setParameter("username", username)
-                .getResultStream()
-                .findFirst()
-                .orElse(null);
+        LocalDateTime dateTime = LocalDateTime.parse(dateString, inputFormatter);
+
+        return dateTime.format(outputFormatter);
     }
-
-        public String formatDate(String dateString) {
-
-            DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
-
-            DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("dd MMMM yyyy");
-
-            LocalDateTime dateTime = LocalDateTime.parse(dateString, inputFormatter);
-
-            return dateTime.format(outputFormatter);
-        }
 
 /*    public Customer readCustomerByEmail(String phonenumber) {
         List<Customer> customers = this.findCustomCustomerByPhone(phonenumber,null);
         return CollectionUtils.isEmpty(customers) ? null : (Customer)customers.get(0);
     }*/
-    }
+}

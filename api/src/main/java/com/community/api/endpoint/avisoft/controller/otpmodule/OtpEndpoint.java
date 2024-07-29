@@ -37,11 +37,6 @@ public class OtpEndpoint {
     @Autowired
     private CustomerService customerService;
 
-
-    @Autowired
-    private EntityManager entityManager;
-
-
     @PostMapping("/send-otp")
     public ResponseEntity<String> sendtOtp(@RequestBody CustomCustomer customerDetails,HttpSession session) throws UnsupportedEncodingException {
 
@@ -92,6 +87,9 @@ public class OtpEndpoint {
                 customerDetails.setMobileNumber(customerDetails.getMobileNumber());
 
             } else if (customerDetails.getUsername()!=null) {
+                if (customerService == null) {
+                    return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
+                }
                 Customer customer = customerService.readCustomerByUsername(customerDetails.getUsername());
                 if (customer == null) {
                     return new ResponseEntity<>("No records found for the provided username.", HttpStatus.NOT_FOUND);
@@ -115,7 +113,7 @@ public class OtpEndpoint {
             }
 
             if (otpEntered == null || otpEntered.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("Invalid OTP");
+                return ResponseEntity.badRequest().body("OTP can not be empty");
             }
 
             CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(customerDetails.getMobileNumber(), customerDetails.getCountryCode());
@@ -123,20 +121,18 @@ public class OtpEndpoint {
             String storedOtp = existingCustomer.getOtp();
             System.out.println("Entered OTP: " + otpEntered + ", storedOtp OTP: " + storedOtp + " session " + customerDetails.getMobileNumber());
             if (otpEntered.equals(storedOtp)) {
-                Boolean existingCustomerFlag =  twilioService.setotp(customerDetails.getMobileNumber(), existingCustomer.getCountryCode());
-                    if (customerService == null) {
-                        return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
-                    }
 
-                 String token = jwtUtil.generateToken(customerDetails.getMobileNumber(),customerDetails.getCountryCode());
+                String tokenKey = "authToken_" + customerDetails.getMobileNumber();
 
-                String extractedPhoneNumber = jwtUtil.extractPhoneNumber(token);
-                System.out.println("Extracted Phone Number: " + extractedPhoneNumber  + " token " + token);
+                String existingToken = (String) session.getAttribute(tokenKey);
 
-                Boolean isValid = jwtUtil.validateToken(token, customCustomerService);
-                System.out.println("Is Token Valid? " + isValid);
-                return ResponseEntity.ok(new AuthResponse(token));
-//                    return ResponseEntity.ok("OTP verified successfully ");
+                if (existingToken != null && jwtUtil.validateToken(existingToken, customCustomerService)) {
+                    return ResponseEntity.ok(new AuthResponse(existingToken));
+                } else {
+                    String newToken = jwtUtil.generateToken(customerDetails.getMobileNumber(), customerDetails.getCountryCode());
+                    session.setAttribute(tokenKey, newToken);
+                    return ResponseEntity.ok(new AuthResponse(newToken));
+                }
 
             } else {
 
