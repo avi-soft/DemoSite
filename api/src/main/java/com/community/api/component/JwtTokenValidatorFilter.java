@@ -56,6 +56,12 @@ public class JwtTokenValidatorFilter extends OncePerRequestFilter {
                 return;
             }
 
+            if(customCustomerService==null){
+                logger.info("customCustomerService is null");
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.getWriter().write("JWT token is expired");
+            }
+
             String jwt = authorizationHeader.substring(BEARER_PREFIX_LENGTH);
             String phoneNumber = jwtUtil.extractPhoneNumber(jwt);
 
