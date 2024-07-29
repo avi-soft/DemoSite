@@ -127,8 +127,6 @@ public class CustomerEndpoint {
             if (customerService == null) {
                 return new ResponseEntity < > ("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
-      /*if(!customCustomerService.validateInput(customerDetails))
-         return new ResponseEntity<>("One or more inputs invalid", HttpStatus.UNPROCESSABLE_ENTITY);*/
             CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
             if (customerDetails.getMobileNumber() != null) {
                 if (customCustomerService.isValidMobileNumber(customerDetails.getMobileNumber()) == false)

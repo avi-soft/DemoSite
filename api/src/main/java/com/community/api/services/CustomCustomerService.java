@@ -48,6 +48,17 @@ public class CustomCustomerService {
                 .orElse(null);
     }
 
+    public CustomCustomer findCustomCustomerByUsername(String username) {
+
+
+
+        return em.createQuery(Constant.PHONE_QUERY, CustomCustomer.class)
+                .setParameter("username", username)
+                .getResultStream()
+                .findFirst()
+                .orElse(null);
+    }
+
         public String formatDate(String dateString) {
 
             DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
