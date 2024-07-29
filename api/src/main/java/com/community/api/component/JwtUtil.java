@@ -19,8 +19,7 @@ public class JwtUtil {
 
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
-    @Autowired
-    private CustomCustomerService customCustomerService;
+
 
     private Key secretKey;
 
@@ -68,7 +67,6 @@ public class JwtUtil {
 
     public Boolean validateToken(String token, CustomCustomerService customCustomerService) {
         final String PhoneNumber = extractPhoneNumber(token);
-        System.out.println(PhoneNumber + " PhoneNumber");
         try{
 
            CustomCustomer existingcustomer = customCustomerService.findCustomCustomerByPhone(PhoneNumber,Constant.COUNTRY_CODE);

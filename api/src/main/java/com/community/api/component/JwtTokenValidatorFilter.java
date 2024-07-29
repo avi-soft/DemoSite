@@ -34,13 +34,13 @@ public class JwtTokenValidatorFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
     private static final int BEARER_PREFIX_LENGTH = BEARER_PREFIX.length();
 
-    private final JwtUtil jwtUtil;
-    private final CustomCustomerService customCustomerService;
-
     @Autowired
-    public JwtTokenValidatorFilter(JwtUtil jwtUtil, CustomCustomerService customCustomerService) {
+    private JwtUtil jwtUtil;
+    @Autowired
+    private CustomCustomerService customCustomerService;
+
+    public JwtTokenValidatorFilter(JwtUtil jwtUtil) {
         this.jwtUtil = jwtUtil;
-        this.customCustomerService = customCustomerService;
     }
 
     @Override
@@ -87,8 +87,8 @@ public class JwtTokenValidatorFilter extends OncePerRequestFilter {
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authentication);
             /* CustomerState.setCustomer(customCustomer);
-            this.setupCustomerForRuleProcessing(customCustomer, request);*/
-            addCustomerToRuleMap(customCustomer, request);
+            this.setupCustomerForRuleProcessing(customCustomer, request);
+            addCustomerToRuleMap(customCustomer, request);*/
 
             chain.doFilter(request, response);
         } catch (ExpiredJwtException e) {
@@ -106,7 +106,7 @@ public class JwtTokenValidatorFilter extends OncePerRequestFilter {
         }
     }
 
-    private void addCustomerToRuleMap(CustomCustomer customCustomer, HttpServletRequest request) {
+/*    private void addCustomerToRuleMap(CustomCustomer customCustomer, HttpServletRequest request) {
         Map<String, Object> ruleMap = (Map) request.getAttribute("blCustomRuleMap");
 
         if (ruleMap == null) {
@@ -115,5 +115,5 @@ public class JwtTokenValidatorFilter extends OncePerRequestFilter {
 
         ruleMap.put("customer", customCustomer);
         request.setAttribute("blCustomRuleMap", ruleMap);
-    }
+    }*/
 }
