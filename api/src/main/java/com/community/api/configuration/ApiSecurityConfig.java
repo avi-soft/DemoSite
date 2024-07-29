@@ -10,15 +10,14 @@
  * the Broadleaf End User License Agreement (EULA), Version 1.1
  * (the "Commercial License" located at http://license.broadleafcommerce.org/commercial_license-1.1.txt)
  * shall apply.
- * 
+ *
  * Alternatively, the Commercial License may be replaced with a mutually agreed upon license (the "Custom License")
  * between you and Broadleaf Commerce. You may not use this file except in compliance with the applicable license.
  * #L%
  */
 package com.community.api.configuration;
-import com.community.api.component.JwtTokenValidatorFilter;
-import com.community.api.component.JwtUtil;
-import com.community.api.services.CustomCustomerService;
+
+import com.community.api.component.JwtAuthenticationFilter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadleafcommerce.profile.web.core.security.RestApiCustomerStateFilter;
@@ -35,11 +34,10 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.channel.ChannelDecisionManagerImpl;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.authentication.rememberme.RememberMeAuthenticationFilter;
 
 import javax.servlet.Filter;
+
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
 
 /**
@@ -51,9 +49,6 @@ import static org.springframework.security.web.util.matcher.AntPathRequestMatche
 public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
 
     private static final Log LOG = LogFactory.getLog(ApiSecurityConfig.class);
-
-    @Autowired
-    private JwtUtil jwtUtil;
 
 
     @Value("${asset.server.url.prefix.internal}")
@@ -76,32 +71,6 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
         );
     }
 
-/*    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .mvcMatcher("/api/**")
-                .httpBasic()
-                .and()
-                .csrf().disable()
-                .authorizeHttpRequests()
-                .requestMatchers("/api/**")
-                .requestMatchers("/otp/**", "/loginWithOtp/**").permitAll()
-                .authenticated()
-                .and()
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .sessionFixation()
-                .none()
-                .enableSessionUrlRewriting(false)
-                .and()
-                .requiresChannel()
-                .anyRequest()
-                .requires(ChannelDecisionManagerImpl.ANY_CHANNEL)
-                .and()
-                .addFilterAfter(apiCustomerStateFilter(), RememberMeAuthenticationFilter.class);
-        return http.build();
-    }*/
-
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
@@ -109,22 +78,21 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/api/v1/account/**", "/api/v1/otp/**").permitAll()
-                .anyRequest().denyAll()
+                .antMatchers("/account/**", "/otp/**").permitAll()
+                .anyRequest().authenticated() 
                 .and()
-                .addFilterBefore(jwtAuthenticationFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(apiCustomerStateFilter(), RememberMeAuthenticationFilter.class)
-                .requiresChannel().anyRequest().requires(ChannelDecisionManagerImpl.ANY_CHANNEL);
+                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAfter(apiCustomerStateFilter(), JwtAuthenticationFilter.class);
     }
 
-     public Filter jwtAuthenticationFilter(JwtUtil jwtUtil) {
-        return new JwtTokenValidatorFilter(jwtUtil);
+    @Bean
+    public Filter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter();
     }
 
     @Bean
     public Filter apiCustomerStateFilter() {
         return new RestApiCustomerStateFilter();
     }
-
 
 }

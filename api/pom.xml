@@ -54,19 +54,32 @@
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
-        <dependency>
+    <dependency>
             <groupId>org.broadleafcommerce</groupId>
             <artifactId>broadleaf-framework-web</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>com.broadleafcommerce</groupId>
-            <artifactId>broadleaf-boot-starter-solr</artifactId>
-        </dependency>
-        <dependency>
+
+        <!-- this dependency is added for calling rest api of broadleaf such as for schemas or any wrapper implementation-->
+     <dependency>
             <groupId>com.broadleafcommerce</groupId>
             <artifactId>broadleaf-rest-api</artifactId>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr-core</artifactId>
+            <version>8.8.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.solr</groupId>
+            <artifactId>solr-solrj</artifactId>
+            <version>8.8.2</version>
+        </dependency>
+      <!-- <dependency>
+           <groupId>com.broadleafcommerce</groupId>
+           <artifactId>broadleaf-boot-starter-solr</artifactId>
+        </dependency>-->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -96,12 +109,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-cache</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.ehcache</groupId>
-            <artifactId>ehcache</artifactId>
-            <version>3.8.1</version>
-        </dependency>
-
 
         <dependency>
             <groupId>io.springfox</groupId>

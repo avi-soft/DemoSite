@@ -57,6 +57,7 @@ public class JwtUtil {
         }
     }
 
+
     public Boolean validateToken(String token, CustomCustomerService customCustomerService) {
         final String PhoneNumber = extractPhoneNumber(token);
         try{
