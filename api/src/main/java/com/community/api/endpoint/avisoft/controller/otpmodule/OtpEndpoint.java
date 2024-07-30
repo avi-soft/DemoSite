@@ -75,7 +75,6 @@ public class OtpEndpoint {
                 twilioService.setotp(mobileNumber, countryCode);
 
 
-                System.out.println("mobileNumber: " + mobileNumber);
                 ResponseEntity<String> otpResponse = twilioService.sendOtpToMobile(mobileNumber, countryCode);
                 return otpResponse;
             }catch (Exception e){
@@ -130,15 +129,13 @@ public class OtpEndpoint {
             String storedOtp = existingCustomer.getOtp();
             System.out.println("Entered OTP: " + otpEntered + ", storedOtp OTP: " + storedOtp + " session " + customerDetails.getMobileNumber());
             if (otpEntered.equals(storedOtp)) {
-
                 String tokenKey = "authToken_" + customerDetails.getMobileNumber();
-
                 String existingToken = (String) session.getAttribute(tokenKey);
-
-                if (existingToken != null && jwtUtil.validateToken(existingToken, customCustomerService)) {
+                System.out.println(existingToken + " existingToken");
+                if (existingToken!= null && jwtUtil.validateToken(existingToken, customCustomerService)) {
                     return ResponseEntity.ok(new AuthResponse(existingToken));
                 } else {
-                    String newToken = jwtUtil.generateToken(customerDetails.getMobileNumber(), customerDetails.getCountryCode());
+                    String newToken = jwtUtil.generateToken(customerDetails.getMobileNumber(),"USER");
                     session.setAttribute(tokenKey, newToken);
                     return ResponseEntity.ok(new AuthResponse(newToken));
                 }

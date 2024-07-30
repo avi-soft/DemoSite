@@ -71,6 +71,7 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
         );
     }
 
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
@@ -78,8 +79,8 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/account/**", "/otp/**").permitAll()
-                .anyRequest().authenticated() 
+                .antMatchers("/otp/**", "/account/**", "/test/**").permitAll()
+                .anyRequest().authenticated()
                 .and()
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(apiCustomerStateFilter(), JwtAuthenticationFilter.class);

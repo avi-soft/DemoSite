@@ -40,18 +40,18 @@ public class JwtAuthenticationFilter  extends OncePerRequestFilter {
             throws IOException, ServletException {
         try {
 
-
             String requestURI = request.getRequestURI();
-            if (requestURI.startsWith("/account") || requestURI.startsWith("/otp")) {
-                logger.info("if");
+            if (requestURI.startsWith("/api/v1/account") || requestURI.startsWith("/api/v1/otp") || requestURI.startsWith("/api/v1/test")) {
                 chain.doFilter(request, response);
                 return;
+            } else {
+                boolean responseHandled = false;
+                responseHandled = authenticateUser(request, response);
+                if (!responseHandled) {
+                    chain.doFilter(request, response);
+                }
             }
-            boolean responseHandled = false;
-            responseHandled = authenticateUser(request, response);
-            if (!responseHandled) {
-                chain.doFilter(request, response);
-            }
+
         }catch (ExpiredJwtException e) {
             if (!response.isCommitted()) {
                 handleException(response, HttpServletResponse.SC_BAD_REQUEST, "JWT token is expired");
