@@ -36,5 +36,15 @@
         <non-jta-data-source>jdbc/cmsStorage</non-jta-data-source>
         <exclude-unlisted-classes/>
     </persistence-unit>
+    <persistence-unit name="blPU" transaction-type="RESOURCE_LOCAL">
+        <non-jta-data-source>jdbc/web</non-jta-data-source>
+
+        <!-- Added this line -->
+        <class>com.community.api.endpoint.customer.CustomCustomer</class>
+
+        <exclude-unlisted-classes/>
+    </persistence-unit>
+
+
 
 </persistence>

@@ -22,7 +22,6 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
-
 import com.broadleafcommerce.rest.api.endpoint.order.CartEndpoint;
 import com.broadleafcommerce.rest.api.wrapper.OrderWrapper;
 
@@ -39,7 +38,7 @@ import javax.servlet.http.HttpServletRequest;
  */
 @RestController
 @RequestMapping(value = "/cart",
-                produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE })
+        produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE })
 public class CustomCartEndpoint extends CartEndpoint {
 
     @Override
