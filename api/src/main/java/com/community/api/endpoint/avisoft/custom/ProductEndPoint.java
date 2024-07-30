@@ -169,7 +169,6 @@ public class ProductEndPoint extends CatalogEndpoint {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(CATEGORYNOTFOUND)));
             }
 
-            System.out.println("Here"+ products.size());
             List<Map<String, Object>> responses = new ArrayList<>();
             for(Product product: products) {
                 // finding customProduct that resembles with productId.
@@ -254,7 +253,7 @@ public class ProductEndPoint extends CatalogEndpoint {
                     extProductService.removeCategoryProductFromCategoryProductRefTable(product.getDefaultCategory().getId(), productId);
 
                     product.setDefaultCategory(category);
-                    product.setCategory(category); // Little fuzzy here as how would i delete it from that table as well.
+                    product.setCategory(category); // Little fuzzy here as i delete the entry if it exists in the table before.
 
                 }
 
