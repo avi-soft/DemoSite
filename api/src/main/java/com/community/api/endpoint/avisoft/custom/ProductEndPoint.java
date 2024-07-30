@@ -61,16 +61,18 @@ public class ProductEndPoint extends CatalogEndpoint {
             }
 
             // Set default category if provided else default Category will be null (which is deprecated as well)
-            if (categoryId != null && categoryId != 0) {
+            if (categoryId != 0) {
 
                 Category category = catalogService.findCategoryById(categoryId);
                 if (category == null) {
-                    throw BroadleafWebServicesException.build(404).addMessage(CATEGORYNOTFOUND);
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(CATEGORYNOTFOUND)));
                 }
 
                 productImpl.setDefaultCategory(category); // This is Deprecated.
                 productImpl.setCategory(category); // This will add both categoryId and productId to category_product_xref table.
 
+            }else {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(CATEGORYNOTFOUND)));
             }
 
             // Save or update the product with values from requestBody.
@@ -122,7 +124,7 @@ public class ProductEndPoint extends CatalogEndpoint {
             CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
 
             if(customProduct == null){
-                throw BroadleafWebServicesException.build(404).addMessage(PRODUCTNOTFOUND);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(CATEGORYNOTFOUND)));
             }
 
             // Assuming CustomProduct has a direct reference to Product
@@ -164,12 +166,12 @@ public class ProductEndPoint extends CatalogEndpoint {
             List<Product> products = catalogService.findAllProducts();
 
             if (products.isEmpty()) {
-                throw BroadleafWebServicesException.build(404).addMessage(PRODUCTNOTFOUND);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(CATEGORYNOTFOUND)));
             }
 
+            System.out.println("Here"+ products.size());
             List<Map<String, Object>> responses = new ArrayList<>();
             for(Product product: products) {
-
                 // finding customProduct that resembles with productId.
                 CustomProduct customProduct = entityManager.find(CustomProduct.class, product.getId());
 
@@ -222,7 +224,7 @@ public class ProductEndPoint extends CatalogEndpoint {
             CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
 
             if(customProduct == null){
-                throw BroadleafWebServicesException.build(404).addMessage(PRODUCTNOTFOUND);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(PRODUCTNOTFOUND)));
             }
 
             // first we set the values of CustomProduct -> ext_product table.
@@ -234,6 +236,8 @@ public class ProductEndPoint extends CatalogEndpoint {
             }
             entityManager.merge(customProduct);
 
+
+
             // now we will update the values of ProductImpl -> blc_product table.
             // Before that we will update the sku value if any in the
             Product product = catalogService.findProductById(productId);
@@ -242,7 +246,7 @@ public class ProductEndPoint extends CatalogEndpoint {
                 Category category = catalogService.findCategoryById(categoryId);
 
                 if(category == null){
-                    throw BroadleafWebServicesException.build(404).addMessage(CATEGORYNOTFOUND);
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(CATEGORYNOTFOUND)));
                 }
 
                 if(product.getDefaultCategory() != category){
@@ -257,6 +261,7 @@ public class ProductEndPoint extends CatalogEndpoint {
             }
             if(activeEndDate != null){
                 product.getDefaultSku().setActiveEndDate(activeEndDate);
+            System.out.println("FINE");
             }
             if(name != null){
                 product.getDefaultSku().setName(name);
@@ -299,7 +304,7 @@ public class ProductEndPoint extends CatalogEndpoint {
             CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
 
             if(customProduct == null){
-                throw BroadleafWebServicesException.build(404).addMessage(PRODUCTNOTFOUND);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(PRODUCTNOTFOUND)));
             }
 
             // Make it archive from the DB.
