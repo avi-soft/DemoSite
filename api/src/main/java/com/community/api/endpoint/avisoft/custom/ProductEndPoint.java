@@ -261,7 +261,6 @@ public class ProductEndPoint extends CatalogEndpoint {
             }
             if(activeEndDate != null){
                 product.getDefaultSku().setActiveEndDate(activeEndDate);
-            System.out.println("FINE");
             }
             if(name != null){
                 product.getDefaultSku().setName(name);

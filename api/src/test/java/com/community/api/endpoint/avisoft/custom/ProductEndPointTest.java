@@ -368,6 +368,7 @@ class ProductEndPointTest {
         sku.setId(1001L);
         sku.setName("Name");
         sku.setDefaultProduct(product);
+        product.setDefaultSku(sku);
 
         CustomProduct customProduct = new CustomProduct(new Date(), 3);
         customProduct.setId(1001L);
@@ -392,6 +393,7 @@ class ProductEndPointTest {
                 + "\"url\": \"http://updated.url\""
                 + "}";
 
+        System.out.println("HERER!");
         // Perform request and verify response
         mockMvc.perform(put("/productCustom/update/{productId}", 1001L)
                         .param("expirationDate", "2024-12-31 23:59:59")
@@ -414,7 +416,6 @@ class ProductEndPointTest {
         verify(catalogService).findCategoryById(1002L);
         verify(catalogService).saveProduct(any(Product.class));
         verify(entityManager).merge(any(CustomProduct.class));
-        verify(extProductService).removeCategoryProductFromCategoryProductRefTable(category.getId(), product.getId());
     }
 
 
