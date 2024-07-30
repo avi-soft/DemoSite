@@ -27,12 +27,12 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-class ProductEndPointTest {
+class CustomProductControllerTest {
 
     private MockMvc mockMvc;
 
     @InjectMocks
-    private ProductEndPoint productEndPoint; // The class containing the retrieveProducts method
+    private CustomProductController customProductController; // The class containing the retrieveProducts method
 
     @Mock
     private CatalogService catalogService; // Mock the CatalogService
@@ -46,13 +46,13 @@ class ProductEndPointTest {
     private ExceptionHandlingService exceptionHandlingService;
 
     @Mock
-    ExtProductService extProductService;
+    CustomProductService customProductService;
 
     @BeforeEach
     public void setUp() {
 
         MockitoAnnotations.openMocks(this);
-        mockMvc = MockMvcBuilders.standaloneSetup(productEndPoint).build();
+        mockMvc = MockMvcBuilders.standaloneSetup(customProductController).build();
         products = new ArrayList<>();
     }
 
@@ -86,7 +86,7 @@ class ProductEndPointTest {
         when(catalogService.createSku()).thenReturn(sku);
         when(catalogService.saveProduct(any(ProductImpl.class))).thenReturn(productImpl);
         when(catalogService.saveSku(any(Sku.class))).thenReturn(sku);
-        doNothing().when(extProductService).saveExtProduct(any(Date.class), anyInt(), anyLong());
+        doNothing().when(customProductService).saveCustomProduct(any(Date.class), anyInt(), anyLong());
 
         // Perform request
         MvcResult mvcResult = mockMvc.perform(post("/productCustom/add")
@@ -112,7 +112,7 @@ class ProductEndPointTest {
         verify(catalogService).createSku();
         verify(catalogService).saveProduct(any(ProductImpl.class));
         verify(catalogService).saveSku(any(Sku.class));
-        verify(extProductService).saveExtProduct(any(Date.class), anyInt(), anyLong());
+        verify(customProductService).saveCustomProduct(any(Date.class), anyInt(), anyLong());
     }
 
     @Test
@@ -142,7 +142,7 @@ class ProductEndPointTest {
 
         // Verify interactions
         verify(catalogService).findCategoryById(1L);
-        verifyNoInteractions(extProductService); // Ensure extProductService is not called
+        verifyNoInteractions(customProductService); // Ensure extProductService is not called
     }
 
 
@@ -384,7 +384,7 @@ class ProductEndPointTest {
         when(catalogService.findCategoryById(1002L)).thenReturn(category);
         when(catalogService.saveProduct(any(Product.class))).thenReturn(product);
         when(entityManager.merge(any(CustomProduct.class))).thenReturn(customProduct);
-        doNothing().when(extProductService).removeCategoryProductFromCategoryProductRefTable(anyLong(), anyLong());
+        doNothing().when(customProductService).removeCategoryProductFromCategoryProductRefTable(anyLong(), anyLong());
 
         // Prepare request
         String requestBody = "{"
@@ -438,6 +438,6 @@ class ProductEndPointTest {
         // Verify interactions
         verify(entityManager).find(CustomProduct.class, 1001L);
         verifyNoInteractions(catalogService); // Ensure catalogService is not called
-        verifyNoInteractions(extProductService); // Ensure extProductService is not called
+        verifyNoInteractions(customProductService); // Ensure extProductService is not called
     }
 }

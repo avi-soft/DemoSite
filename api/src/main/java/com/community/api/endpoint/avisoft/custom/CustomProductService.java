@@ -15,7 +15,7 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
 @Service
-public class ExtProductService {
+public class CustomProductService {
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -23,7 +23,7 @@ public class ExtProductService {
     @Autowired
     private Validator validator; // Autowire Validator bean if needed
 
-    public void saveExtProduct(Date goLiveDate, Integer priorityLevel, Long productId) {
+    public void saveCustomProduct(Date goLiveDate, Integer priorityLevel, Long productId) {
         // Validate priorityLevel
         Errors errors = validatePriorityLevel(priorityLevel);
         if (errors.hasErrors()) {
@@ -58,7 +58,7 @@ public class ExtProductService {
         return errors;
     }
 
-    public List<CustomProduct> getExtProducts() {
+    public List<CustomProduct> getCustomProducts() {
         String sql = "SELECT * FROM ext_product";
 
         return entityManager.createNativeQuery(sql, CustomProduct.class).getResultList();
@@ -67,7 +67,7 @@ public class ExtProductService {
     @Transactional
     public void removeCategoryProductFromCategoryProductRefTable(Long categoryId, Long productId) {
         String sql = "DELETE FROM blc_category_product_xref WHERE product_id = :productId AND category_id = :categoryId";
-        try{
+        try {
             entityManager.createNativeQuery(sql)
                     .setParameter("productId", productId)
                     .setParameter("categoryId", categoryId)
@@ -77,26 +77,4 @@ public class ExtProductService {
         }
     }
 
-
-    /*@PersistenceContext
-    private EntityManager entityManager;
-
-    @Transactional
-    public void saveExtProduct(Date goLiveDate, Integer priorityLevel, Long productId) {
-        String sql = "INSERT INTO ext_product (golivedate, priorityLevel, product_id) VALUES (:goLiveDate, :priorityLevel, :productId)";
-
-        entityManager.createNativeQuery(sql)
-                .setParameter("goLiveDate", goLiveDate != null ? new Timestamp(goLiveDate.getTime()) : null)
-                .setParameter("priorityLevel", priorityLevel)
-                .setParameter("productId", productId)
-                .executeUpdate();
-    }
-
-    @Transactional
-    public List<CustomProduct> getExtProduct() {
-        String sql = "SELECT * FROM ext_product";
-
-        List<CustomProduct> extProducts = entityManager.createNativeQuery(sql, CustomProduct.class).getResultList();
-        return extProducts;
-    }*/
 }

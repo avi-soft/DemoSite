@@ -20,7 +20,7 @@ import java.util.*;
 @RequestMapping(value = "/productCustom",
         produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }
 )
-public class ProductEndPoint extends CatalogEndpoint {
+public class CustomProductController extends CatalogEndpoint {
 
     private static final String CATALOGSERVICENOTINITIALIZED = "Catalog service is not initialized.";
     private static final String PRODUCTNOTFOUND = "Product not Found";
@@ -33,7 +33,7 @@ public class ProductEndPoint extends CatalogEndpoint {
     protected EntityManager entityManager;
 
     @Autowired
-    protected ExtProductService extProductService;
+    protected CustomProductService customProductService;
 
     /*
 
@@ -102,7 +102,7 @@ public class ProductEndPoint extends CatalogEndpoint {
             product.setDefaultSku(sku);
 
             // Save external product with provided dates and get status code
-            extProductService.saveExtProduct(goLiveDate, priorityLevel, product.getId());
+            customProductService.saveCustomProduct(goLiveDate, priorityLevel, product.getId());
 
             return ResponseEntity.ok("Product added successfully");
 
@@ -250,7 +250,7 @@ public class ProductEndPoint extends CatalogEndpoint {
 
                 if(product.getDefaultCategory() != category){
                     // here we will write a query to delete the previous data set from category_product_xref table and that will do the job.
-                    extProductService.removeCategoryProductFromCategoryProductRefTable(product.getDefaultCategory().getId(), productId);
+                    customProductService.removeCategoryProductFromCategoryProductRefTable(product.getDefaultCategory().getId(), productId);
 
                     product.setDefaultCategory(category);
                     product.setCategory(category); // Little fuzzy here as i delete the entry if it exists in the table before.
