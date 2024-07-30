@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
 import javax.persistence.EntityManager;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -60,10 +61,13 @@ class CustomProductControllerTest {
 
     // Utility method to parse JSON string
     private List<Map<String, Object>> parseJson(String json) throws IOException {
-        return objectMapper.readValue(json, new TypeReference<List<Map<String, Object>>>() {});
+        return objectMapper.readValue(json, new TypeReference<List<Map<String, Object>>>() {
+        });
     }
+
     private Map<String, Object> parseJson2(String json) throws IOException {
-        return objectMapper.readValue(json, new TypeReference<Map<String, Object>>() {});
+        return objectMapper.readValue(json, new TypeReference<Map<String, Object>>() {
+        });
     }
 
     @Test
@@ -417,7 +421,6 @@ class CustomProductControllerTest {
         verify(catalogService).saveProduct(any(Product.class));
         verify(entityManager).merge(any(CustomProduct.class));
     }
-
 
 
     @Test

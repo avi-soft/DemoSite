@@ -1,4 +1,5 @@
 package com.community.api.endpoint.avisoft.controller.cart;
+
 import com.broadleafcommerce.rest.api.endpoint.BaseEndpoint;
 import com.broadleafcommerce.rest.api.endpoint.order.CartEndpoint;
 import org.broadleafcommerce.core.order.domain.Order;
@@ -13,6 +14,7 @@ import org.broadleafcommerce.profile.web.core.CustomerState;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -25,12 +27,16 @@ import java.util.List;
 
 @RestController
 @RequestMapping(value = "/cart-custom",
-        produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }
+        produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE}
 )
 public class CartEndPoint extends BaseEndpoint {
+
     private static final Logger logger = LoggerFactory.getLogger(CartEndpoint.class);
+
     @Autowired
+    @Qualifier("blCustomerService")
     private CustomerService customerService;
+
     @Autowired
     private OrderService orderService; //added private access modifier
 
