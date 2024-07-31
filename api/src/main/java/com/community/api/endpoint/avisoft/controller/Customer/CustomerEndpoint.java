@@ -125,8 +125,6 @@ public class CustomerEndpoint {
             if (customerService == null) {
                 return new ResponseEntity < > ("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
-      /*if(!customCustomerService.validateInput(customerDetails))
-         return new ResponseEntity<>("One or more inputs invalid", HttpStatus.UNPROCESSABLE_ENTITY);*/
             CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
             if (customerDetails.getMobileNumber() != null) {
                 if (customCustomerService.isValidMobileNumber(customerDetails.getMobileNumber()) == false)
@@ -168,9 +166,12 @@ public class CustomerEndpoint {
             Customer customer = customerService.readCustomerById(customerId);
             if (customer != null) {
                 customerService.deleteCustomer(customerService.readCustomerById(customerId));
-                return new ResponseEntity < > ("Record Deleted Successfully", HttpStatus.OK);
-            } else {
-                return new ResponseEntity < > ("No Records found for this ID", HttpStatus.NO_CONTENT);
+                return new ResponseEntity<>("Record Deleted Successfully", HttpStatus.OK);
+            }
+            else
+            {
+                return new ResponseEntity<>("No Records found for this ID", HttpStatus.INTERNAL_SERVER_ERROR);
+
             }
         } catch (Exception e) {
             exceptionHandling.handleException(e);

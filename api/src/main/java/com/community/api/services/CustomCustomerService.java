@@ -48,19 +48,19 @@ public class CustomCustomerService {
                 .orElse(null);
     }
 
-        public String formatDate(String dateString) {
+    public String formatDate(String dateString) {
 
-            DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+        DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
 
-            DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("dd MMMM yyyy");
+        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("dd MMMM yyyy");
 
-            LocalDateTime dateTime = LocalDateTime.parse(dateString, inputFormatter);
+        LocalDateTime dateTime = LocalDateTime.parse(dateString, inputFormatter);
 
-            return dateTime.format(outputFormatter);
-        }
+        return dateTime.format(outputFormatter);
+    }
 
 /*    public Customer readCustomerByEmail(String phonenumber) {
         List<Customer> customers = this.findCustomCustomerByPhone(phonenumber,null);
         return CollectionUtils.isEmpty(customers) ? null : (Customer)customers.get(0);
     }*/
-    }
+}
