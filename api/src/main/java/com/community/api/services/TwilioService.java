@@ -59,12 +59,12 @@ public class TwilioService {
             String completeMobileNumber = countryCode + mobileNumber;
             String otp = generateOTP();
 
-            Message message = Message.creator(
+/*            Message message = Message.creator(
                             new PhoneNumber(completeMobileNumber),
                             new PhoneNumber(twilioPhoneNumber),
                             otp)
 
-                    .create();
+                    .create();*/
 
 
             CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(mobileNumber,countryCode);

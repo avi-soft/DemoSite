@@ -1,18 +1,18 @@
 package com.community.api.endpoint.avisoft.controller;
 
 import com.community.api.component.JwtUtil;
+import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
+import com.community.api.endpoint.customer.CustomCustomer;
+import com.community.api.services.CustomCustomerService;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.*;
 
 import com.community.api.services.exception.ExceptionHandlingImplement;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
-import io.jsonwebtoken.security.Keys;
+import javax.servlet.http.HttpSession;
 import java.security.Key;
 import java.util.Base64;
 
@@ -25,6 +25,8 @@ public class TestController {
 
     @Autowired
     private JwtUtil jwtUtil;
+    @Autowired
+    private CustomCustomerService customCustomerService;
 
     @GetMapping("/catch-error")
     public ResponseEntity<String> catcherror() {
@@ -41,8 +43,18 @@ public class TestController {
     }
 
     @GetMapping("/generate-token")
-    public String generateToken(@RequestParam String phoneNumber,@RequestParam String countrycode) {
-        return jwtUtil.generateToken(phoneNumber,countrycode);
+    public ResponseEntity<OtpEndpoint.AuthResponse> generateToken(@RequestBody CustomCustomer customerDetails, HttpSession session) {
+        String tokenKey = "authToken_" + customerDetails.getMobileNumber();
+        String existingToken = (String) session.getAttribute(tokenKey);
+        System.out.println(existingToken + " existingToken");
+        if (existingToken!= null && jwtUtil.validateToken(existingToken, customCustomerService)) {
+            return ResponseEntity.ok(new OtpEndpoint.AuthResponse(existingToken));
+        } else {
+            String newToken = jwtUtil.generateToken(customerDetails.getMobileNumber(),"USER");
+            session.setAttribute(tokenKey, newToken);
+            return ResponseEntity.ok(new OtpEndpoint.AuthResponse(newToken));
+        }
+
     }
     @GetMapping("/generate-key")
     public String generateKey() {
