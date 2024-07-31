@@ -1,5 +1,6 @@
 package com.community.api.endpoint.avisoft.controller.Customer;
 
+import com.community.api.component.AuthResponse;
 import com.community.api.component.Constant;
 import com.community.api.endpoint.customer.CustomCustomer;
 import com.community.api.endpoint.customer.CustomerDTO;
@@ -179,5 +180,18 @@ public class CustomerEndpoint {
             exceptionHandling.handleException(e);
             return new ResponseEntity < > ("Error deleting", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    public static ResponseEntity<AuthResponse> createAuthResponse(String token, Customer customer , CustomCustomer existingCustomer) {
+        CustomerDTO customerDTO = new CustomerDTO();
+        customerDTO.setFirstName(customer.getFirstName());
+        customerDTO.setLastName(customer.getLastName());
+        customerDTO.setEmail(customer.getEmailAddress());
+        customerDTO.setUsername(customer.getUsername());
+        customerDTO.setCustomerId(customer.getId());
+        customerDTO.setMobileNumber(existingCustomer.getMobileNumber());
+
+        AuthResponse authResponse = new AuthResponse(token, customerDTO);
+        return ResponseEntity.ok(authResponse);
     }
 }

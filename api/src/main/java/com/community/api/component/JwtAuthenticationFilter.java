@@ -20,12 +20,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import static org.ehcache.core.exceptions.StorePassThroughException.handleException;
-
 @Component
-public class JwtAuthenticationFilter  extends OncePerRequestFilter {
+public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter .class);
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
     private static final int BEARER_PREFIX_LENGTH = BEARER_PREFIX.length();
@@ -39,57 +37,44 @@ public class JwtAuthenticationFilter  extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws IOException, ServletException {
         try {
-
             String requestURI = request.getRequestURI();
-            if (requestURI.startsWith("/api/v1/account") || requestURI.startsWith("/api/v1/otp") || requestURI.startsWith("/api/v1/test")) {
+            if (isUnsecuredUri(requestURI)) {
                 chain.doFilter(request, response);
                 return;
-            } else {
-                boolean responseHandled = false;
-                responseHandled = authenticateUser(request, response);
-                if (!responseHandled) {
-                    chain.doFilter(request, response);
-                }
             }
 
-        }catch (ExpiredJwtException e) {
-            if (!response.isCommitted()) {
-                handleException(response, HttpServletResponse.SC_BAD_REQUEST, "JWT token is expired");
+            boolean responseHandled = authenticateUser(request, response);
+            if (!responseHandled) {
+                chain.doFilter(request, response);
+            }else{
+                return;
             }
+
+        } catch (ExpiredJwtException e) {
+            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "JWT token is expired");
+            logger.error("ExpiredJwtException caught: {}", e.getMessage());
         } catch (MalformedJwtException e) {
-            if (!response.isCommitted()) {
-                handleException(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid JWT token");
-            }
+            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JWT token");
+            logger.error("MalformedJwtException caught: {}", e.getMessage());
         } catch (Exception e) {
-            if (!response.isCommitted()) {
-                handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
-            }
+            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+            logger.error("Exception caught: {}", e.getMessage());
         }
     }
-    private void handleException(HttpServletResponse response, int statusCode, String message) throws IOException {
-        if (!response.isCommitted()) {
-            response.setStatus(statusCode);
-            response.getWriter().write(message);
-        }
+
+    private boolean isUnsecuredUri(String requestURI) {
+        return requestURI.startsWith("/api/v1/account") || requestURI.startsWith("/api/v1/otp") || requestURI.startsWith("/api/v1/test");
     }
 
     private boolean authenticateUser(HttpServletRequest request, HttpServletResponse response) throws IOException {
         final String authorizationHeader = request.getHeader(AUTHORIZATION_HEADER);
-        logger.info(authorizationHeader + " authorizationHeader");
-
         if (authorizationHeader == null || !authorizationHeader.startsWith(BEARER_PREFIX)) {
-            if (!response.isCommitted()) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("JWT token cannot be empty");
-            }
+            respondWithUnauthorized(response, "JWT token cannot be empty");
             return true;
         }
 
         if (customCustomerService == null) {
-            if (!response.isCommitted()) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("customCustomerService is null");
-            }
+            respondWithUnauthorized(response, "CustomCustomerService is null");
             return true;
         }
 
@@ -97,121 +82,42 @@ public class JwtAuthenticationFilter  extends OncePerRequestFilter {
         String phoneNumber = jwtUtil.extractPhoneNumber(jwt);
 
         if (phoneNumber == null) {
-            if (!response.isCommitted()) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("Invalid phoneNumber in token");
-            }
+            respondWithUnauthorized(response, "Invalid phoneNumber in token");
             return true;
         }
 
         if (!jwtUtil.validateToken(jwt, customCustomerService)) {
-            if (!response.isCommitted()) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("Invalid JWT token");
-            }
+            respondWithUnauthorized(response, "Invalid JWT token");
             return true;
         }
 
         if (phoneNumber != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             CustomCustomer customCustomer = customCustomerService.findCustomCustomerByPhone(phoneNumber, null);
-
-            if (customCustomer != null) {
-                Boolean validateToken = this.jwtUtil.validateToken(jwt, customCustomerService);
-
-                if (validateToken) {
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                            phoneNumber, null, new ArrayList<>());
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                } else {
-                    if (!response.isCommitted()) {
-                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                        response.getWriter().write("Invalid JWT token");
-                    }
-                    return true;
-                }
+            if (customCustomer != null && jwtUtil.validateToken(jwt, customCustomerService)) {
+                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                        phoneNumber, null, new ArrayList<>());
+                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                return false;
             } else {
-                if (!response.isCommitted()) {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.getWriter().write("Invalid data provided");
-                }
+                respondWithUnauthorized(response, "Invalid data provided");
                 return true;
             }
         }
         return false;
     }
 
-    /*private void authenticateUser(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        final  String authorizationHeader = request.getHeader(AUTHORIZATION_HEADER);
-        logger.info(authorizationHeader + " authorizationHeader");
-
-        if (authorizationHeader == null || !authorizationHeader.startsWith(BEARER_PREFIX)) {
-            logger.info("JWT token can not be empty!");
+    private void respondWithUnauthorized(HttpServletResponse response, String message) throws IOException {
+        if (!response.isCommitted()) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write(" JWT token can not be empty");
-            return;
+            response.getWriter().write(message);
         }
+    }
 
-        if(customCustomerService==null){
-            logger.info("customCustomerService is null");
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("customCustomerService is null");
+    private void handleException(HttpServletResponse response, int statusCode, String message) throws IOException {
+        if (!response.isCommitted()) {
+            response.setStatus(statusCode);
+            response.getWriter().write(message);
         }
-
-        String jwt = authorizationHeader.substring(BEARER_PREFIX_LENGTH);
-        String phoneNumber = jwtUtil.extractPhoneNumber(jwt);
-
-        if (phoneNumber == null) {
-            logger.info("Invalid phoneNumber in token");
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Invalid phoneNumber in token");
-            return;
-        }
-
-
-
-        if (!jwtUtil.validateToken(jwt, customCustomerService)) {
-            logger.info("Invalid JWT token");
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Invalid JWT token");
-            return;
-        }
-        if (phoneNumber != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-
-            CustomCustomer customCustomer = customCustomerService.findCustomCustomerByPhone(phoneNumber,null);
-
-            if(customCustomer!=null){
-
-                Boolean validateToken = this.jwtUtil.validateToken(jwt,customCustomerService);
-
-                if (validateToken) {
-                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                            phoneNumber, null, new ArrayList<>());
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-
-                } else {
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.getWriter().write("Invalid JWT token");
-                    return;
-                }
-            }else{
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("Invalid data provided");
-                return;
-            }
-        }
-
-    }*/
-
-/*    private void addCustomerToRuleMap(CustomCustomer customCustomer, HttpServletRequest request) {
-        Map<String, Object> ruleMap = (Map) request.getAttribute("blCustomRuleMap");
-
-        if (ruleMap == null) {
-            ruleMap = new HashMap<>();
-        }
-
-        ruleMap.put("customer", customCustomer);
-        request.setAttribute("blCustomRuleMap", ruleMap);
-    }*/
+    }
 }
