@@ -292,7 +292,7 @@ public class CustomProductController extends CatalogEndpoint {
             // Make it archive from the DB.
             catalogService.removeProduct(customProduct.getDefaultSku().getDefaultProduct());
 
-            return ResponseEntity.ok("Product Archived Successfully");
+            return ResponseEntity.ok("Product Deleted Successfully");
 
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
