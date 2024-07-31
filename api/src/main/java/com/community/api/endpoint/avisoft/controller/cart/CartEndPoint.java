@@ -43,7 +43,7 @@ public class CartEndPoint extends BaseEndpoint {
     private CartService cartService;
 
     @RequestMapping(value = "empty", method = RequestMethod.DELETE)
-    public ResponseEntity<String> deleteOrderFromCart(@RequestParam Long customerId) {
+    public ResponseEntity<String> emptyTheCart(@RequestParam Long customerId) {
         try {
             if (isAnyServiceNull()) {
                 return new ResponseEntity<>("One or more Serivces not initialized",HttpStatus.INTERNAL_SERVER_ERROR);
@@ -64,7 +64,8 @@ public class CartEndPoint extends BaseEndpoint {
                 return new ResponseEntity<>(HttpStatus.OK);
 
             }
-        } catch (Exception e) { //updated exception
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
             return new ResponseEntity<>("Error deleting!", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -102,6 +103,7 @@ public class CartEndPoint extends BaseEndpoint {
                 return new ResponseEntity<>("Cart updated", HttpStatus.OK);
             }
         } catch (Exception e) {
+            exceptionHandling.handleException(e);
             return new ResponseEntity<>("Error adding item to cart", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -119,7 +121,8 @@ public class CartEndPoint extends BaseEndpoint {
                     return new ResponseEntity<>("No items found", HttpStatus.NOT_FOUND);
             } else
                 return new ResponseEntity<>("Customer not found", HttpStatus.NOT_FOUND);
-        } catch (Exception e) { //updated exception
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
             return new ResponseEntity<>("Error retrieving cart", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -138,7 +141,8 @@ public class CartEndPoint extends BaseEndpoint {
                     return new ResponseEntity<>("No items found", HttpStatus.NOT_FOUND);
             } else
                 return new ResponseEntity<>("Customer not found", HttpStatus.NOT_FOUND);
-        } catch (Exception e) { //updated exception
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
             return new ResponseEntity<>("Error retrieving cart Items", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
