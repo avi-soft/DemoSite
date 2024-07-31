@@ -45,6 +45,7 @@ public class TestController {
     @GetMapping("/generate-token")
     public ResponseEntity<OtpEndpoint.AuthResponse> generateToken(@RequestBody CustomCustomer customerDetails, HttpSession session) {
         String tokenKey = "authToken_" + customerDetails.getMobileNumber();
+        String Role = customerDetails.getMobileNumber();
         String existingToken = (String) session.getAttribute(tokenKey);
         System.out.println(existingToken + " existingToken");
         if (existingToken!= null && jwtUtil.validateToken(existingToken, customCustomerService)) {
