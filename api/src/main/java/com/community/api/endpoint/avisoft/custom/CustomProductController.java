@@ -25,6 +25,7 @@ public class CustomProductController extends CatalogEndpoint {
     private static final String CATALOGSERVICENOTINITIALIZED = "Catalog service is not initialized.";
     private static final String PRODUCTNOTFOUND = "Product not Found";
     private static final String CATEGORYNOTFOUND = "Category not Found";
+    private static final String PRODUCTTITLENOTGIVEN = "Product MetaTitle not Given";
 
     @Autowired
     protected ExceptionHandlingService exceptionHandlingService;
@@ -48,7 +49,7 @@ public class CustomProductController extends CatalogEndpoint {
                                              @RequestParam(value = "expirationDate") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date activeEndDate,
                                              @RequestParam(value = "goLiveDate") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date goLiveDate,
                                              @RequestParam(value = "priorityLevel", required = false, defaultValue = "1") Integer priorityLevel,
-                                             @RequestParam(value = "categoryId", required = false, defaultValue = "0") Long categoryId,
+                                             @RequestParam(value = "categoryId", required = true) Long categoryId,
                                              @RequestParam(value = "skuId", required = false, defaultValue = "0") Long skuId,
                                              @RequestParam(value = "quantity", required = false, defaultValue = "100000") Integer quantity,
                                              @RequestParam(value = "cost", required = false, defaultValue = "100")Double cost){
@@ -72,6 +73,13 @@ public class CustomProductController extends CatalogEndpoint {
             }else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(CATEGORYNOTFOUND)));
             }
+
+
+            //Here we check wheather the metaTitle of product is given or not in responseBody
+            if(productImpl.getMetaTitle() == null || Objects.equals(productImpl.getMetaTitle(), "")){
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(PRODUCTTITLENOTGIVEN)));
+            }
+
 
             // Save or update the product with values from requestBody.
             Product product = catalogService.saveProduct(productImpl);

@@ -102,9 +102,17 @@ class CustomProductControllerTest {
                         .param("quantity", "10")
                         .param("cost", "150.00")
                         .contentType("application/json")
-                        .content("{\"id\":1001}")
+                        .content("{"
+                                        + "\"metaTitle\": \"Updated Meta Title\""
+                                        + "}")
                 ).andExpect(status().isOk())
                 .andReturn();
+
+        String requestBody = "{"
+                + "\"metaTitle\": \"Updated Meta Title\","
+                + "\"metaDescription\": \"Updated Meta Description\","
+                + "\"url\": \"http://updated.url\""
+                + "}";
 
         // Verify response
         assertEquals("Product added successfully", mvcResult.getResponse().getContentAsString());
