@@ -26,21 +26,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/category")
+@RequestMapping(value = "/categoryCustom")
 public class CustomCategoryController extends CatalogEndpoint {
 
     private static final Logger logger = LoggerFactory.getLogger(com.community.api.endpoint.avisoft.controller.Category.CustomCategoryEndpoint.class);
     private static final String CATEGORYNOTFOUND = "Category not Found";
     private static final String CATEGORYTITLENOTGIVEN = "Category MetaTitle not Given";
+    private static final String CATEGORYDESCNOTGIVEN = "Category Description not Given";
 
-    @PersistenceContext
+    @Autowired
     private ExceptionHandlingService exceptionHandlingService;
 
     @PersistenceContext
-    private EntityManager em;
 
-    @PersistenceContext
-    private JdbcTemplate jdbcTemplate;
+    private EntityManager em;
 
 
     @PostMapping("/add")
@@ -50,19 +49,19 @@ public class CustomCategoryController extends CatalogEndpoint {
                 throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
             }
 
-            final Category category = this.catalogService.createCategory();
+            Category category = this.catalogService.createCategory();
 
-            if(categoryImpl.getMetaTitle() == null || categoryImpl.getMetaTitle().isEmpty()){
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(CATEGORYTITLENOTGIVEN)));
+            if(categoryImpl.getName() == null || categoryImpl.getName().isEmpty()){
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(new RuntimeException(CATEGORYTITLENOTGIVEN)));
             }
-            category.setName(categoryImpl.getName());
-            category.setUrl(category.getUrl());
-            category.setDescription(categoryImpl.getDescription());
+            if(categoryImpl.getDescription() == null || categoryImpl.getDescription().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(new RuntimeException(CATEGORYDESCNOTGIVEN)));
+            }
 
-            catalogService.saveCategory(category);
+            catalogService.saveCategory(categoryImpl);
 
             CategoryWrapper wrapper = (CategoryWrapper) this.context.getBean(CategoryWrapper.class.getName());
-            wrapper.wrapDetails(category, request);
+            wrapper.wrapDetails(categoryImpl, request);
             return ResponseEntity.ok(wrapper);
 
         } catch (Exception e) {
@@ -97,7 +96,7 @@ public class CustomCategoryController extends CatalogEndpoint {
 
     }
 
-    @RequestMapping(value = "", method = RequestMethod.GET, params = {"categoryId"})
+    @RequestMapping(value = "/category", method = RequestMethod.GET, params = {"categoryId"})
     public ResponseEntity<?> getCategoryById(HttpServletRequest request, @RequestParam("categoryId") Long id, @RequestParam(value = "productLimit", defaultValue = "20") int productLimit, @RequestParam(value = "productOffset", defaultValue = "1") int productOffset, @RequestParam(value = "subcategoryLimit", defaultValue = "20") int subcategoryLimit, @RequestParam(value = "subcategoryOffset", defaultValue = "1") int subcategoryOffset) {
         try {
             if (catalogService == null) {
