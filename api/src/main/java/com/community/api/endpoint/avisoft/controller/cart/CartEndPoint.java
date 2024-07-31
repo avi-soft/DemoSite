@@ -41,29 +41,6 @@ public class CartEndPoint extends BaseEndpoint {
     private OrderItemService orderItemService;
     @Autowired
     private CartService cartService;
-    @RequestMapping(value = "getCart", method = RequestMethod.GET)
-    public ResponseEntity<String> retrieveProductById(@RequestParam Long customerId) {
-
-        try {
-            if (isAnyServiceNull()) {
-                return new ResponseEntity<>("One or more Serivces not initialized",HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-            Customer customer = customerService.readCustomerById(customerId);//finding the customer to get cart associated with it within try catch
-            Order cart = null;
-            if (customer == null) {
-                return new ResponseEntity<>("Customer with this Id not found", HttpStatus.NOT_FOUND);
-            } else {
-                cart = this.orderService.findCartForCustomer(customer);
-                if (cart == null) {
-                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-                } else {
-                    return new ResponseEntity<>("Cart found for " + cart.getCustomer().getFirstName() + cart.getCustomer().getLastName(), HttpStatus.OK);
-                }
-            }
-        } catch (Exception e) {
-            return new ResponseEntity<>("Error retrieving Cart", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
 
     @RequestMapping(value = "empty", method = RequestMethod.DELETE)
     public ResponseEntity<String> deleteOrderFromCart(@RequestParam Long customerId) {
@@ -110,7 +87,7 @@ public class CartEndPoint extends BaseEndpoint {
                 }
                 Product product = catalogService.findProductById(productId);
                 if (product == null)
-                    return new ResponseEntity<>("Product not found", HttpStatus.OK);
+                    return new ResponseEntity<>("Product not found", HttpStatus.NOT_FOUND);
                 OrderItemRequest orderItemRequest = new OrderItemRequest();
                 orderItemRequest.setProduct(product);
                 OrderItem orderItem = orderItemService.createOrderItem(orderItemRequest);
@@ -156,7 +133,7 @@ public class CartEndPoint extends BaseEndpoint {
             if (customer != null) {
                 Order cart=orderService.findOrderById(orderId);
                 if ( cart!= null) {
-                    return new ResponseEntity<>(cart.getOrderItems().toString(), HttpStatus.OK);
+                    return new ResponseEntity<>(cart.getOrderItems().get(0).getName(), HttpStatus.OK);
                 } else
                     return new ResponseEntity<>("No items found", HttpStatus.NOT_FOUND);
             } else
