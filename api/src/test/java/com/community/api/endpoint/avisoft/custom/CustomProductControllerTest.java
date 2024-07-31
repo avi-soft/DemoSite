@@ -323,7 +323,7 @@ class CustomProductControllerTest {
         MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.delete("/productCustom/delete/{productId}", 1001L)
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(content().string("Product Archived Successfully"))
+                .andExpect(content().string("Product Deleted Successfully"))
                 .andReturn();
 
         // Verify interactions
