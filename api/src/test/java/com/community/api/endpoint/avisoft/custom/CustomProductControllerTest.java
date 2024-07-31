@@ -82,7 +82,7 @@ class CustomProductControllerTest {
 
         Sku sku = new SkuImpl();
         sku.setId(2001L);
-        sku.setName("Sample SKU");
+
 
         // Mock behaviors
         when(catalogService.findCategoryById(1L)).thenReturn(category);
@@ -99,8 +99,6 @@ class CustomProductControllerTest {
                         .param("priorityLevel", "5")
                         .param("categoryId", "1")
                         .param("skuId", "0")
-                        .param("name", "New Product")
-                        .param("description", "New Product Description")
                         .param("quantity", "10")
                         .param("cost", "150.00")
                         .contentType("application/json")
@@ -135,8 +133,6 @@ class CustomProductControllerTest {
                         .param("priorityLevel", "5")
                         .param("categoryId", "1") // Category ID that will not be found
                         .param("skuId", "0")
-                        .param("name", "New Product")
-                        .param("description", "New Product Description")
                         .param("quantity", "10")
                         .param("cost", "150.00")
                         .contentType("application/json")
@@ -166,7 +162,6 @@ class CustomProductControllerTest {
         customProduct.setId(1001L);
         customProduct.setDefaultSku(sku);
         customProduct.getDefaultSku().setDefaultProduct(product);
-        customProduct.getDefaultSku().setName("helloSku");
         customProduct.setDefaultCategory(category);
         customProduct.getDefaultCategory().getId();
         customProduct.getDefaultSku().setCost(new Money());
@@ -194,7 +189,6 @@ class CustomProductControllerTest {
 
         Map<String, Object> productResponse = responseBody.get(0);
         assertEquals(customProduct.getId().toString(), productResponse.get("productId").toString());
-        assertEquals(customProduct.getDefaultSku().getName(), productResponse.get("productName"));
     }
 
     @Test
@@ -225,7 +219,6 @@ class CustomProductControllerTest {
 
         Sku sku = new SkuImpl();
         sku.setId(1001L);
-        sku.setName("Sample SKU");
         sku.setDefaultProduct(product);
         sku.setCost(new Money(150.00)); // Assuming Money has a constructor for amount
 
@@ -267,10 +260,8 @@ class CustomProductControllerTest {
 
         // Verify response content
         assertEquals(customProduct.getId().toString(), responseBody.get("productId").toString());
-        assertEquals(customProduct.getDefaultSku().getName(), responseBody.get("productName"));
         assertEquals(customProduct.getArchived().toString(), responseBody.get("archived").toString());
         assertEquals(customProduct.getMetaTitle(), responseBody.get("metaTitle"));
-        assertEquals(customProduct.getDefaultSku().getDescription(), responseBody.get("description"));
         assertEquals(customProduct.getDefaultSku().getCost().doubleValue(), responseBody.get("cost"));
         assertEquals(customProduct.getDefaultCategory().getId().toString(), responseBody.get("defaultCategoryId").toString());
         assertEquals(customProduct.getDefaultCategory().getName(), responseBody.get("categoryName"));
@@ -370,7 +361,6 @@ class CustomProductControllerTest {
 
         Sku sku = new SkuImpl();
         sku.setId(1001L);
-        sku.setName("Name");
         sku.setDefaultProduct(product);
         product.setDefaultSku(sku);
 
@@ -404,8 +394,6 @@ class CustomProductControllerTest {
                         .param("goLiveDate", "2024-10-01 00:00:00")
                         .param("priorityLevel", "5")
                         .param("categoryId", "1002")
-                        .param("name", "Updated Name")
-                        .param("description", "Updated Description")
                         .param("quantity", "20")
                         .param("cost", "200.00")
                         .contentType(MediaType.APPLICATION_JSON)

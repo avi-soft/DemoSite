@@ -45,13 +45,11 @@ public class CustomProductController extends CatalogEndpoint {
     @Transactional
     @PostMapping("/add")
     public ResponseEntity<String> addProduct(@RequestBody ProductImpl productImpl,
-                                             @RequestParam(value = "expirationDate") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date activeEndDate, // if we don't give required field then by default it sets to true.
+                                             @RequestParam(value = "expirationDate") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date activeEndDate,
                                              @RequestParam(value = "goLiveDate") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date goLiveDate,
                                              @RequestParam(value = "priorityLevel", required = false, defaultValue = "1") Integer priorityLevel,
                                              @RequestParam(value = "categoryId", required = false, defaultValue = "0") Long categoryId,
                                              @RequestParam(value = "skuId", required = false, defaultValue = "0") Long skuId,
-                                             @RequestParam(value = "name", required = false, defaultValue = "demo Product") String name,
-                                             @RequestParam(value = "description", required = false, defaultValue = "demo Description") String description,
                                              @RequestParam(value = "quantity", required = false, defaultValue = "100000") Integer quantity,
                                              @RequestParam(value = "cost", required = false, defaultValue = "100")Double cost){
         try {
@@ -82,8 +80,6 @@ public class CustomProductController extends CatalogEndpoint {
             Sku sku = catalogService.findSkuById(skuId);
             if (sku == null) {
                 sku = catalogService.createSku();
-                sku.setName(name);
-                sku.setDescription(description);
                 sku.setCost(new Money(cost));
                 sku.setQuantityAvailable(quantity);
             }
@@ -133,10 +129,8 @@ public class CustomProductController extends CatalogEndpoint {
             // Construct a JSON response
             Map<String, Object> response = new HashMap<>();
             response.put("productId", customProduct.getId());
-            response.put("productName", customProduct.getDefaultSku().getName());
             response.put("archived", customProduct.getArchived());
             response.put("metaTitle", customProduct.getMetaTitle());
-            response.put("description", customProduct.getDefaultSku().getDescription());
             response.put("cost", customProduct.getDefaultSku().getCost().doubleValue());
             response.put("defaultCategoryId", customProduct.getDefaultCategory().getId());
             response.put("categoryName", customProduct.getDefaultCategory().getName());
@@ -178,10 +172,8 @@ public class CustomProductController extends CatalogEndpoint {
 
                     Map<String, Object> response = new HashMap<>();
                     response.put("productId", customProduct.getId());
-                    response.put("productName", customProduct.getDefaultSku().getName());
                     response.put("archived", customProduct.getArchived());
                     response.put("metaTitle", customProduct.getMetaTitle());
-                    response.put("description", customProduct.getDefaultSku().getDescription());
                     response.put("cost", customProduct.getDefaultSku().getCost().doubleValue());
                     response.put("defaultCategoryId", customProduct.getDefaultCategory().getId());
                     response.put("categoryName", customProduct.getDefaultCategory().getName());
@@ -208,8 +200,6 @@ public class CustomProductController extends CatalogEndpoint {
                                            @RequestParam(value = "goLiveDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date goLiveDate,
                                            @RequestParam(value = "priorityLevel", required = false) Integer priorityLevel,
                                            @RequestParam(value = "categoryId", required = false, defaultValue = "0") Long categoryId,
-                                           @RequestParam(value = "name", required = false) String name,
-                                           @RequestParam(value = "description", required = false) String description,
                                            @RequestParam(value = "quantity", required = false) Integer quantity,
                                            @RequestParam(value = "cost", required = false) Double cost,
                                            @PathVariable("productId") Long productId ) {
@@ -261,14 +251,8 @@ public class CustomProductController extends CatalogEndpoint {
             if(activeEndDate != null){
                 product.getDefaultSku().setActiveEndDate(activeEndDate);
             }
-            if(name != null){
-                product.getDefaultSku().setName(name);
-            }
             if(cost != null){
                 product.getDefaultSku().setCost(new Money(cost));
-            }
-            if(description != null){
-                product.getDefaultSku().setDescription(description);
             }
             if(quantity != null){
                 product.getDefaultSku().setQuantityAvailable(quantity);
