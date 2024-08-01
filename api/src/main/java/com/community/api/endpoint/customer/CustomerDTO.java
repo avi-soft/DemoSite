@@ -12,8 +12,9 @@ import org.springframework.stereotype.Component;
 @Getter
 @Component
 public class CustomerDTO {
-    private String firstName,lastName,email,mobileNumber,username,role;
+
+//    todo :- need to add role here
+    private String firstName,lastName,email,mobileNumber,username;
 
     private Long customerId;
-
 }
