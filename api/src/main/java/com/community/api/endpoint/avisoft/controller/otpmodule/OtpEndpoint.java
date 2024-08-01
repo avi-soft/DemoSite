@@ -3,6 +3,7 @@ import com.community.api.component.Constant;
 import com.community.api.component.JwtAuthenticationFilter;
 import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.customer.CustomCustomer;
+import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.services.CustomCustomerService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.TwilioService;
@@ -33,66 +34,67 @@ public class OtpEndpoint {
     private CustomCustomerService customCustomerService;
     @Autowired
     private JwtUtil jwtUtil;
-    public OtpEndpoint( TwilioService twilioService) {
+
+    public OtpEndpoint(TwilioService twilioService) {
 
         this.twilioService = twilioService;
     }
+
     @Autowired
     private EntityManager em;
     @Autowired
     private CustomerService customerService;
 
     @PostMapping("/send-otp")
-    public ResponseEntity<String> sendtOtp(@RequestBody CustomCustomer customerDetails,HttpSession session) throws UnsupportedEncodingException {
+    public ResponseEntity<String> sendtOtp(@RequestBody CustomCustomer customerDetails, HttpSession session) throws UnsupportedEncodingException {
 
-            try{
+        try {
 
-                logger.info("Hlllo");
-                if (customerDetails.getMobileNumber().isEmpty() || customerDetails.getMobileNumber()==null)
-                    return new ResponseEntity<>("Enter mobile number", HttpStatus.UNPROCESSABLE_ENTITY);
+            if (customerDetails.getMobileNumber().isEmpty() || customerDetails.getMobileNumber() == null)
+                return new ResponseEntity<>("Enter mobile number", HttpStatus.UNPROCESSABLE_ENTITY);
 
-                String mobileNumber = null;
-                if (customerDetails.getMobileNumber().startsWith("0")) {
-                    mobileNumber = customerDetails.getMobileNumber().substring(1);
-                }else{
-                     mobileNumber = customerDetails.getMobileNumber();
-                }
+            String mobileNumber = null;
+            if (customerDetails.getMobileNumber().startsWith("0")) {
+                mobileNumber = customerDetails.getMobileNumber().substring(1);
+            } else {
+                mobileNumber = customerDetails.getMobileNumber();
+            }
 
-                if (!customCustomerService.isValidMobileNumber(mobileNumber)) {
-                    return ResponseEntity.badRequest().body("Invalid mobile number");
-                }
+            if (!customCustomerService.isValidMobileNumber(mobileNumber)) {
+                return ResponseEntity.badRequest().body("Invalid mobile number");
+            }
 
-                String countryCode = null;
-                if (customerDetails.getCountryCode() == null || customerDetails.getCountryCode().isEmpty()) {
+            String countryCode = null;
+            if (customerDetails.getCountryCode() == null || customerDetails.getCountryCode().isEmpty()) {
 
-                    countryCode = Constant.COUNTRY_CODE;
-                }else{
-                    countryCode = customerDetails.getCountryCode();
-
-                }
-                twilioService.setotp(mobileNumber, countryCode);
-
-
-                ResponseEntity<String> otpResponse = twilioService.sendOtpToMobile(mobileNumber, countryCode);
-                return otpResponse;
-            }catch (Exception e){
-                exceptionHandling.handleException(e);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error sending OTP: " + e.getMessage());
+                countryCode = Constant.COUNTRY_CODE;
+            } else {
+                countryCode = customerDetails.getCountryCode();
 
             }
+            twilioService.setotp(mobileNumber, countryCode);
+
+
+            ResponseEntity<String> otpResponse = twilioService.sendOtpToMobile(mobileNumber, countryCode);
+            return otpResponse;
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error sending OTP: " + e.getMessage());
+
+        }
 
     }
 
 
     @PostMapping("/verify-otp")
-    public ResponseEntity<?> verifyOTP(@RequestBody CustomCustomer customerDetails,@RequestParam("otpEntered") String otpEntered, HttpSession session) {
+    public ResponseEntity<?> verifyOTP(@RequestBody CustomCustomer customerDetails, @RequestParam("otpEntered") String otpEntered, HttpSession session) {
         try {
 
-            if(customerDetails.getMobileNumber()!=null){
+            if (customerDetails.getMobileNumber() != null) {
 
                 customerDetails.setMobileNumber(customerDetails.getMobileNumber());
 
-            } else if (customerDetails.getUsername()!=null) {
+            } else if (customerDetails.getUsername() != null) {
                 if (customerService == null) {
                     return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
                 }
@@ -108,7 +110,7 @@ public class OtpEndpoint {
                     return new ResponseEntity<>("No records found", HttpStatus.NO_CONTENT);
                 }
 
-            }else{
+            } else {
                 return new ResponseEntity<>("Invalid data", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
@@ -124,20 +126,22 @@ public class OtpEndpoint {
 
             CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(customerDetails.getMobileNumber(), customerDetails.getCountryCode());
 
+
             String storedOtp = existingCustomer.getOtp();
-            System.out.println("Entered OTP: " + otpEntered + ", storedOtp OTP: " + storedOtp + " session " + customerDetails.getMobileNumber());
+
+            Customer customer = customerService.readCustomerById(existingCustomer.getId());
             if (otpEntered.equals(storedOtp)) {
                 String tokenKey = "authToken_" + customerDetails.getMobileNumber();
                 String existingToken = (String) session.getAttribute(tokenKey);
-                System.out.println(existingToken + " existingToken");
-                if (existingToken!= null && jwtUtil.validateToken(existingToken, customCustomerService)) {
-                    return ResponseEntity.ok(new AuthResponse(existingToken));
-                } else {
-                    String newToken = jwtUtil.generateToken(customerDetails.getMobileNumber(),"USER");
-                    session.setAttribute(tokenKey, newToken);
-                    return ResponseEntity.ok(new AuthResponse(newToken));
-                }
+                System.out.println(existingToken + " existingToken" + tokenKey);
 
+                if (existingToken != null && jwtUtil.validateToken(existingToken, customCustomerService)) {
+                    return ResponseEntity.ok(createAuthResponse(existingToken, customer,existingCustomer));
+                } else {
+                    String newToken = jwtUtil.generateToken(customerDetails.getMobileNumber(), "USER", customerDetails.getCountryCode());
+                    session.setAttribute(tokenKey, newToken);
+                    return ResponseEntity.ok(createAuthResponse(newToken, existingCustomer,existingCustomer));
+                }
             } else {
 
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid OTP");
@@ -148,17 +152,34 @@ public class OtpEndpoint {
         }
     }
 
+    private ResponseEntity<AuthResponse> createAuthResponse(String token, Customer customer ,CustomCustomer existingCustomer) {
+        CustomerDTO customerDTO = new CustomerDTO();
+        customerDTO.setFirstName(customer.getFirstName());
+        customerDTO.setLastName(customer.getLastName());
+        customerDTO.setEmail(customer.getEmailAddress());
+        customerDTO.setUsername(customer.getUsername());
+        customerDTO.setCustomerId(customer.getId());
+        customerDTO.setMobileNumber(existingCustomer.getMobileNumber());
+
+        AuthResponse authResponse = new AuthResponse(token, customerDTO);
+        return ResponseEntity.ok(authResponse);
+    }
 
     public static class AuthResponse {
         private String token;
+        private CustomerDTO userDetails;
 
-        public AuthResponse(String token) {
+        public AuthResponse(String token, CustomerDTO userDetails) {
             this.token = token;
+            this.userDetails = userDetails;
         }
 
         public String getToken() {
             return token;
         }
-    }
 
+        public CustomerDTO getUserDetails() {
+            return userDetails;
+        }
+    }
 }

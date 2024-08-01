@@ -1,6 +1,7 @@
 package com.community.api.endpoint.avisoft.controller.Customer;
 
 import com.community.api.component.Constant;
+import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.CustomCustomer;
 import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.services.CustomCustomerService;
@@ -43,14 +44,12 @@ public class CustomerEndpoint {
 
     @RequestMapping(value = "getCustomer/{customerId}", method = RequestMethod.GET)
     public ResponseEntity < Object > retrieveCustomerById(@PathVariable Long customerId) {
-        logger.debug("Retrieving customer by ID: {}", customerId);
         try {
             if (customerService == null) {
                 logger.error("Customer service is not initialized.");
                 return new ResponseEntity < > (HttpStatus.INTERNAL_SERVER_ERROR);
             }
             Customer customer = customerService.readCustomerById(customerId);
-
             if (customer == null) {
                 return new ResponseEntity < > ("Customer with this ID does not exist", HttpStatus.NOT_FOUND);
             } else {
@@ -179,5 +178,18 @@ public class CustomerEndpoint {
             exceptionHandling.handleException(e);
             return new ResponseEntity < > ("Error deleting", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    public static ResponseEntity<OtpEndpoint.AuthResponse> createAuthResponse(String token, Customer customer , CustomCustomer existingCustomer) {
+        CustomerDTO customerDTO = new CustomerDTO();
+        customerDTO.setFirstName(customer.getFirstName());
+        customerDTO.setLastName(customer.getLastName());
+        customerDTO.setEmail(customer.getEmailAddress());
+        customerDTO.setUsername(customer.getUsername());
+        customerDTO.setCustomerId(customer.getId());
+        customerDTO.setMobileNumber(existingCustomer.getMobileNumber());
+
+        OtpEndpoint.AuthResponse authResponse = new OtpEndpoint.AuthResponse(token, customerDTO);
+        return ResponseEntity.ok(authResponse);
     }
 }

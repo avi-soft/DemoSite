@@ -45,7 +45,6 @@
 
         <!-- Added this line -->
         <class>com.community.api.endpoint.customer.CustomCustomer</class>
-
         <exclude-unlisted-classes/>
     </persistence-unit>
 
