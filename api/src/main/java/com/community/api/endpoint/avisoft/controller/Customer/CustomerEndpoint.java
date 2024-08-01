@@ -43,14 +43,12 @@ public class CustomerEndpoint {
 
     @RequestMapping(value = "getCustomer/{customerId}", method = RequestMethod.GET)
     public ResponseEntity < Object > retrieveCustomerById(@PathVariable Long customerId) {
-        logger.debug("Retrieving customer by ID: {}", customerId);
         try {
             if (customerService == null) {
                 logger.error("Customer service is not initialized.");
                 return new ResponseEntity < > (HttpStatus.INTERNAL_SERVER_ERROR);
             }
             Customer customer = customerService.readCustomerById(customerId);
-
             if (customer == null) {
                 return new ResponseEntity < > ("Customer with this ID does not exist", HttpStatus.NOT_FOUND);
             } else {
