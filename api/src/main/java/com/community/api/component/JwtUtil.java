@@ -45,7 +45,7 @@ public class JwtUtil {
                     .setHeaderParam("typ", "JWT")
                     .claim("phoneNumber", phoneNumber)
                     .claim("role", Role)
-                    .claim("role", countryCode)
+                    .claim("countryCode", countryCode)
                     .setIssuedAt(new Date())
                     .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
                     .signWith(secretKey, SignatureAlgorithm.HS256)
