@@ -42,20 +42,7 @@ public class TestController {
         return ResponseEntity.ok("Success");
     }
 
-    @GetMapping("/generate-token")
-    public ResponseEntity<OtpEndpoint.AuthResponse> generateToken(@RequestBody CustomCustomer customerDetails, HttpSession session) {
-        String tokenKey = "authToken_" + customerDetails.getMobileNumber();
-        String existingToken = (String) session.getAttribute(tokenKey);
-        System.out.println(existingToken + " existingToken");
-        if (existingToken!= null && jwtUtil.validateToken(existingToken, customCustomerService)) {
-            return ResponseEntity.ok(new OtpEndpoint.AuthResponse(existingToken));
-        } else {
-            String newToken = jwtUtil.generateToken(customerDetails.getMobileNumber(),"USER");
-            session.setAttribute(tokenKey, newToken);
-            return ResponseEntity.ok(new OtpEndpoint.AuthResponse(newToken));
-        }
 
-    }
     @GetMapping("/generate-key")
     public String generateKey() {
         Key key = Keys.secretKeyFor(io.jsonwebtoken.SignatureAlgorithm.HS256);
