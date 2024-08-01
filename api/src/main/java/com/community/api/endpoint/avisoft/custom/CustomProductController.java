@@ -52,7 +52,7 @@ public class CustomProductController extends CatalogEndpoint {
                                              @RequestParam(value = "categoryId", required = true) Long categoryId,
                                              @RequestParam(value = "skuId", required = false, defaultValue = "0") Long skuId,
                                              @RequestParam(value = "quantity", required = false, defaultValue = "100000") Integer quantity,
-                                             @RequestParam(value = "cost", required = false, defaultValue = "100")Double cost){
+                                             @RequestParam(value = "cost", required = true)Double cost){
         try {
 
             if (catalogService == null) {
