@@ -1,9 +1,7 @@
 package com.community.api.endpoint.avisoft.controller.otpmodule;
-import com.community.api.component.AuthResponse;
 import com.community.api.component.Constant;
 import com.community.api.component.JwtAuthenticationFilter;
 import com.community.api.component.JwtUtil;
-import com.community.api.endpoint.avisoft.controller.Customer.CustomerEndpoint;
 import com.community.api.endpoint.customer.CustomCustomer;
 import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.services.CustomCustomerService;
@@ -138,11 +136,11 @@ public class OtpEndpoint {
                 System.out.println(existingToken + " existingToken" + tokenKey);
 
                 if (existingToken != null && jwtUtil.validateToken(existingToken, customCustomerService)) {
-                    return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(existingToken, customer,existingCustomer));
+                    return ResponseEntity.ok(createAuthResponse(existingToken, customer,existingCustomer));
                 } else {
                     String newToken = jwtUtil.generateToken(customerDetails.getMobileNumber(), "USER", customerDetails.getCountryCode());
                     session.setAttribute(tokenKey, newToken);
-                    return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(newToken, existingCustomer,existingCustomer));
+                    return ResponseEntity.ok(createAuthResponse(newToken, existingCustomer,existingCustomer));
                 }
             } else {
 
@@ -154,6 +152,34 @@ public class OtpEndpoint {
         }
     }
 
+    private ResponseEntity<AuthResponse> createAuthResponse(String token, Customer customer ,CustomCustomer existingCustomer) {
+        CustomerDTO customerDTO = new CustomerDTO();
+        customerDTO.setFirstName(customer.getFirstName());
+        customerDTO.setLastName(customer.getLastName());
+        customerDTO.setEmail(customer.getEmailAddress());
+        customerDTO.setUsername(customer.getUsername());
+        customerDTO.setCustomerId(customer.getId());
+        customerDTO.setMobileNumber(existingCustomer.getMobileNumber());
 
+        AuthResponse authResponse = new AuthResponse(token, customerDTO);
+        return ResponseEntity.ok(authResponse);
+    }
 
+    public static class AuthResponse {
+        private String token;
+        private CustomerDTO userDetails;
+
+        public AuthResponse(String token, CustomerDTO userDetails) {
+            this.token = token;
+            this.userDetails = userDetails;
+        }
+
+        public String getToken() {
+            return token;
+        }
+
+        public CustomerDTO getUserDetails() {
+            return userDetails;
+        }
+    }
 }

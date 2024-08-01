@@ -1,7 +1,7 @@
 package com.community.api.endpoint.avisoft.controller.Customer;
 
-import com.community.api.component.AuthResponse;
 import com.community.api.component.Constant;
+import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.CustomCustomer;
 import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.services.CustomCustomerService;
@@ -182,7 +182,7 @@ public class CustomerEndpoint {
         }
     }
 
-    public static ResponseEntity<AuthResponse> createAuthResponse(String token, Customer customer , CustomCustomer existingCustomer) {
+    public static ResponseEntity<OtpEndpoint.AuthResponse> createAuthResponse(String token, Customer customer , CustomCustomer existingCustomer) {
         CustomerDTO customerDTO = new CustomerDTO();
         customerDTO.setFirstName(customer.getFirstName());
         customerDTO.setLastName(customer.getLastName());
@@ -191,7 +191,7 @@ public class CustomerEndpoint {
         customerDTO.setCustomerId(customer.getId());
         customerDTO.setMobileNumber(existingCustomer.getMobileNumber());
 
-        AuthResponse authResponse = new AuthResponse(token, customerDTO);
+        OtpEndpoint.AuthResponse authResponse = new OtpEndpoint.AuthResponse(token, customerDTO);
         return ResponseEntity.ok(authResponse);
     }
 }

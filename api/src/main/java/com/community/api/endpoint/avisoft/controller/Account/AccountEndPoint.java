@@ -1,9 +1,9 @@
 package com.community.api.endpoint.avisoft.controller.Account;
 
-import com.community.api.component.AuthResponse;
 import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.avisoft.controller.Customer.CustomerEndpoint;
+import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.CustomCustomer;
 import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.services.CustomCustomerService;
@@ -24,7 +24,6 @@ import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
 
 import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 
 import static org.apache.commons.lang.StringUtils.isNumeric;
 
@@ -70,7 +69,7 @@ public class AccountEndPoint {
 
     @PostMapping("/loginWithPassword")
     @ResponseBody
-    public ResponseEntity<String> loginWithPassword(@RequestBody CustomCustomer customer, HttpSession session) {
+    public ResponseEntity<?> loginWithPassword(@RequestBody CustomCustomer customer, HttpSession session) {
         try {
             if (customer.getMobileNumber() != null) {
                 if (customer.getCountryCode() == null || customer.getCountryCode().isEmpty()) {
@@ -171,7 +170,7 @@ public class AccountEndPoint {
         }
     }
     @RequestMapping(value = "login-with-password", method = RequestMethod.POST)
-    public ResponseEntity<String> loginWithCustomerPassword(@RequestBody CustomCustomer customerDetails, HttpSession session) {
+    public ResponseEntity<?> loginWithCustomerPassword(@RequestBody CustomCustomer customerDetails, HttpSession session) {
         try {
             if (customerDetails.getCountryCode() == null) {
                 customerDetails.setCountryCode(Constant.COUNTRY_CODE);
@@ -191,36 +190,21 @@ public class AccountEndPoint {
                     String tokenKey = "authToken_" + customerDetails.getMobileNumber();
                     String existingToken = (String) session.getAttribute(tokenKey);
 
-                    String token;
                     if (existingToken != null && jwtUtil.validateToken(existingToken, customCustomerService)) {
-                        token = existingToken;
+
+                        return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(existingToken, customer,existingCustomer));
                     } else {
-                        token = jwtUtil.generateToken(customerDetails.getMobileNumber(), "USER", customerDetails.getCountryCode());
+                       String token = jwtUtil.generateToken(customerDetails.getMobileNumber(), "USER", customerDetails.getCountryCode());
                         session.setAttribute(tokenKey, token);
+                        return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(token, existingCustomer,existingCustomer));
                     }
 
-                    CustomerDTO customerDTO = new CustomerDTO();
-                    customerDTO.setCustomerId(customer.getId());
-                    customerDTO.setFirstName(customer.getFirstName());
-                    customerDTO.setLastName(customer.getLastName());
-                    customerDTO.setEmail(customer.getEmailAddress());
-                    customerDTO.setUsername(customer.getUsername());
-                    customerDTO.setMobileNumber(existingCustomer.getMobileNumber());
-
-                    AuthResponse authResponse = new AuthResponse(token, customerDTO);
-
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    String jsonResponse = objectMapper.writeValueAsString(authResponse);
-
-                    return ResponseEntity.ok(jsonResponse);
                 } else {
                     return new ResponseEntity<>("Incorrect Password", HttpStatus.UNAUTHORIZED);
                 }
             } else {
                 return new ResponseEntity<>("Customer does not exist", HttpStatus.NOT_FOUND);
             }
-        } catch (JsonProcessingException e) {
-            return new ResponseEntity<>("Error processing JSON", HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return new ResponseEntity<>("Error retrieving Customer", HttpStatus.INTERNAL_SERVER_ERROR);
