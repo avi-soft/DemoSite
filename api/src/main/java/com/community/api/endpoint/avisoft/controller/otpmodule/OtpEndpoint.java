@@ -18,8 +18,6 @@ import javax.persistence.EntityManager;
 import javax.servlet.http.HttpSession;
 import java.io.UnsupportedEncodingException;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 @RestController
 @RequestMapping("/otp")
 public class OtpEndpoint {
