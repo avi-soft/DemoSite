@@ -48,7 +48,7 @@ public class CustomProductController extends CatalogEndpoint {
     public ResponseEntity<String> addProduct(@RequestBody ProductImpl productImpl,
                                              @RequestParam(value = "expirationDate") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date activeEndDate,
                                              @RequestParam(value = "goLiveDate") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date goLiveDate,
-                                             @RequestParam(value = "priorityLevel", required = false, defaultValue = "1") Integer priorityLevel,
+                                             @RequestParam(value = "priorityLevel", required = false, defaultValue = "5") Integer priorityLevel,
                                              @RequestParam(value = "categoryId", required = true) Long categoryId,
                                              @RequestParam(value = "skuId", required = false, defaultValue = "0") Long skuId,
                                              @RequestParam(value = "quantity", required = false, defaultValue = "100000") Integer quantity,
