@@ -1,6 +1,7 @@
 package com.community.api.endpoint.avisoft.controller.Customer;
 
 import com.community.api.component.Constant;
+import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.CustomCustomer;
 import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.services.CustomCustomerService;
@@ -177,5 +178,18 @@ public class CustomerEndpoint {
             exceptionHandling.handleException(e);
             return new ResponseEntity < > ("Error deleting", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    public static ResponseEntity<OtpEndpoint.AuthResponse> createAuthResponse(String token, Customer customer , CustomCustomer existingCustomer) {
+        CustomerDTO customerDTO = new CustomerDTO();
+        customerDTO.setFirstName(customer.getFirstName());
+        customerDTO.setLastName(customer.getLastName());
+        customerDTO.setEmail(customer.getEmailAddress());
+        customerDTO.setUsername(customer.getUsername());
+        customerDTO.setCustomerId(customer.getId());
+        customerDTO.setMobileNumber(existingCustomer.getMobileNumber());
+
+        OtpEndpoint.AuthResponse authResponse = new OtpEndpoint.AuthResponse(token, customerDTO);
+        return ResponseEntity.ok(authResponse);
     }
 }
