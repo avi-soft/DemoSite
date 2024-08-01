@@ -5,8 +5,10 @@ import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.customer.CustomCustomer;
 import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.services.CustomCustomerService;
+import com.community.api.services.RateLimiterService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.TwilioService;
+import io.github.bucket4j.Bucket;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.slf4j.Logger;
@@ -35,10 +37,14 @@ public class OtpEndpoint {
     @Autowired
     private JwtUtil jwtUtil;
 
-    public OtpEndpoint(TwilioService twilioService) {
+    public OtpEndpoint(TwilioService twilioService, RateLimiterService rateLimiterService) {
 
         this.twilioService = twilioService;
+        this.rateLimiterService = rateLimiterService;
     }
+
+    @Autowired
+    private final RateLimiterService rateLimiterService;
 
     @Autowired
     private EntityManager em;
@@ -60,9 +66,6 @@ public class OtpEndpoint {
                 mobileNumber = customerDetails.getMobileNumber();
             }
 
-            if (!customCustomerService.isValidMobileNumber(mobileNumber)) {
-                return ResponseEntity.badRequest().body("Invalid mobile number");
-            }
 
             String countryCode = null;
             if (customerDetails.getCountryCode() == null || customerDetails.getCountryCode().isEmpty()) {
@@ -72,11 +75,28 @@ public class OtpEndpoint {
                 countryCode = customerDetails.getCountryCode();
 
             }
+            CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhoneWithOtp(customerDetails.getMobileNumber(), countryCode);
             twilioService.setotp(mobileNumber, countryCode);
 
+            if(existingCustomer!=null){
+                return ResponseEntity.badRequest().body("Customer already exists ");
 
-            ResponseEntity<String> otpResponse = twilioService.sendOtpToMobile(mobileNumber, countryCode);
-            return otpResponse;
+            }
+            Bucket bucket = rateLimiterService.resolveBucket(customerDetails.getMobileNumber(),"/otp/send-otp");
+            if (bucket.tryConsume(1)) {
+                if (!customCustomerService.isValidMobileNumber(mobileNumber)) {
+                    return ResponseEntity.badRequest().body("Invalid mobile number");
+                }
+
+                ResponseEntity<String> otpResponse = twilioService.sendOtpToMobile(mobileNumber, countryCode);
+                return otpResponse;
+            } else {
+
+                ResponseEntity<String>  otpResponse =  ResponseEntity.ok("You can send otp only once in 1 minute" );
+                return  otpResponse;
+            }
+
+
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error sending OTP: " + e.getMessage());
