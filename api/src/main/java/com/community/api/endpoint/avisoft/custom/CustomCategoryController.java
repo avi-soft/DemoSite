@@ -6,9 +6,7 @@ import com.broadleafcommerce.rest.api.wrapper.CategoriesWrapper;
 import com.broadleafcommerce.rest.api.wrapper.CategoryAttributeWrapper;
 import com.broadleafcommerce.rest.api.wrapper.CategoryWrapper;
 import com.community.api.services.exception.ExceptionHandlingService;
-import org.broadleafcommerce.core.catalog.domain.Category;
-import org.broadleafcommerce.core.catalog.domain.CategoryAttribute;
-import org.broadleafcommerce.core.catalog.domain.CategoryImpl;
+import org.broadleafcommerce.core.catalog.domain.*;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,8 +35,10 @@ public class CustomCategoryController extends CatalogEndpoint {
     @Autowired
     private ExceptionHandlingService exceptionHandlingService;
 
-    @PersistenceContext
+    @Autowired
+    private CustomCategoryService customCategoryService;
 
+    @PersistenceContext
     private EntityManager em;
 
 
@@ -251,7 +251,7 @@ public class CustomCategoryController extends CatalogEndpoint {
 
     }
 
-    @RequestMapping(value = "/{categoryId}/products", method = RequestMethod.GET)
+    @RequestMapping(value = "/products/{categoryId}", method = RequestMethod.GET)
     public ResponseEntity<?> getProductsFromCatrgoryId(@PathVariable Long categoryId) {
         try {
             if (catalogService == null) {
@@ -268,18 +268,17 @@ public class CustomCategoryController extends CatalogEndpoint {
                 throw BroadleafWebServicesException.build(404).addMessage("Error retrieving category as There is no category in DB with this Id");
             }
 
-            String query = "SELECT p FROM CUSTOM_CUSTOMER p WHERE p.customer_id = :customer_id";
-            List products = em.createQuery(query).setParameter("customer_id", categoryId).getResultList();
+            List<CategoryProductXref> categoryProductXrefList = customCategoryService.getAllProductsByCategoryId(categoryId);
+            Category category = catalogService.findCategoryById(categoryId);
+            Long ch = categoryProductXrefList.get(0).getId();
 
+//            CustomCategoryDao customCategoryDao = new CustomCategoryDao();
+//            customCategoryDao.setCategoryId(category.getId());
+//            customCategoryDao.setCategoryName(category.getMetaTitle());
+//            customCategoryDao.setProducts(productList);
 
-            logger.info("products == " + products);
-
-            if (products.isEmpty()) {
-
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("No products found for the given category ID.");
-
-            }
-            return ResponseEntity.ok(products);
+            System.out.println(categoryProductXrefList.size());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("customCategoryDao");
 
         } catch (Exception e) {
 

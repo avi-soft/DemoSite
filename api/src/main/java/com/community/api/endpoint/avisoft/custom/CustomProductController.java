@@ -9,6 +9,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.Errors;
+import org.springframework.web.bind.MissingPathVariableException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityManager;
@@ -26,6 +28,9 @@ public class CustomProductController extends CatalogEndpoint {
     private static final String PRODUCTNOTFOUND = "Product not Found";
     private static final String CATEGORYNOTFOUND = "Category not Found";
     private static final String PRODUCTTITLENOTGIVEN = "Product MetaTitle not Given";
+    private static final String COSTCANNOTBEZERO = "Cost cannot be negative";
+    private static final String QUANTITYCANNOTBEZERO = " Quantity cannot be negative";
+    private static final String FIELDCANNOTBELESSTHANEQUALTOZERO = "Field cannot be <= 0";
 
     @Autowired
     protected ExceptionHandlingService exceptionHandlingService;
@@ -48,15 +53,25 @@ public class CustomProductController extends CatalogEndpoint {
     public ResponseEntity<String> addProduct(@RequestBody ProductImpl productImpl,
                                              @RequestParam(value = "expirationDate") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date activeEndDate,
                                              @RequestParam(value = "goLiveDate") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date goLiveDate,
-                                             @RequestParam(value = "priorityLevel", required = false, defaultValue = "5") Integer priorityLevel,
-                                             @RequestParam(value = "categoryId", required = true) Long categoryId,
-                                             @RequestParam(value = "skuId", required = false, defaultValue = "0") Long skuId,
-                                             @RequestParam(value = "quantity", required = false, defaultValue = "100000") Integer quantity,
-                                             @RequestParam(value = "cost", required = true)Double cost){
+                                             @RequestParam(value = "priorityLevel", required = false, defaultValue = "5") String priorityLevelParam,
+                                             @RequestParam(value = "categoryId", required = true) String categoryIdParam,
+                                             @RequestParam(value = "skuId", required = false, defaultValue = "0") String skuIdParam,
+                                             @RequestParam(value = "quantity", required = false, defaultValue = "100000") String quantityParam,
+                                             @RequestParam(value = "cost", required = true)String costParam){
         try {
 
             if (catalogService == null) {
                 throw BroadleafWebServicesException.build(404).addMessage(CATALOGSERVICENOTINITIALIZED);
+            }
+
+            Integer priorityLevel = Integer.parseInt(priorityLevelParam);
+            Double cost = Double.parseDouble(costParam);
+            Integer quantity = Integer.parseInt(quantityParam);
+            Long skuId = Long.parseLong(skuIdParam);
+            Long categoryId = Long.parseLong(categoryIdParam);
+
+            if(cost <= 0 || quantity <= 0 || skuId <= 0 || categoryId <= 0){
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(FIELDCANNOTBELESSTHANEQUALTOZERO)));
             }
 
             // Set default category if provided else default Category will be null (which is deprecated as well)
@@ -69,6 +84,7 @@ public class CustomProductController extends CatalogEndpoint {
 
                 productImpl.setDefaultCategory(category); // This is Deprecated.
                 productImpl.setCategory(category); // This will add both categoryId and productId to category_product_xref table.
+                productImpl.getDefaultCategory();
 
             }else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(CATEGORYNOTFOUND)));
@@ -88,7 +104,13 @@ public class CustomProductController extends CatalogEndpoint {
             Sku sku = catalogService.findSkuById(skuId);
             if (sku == null) {
                 sku = catalogService.createSku();
+                if(cost<0){
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(COSTCANNOTBEZERO)));
+                }
                 sku.setCost(new Money(cost));
+                if(quantity<0){
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(QUANTITYCANNOTBEZERO)));
+                }
                 sku.setQuantityAvailable(quantity);
             }
 
@@ -110,16 +132,24 @@ public class CustomProductController extends CatalogEndpoint {
 
             return ResponseEntity.ok("Product added successfully");
 
-        }catch (Exception e) {
+        }  catch (NumberFormatException numberFormatException){
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(exceptionHandlingService.handleException(numberFormatException));
+        }
+        catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(HttpStatus.INTERNAL_SERVER_ERROR ,e));
         }
 
     }
 
-    @GetMapping("/getProducts/{productId}")
-    public ResponseEntity<?> retrieveProductById(@PathVariable("productId") Long productId) {
+    @GetMapping("/getProductById/{productId}")
+    public ResponseEntity<?> retrieveProductById(@PathVariable("productId") String productIdPath) {
 
         try {
+
+            Long productId = Long.parseLong(productIdPath);
+            if(productId<=0){
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(FIELDCANNOTBELESSTHANEQUALTOZERO)));
+            }
 
             if (catalogService == null) {
                 throw BroadleafWebServicesException.build(404).addMessage(CATALOGSERVICENOTINITIALIZED);
@@ -139,6 +169,7 @@ public class CustomProductController extends CatalogEndpoint {
             response.put("productId", customProduct.getId());
             response.put("archived", customProduct.getArchived());
             response.put("metaTitle", customProduct.getMetaTitle());
+            response.put("metaDescription", customProduct.getMetaDescription());
             response.put("cost", customProduct.getDefaultSku().getCost().doubleValue());
             response.put("defaultCategoryId", customProduct.getDefaultCategory().getId());
             response.put("categoryName", customProduct.getDefaultCategory().getName());
@@ -149,13 +180,16 @@ public class CustomProductController extends CatalogEndpoint {
 
             return ResponseEntity.ok(response);
 
-        } catch (Exception e) {
+        }  catch (NumberFormatException numberFormatException){
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(exceptionHandlingService.handleException(numberFormatException));
+        }
+        catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
         }
 
     }
 
-    @GetMapping("/getProducts")
+    @GetMapping("/getAllProducts")
     public ResponseEntity<?> retrieveProducts() {
 
         try {
@@ -168,7 +202,7 @@ public class CustomProductController extends CatalogEndpoint {
             List<Product> products = catalogService.findAllProducts();
 
             if (products.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(CATEGORYNOTFOUND)));
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(PRODUCTNOTFOUND)));
             }
 
             List<Map<String, Object>> responses = new ArrayList<>();
@@ -182,6 +216,7 @@ public class CustomProductController extends CatalogEndpoint {
                     response.put("productId", customProduct.getId());
                     response.put("archived", customProduct.getArchived());
                     response.put("metaTitle", customProduct.getMetaTitle());
+                    response.put("metaDescription", customProduct.getMetaDescription());
                     response.put("cost", customProduct.getDefaultSku().getCost().doubleValue());
                     response.put("defaultCategoryId", customProduct.getDefaultCategory().getId());
                     response.put("categoryName", customProduct.getDefaultCategory().getName());
@@ -196,7 +231,8 @@ public class CustomProductController extends CatalogEndpoint {
 
             return ResponseEntity.ok(responses);
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
         }
     }
@@ -206,13 +242,27 @@ public class CustomProductController extends CatalogEndpoint {
     public ResponseEntity<String> updateProduct(@RequestBody ProductImpl productImpl,
                                            @RequestParam(value = "expirationDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date activeEndDate,
                                            @RequestParam(value = "goLiveDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date goLiveDate,
-                                           @RequestParam(value = "priorityLevel", required = false) Integer priorityLevel,
-                                           @RequestParam(value = "categoryId", required = false, defaultValue = "0") Long categoryId,
-                                           @RequestParam(value = "quantity", required = false) Integer quantity,
-                                           @RequestParam(value = "cost", required = false) Double cost,
-                                           @PathVariable("productId") Long productId ) {
+                                           @RequestParam(value = "priorityLevel", required = false) String priorityLevelParam,
+                                           @RequestParam(value = "categoryId", required = false, defaultValue = "0") String categoryIdParam,
+                                           @RequestParam(value = "quantity", required = false) String quantityParam,
+                                           @RequestParam(value = "cost", required = false) String costParam,
+                                           @PathVariable("productId") String productIdParam ) {
 
         try {
+
+            Long productId = Long.parseLong(productIdParam);
+            Integer priorityLevel = Integer.parseInt(priorityLevelParam);
+            Errors errors = customProductService.validatePriorityLevel(priorityLevel);
+            if (errors.hasErrors()) {
+                throw new IllegalArgumentException("Validation error12: " + errors.getFieldError().getDefaultMessage());
+            }
+            Double cost = Double.parseDouble(costParam);
+            Integer quantity = Integer.parseInt(quantityParam);
+            Long categoryId = Long.parseLong(categoryIdParam);
+
+            if(cost <= 0 || quantity <= 0 || productId <= 0 || categoryId <= 0){
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(FIELDCANNOTBELESSTHANEQUALTOZERO)));
+            }
 
             if (catalogService == null) {
                 throw BroadleafWebServicesException.build(404).addMessage(CATALOGSERVICENOTINITIALIZED);
@@ -260,9 +310,17 @@ public class CustomProductController extends CatalogEndpoint {
                 product.getDefaultSku().setActiveEndDate(activeEndDate);
             }
             if(cost != null){
+
+                if(cost<0){
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(COSTCANNOTBEZERO)));
+                }
                 product.getDefaultSku().setCost(new Money(cost));
             }
             if(quantity != null){
+
+                if(quantity<0){
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(COSTCANNOTBEZERO)));
+                }
                 product.getDefaultSku().setQuantityAvailable(quantity);
             }
 
@@ -275,6 +333,8 @@ public class CustomProductController extends CatalogEndpoint {
 
             return ResponseEntity.ok("Product Updated Successfully");
 
+        } catch (NumberFormatException numberFormatException){
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(exceptionHandlingService.handleException(numberFormatException));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
         }
@@ -283,8 +343,10 @@ public class CustomProductController extends CatalogEndpoint {
 
 
     @DeleteMapping("/delete/{productId}")
-    public ResponseEntity<String> deleteProduct(@PathVariable("productId") Long productId) {
+    public ResponseEntity<String> deleteProduct(@PathVariable("productId") String productIdPath) {
         try {
+
+            Long productId = Long.parseLong(productIdPath);
 
             if (catalogService == null) {
                 throw BroadleafWebServicesException.build(404).addMessage(CATALOGSERVICENOTINITIALIZED);
@@ -302,8 +364,11 @@ public class CustomProductController extends CatalogEndpoint {
 
             return ResponseEntity.ok("Product Deleted Successfully");
 
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
+        }  catch (NumberFormatException numberFormatException){
+            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(exceptionHandlingService.handleException(numberFormatException));
+        }
+        catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(HttpStatus.INTERNAL_SERVER_ERROR ,e));
         }
     }
 

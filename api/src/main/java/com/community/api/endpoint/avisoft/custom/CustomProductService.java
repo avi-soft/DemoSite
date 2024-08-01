@@ -49,7 +49,7 @@ public class CustomProductService {
        @param priorityLevel The priority level to validate.
        @return Errors object containing validation errors, if any.
      */
-    private Errors validatePriorityLevel(Integer priorityLevel) {
+    protected Errors validatePriorityLevel(Integer priorityLevel) {
         CustomProduct product = new CustomProduct();
         product.setPriorityLevel(priorityLevel);
 
