@@ -42,14 +42,15 @@ public class CustomerEndpoint {
     @Autowired
     private CustomCustomerService customCustomerService;
 
-    @RequestMapping(value = "getCustomer/{customerId}", method = RequestMethod.GET)
-    public ResponseEntity < Object > retrieveCustomerById(@PathVariable Long customerId) {
+    @GetMapping(value = "getCustomer/{customerId}" )
+    public ResponseEntity < Object > retrieveCustomerById(@PathVariable String customerId) {
         try {
+            Long customerid = Long.parseLong(customerId);
             if (customerService == null) {
                 logger.error("Customer service is not initialized.");
                 return new ResponseEntity < > (HttpStatus.INTERNAL_SERVER_ERROR);
             }
-            Customer customer = customerService.readCustomerById(customerId);
+            Customer customer = customerService.readCustomerById(customerid);
             if (customer == null) {
                 return new ResponseEntity < > ("Customer with this ID does not exist", HttpStatus.NOT_FOUND);
             } else {
@@ -67,6 +68,8 @@ public class CustomerEndpoint {
                     return new ResponseEntity < > ("Error fetching Customer Data", HttpStatus.NOT_FOUND);
                 }
             }
+        }catch (NumberFormatException e) {
+            return new ResponseEntity<>("Invalid customer ID format", HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
 
             exceptionHandling.handleException(e);
@@ -76,7 +79,7 @@ public class CustomerEndpoint {
     }
 
     @Transactional
-    @RequestMapping(value = "register", method = RequestMethod.POST)
+    @PostMapping(value = "register")
     public ResponseEntity < String > addCustomer(@RequestBody CustomCustomer customerDetails) {
         try {
             if (customerService == null) {
@@ -120,13 +123,15 @@ public class CustomerEndpoint {
     }
 
     @Transactional
-    @RequestMapping(value = "update/{customerId}", method = RequestMethod.PATCH)
-    public ResponseEntity < String > updateCustomer(@RequestBody CustomCustomer customerDetails, @PathVariable Long customerId) {
+    @PatchMapping(value = "update/{customerId}")
+    public ResponseEntity < String > updateCustomer(@RequestBody CustomCustomer customerDetails, @PathVariable String customerId) {
         try {
+            Long customerid = Long.parseLong(customerId);
+
             if (customerService == null) {
                 return new ResponseEntity < > ("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
-            CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
+            CustomCustomer customCustomer = em.find(CustomCustomer.class, customerid);
             if (customerDetails.getMobileNumber() != null) {
                 if (customCustomerService.isValidMobileNumber(customerDetails.getMobileNumber()) == false)
                     return new ResponseEntity < > ("Cannot update phoneNumber", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -147,10 +152,12 @@ public class CustomerEndpoint {
                     return new ResponseEntity < > ("Email not available", HttpStatus.BAD_REQUEST);
                 }
             }
-            customerDetails.setId(customerId);
+            customerDetails.setId(customerid);
             customerDetails.setMobileNumber(customCustomer.getMobileNumber());
             em.merge(customerDetails);
             return new ResponseEntity < > ("Customer Updated", HttpStatus.OK);
+        }catch (NumberFormatException e) {
+            return new ResponseEntity<>("Invalid customer ID format", HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return new ResponseEntity < > ("Error updating", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -158,15 +165,17 @@ public class CustomerEndpoint {
     }
 
     @Transactional
-    @RequestMapping(value = "delete/{customerId}", method = RequestMethod.DELETE)
-    public ResponseEntity < String > updateCustomer(@PathVariable Long customerId) {
+    @DeleteMapping(value = "delete/{customerId}")
+    public ResponseEntity<String> deleteCustomer(@PathVariable String customerId) {
+
         try {
+            Long customerid = Long.parseLong(customerId);
             if (customerService == null) {
                 return new ResponseEntity < > ("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
-            Customer customer = customerService.readCustomerById(customerId);
+            Customer customer = customerService.readCustomerById(customerid);
             if (customer != null) {
-                customerService.deleteCustomer(customerService.readCustomerById(customerId));
+                customerService.deleteCustomer(customerService.readCustomerById(customerid));
                 return new ResponseEntity<>("Record Deleted Successfully", HttpStatus.OK);
             }
             else
@@ -174,6 +183,8 @@ public class CustomerEndpoint {
                 return new ResponseEntity<>("No Records found for this ID", HttpStatus.INTERNAL_SERVER_ERROR);
 
             }
+        }catch (NumberFormatException e) {
+            return new ResponseEntity<>("Invalid customer ID format", HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return new ResponseEntity < > ("Error deleting", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -191,5 +202,39 @@ public class CustomerEndpoint {
 
         OtpEndpoint.AuthResponse authResponse = new OtpEndpoint.AuthResponse(token, customerDTO);
         return ResponseEntity.ok(authResponse);
+    }
+    @GetMapping(value = "getCustomerbyphone/{phonenumber}" )
+    public ResponseEntity < Object > retrieveCustomerByPhonenumber(@PathVariable String phonenumber) {
+        try {
+            if (customerService == null) {
+                logger.error("Customer service is not initialized.");
+                return new ResponseEntity < > (HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            Customer customer = customCustomerService.findCustomCustomerByPhone(phonenumber,null);
+            if (customer == null) {
+                return new ResponseEntity < > ("No Customers found", HttpStatus.NOT_FOUND);
+            } else {
+                CustomerDTO customerDTO = new CustomerDTO();
+                customerDTO.setFirstName(customer.getFirstName());
+                customerDTO.setLastName(customer.getLastName());
+                customerDTO.setEmail(customer.getEmailAddress());
+                customerDTO.setUsername(customer.getUsername());
+                customerDTO.setCustomerId(customer.getId());
+                CustomCustomer customCustomer = em.find(CustomCustomer.class, customer.getId());
+                if (customCustomer != null) {
+                    customerDTO.setMobileNumber(customCustomer.getMobileNumber());
+                    return new ResponseEntity < > (customerDTO, HttpStatus.OK);
+                } else {
+                    return new ResponseEntity < > ("Error fetching Customer Data", HttpStatus.NOT_FOUND);
+                }
+            }
+        }catch (NumberFormatException e) {
+            return new ResponseEntity<>("Invalid customer ID format", HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+
+            exceptionHandling.handleException(e);
+            return new ResponseEntity < > ("Error retrieving Customer", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
     }
 }
