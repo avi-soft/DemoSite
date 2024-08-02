@@ -203,4 +203,38 @@ public class CustomerEndpoint {
         OtpEndpoint.AuthResponse authResponse = new OtpEndpoint.AuthResponse(token, customerDTO);
         return ResponseEntity.ok(authResponse);
     }
+    @GetMapping(value = "getCustomerbyphone/{phonenumber}" )
+    public ResponseEntity < Object > retrieveCustomerByPhonenumber(@PathVariable String phonenumber) {
+        try {
+            if (customerService == null) {
+                logger.error("Customer service is not initialized.");
+                return new ResponseEntity < > (HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            Customer customer = customCustomerService.findCustomCustomerByPhone(phonenumber,null);
+            if (customer == null) {
+                return new ResponseEntity < > ("No Customers found", HttpStatus.NOT_FOUND);
+            } else {
+                CustomerDTO customerDTO = new CustomerDTO();
+                customerDTO.setFirstName(customer.getFirstName());
+                customerDTO.setLastName(customer.getLastName());
+                customerDTO.setEmail(customer.getEmailAddress());
+                customerDTO.setUsername(customer.getUsername());
+                customerDTO.setCustomerId(customer.getId());
+                CustomCustomer customCustomer = em.find(CustomCustomer.class, customer.getId());
+                if (customCustomer != null) {
+                    customerDTO.setMobileNumber(customCustomer.getMobileNumber());
+                    return new ResponseEntity < > (customerDTO, HttpStatus.OK);
+                } else {
+                    return new ResponseEntity < > ("Error fetching Customer Data", HttpStatus.NOT_FOUND);
+                }
+            }
+        }catch (NumberFormatException e) {
+            return new ResponseEntity<>("Invalid customer ID format", HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+
+            exceptionHandling.handleException(e);
+            return new ResponseEntity < > ("Error retrieving Customer", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
 }
