@@ -32,7 +32,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private JwtUtil jwtUtil;
     @Autowired
     private CustomCustomerService customCustomerService;
-
+    @Autowired
+    private TokenBlacklist tokenBlacklistService;
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws IOException, ServletException {
@@ -80,6 +81,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String jwt = authorizationHeader.substring(BEARER_PREFIX_LENGTH);
         String phoneNumber = jwtUtil.extractPhoneNumber(jwt);
+        String countryCode = jwtUtil.extractCountryCode(jwt);
 
         if (phoneNumber == null) {
             respondWithUnauthorized(response, "Invalid phoneNumber in token");
@@ -91,8 +93,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return true;
         }
 
+/*        if (tokenBlacklistService.isTokenBlacklisted(jwt)) {
+            respondWithUnauthorized(response, "JWT token is blacklisted you are not authorized");
+            return true;
+        }*/
+
+
+
+
+
+
+
         if (phoneNumber != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            CustomCustomer customCustomer = customCustomerService.findCustomCustomerByPhone(phoneNumber, null);
+            CustomCustomer customCustomer = customCustomerService.findCustomCustomerByPhone(phoneNumber, countryCode);
             if (customCustomer != null && jwtUtil.validateToken(jwt, customCustomerService)) {
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         phoneNumber, null, new ArrayList<>());

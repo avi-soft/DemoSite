@@ -23,9 +23,8 @@ public class RateLimiterService {
         Bandwidth limit;
         String action = key.split(":")[1];
 
-        System.out.println(action + " action");
         if (action.startsWith("/otp/send-otp")) {
-            limit = Bandwidth.classic(1, Refill.greedy(1, Duration.ofMinutes(1)));
+            limit = Bandwidth.classic(1, Refill.greedy(1, Duration.ofSeconds(30)));
         } else if (action.startsWith("/api/rate-limit")) {
             limit = Bandwidth.classic(2, Refill.greedy(2, Duration.ofMinutes(1)));
         } else {

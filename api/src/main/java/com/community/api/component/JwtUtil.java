@@ -30,7 +30,8 @@ public class JwtUtil {
 
     private Key secretKey;
 
-
+    @Autowired
+    private TokenBlacklist tokenBlacklistService;
     @PostConstruct
     public void init() {
 
@@ -100,7 +101,9 @@ public class JwtUtil {
         final String PhoneNumber = extractPhoneNumber(token);
         final String countryCode = extractCountryCode(token);
         try{
-
+           /* if (tokenBlacklistService.isTokenBlacklisted(token)) {
+                return false;
+            }*/
             CustomCustomer existingcustomer = customCustomerService.findCustomCustomerByPhone(PhoneNumber,countryCode);
             System.out.println(PhoneNumber + " PhoneNumber" + existingcustomer + " expired  " + isTokenExpired(token));
             if(existingcustomer!=null){

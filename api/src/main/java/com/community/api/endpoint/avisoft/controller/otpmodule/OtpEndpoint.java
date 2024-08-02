@@ -66,7 +66,6 @@ public class OtpEndpoint {
                 mobileNumber = customerDetails.getMobileNumber();
             }
 
-
             String countryCode = null;
             if (customerDetails.getCountryCode() == null || customerDetails.getCountryCode().isEmpty()) {
 
@@ -80,7 +79,6 @@ public class OtpEndpoint {
 
             if(existingCustomer!=null){
                 return ResponseEntity.badRequest().body("Customer already exists ");
-
             }
             Bucket bucket = rateLimiterService.resolveBucket(customerDetails.getMobileNumber(),"/otp/send-otp");
             if (bucket.tryConsume(1)) {
