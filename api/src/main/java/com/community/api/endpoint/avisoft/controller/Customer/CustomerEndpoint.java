@@ -7,6 +7,7 @@ import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.services.CustomCustomerService;
 import com.community.api.services.TwilioService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
+import org.apache.http.protocol.HTTP;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.slf4j.Logger;
@@ -19,7 +20,9 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
+import java.lang.reflect.Field;
 import java.net.URLEncoder;
+import java.security.Principal;
 
 @RestController
 @RequestMapping(value = "/customer-custom",
@@ -118,17 +121,22 @@ public class CustomerEndpoint {
     }
 
     @Transactional
-    @RequestMapping(value = "update/{customerId}", method = RequestMethod.PATCH)
+    @RequestMapping(value = "update/{customerId}", method = RequestMethod.POST)
     public ResponseEntity < String > updateCustomer(@RequestBody CustomCustomer customerDetails, @PathVariable Long customerId) {
         try {
             if (customerService == null) {
                 return new ResponseEntity < > ("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
             CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
+            if(customCustomer==null)
+            {
+                return new ResponseEntity<>("No data found for this customerId", HttpStatus.NOT_FOUND);
+            }
             if (customerDetails.getMobileNumber() != null) {
                 if (customCustomerService.isValidMobileNumber(customerDetails.getMobileNumber()) == false)
                     return new ResponseEntity < > ("Cannot update phoneNumber", HttpStatus.INTERNAL_SERVER_ERROR);
             }
+//            customCustomer.setId(customerId);
             Customer existingCustomerByUsername = null;
             Customer existingCustomerByEmail = null;
             if (customerDetails.getUsername() != null) {
@@ -147,7 +155,20 @@ public class CustomerEndpoint {
             }
             customerDetails.setId(customerId);
             customerDetails.setMobileNumber(customCustomer.getMobileNumber());
+
+            //using reflections
+            customerDetails.setQualificationList(customCustomer.getQualificationList());
+            for (Field field : CustomCustomer.class.getDeclaredFields()) {
+                field.setAccessible(true);
+                Object newValue = field.get(customerDetails);
+                if (newValue != null) {
+                    field.set(customCustomer, newValue);
+                }
+            }
+            //using reflections
+
             em.merge(customerDetails);
+            em.merge(customCustomer);
             return new ResponseEntity < > ("Customer Updated", HttpStatus.OK);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
@@ -178,16 +199,9 @@ public class CustomerEndpoint {
         }
     }
 
-    public static ResponseEntity<OtpEndpoint.AuthResponse> createAuthResponse(String token, Customer customer , CustomCustomer existingCustomer) {
-        CustomerDTO customerDTO = new CustomerDTO();
-        customerDTO.setFirstName(customer.getFirstName());
-        customerDTO.setLastName(customer.getLastName());
-        customerDTO.setEmail(customer.getEmailAddress());
-        customerDTO.setUsername(customer.getUsername());
-        customerDTO.setCustomerId(customer.getId());
-        customerDTO.setMobileNumber(existingCustomer.getMobileNumber());
-
-        OtpEndpoint.AuthResponse authResponse = new OtpEndpoint.AuthResponse(token, customerDTO);
+    public static ResponseEntity<OtpEndpoint.AuthResponse> createAuthResponse(String token, Customer customer ) {
+        customer.setPassword(null);
+        OtpEndpoint.AuthResponse authResponse = new OtpEndpoint.AuthResponse(token, customer);
         return ResponseEntity.ok(authResponse);
     }
 }

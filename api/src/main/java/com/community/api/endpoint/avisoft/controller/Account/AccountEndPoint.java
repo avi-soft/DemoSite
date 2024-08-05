@@ -192,11 +192,11 @@ public class AccountEndPoint {
 
                     if (existingToken != null && jwtUtil.validateToken(existingToken, customCustomerService)) {
 
-                        return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(existingToken, customer,existingCustomer));
+                        return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(existingToken, customer));
                     } else {
                        String token = jwtUtil.generateToken(customerDetails.getMobileNumber(), "USER", customerDetails.getCountryCode());
                         session.setAttribute(tokenKey, token);
-                        return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(token, existingCustomer,existingCustomer));
+                        return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(token, existingCustomer));
                     }
 
                 } else {

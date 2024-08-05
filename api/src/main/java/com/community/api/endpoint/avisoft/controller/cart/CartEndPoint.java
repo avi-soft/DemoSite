@@ -2,6 +2,7 @@ package com.community.api.endpoint.avisoft.controller.cart;
 import com.broadleafcommerce.rest.api.endpoint.BaseEndpoint;
 import com.community.api.services.CartService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.broadleafcommerce.core.order.domain.Order;
@@ -126,6 +127,8 @@ public class CartEndPoint extends BaseEndpoint {
             return new ResponseEntity<>("Error retrieving cart", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    @Transactional
+    @JsonBackReference
     @RequestMapping(value = "preview-cart", method = RequestMethod.GET)
     public ResponseEntity<?> retrieveCartItems(@RequestParam long customerId, @RequestParam Long orderId) {
         try {
@@ -133,14 +136,25 @@ public class CartEndPoint extends BaseEndpoint {
                 return new ResponseEntity<>("One or more Serivces not initialized",HttpStatus.INTERNAL_SERVER_ERROR);
             }
             Customer customer = customerService.readCustomerById(customerId);
-            if (customer != null) {
-                Order cart=orderService.findOrderById(orderId);
-                if ( cart!= null) {
-                    return new ResponseEntity<>(cart.getOrderItems().get(0).getName(), HttpStatus.OK);
-                } else
-                    return new ResponseEntity<>("No items found", HttpStatus.NOT_FOUND);
+            if (customer == null)
+            {
+                return new ResponseEntity<>("customer does not exist",HttpStatus.NOT_FOUND);
+            }
+            Order cart=orderService.findOrderById(orderId);
+            List<OrderItem>orderItemList=cart.getOrderItems();
+            List<OrderItem>neworderItemList=new ArrayList<>();
+            if (cart!=null) {
+                for(OrderItem orderItem:cart.getOrderItems())
+                {
+                    OrderItem current=orderItem;
+                    current.setOrder(null);
+                    neworderItemList.add(current);
+                }
+                orderItemList=neworderItemList;
+                cart.setOrderItems(orderItemList);
+                   return new ResponseEntity<>(cart.getOrderItems().toArray(),HttpStatus.OK);
             } else
-                return new ResponseEntity<>("Customer not found", HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>("No items found", HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return new ResponseEntity<>("Error retrieving cart Items", HttpStatus.INTERNAL_SERVER_ERROR);
