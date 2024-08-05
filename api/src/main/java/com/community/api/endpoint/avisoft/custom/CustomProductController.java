@@ -14,9 +14,15 @@ import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityManager;
+import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/productCustom",
@@ -47,9 +53,19 @@ public class CustomProductController extends CatalogEndpoint {
      */
 
 
+    private String decodeParameter(Map<String, String[]> queryParams, String paramName) throws UnsupportedEncodingException {
+        String[] values = queryParams.get(paramName);
+        if (values != null && values.length > 0) {
+            String encodedValue = values[0];
+            return URLDecoder.decode(encodedValue, StandardCharsets.UTF_8.toString());
+        }
+        return null;
+    }
+
     @Transactional
     @PostMapping("/add")
-    public ResponseEntity<String> addProduct(@RequestBody ProductImpl productImpl,
+    public ResponseEntity<String> addProduct(HttpServletRequest request,
+                                             @RequestBody ProductImpl productImpl,
                                              @RequestParam(value = "expirationDate") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date activeEndDate,
                                              @RequestParam(value = "goLiveDate") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date goLiveDate,
                                              @RequestParam(value = "priorityLevel", required = false, defaultValue = "5") String priorityLevelParam,
@@ -58,6 +74,74 @@ public class CustomProductController extends CatalogEndpoint {
                                              @RequestParam(value = "quantity", required = false) String quantityParam,
                                              @RequestParam(value = "cost") String costParam) {
         try {
+
+            // Extract and decode query parameters
+            Map<String, String[]> queryParams = request.getParameterMap();
+            String decodedCategoryIdParam = decodeParameter(queryParams, "categoryId");
+            String decodedSkuIdParam = decodeParameter(queryParams, "skuId");
+            String decodedQuantityParam = decodeParameter(queryParams, "quantity");
+            String decodedCostParam = decodeParameter(queryParams, "cost");
+            String decodedPriorityLevelParam = decodeParameter(queryParams, "priorityLevel");
+
+            // Print parameters from request URL
+            System.out.println("Decoded Category ID: " + decodedCategoryIdParam);
+            System.out.println("Decoded SKU ID: " + decodedSkuIdParam);
+            System.out.println("Decoded Quantity: " + decodedQuantityParam);
+            System.out.println("Decoded Cost: " + decodedCostParam);
+            System.out.println("Decoded Priority Level: " + decodedPriorityLevelParam);
+
+            // Process parameters if they are not null
+            if (decodedPriorityLevelParam != null) {
+                System.out.println("Priority Level from URL: " + decodedPriorityLevelParam);
+            }
+            if (decodedSkuIdParam != null) {
+                System.out.println("SKU ID from URL: " + decodedSkuIdParam);
+            }
+            if (decodedQuantityParam != null) {
+                System.out.println("Quantity from URL: " + decodedQuantityParam);
+            }
+//            // Get the full URL from the request
+//            String requestUrl = request.getRequestURL().toString();
+//            String queryString = request.getQueryString();
+//            if (queryString != null) {
+//                requestUrl += "?" + queryString;
+//            }
+//
+//            // Print the full URL for debugging
+//            System.out.println("Request URL: " + requestUrl);
+//
+//            // Decode query parameters to handle any encoding issues
+//            categoryIdParam = URLDecoder.decode(categoryIdParam, StandardCharsets.UTF_8.toString());
+//            skuIdParam = (skuIdParam != null) ? URLDecoder.decode(skuIdParam, StandardCharsets.UTF_8.toString()) : null;
+//            quantityParam = (quantityParam != null) ? URLDecoder.decode(quantityParam, StandardCharsets.UTF_8.toString()) : null;
+//            costParam = URLDecoder.decode(costParam, StandardCharsets.UTF_8.toString());
+
+//            // Extract query parameters
+//            Map<String, String[]> queryParams = request.getParameterMap();
+//            Map<String, String> queryParamMap = queryParams.entrySet().stream()
+//                    .collect(Collectors.toMap(Map.Entry::getKey, e -> String.join(",", e.getValue())));
+//
+//            // Print the URL and parameters for debugging
+//            String requestUrl = request.getRequestURL().toString();
+//            String queryString = request.getQueryString();
+//            if (queryString != null) {
+//                requestUrl += "?" + queryString;
+//            }
+//            System.out.println("Request URL: " + requestUrl);
+//            System.out.println("Query Parameters: " + queryParamMap);
+//
+
+//            categoryIdParam = URLDecoder.decode(categoryIdParam, StandardCharsets.UTF_8.toString());
+//            skuIdParam = URLDecoder.decode(skuIdParam, StandardCharsets.UTF_8.toString());
+//            quantityParam = URLDecoder.decode(quantityParam, StandardCharsets.UTF_8.toString());
+//            costParam = URLDecoder.decode(costParam, StandardCharsets.UTF_8.toString());
+//
+//            String requestUrl = request.getRequestURL().toString();
+//            String queryString = request.getQueryString();
+//            Map<String, String> queryParamList = new ArrayList<>();
+//
+//            // Print the URL for debugging
+//            System.out.println("Request URL: " + requestUrl);
 
             if (catalogService == null) {
                 throw BroadleafWebServicesException.build(404).addMessage(CATALOGSERVICENOTINITIALIZED);
