@@ -252,7 +252,7 @@ public class CustomProductController extends CatalogEndpoint {
     }
 
     @Transactional
-    @PatchMapping("/update/{productId}")
+    @PutMapping("/update/{productId}")
     public ResponseEntity<String> updateProduct(@RequestBody ProductImpl productImpl,
                                                 @RequestParam(value = "expirationDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date activeEndDate,
                                                 @RequestParam(value = "goLiveDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date goLiveDate,
@@ -321,7 +321,6 @@ public class CustomProductController extends CatalogEndpoint {
             if (priorityLevel != 0) {
                 customProduct.setPriorityLevel(priorityLevel);
             }
-            entityManager.merge(customProduct);
 
             // now we will update the values of ProductImpl -> blc_product table.
             // Before that we will update the sku value if any in the
@@ -357,13 +356,17 @@ public class CustomProductController extends CatalogEndpoint {
                 product.getDefaultSku().setQuantityAvailable(quantity);
             }
 
+            System.out.println("HELLO");
+
             // Updated the necessary attributes.
             if (productImpl.getMetaTitle() != null) {
-                product.setMetaTitle(productImpl.getMetaTitle().trim());
-                if(product.getMetaTitle().isEmpty()){
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException("Product MetaTitle not Given")));
+                if(productImpl.getMetaTitle().trim().isEmpty()){
+                    throw new RuntimeException("Product MetaTitle not Given");
                 }
+                product.setMetaTitle(productImpl.getMetaTitle());
             }
+            System.out.println("HELLO2");
+
             if (productImpl.getMetaDescription() != null) {
                 product.setMetaDescription(productImpl.getMetaDescription().trim());
             }
@@ -371,6 +374,7 @@ public class CustomProductController extends CatalogEndpoint {
                 product.setUrl(productImpl.getUrl());
             }
             catalogService.saveProduct(product);
+            entityManager.merge(customProduct);
 
             return ResponseEntity.ok("Product Updated Successfully");
 
