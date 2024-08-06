@@ -1,5 +1,6 @@
-package com.community.api.endpoint.avisoft.custom;
+package com.community.api.services;
 
+import com.community.api.entity.CustomProduct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,7 +16,7 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
 @Service
-public class CustomProductService {
+public class ProductService {
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -49,7 +50,7 @@ public class CustomProductService {
        @param priorityLevel The priority level to validate.
        @return Errors object containing validation errors, if any.
      */
-    private Errors validatePriorityLevel(Integer priorityLevel) {
+    public Errors validatePriorityLevel(Integer priorityLevel) {
         CustomProduct product = new CustomProduct();
         product.setPriorityLevel(priorityLevel);
 
