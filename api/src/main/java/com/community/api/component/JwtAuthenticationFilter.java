@@ -35,8 +35,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
     private CustomerService CustomerService;
-    @Autowired
-    private TokenBlacklist tokenBlacklistService;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws IOException, ServletException {
@@ -106,7 +105,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String  ipAdress =request.getRemoteAddr();
         String User_Agent =   request.getHeader("User-Agent");
 
-        System.out.println(ipAdress + " ipAdress" + User_Agent + " User_Agent authenticateUser" );
         if (!jwtUtil.validateToken(jwt, ipAdress, User_Agent)) {
             respondWithUnauthorized(response, "Invalid JWT token");
             return true;
