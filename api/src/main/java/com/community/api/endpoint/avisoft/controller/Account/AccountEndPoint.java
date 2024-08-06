@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityManager;
@@ -44,6 +45,8 @@ public class AccountEndPoint {
     private TwilioService twilioService;
     @Autowired
     private CustomCustomerService customCustomerService;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     @PostMapping("/loginWithOtp")
     @ResponseBody
     public ResponseEntity<String> verifyAndLogin(@RequestBody CustomCustomer customer, HttpSession session) {
@@ -136,7 +139,7 @@ public class AccountEndPoint {
             if (customer == null) {
                 return new ResponseEntity<>("No records found for the provided username.", HttpStatus.NOT_FOUND);
             }
-            if (customer.getPassword().equals(customerDetails.getPassword())) {
+            if (passwordEncoder.matches(customerDetails.getPassword(), customer.getPassword())) {
                 return ResponseEntity.ok("Login successful");
             } else {
                 return ResponseEntity.badRequest().body("Invalid password");
@@ -186,17 +189,17 @@ public class AccountEndPoint {
             CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(customerDetails.getMobileNumber(), customerDetails.getCountryCode());
             if (existingCustomer != null) {
                 Customer customer = customerService.readCustomerById(existingCustomer.getId());
-                if (customer.getPassword().equals(customerDetails.getPassword())) {
+                if (passwordEncoder.matches(customerDetails.getPassword(), existingCustomer.getPassword())) {
                     String tokenKey = "authToken_" + customerDetails.getMobileNumber();
                     String existingToken = (String) session.getAttribute(tokenKey);
 
                     if (existingToken != null && jwtUtil.validateToken(existingToken, customCustomerService)) {
 
-                        return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(existingToken, customer,existingCustomer));
+                        return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(existingToken, customer));
                     } else {
                        String token = jwtUtil.generateToken(customerDetails.getMobileNumber(), "USER", customerDetails.getCountryCode());
                         session.setAttribute(tokenKey, token);
-                        return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(token, existingCustomer,existingCustomer));
+                        return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(token, existingCustomer));
                     }
 
                 } else {
