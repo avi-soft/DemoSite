@@ -102,7 +102,10 @@ public class CustomerEndpoint {
             customerDetails.setId(customerId);
             customerDetails.setMobileNumber(customCustomer.getMobileNumber());
             customerDetails.setQualificationList(customCustomer.getQualificationList());
-            customerDetails.setMobileNumber(customCustomer.getMobileNumber());
+
+
+
+
             customerDetails.setCountryCode(customCustomer.getCountryCode());
             Customer customer = customerService.readCustomerById(customerId);
             //using reflections
@@ -116,6 +119,9 @@ public class CustomerEndpoint {
             if (customerDetails.getFirstName() != null || customerDetails.getLastName() != null) {
                 customer.setFirstName(customerDetails.getFirstName());
                 customer.setLastName(customerDetails.getLastName());
+            }
+            if(customerDetails.getEmailAddress()!=null){
+                customer.setEmailAddress(customerDetails.getEmailAddress());
             }
             em.merge(customCustomer);
             return new ResponseEntity<>(customer, HttpStatus.OK);
