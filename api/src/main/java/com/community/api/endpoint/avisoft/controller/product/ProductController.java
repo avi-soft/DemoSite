@@ -165,10 +165,10 @@ public class ProductController extends CatalogEndpoint {
             String formattedDate = dateFormat.format(new Date());
             Date activeStartDate = dateFormat.parse(formattedDate); // Convert formatted date string back to Date
 
-            if (activeEndDate.before(activeStartDate)) {
-                return new ResponseEntity<>("Expiration date cannot be before of current date", HttpStatus.INTERNAL_SERVER_ERROR);
+            if (!activeEndDate.after(activeStartDate)) {
+                return new ResponseEntity<>("Expiration date cannot be before or equal of current date", HttpStatus.INTERNAL_SERVER_ERROR);
             } else if (!activeEndDate.after(goLiveDate) || !goLiveDate.after(activeStartDate)) {
-                return new ResponseEntity<>("Expiration date cannot be before or equal of goLive date and Greater and current date", HttpStatus.INTERNAL_SERVER_ERROR);
+                return new ResponseEntity<>("Expiration date cannot be before or equal of goLive date and before or equal of current date", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             sku.setActiveStartDate(activeStartDate);
@@ -374,9 +374,9 @@ public class ProductController extends CatalogEndpoint {
 
             // first we set the values of CustomProduct -> ext_product table.
             if (goLiveDate != null) {
-                if (goLiveDate.before(new Date())) {
-                    return new ResponseEntity<>("GoLive date cannot be before of current date", HttpStatus.INTERNAL_SERVER_ERROR);
-                } else if (activeEndDate != null && activeEndDate.before(goLiveDate)) {
+                if (!goLiveDate.after(new Date())) {
+                    return new ResponseEntity<>("GoLive date cannot be before and equal of current date", HttpStatus.INTERNAL_SERVER_ERROR);
+                } else if (activeEndDate != null && !activeEndDate.after(goLiveDate)) {
                     return new ResponseEntity<>("Expiration date cannot be before of GoLiveDate", HttpStatus.INTERNAL_SERVER_ERROR);
                 } else if (activeEndDate == null && !goLiveDate.before(customProduct.getDefaultSku().getActiveEndDate())) {
                     return new ResponseEntity<>("GoLive date cannot be after of ExpirationDate", HttpStatus.INTERNAL_SERVER_ERROR);
