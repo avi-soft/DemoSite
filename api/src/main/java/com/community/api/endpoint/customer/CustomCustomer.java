@@ -1,5 +1,6 @@
 package com.community.api.endpoint.customer;
 
+import com.community.api.utils.Document;
 import io.micrometer.core.lang.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

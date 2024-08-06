@@ -1,6 +1,5 @@
 package com.community.api.endpoint.avisoft.controller.Customer;
 
-import com.community.api.component.Constant;
 import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.CustomCustomer;
 import com.community.api.endpoint.customer.CustomerDTO;
@@ -10,9 +9,8 @@ import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.apache.http.protocol.HTTP;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +24,7 @@ import java.net.URLEncoder;
 import java.security.Principal;
 
 @RestController
-@RequestMapping(value = "/customer-custom",
+@RequestMapping(value = "/customer",
         produces = {
                 MediaType.APPLICATION_JSON_VALUE,
                 MediaType.APPLICATION_XML_VALUE
@@ -71,7 +69,7 @@ public class CustomerEndpoint {
 
     @Transactional
     @RequestMapping(value = "update", method = RequestMethod.POST)
-    public ResponseEntity<String> updateCustomer(@RequestBody CustomCustomer customerDetails, @RequestParam Long customerId) {
+    public ResponseEntity<?> updateCustomer(@RequestBody CustomCustomer customerDetails, @RequestParam Long customerId) {
         try {
             if (customerService == null) {
                 return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -120,8 +118,9 @@ public class CustomerEndpoint {
                 customer.setLastName(customerDetails.getLastName());
             }
             em.merge(customCustomer);
-            return new ResponseEntity<>("Customer Updated", HttpStatus.OK);
-        } catch (Exception e) {
+            return new ResponseEntity<>(customer, HttpStatus.OK);
+        }
+        catch (Exception e) {
             exceptionHandling.handleException(e);
             return new ResponseEntity<>("Error updating", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -138,7 +137,7 @@ public class CustomerEndpoint {
             if (customer == null) {
                 return new ResponseEntity<>("No data found for this customerId", HttpStatus.NOT_FOUND);
             }
-            String username=customerDTO.getUserName();
+            String username=customerDTO.getUsername();
             Customer existingCustomerByUsername = null;
             if ( username != null) {
                 existingCustomerByUsername = customerService.readCustomerByUsername(username);
@@ -168,14 +167,28 @@ public class CustomerEndpoint {
                 return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
             Customer customer=customerService.readCustomerById(customerId);
-            String password= customerDTO.getPassword();
             if (customer == null) {
                 return new ResponseEntity<>("No data found for this customerId", HttpStatus.NOT_FOUND);
             }
-            if (customerDTO.getPassword() != null) {
-                customer.setPassword(passwordEncoder.encode(password));
+            if(customer.getPassword()==null||customer.getPassword().isEmpty())
+            {
+                customer.setPassword(passwordEncoder.encode(customerDTO.getPassword()));
                 em.merge(customer);
-                return new ResponseEntity<>(customer,HttpStatus.OK);
+                return new ResponseEntity<>(customer, HttpStatus.NOT_FOUND);
+            }
+            String password= customerDTO.getPassword();
+            if (customerDTO.getPassword() != null&&customerDTO.getOldPassword()!=null) {
+                if (passwordEncoder.matches(customerDTO.getOldPassword(),customer.getPassword())) {
+                    if(!customerDTO.getPassword().equals(customerDTO.getOldPassword())) {
+                        customer.setPassword(passwordEncoder.encode(password));
+                        em.merge(customer);
+                        return new ResponseEntity<>(customer, HttpStatus.OK);
+                    }
+                    else
+                        return new ResponseEntity<>("Old password and new password can not be same!", HttpStatus.BAD_REQUEST);
+                }
+                else
+                    return new ResponseEntity<>("The old password you provided is incorrect. Please try again with the correct old password", HttpStatus.BAD_REQUEST);
             }
             else
             {
@@ -183,7 +196,7 @@ public class CustomerEndpoint {
             }
         } catch (Exception exception) {
             exceptionHandling.handleException(exception);
-            return new ResponseEntity<>("Error updating username", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("Error updating password", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     @Transactional

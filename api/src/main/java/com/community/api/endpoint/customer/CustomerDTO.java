@@ -14,5 +14,5 @@ import org.springframework.stereotype.Component;
 public class CustomerDTO {
 
 //    todo :- need to add role here
-    private String userName,password;
+    private String username,password,oldPassword;
 }

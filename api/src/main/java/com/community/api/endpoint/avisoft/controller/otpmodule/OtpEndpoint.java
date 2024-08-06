@@ -148,7 +148,6 @@ public class OtpEndpoint {
             String storedOtp = existingCustomer.getOtp();
 
             Customer customer = customerService.readCustomerById(existingCustomer.getId());
-            customer.setPassword(null);
             if (otpEntered.equals(storedOtp)) {
                 String tokenKey = "authToken_" + customerDetails.getMobileNumber();
                 String existingToken = (String) session.getAttribute(tokenKey);
