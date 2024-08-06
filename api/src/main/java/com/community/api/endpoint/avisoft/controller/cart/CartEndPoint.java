@@ -28,20 +28,25 @@ import java.util.List;
         produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }
 )
 public class CartEndPoint extends BaseEndpoint {
+    private final CustomerService customerService;
+    private final OrderService orderService;
+    private final CatalogService catalogService;
+    private final ExceptionHandlingImplement exceptionHandling;
+    private final EntityManager entityManager;
+    private final OrderItemService orderItemService;
+    private final CartService cartService;
     @Autowired
-    private CustomerService customerService;
-    @Autowired
-    private OrderService orderService;
-    @Autowired
-    private CatalogService catalogService;
-    @Autowired
-    private ExceptionHandlingImplement exceptionHandling;
-    @Autowired
-    private EntityManager entityManager;
-    @Autowired
-    private OrderItemService orderItemService;
-    @Autowired
-    private CartService cartService;
+    public CartEndPoint(CustomerService customerService, OrderService orderService, CatalogService catalogService,
+                        ExceptionHandlingImplement exceptionHandling, EntityManager entityManager,
+                        OrderItemService orderItemService, CartService cartService) {
+        this.customerService = customerService;
+        this.orderService = orderService;
+        this.catalogService = catalogService;
+        this.exceptionHandling = exceptionHandling;
+        this.entityManager = entityManager;
+        this.orderItemService = orderItemService;
+        this.cartService = cartService;
+    }
 
     @RequestMapping(value = "empty", method = RequestMethod.DELETE)
     public ResponseEntity<String> emptyTheCart(@RequestParam Long customerId) {

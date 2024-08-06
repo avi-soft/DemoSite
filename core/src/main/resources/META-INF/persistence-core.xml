@@ -45,7 +45,7 @@
 
         <!-- Added this line -->
         <class>com.community.api.endpoint.customer.CustomCustomer</class>
-        <class>com.community.api.endpoint.customer.Document</class>
+        <class>com.community.api.utils.Document </class>
         <class>com.community.api.endpoint.customer.Qualification</class>
 
         <exclude-unlisted-classes/>

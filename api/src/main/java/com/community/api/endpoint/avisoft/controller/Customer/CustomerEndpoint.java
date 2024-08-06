@@ -113,7 +113,7 @@ public class CustomerEndpoint {
                     field.set(customCustomer, newValue);
                 }
             }
-            if (customerDetails.getFathersName() != null || customerDetails.getLastName() != null) {
+            if (customerDetails.getFirstName() != null || customerDetails.getLastName() != null) {
                 customer.setFirstName(customerDetails.getFirstName());
                 customer.setLastName(customerDetails.getLastName());
             }
