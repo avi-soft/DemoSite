@@ -1,6 +1,5 @@
 package com.community.api.endpoint.avisoft.controller.otpmodule;
 import com.community.api.component.Constant;
-import com.community.api.component.JwtAuthenticationFilter;
 import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.customer.CustomCustomer;
 import com.community.api.endpoint.customer.CustomerDTO;
@@ -55,9 +54,7 @@ public class OtpEndpoint {
 
     @PostMapping("/send-otp")
     public ResponseEntity<String> sendtOtp(@RequestBody CustomCustomer customerDetails, HttpSession session) throws UnsupportedEncodingException {
-
         try {
-
             if (customerDetails.getMobileNumber().isEmpty() || customerDetails.getMobileNumber() == null)
                 return new ResponseEntity<>("Enter mobile number", HttpStatus.UNPROCESSABLE_ENTITY);
 

@@ -27,10 +27,10 @@ public class JwtUtil {
     @Value("${jwt.secret.key}")
     private String secretKeyString;
 
-    private Key secretKey;
+    private static Key secretKey;
 
     @Autowired
-    private TokenBlacklist tokenBlacklistService;
+    private static TokenBlacklist tokenBlacklistService;
 
     @Autowired
     private CustomerService customerService;
@@ -90,11 +90,7 @@ public class JwtUtil {
             if (isTokenExpired(token)) {
                 return false;
             }
-            String uniqueTokenId = Jwts.parserBuilder()
-                    .setSigningKey(secretKey)
-                    .build()
-                    .parseClaimsJws(token)
-                    .getHeader()
+            String uniqueTokenId = this.parseClaimsHeaders(token)
                     .get("jti").toString();
 
             if (tokenBlacklistService.isTokenBlacklisted(uniqueTokenId)) {
@@ -156,15 +152,21 @@ public class JwtUtil {
             throw new RuntimeException("Error checking token expiration", e);
         }
     }
-    public void logoutUser(String token) {
-        String uniqueTokenId = Jwts.parserBuilder()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token)
-                .getHeader()
-                .get("jti").toString();
+    public static boolean logoutUser(String token) {
+        try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
 
-        tokenBlacklistService.blacklistToken(uniqueTokenId);
+            String uniqueTokenId = claims.getId();
+
+            tokenBlacklistService.blacklistToken(uniqueTokenId);
+            return true;
+        } catch (Exception e) {
+            System.err.println("Invalid token or error parsing token: " + e.getMessage());
+            return false;
+        }
     }
-
 }
