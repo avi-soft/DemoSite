@@ -1,7 +1,5 @@
 package com.community.api.component;
 
-import com.community.api.endpoint.customer.CustomCustomer;
-import com.community.api.services.CustomCustomerService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -27,10 +25,10 @@ public class JwtUtil {
     @Value("${jwt.secret.key}")
     private String secretKeyString;
 
-    private static Key secretKey;
+    private Key secretKey;
 
     @Autowired
-    private static TokenBlacklist tokenBlacklistService;
+    private TokenBlacklist tokenBlacklist;
 
     @Autowired
     private CustomerService customerService;
@@ -43,7 +41,7 @@ public class JwtUtil {
 
     public String generateToken(Long id, String role, String ipAddress, String userAgent) {
         try {
-            String uniqueTokenId = UUID.randomUUID().toString() + ":" + id;
+            String uniqueTokenId = UUID.randomUUID().toString();
 
             return Jwts.builder()
                     .setHeaderParam("typ", "JWT")
@@ -67,8 +65,12 @@ public class JwtUtil {
             throw new IllegalArgumentException("Token is required");
         }
         try {
-            return (long) Math.toIntExact(this.parseClaims(token)
-                    .get("id", Long.class));
+            return Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .get("id", Long.class);
         } catch (ExpiredJwtException e) {
             throw new RuntimeException("JWT token is expired", e);
         } catch (Exception e) {
@@ -77,10 +79,20 @@ public class JwtUtil {
         }
     }
 
-    public Boolean validateToken(String token, CustomCustomerService customCustomerService, String ipAddress, String userAgent) {
+    public Boolean validateToken(String token, String ipAddress, String userAgent) {
         Long id = extractId(token);
 
         try {
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            String tokenId = claims.getId();
+            if (tokenBlacklist.isTokenBlacklisted(tokenId)) {
+                return false;
+            }
 
             Customer existingCustomer = customerService.readCustomerById(id);
             if (existingCustomer == null) {
@@ -90,26 +102,12 @@ public class JwtUtil {
             if (isTokenExpired(token)) {
                 return false;
             }
-            String uniqueTokenId = this.parseClaimsHeaders(token)
-                    .get("jti").toString();
 
-            if (tokenBlacklistService.isTokenBlacklisted(uniqueTokenId)) {
-                return false;
-            }
+            String storedIpAddress = claims.get("ipAddress", String.class);
+            String storedUserAgent = claims.get("userAgent", String.class);
 
-            String trimmedIpAddress = ipAddress.trim();
-            String trimmedUserAgent = userAgent.trim();
-
-            String storedIpAddress = parseClaims(token).get("ipAddress", String.class);
-            String storedUserAgent = parseClaims(token).get("userAgent", String.class);
-            String trimmedStoredIpAddress = storedIpAddress != null ? storedIpAddress.trim() : "";
-            String trimmedStoredUserAgent = storedUserAgent != null ? storedUserAgent.trim() : "";
-
-            if (trimmedIpAddress.equals(trimmedStoredIpAddress) && trimmedUserAgent.equalsIgnoreCase(trimmedStoredUserAgent)) {
-                return true;
-            }
-
-            return false;
+            return ipAddress.trim().equals(storedIpAddress != null ? storedIpAddress.trim() : "") &&
+                    userAgent.trim().equalsIgnoreCase(storedUserAgent != null ? storedUserAgent.trim() : "");
         } catch (ExpiredJwtException e) {
             exceptionHandling.handleException(e);
             return false;
@@ -122,37 +120,23 @@ public class JwtUtil {
         }
     }
 
-
-    private Claims parseClaims(String token) {
-        return Jwts.parserBuilder()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
-    }
-
-    public Claims parseClaimsHeaders(String token) {
-        return (Claims) Jwts.parserBuilder()
-                .setSigningKey(secretKey)
-                .build()
-                .parseClaimsJws(token)
-                .getHeader();
-    }
-
     private boolean isTokenExpired(String token) {
         try {
-            Date expiration = this.parseClaims(token)
+            Date expiration = Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody()
                     .getExpiration();
 
             return expiration.before(new Date());
-        } catch (ExpiredJwtException e) {
-            return true;
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             throw new RuntimeException("Error checking token expiration", e);
         }
     }
-    public static boolean logoutUser(String token) {
+
+    public boolean logoutUser(String token) {
         try {
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
@@ -161,12 +145,12 @@ public class JwtUtil {
                     .getBody();
 
             String uniqueTokenId = claims.getId();
-
-            tokenBlacklistService.blacklistToken(uniqueTokenId);
+            tokenBlacklist.blacklistToken(uniqueTokenId);
             return true;
         } catch (Exception e) {
-            System.err.println("Invalid token or error parsing token: " + e.getMessage());
+            exceptionHandling.handleException(e);
             return false;
+
         }
     }
 }

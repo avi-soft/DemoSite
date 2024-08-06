@@ -192,7 +192,7 @@ public class AccountEndPoint {
                     String existingToken = (String) session.getAttribute(tokenKey);
                     String ipAddress = request.getRemoteAddr();
                     String userAgent = request.getHeader("User-Agent");
-                    if (existingToken != null && jwtUtil.validateToken(existingToken, customCustomerService, ipAddress, userAgent)) {
+                    if (existingToken != null && jwtUtil.validateToken(existingToken,  ipAddress, userAgent)) {
 
                         return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(existingToken, customer));
                     } else {

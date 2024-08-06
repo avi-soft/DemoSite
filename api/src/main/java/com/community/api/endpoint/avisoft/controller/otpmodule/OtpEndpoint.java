@@ -159,7 +159,7 @@ public class OtpEndpoint {
                 em.persist(existingCustomer);
                 String existingToken = (String) session.getAttribute(tokenKey);
 
-                if (existingToken != null && jwtUtil.validateToken(existingToken, customCustomerService, ipAddress,ipAddress)){
+                if (existingToken != null && jwtUtil.validateToken(existingToken,  ipAddress,ipAddress)){
                     return ResponseEntity.ok(createAuthResponse(existingToken,customer));
                 } else {
                     String newToken = jwtUtil.generateToken(existingCustomer.getId(), "USER",ipAddress,userAgent);

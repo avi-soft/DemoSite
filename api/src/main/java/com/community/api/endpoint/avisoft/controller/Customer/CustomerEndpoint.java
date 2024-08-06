@@ -7,11 +7,9 @@ import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.services.CustomCustomerService;
 import com.community.api.services.TwilioService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
-import org.apache.http.protocol.HTTP;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -21,8 +19,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.lang.reflect.Field;
-import java.net.URLEncoder;
-import java.security.Principal;
 import java.util.Map;
 
 @RestController
@@ -113,7 +109,6 @@ public class CustomerEndpoint {
             for (Field field : CustomCustomer.class.getDeclaredFields()) {
                 field.setAccessible(true);
                 Object newValue = field.get(customerDetails);
-                System.out.println(field);
                 if (newValue != null) {
                     field.set(customCustomer, newValue);
                 }
@@ -239,7 +234,6 @@ public class CustomerEndpoint {
         if (token == null || token.isEmpty()) {
             return ResponseEntity.badRequest().body("Token is required");
         }
-
         try {
             jwtUtil.logoutUser(token);
 

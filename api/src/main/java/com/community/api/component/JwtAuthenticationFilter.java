@@ -107,14 +107,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String User_Agent =   request.getHeader("User-Agent");
 
         System.out.println(ipAdress + " ipAdress" + User_Agent + " User_Agent authenticateUser" );
-        if (!jwtUtil.validateToken(jwt, customCustomerService, ipAdress, User_Agent)) {
+        if (!jwtUtil.validateToken(jwt, ipAdress, User_Agent)) {
             respondWithUnauthorized(response, "Invalid JWT token");
             return true;
         }
 
         if (id != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             Customer customCustomer = CustomerService.readCustomerById(id);
-            if (customCustomer != null && jwtUtil.validateToken(jwt, customCustomerService, ipAdress, User_Agent)) {
+            if (customCustomer != null && jwtUtil.validateToken(jwt,  ipAdress, User_Agent)) {
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                         customCustomer.getId(), null, new ArrayList<>());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
