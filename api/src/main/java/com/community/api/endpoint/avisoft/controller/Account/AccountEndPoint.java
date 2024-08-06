@@ -3,23 +3,21 @@ package com.community.api.endpoint.avisoft.controller.Account;
 import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.avisoft.controller.Customer.CustomerEndpoint;
-import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.CustomCustomer;
-import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.services.CustomCustomerService;
 import com.community.api.services.TwilioService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityManager;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
 
@@ -44,6 +42,8 @@ public class AccountEndPoint {
     private TwilioService twilioService;
     @Autowired
     private CustomCustomerService customCustomerService;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     @PostMapping("/loginWithOtp")
     @ResponseBody
     public ResponseEntity<String> verifyAndLogin(@RequestBody CustomCustomer customer, HttpSession session) {
@@ -69,14 +69,14 @@ public class AccountEndPoint {
 
     @PostMapping("/loginWithPassword")
     @ResponseBody
-    public ResponseEntity<?> loginWithPassword(@RequestBody CustomCustomer customer, HttpSession session) {
+    public ResponseEntity<?> loginWithPassword(@RequestBody CustomCustomer customer, HttpSession session,HttpServletRequest request) {
         try {
             if (customer.getMobileNumber() != null) {
                 if (customer.getCountryCode() == null || customer.getCountryCode().isEmpty()) {
                     customer.setCountryCode(Constant.COUNTRY_CODE);
                 }
                 if (customCustomerService.isValidMobileNumber(customer.getMobileNumber()) && isNumeric(customer.getMobileNumber())) {
-                    return loginWithCustomerPassword(customer, session);
+                    return loginWithCustomerPassword(customer, session, request);
                 } else {
                     return ResponseEntity.badRequest().body("Mobile number is not valid");
                 }
@@ -136,7 +136,7 @@ public class AccountEndPoint {
             if (customer == null) {
                 return new ResponseEntity<>("No records found for the provided username.", HttpStatus.NOT_FOUND);
             }
-            if (customer.getPassword().equals(customerDetails.getPassword())) {
+            if (passwordEncoder.matches(customerDetails.getPassword(), customer.getPassword())) {
                 return ResponseEntity.ok("Login successful");
             } else {
                 return ResponseEntity.badRequest().body("Invalid password");
@@ -170,7 +170,8 @@ public class AccountEndPoint {
         }
     }
     @RequestMapping(value = "login-with-password", method = RequestMethod.POST)
-    public ResponseEntity<?> loginWithCustomerPassword(@RequestBody CustomCustomer customerDetails, HttpSession session) {
+    public ResponseEntity<?> loginWithCustomerPassword(@RequestBody CustomCustomer customerDetails, HttpSession session,
+                                                       HttpServletRequest request) {
         try {
             if (customerDetails.getCountryCode() == null) {
                 customerDetails.setCountryCode(Constant.COUNTRY_CODE);
@@ -186,17 +187,19 @@ public class AccountEndPoint {
             CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(customerDetails.getMobileNumber(), customerDetails.getCountryCode());
             if (existingCustomer != null) {
                 Customer customer = customerService.readCustomerById(existingCustomer.getId());
-                if (customer.getPassword().equals(customerDetails.getPassword())) {
+                if (passwordEncoder.matches(customerDetails.getPassword(), existingCustomer.getPassword())) {
                     String tokenKey = "authToken_" + customerDetails.getMobileNumber();
                     String existingToken = (String) session.getAttribute(tokenKey);
+                    String ipAddress = request.getRemoteAddr();
+                    String userAgent = request.getHeader("User-Agent");
+                    if (existingToken != null && jwtUtil.validateToken(existingToken,  ipAddress, userAgent)) {
 
-                    if (existingToken != null && jwtUtil.validateToken(existingToken, customCustomerService)) {
-
-                        return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(existingToken, customer,existingCustomer));
+                        return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(existingToken, customer));
                     } else {
-                       String token = jwtUtil.generateToken(customerDetails.getMobileNumber(), "USER", customerDetails.getCountryCode());
+
+                       String token = jwtUtil.generateToken(existingCustomer.getId(), "USER",ipAddress,userAgent);
                         session.setAttribute(tokenKey, token);
-                        return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(token, existingCustomer,existingCustomer));
+                        return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(token, existingCustomer));
                     }
 
                 } else {
