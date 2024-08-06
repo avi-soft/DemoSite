@@ -1,61 +1,48 @@
-package com.community.api.endpoint.avisoft.custom;
+package com.community.api.endpoint.avisoft.controller.Category;
 
 import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
 import com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException;
 import com.broadleafcommerce.rest.api.wrapper.CategoriesWrapper;
-import com.broadleafcommerce.rest.api.wrapper.CategoryAttributeWrapper;
 import com.broadleafcommerce.rest.api.wrapper.CategoryWrapper;
+import com.community.api.services.CategoryService;
 import com.community.api.services.exception.ExceptionHandlingService;
 import org.broadleafcommerce.core.catalog.domain.*;
-import org.broadleafcommerce.core.catalog.service.CatalogService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.bind.annotation.*;
 
-import javax.annotation.Resource;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
 import java.util.List;
 
 @RestController
 @RequestMapping(value = "/categoryCustom")
-public class CustomCategoryController extends CatalogEndpoint {
-
-    private static final Logger logger = LoggerFactory.getLogger(com.community.api.endpoint.avisoft.controller.Category.CustomCategoryEndpoint.class);
-    private static final String CATEGORYNOTFOUND = "Category not Found";
-    private static final String CATEGORYTITLENOTGIVEN = "Category MetaTitle not Given";
-    private static final String CATEGORYDESCNOTGIVEN = "Category Description not Given";
+public class CategoryController extends CatalogEndpoint {
 
     @Autowired
     private ExceptionHandlingService exceptionHandlingService;
 
     @Autowired
-    private CustomCategoryService customCategoryService;
+    private CategoryService customCategoryService;
 
     @PersistenceContext
-    private EntityManager em;
+    private EntityManager entityManager;
 
 
     @PostMapping("/add")
     public ResponseEntity<?> addCategory(HttpServletRequest request, @RequestBody CategoryImpl categoryImpl) {
         try {
             if (catalogService == null) {
-                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
+                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            Category category = this.catalogService.createCategory();
-
-            if(categoryImpl.getName() == null || categoryImpl.getName().isEmpty()){
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(new RuntimeException(CATEGORYTITLENOTGIVEN)));
+            if(categoryImpl.getName().isEmpty()){
+                return new ResponseEntity<>("CategoryTitle cannot be empty or null", HttpStatus.INTERNAL_SERVER_ERROR);
             }
             if(categoryImpl.getDescription() == null || categoryImpl.getDescription().isEmpty()) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(new RuntimeException(CATEGORYDESCNOTGIVEN)));
+                return new ResponseEntity<>("CategoryDescription cannot be empty or null", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             catalogService.saveCategory(categoryImpl);
@@ -65,23 +52,21 @@ public class CustomCategoryController extends CatalogEndpoint {
             return ResponseEntity.ok(wrapper);
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
+            return new ResponseEntity<>("Some Exception Occurred", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
     }
-    @RequestMapping(value = "/categories", method = RequestMethod.GET)
+
+    @GetMapping(value = "/categories")
     public ResponseEntity<?> getCategories(HttpServletRequest request, @RequestParam(value = "limit", defaultValue = "20") int limit) {
         try {
             if (catalogService == null) {
-                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
+                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             List<Category> categories = this.catalogService.findAllCategories();
 
-            if (categories.size() == 0) {
-
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(CATEGORYNOTFOUND)));
-
+            if (categories.isEmpty()) {
+                return new ResponseEntity<>("categories not found", HttpStatus.INTERNAL_SERVER_ERROR);
             } else {
 
                 CategoriesWrapper wrapper = (CategoriesWrapper) this.context.getBean(CategoriesWrapper.class.getName());
@@ -91,33 +76,30 @@ public class CustomCategoryController extends CatalogEndpoint {
 
             }
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
+            return new ResponseEntity<>("Some Exception Occurred", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
     }
 
-    @RequestMapping(value = "/category", method = RequestMethod.GET, params = {"categoryId"})
-    public ResponseEntity<?> getCategoryById(HttpServletRequest request, @RequestParam("categoryId") Long id, @RequestParam(value = "productLimit", defaultValue = "20") int productLimit, @RequestParam(value = "productOffset", defaultValue = "1") int productOffset, @RequestParam(value = "subcategoryLimit", defaultValue = "20") int subcategoryLimit, @RequestParam(value = "subcategoryOffset", defaultValue = "1") int subcategoryOffset) {
+    @GetMapping(value = "/category")
+    public ResponseEntity<?> getCategoryById(HttpServletRequest request, @RequestParam("categoryId") Long categoryId, @RequestParam(value = "productLimit", defaultValue = "20") int productLimit, @RequestParam(value = "productOffset", defaultValue = "1") int productOffset, @RequestParam(value = "subcategoryLimit", defaultValue = "20") int subcategoryLimit, @RequestParam(value = "subcategoryOffset", defaultValue = "1") int subcategoryOffset) {
         try {
             if (catalogService == null) {
-                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
+                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            if (id == null) {
+            if (categoryId == null) {
 
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(CATEGORYNOTFOUND)));
+                return new ResponseEntity<>("CategoryId not provided", HttpStatus.INTERNAL_SERVER_ERROR);
 
             }
-            Category cat = this.catalogService.findCategoryById(id);
+            Category category = this.catalogService.findCategoryById(categoryId);
 
-            if (cat == null) {
-
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(CATEGORYNOTFOUND)));
-
+            if (category == null) {
+                return new ResponseEntity<>("Category not found", HttpStatus.INTERNAL_SERVER_ERROR);
             } else {
 
                 CategoryWrapper wrapper = (CategoryWrapper) this.context.getBean(CategoryWrapper.class.getName());
-                wrapper.wrapDetails(cat, request);
+                wrapper.wrapDetails(category, request);
                 return ResponseEntity.ok(wrapper);
 
             }
@@ -125,47 +107,16 @@ public class CustomCategoryController extends CatalogEndpoint {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
         }
-
     }
 
-    @RequestMapping(value = "/subcategories/{categoryId}", method = RequestMethod.GET)
-    public ResponseEntity<?> getSubCategories(HttpServletRequest request, @PathVariable("categoryId") Long id) {
-
-        try {
-            if (catalogService == null) {
-                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
-            }
-
-            final Category category = this.catalogService.findCategoryById(id);
-
-            if (category == null) {
-
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(CATEGORYNOTFOUND)));
-
-            } else {
-
-                CategoriesWrapper wrapper = (CategoriesWrapper) this.context.getBean(CategoriesWrapper.class.getName());
-                List<Category> categories = this.catalogService.findAllSubCategories(category);
-
-                wrapper.wrapDetails(categories, request);
-                return ResponseEntity.ok(wrapper);
-
-            }
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
-        }
-
-    }
-
-    @RequestMapping(value = "/remove/{categoryId}", method = RequestMethod.DELETE)
+    @DeleteMapping(value = "/remove/{categoryId}")
     public ResponseEntity<?> removeCategoryById(HttpServletRequest request, @PathVariable("categoryId") Long id, @RequestParam(value = "productLimit", defaultValue = "20") int productLimit, @RequestParam(value = "productOffset", defaultValue = "1") int productOffset, @RequestParam(value = "subcategoryLimit", defaultValue = "20") int subcategoryLimit, @RequestParam(value = "subcategoryOffset", defaultValue = "1") int subcategoryOffset) {
         try {
             if (catalogService == null) {
-                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
+                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            final Category category = this.catalogService.findCategoryById(id);
+            Category category = this.catalogService.findCategoryById(id);
 
             if (category != null) {
 
@@ -175,12 +126,11 @@ public class CustomCategoryController extends CatalogEndpoint {
                 return ResponseEntity.ok(wrapper);
 
             } else {
-
-                throw BroadleafWebServicesException.build(404).addMessage("Product not available", id);
-
+                return new ResponseEntity<>("category not found", HttpStatus.INTERNAL_SERVER_ERROR);
             }
+
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
+            return new ResponseEntity<>("Some Exception Occurred", HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }
@@ -192,7 +142,7 @@ public class CustomCategoryController extends CatalogEndpoint {
                 throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
             }
 
-            final Category category = this.catalogService.findCategoryById(id);
+            Category category = this.catalogService.findCategoryById(id);
 
             if (category != null) {
 
@@ -203,53 +153,14 @@ public class CustomCategoryController extends CatalogEndpoint {
                 return ResponseEntity.ok(wrapper);
 
             } else {
-
-                throw BroadleafWebServicesException.build(404).addMessage("There is no category with this id to update", id);
-
+                return new ResponseEntity<>("category not found", HttpStatus.INTERNAL_SERVER_ERROR);
             }
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
+            return new ResponseEntity<>("Some Exception Occurred", HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }
 
-    @RequestMapping(value = "/attributes/{categoryId}", method = RequestMethod.GET)
-    public ResponseEntity<?> getCategoryAttributes(HttpServletRequest request, @PathVariable("categoryId") Long categoryId) {
-        try {
-            if (catalogService == null) {
-                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
-            }
-
-            Category category = this.catalogService.findCategoryById(categoryId);
-
-            if (category == null) {
-
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(CATEGORYNOTFOUND)));
-
-            } else {
-
-                List<CategoryAttributeWrapper> categoryAttributeWrapperList = new ArrayList<>();
-
-                if (category.getCategoryAttributesMap() != null) {
-
-                    for (String key : category.getCategoryAttributesMap().keySet()) {
-                        CategoryAttributeWrapper wrapper = (CategoryAttributeWrapper) this.context.getBean(CategoryAttributeWrapper.class.getName());
-                        wrapper.wrapSummary((CategoryAttribute) category.getCategoryAttributesMap().get(key), request);
-                        categoryAttributeWrapperList.add(wrapper);
-                    }
-
-                }
-                return ResponseEntity.ok(categoryAttributeWrapperList);
-
-            }
-        } catch (Exception e) {
-
-            String errorMessage = exceptionHandlingService.handleException(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMessage);
-
-        }
-
-    }
 
     @RequestMapping(value = "/products/{categoryId}", method = RequestMethod.GET)
     public ResponseEntity<?> getProductsFromCatrgoryId(@PathVariable Long categoryId) {
@@ -262,9 +173,9 @@ public class CustomCategoryController extends CatalogEndpoint {
                 throw BroadleafWebServicesException.build(404).addMessage("category Id is not provided in request headers.");
             }
 
-            Category cat = this.catalogService.findCategoryById(categoryId);
+            Category category1 = this.catalogService.findCategoryById(categoryId);
 
-            if (cat == null) {
+            if (category1 == null) {
                 throw BroadleafWebServicesException.build(404).addMessage("Error retrieving category as There is no category in DB with this Id");
             }
 

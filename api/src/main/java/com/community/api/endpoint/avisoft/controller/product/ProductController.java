@@ -1,7 +1,9 @@
-package com.community.api.endpoint.avisoft.custom;
+package com.community.api.endpoint.avisoft.controller.product;
 
 import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
 import com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException;
+import com.community.api.entity.CustomProduct;
+import com.community.api.services.ProductService;
 import com.community.api.services.exception.ExceptionHandlingService;
 import org.broadleafcommerce.common.money.Money;
 import org.broadleafcommerce.core.catalog.domain.*;
@@ -22,13 +24,12 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/productCustom",
         produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE}
 )
-public class CustomProductController extends CatalogEndpoint {
+public class ProductController extends CatalogEndpoint {
 
     private static final String CATALOGSERVICENOTINITIALIZED = "Catalog service is not initialized.";
     private static final String PRODUCTNOTFOUND = "Product not Found";
@@ -44,7 +45,7 @@ public class CustomProductController extends CatalogEndpoint {
     protected EntityManager entityManager;
 
     @Autowired
-    protected CustomProductService customProductService;
+    protected ProductService productService;
 
     /*
 
@@ -52,15 +53,6 @@ public class CustomProductController extends CatalogEndpoint {
 
      */
 
-
-    private String decodeParameter(Map<String, String[]> queryParams, String paramName) throws UnsupportedEncodingException {
-        String[] values = queryParams.get(paramName);
-        if (values != null && values.length > 0) {
-            String encodedValue = values[0];
-            return URLDecoder.decode(encodedValue, StandardCharsets.UTF_8.toString());
-        }
-        return null;
-    }
 
     @Transactional
     @PostMapping("/add")
@@ -73,78 +65,41 @@ public class CustomProductController extends CatalogEndpoint {
                                              @RequestParam(value = "skuId", required = false) String skuIdParam,
                                              @RequestParam(value = "quantity", required = false) String quantityParam,
                                              @RequestParam(value = "cost") String costParam) {
+
+
         try {
 
-            // Extract and decode query parameters
-            Map<String, String[]> queryParams = request.getParameterMap();
-            String decodedCategoryIdParam = decodeParameter(queryParams, "categoryId");
-            String decodedSkuIdParam = decodeParameter(queryParams, "skuId");
-            String decodedQuantityParam = decodeParameter(queryParams, "quantity");
-            String decodedCostParam = decodeParameter(queryParams, "cost");
-            String decodedPriorityLevelParam = decodeParameter(queryParams, "priorityLevel");
+            // Get the query string from the request
+            String queryString = request.getQueryString();
+            if (queryString != null) {
+                // Split the query string by '&' to get each parameter
+                String[] params = queryString.split("&");
 
-            // Print parameters from request URL
-            System.out.println("Decoded Category ID: " + decodedCategoryIdParam);
-            System.out.println("Decoded SKU ID: " + decodedSkuIdParam);
-            System.out.println("Decoded Quantity: " + decodedQuantityParam);
-            System.out.println("Decoded Cost: " + decodedCostParam);
-            System.out.println("Decoded Priority Level: " + decodedPriorityLevelParam);
+                // Create a map to hold parameters
+                Map<String, String> paramMap = new HashMap<>();
 
-            // Process parameters if they are not null
-            if (decodedPriorityLevelParam != null) {
-                System.out.println("Priority Level from URL: " + decodedPriorityLevelParam);
-            }
-            if (decodedSkuIdParam != null) {
-                System.out.println("SKU ID from URL: " + decodedSkuIdParam);
-            }
-            if (decodedQuantityParam != null) {
-                System.out.println("Quantity from URL: " + decodedQuantityParam);
-            }
-//            // Get the full URL from the request
-//            String requestUrl = request.getRequestURL().toString();
-//            String queryString = request.getQueryString();
-//            if (queryString != null) {
-//                requestUrl += "?" + queryString;
-//            }
-//
-//            // Print the full URL for debugging
-//            System.out.println("Request URL: " + requestUrl);
-//
-//            // Decode query parameters to handle any encoding issues
-//            categoryIdParam = URLDecoder.decode(categoryIdParam, StandardCharsets.UTF_8.toString());
-//            skuIdParam = (skuIdParam != null) ? URLDecoder.decode(skuIdParam, StandardCharsets.UTF_8.toString()) : null;
-//            quantityParam = (quantityParam != null) ? URLDecoder.decode(quantityParam, StandardCharsets.UTF_8.toString()) : null;
-//            costParam = URLDecoder.decode(costParam, StandardCharsets.UTF_8.toString());
+                // Process each parameter
+                for (String param : params) {
+                    String[] keyValue = param.split("=");
+                    if (keyValue.length == 2) {
+                        String key = keyValue[0];
+                        String value = keyValue[1];
 
-//            // Extract query parameters
-//            Map<String, String[]> queryParams = request.getParameterMap();
-//            Map<String, String> queryParamMap = queryParams.entrySet().stream()
-//                    .collect(Collectors.toMap(Map.Entry::getKey, e -> String.join(",", e.getValue())));
-//
-//            // Print the URL and parameters for debugging
-//            String requestUrl = request.getRequestURL().toString();
-//            String queryString = request.getQueryString();
-//            if (queryString != null) {
-//                requestUrl += "?" + queryString;
-//            }
-//            System.out.println("Request URL: " + requestUrl);
-//            System.out.println("Query Parameters: " + queryParamMap);
-//
+                        // Encode the value to UTF-8
+                        try {
+                            value = URLEncoder.encode(value, "UTF-8");
+                        } catch (UnsupportedEncodingException e) {
+                            e.printStackTrace();
+                            // Handle encoding error if necessary
+                        }
 
-//            categoryIdParam = URLDecoder.decode(categoryIdParam, StandardCharsets.UTF_8.toString());
-//            skuIdParam = URLDecoder.decode(skuIdParam, StandardCharsets.UTF_8.toString());
-//            quantityParam = URLDecoder.decode(quantityParam, StandardCharsets.UTF_8.toString());
-//            costParam = URLDecoder.decode(costParam, StandardCharsets.UTF_8.toString());
-//
-//            String requestUrl = request.getRequestURL().toString();
-//            String queryString = request.getQueryString();
-//            Map<String, String> queryParamList = new ArrayList<>();
-//
-//            // Print the URL for debugging
-//            System.out.println("Request URL: " + requestUrl);
+                        paramMap.put(key, value);
+                    }
+                }
+                // Print each parameter for debugging
+                System.out.println("Extracted Query Parameters:");
+                paramMap.forEach((key, value) -> System.out.println(key + ": " + value));
 
-            if (catalogService == null) {
-                throw BroadleafWebServicesException.build(404).addMessage(CATALOGSERVICENOTINITIALIZED);
             }
 
             Integer priorityLevel = Integer.parseInt(priorityLevelParam); // Default value given
@@ -229,7 +184,7 @@ public class CustomProductController extends CatalogEndpoint {
             product.setDefaultSku(sku);
 
             // Save external product with provided dates and get status code
-            customProductService.saveCustomProduct(goLiveDate, priorityLevel, product.getId());
+            productService.saveCustomProduct(goLiveDate, priorityLevel, product.getId());
 
             return ResponseEntity.ok("Product added successfully");
 
@@ -248,17 +203,17 @@ public class CustomProductController extends CatalogEndpoint {
 
             Long productId = Long.parseLong(productIdPath);
             if (productId <= 0) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException("PRODUCTID cannot be <= 0")));
+                return new ResponseEntity<>("productId cannot be <= 0", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             if (catalogService == null) {
-                throw BroadleafWebServicesException.build(404).addMessage(CATALOGSERVICENOTINITIALIZED);
+                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
 
             if (customProduct == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(CATEGORYNOTFOUND)));
+                return new ResponseEntity<>("product not found", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             // Assuming CustomProduct has a direct reference to Product
@@ -281,9 +236,9 @@ public class CustomProductController extends CatalogEndpoint {
             return ResponseEntity.ok(response);
 
         } catch (NumberFormatException numberFormatException) {
-            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(exceptionHandlingService.handleException(numberFormatException));
+            return new ResponseEntity<>("numberFormatException", HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
+            return new ResponseEntity<>("Some Exception Occurred", HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }
@@ -294,14 +249,14 @@ public class CustomProductController extends CatalogEndpoint {
         try {
 
             if (catalogService == null) {
-                throw BroadleafWebServicesException.build(404).addMessage(CATALOGSERVICENOTINITIALIZED);
+                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             // find all the products.
             List<Product> products = catalogService.findAllProducts();
 
             if (products.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new RuntimeException(PRODUCTNOTFOUND)));
+                return new ResponseEntity<>("product not found", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             List<Map<String, Object>> responses = new ArrayList<>();
@@ -331,7 +286,7 @@ public class CustomProductController extends CatalogEndpoint {
             return ResponseEntity.ok(responses);
 
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionHandlingService.handleException(e));
+            return new ResponseEntity<>("Some Exception Occurred", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -353,7 +308,7 @@ public class CustomProductController extends CatalogEndpoint {
             Integer priorityLevel = 0;
             if(priorityLevelParam != null){
                 priorityLevel = Integer.parseInt(priorityLevelParam);
-                Errors errors = customProductService.validatePriorityLevel(priorityLevel);
+                Errors errors = productService.validatePriorityLevel(priorityLevel);
                 if (errors.hasErrors()) {
                     return ResponseEntity.status(HttpStatus.NOT_FOUND).body(exceptionHandlingService.handleException(new IllegalArgumentException("Validation error: " + errors.getFieldError().getDefaultMessage())));
                 }
@@ -419,7 +374,7 @@ public class CustomProductController extends CatalogEndpoint {
 
                 if (product.getDefaultCategory() != category) {
                     // here we will write a query to delete the previous data set from category_product_xref table and that will do the job.
-                    customProductService.removeCategoryProductFromCategoryProductRefTable(product.getDefaultCategory().getId(), productId);
+                    productService.removeCategoryProductFromCategoryProductRefTable(product.getDefaultCategory().getId(), productId);
 
                     product.setDefaultCategory(category);
                     product.setCategory(category); // Little fuzzy here as i delete the entry if it exists in the table before.
@@ -449,7 +404,6 @@ public class CustomProductController extends CatalogEndpoint {
                 }
                 product.setMetaTitle(productImpl.getMetaTitle());
             }
-            System.out.println("HELLO2");
 
             if (productImpl.getMetaDescription() != null) {
                 product.setMetaDescription(productImpl.getMetaDescription().trim());
