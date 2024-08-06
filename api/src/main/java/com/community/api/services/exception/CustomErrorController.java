@@ -1,4 +1,4 @@
-package com.community.api.endpoint.avisoft.custom;
+package com.community.api.services.exception;
 
 import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.http.HttpStatus;
