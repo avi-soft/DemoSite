@@ -1,12 +1,15 @@
 package com.community.api.endpoint.avisoft.controller.Customer;
 
 import com.community.api.component.Constant;
+import com.community.api.component.JwtUtil;
+import com.community.api.component.TokenBlacklist;
 import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.CustomCustomer;
 import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.services.CustomCustomerService;
 import com.community.api.services.TwilioService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
+import io.jsonwebtoken.Jwts;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.slf4j.Logger;
@@ -17,9 +20,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.Resource;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.net.URLEncoder;
+import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/customer-custom",
@@ -41,6 +46,16 @@ public class CustomerEndpoint {
     private TwilioService twilioService;
     @Autowired
     private CustomCustomerService customCustomerService;
+
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Autowired
+    private TokenBlacklist tokenBlacklistService;
+
+    @Resource(name="blCustomerService")
+    protected CustomerService customerService_new;
 
     @GetMapping(value = "getCustomer/{customerId}" )
     public ResponseEntity < Object > retrieveCustomerById(@PathVariable String customerId) {
@@ -181,7 +196,6 @@ public class CustomerEndpoint {
             else
             {
                 return new ResponseEntity<>("No Records found for this ID", HttpStatus.INTERNAL_SERVER_ERROR);
-
             }
         }catch (NumberFormatException e) {
             return new ResponseEntity<>("Invalid customer ID format", HttpStatus.BAD_REQUEST);
@@ -236,5 +250,26 @@ public class CustomerEndpoint {
             return new ResponseEntity < > ("Error retrieving Customer", HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@RequestBody Map<String, String> request) {
+        String token = request.get("token");
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.badRequest().body("Token is required");
+        }
+
+        try {
+
+            String uniqueTokenId = jwtUtil.parseClaimsHeaders(token)
+                    .get("jti", String.class);
+
+            System.out.println(uniqueTokenId + " uniqueTokenId");
+
+            tokenBlacklistService.blacklistToken(uniqueTokenId);
+            return ResponseEntity.ok("Logged out successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during logout");
+        }
     }
 }

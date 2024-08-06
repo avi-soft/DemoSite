@@ -20,6 +20,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityManager;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
 
@@ -69,14 +70,14 @@ public class AccountEndPoint {
 
     @PostMapping("/loginWithPassword")
     @ResponseBody
-    public ResponseEntity<?> loginWithPassword(@RequestBody CustomCustomer customer, HttpSession session) {
+    public ResponseEntity<?> loginWithPassword(@RequestBody CustomCustomer customer, HttpSession session,HttpServletRequest request) {
         try {
             if (customer.getMobileNumber() != null) {
                 if (customer.getCountryCode() == null || customer.getCountryCode().isEmpty()) {
                     customer.setCountryCode(Constant.COUNTRY_CODE);
                 }
                 if (customCustomerService.isValidMobileNumber(customer.getMobileNumber()) && isNumeric(customer.getMobileNumber())) {
-                    return loginWithCustomerPassword(customer, session);
+                    return loginWithCustomerPassword(customer, session, request);
                 } else {
                     return ResponseEntity.badRequest().body("Mobile number is not valid");
                 }
@@ -170,7 +171,8 @@ public class AccountEndPoint {
         }
     }
     @RequestMapping(value = "login-with-password", method = RequestMethod.POST)
-    public ResponseEntity<?> loginWithCustomerPassword(@RequestBody CustomCustomer customerDetails, HttpSession session) {
+    public ResponseEntity<?> loginWithCustomerPassword(@RequestBody CustomCustomer customerDetails, HttpSession session,
+                                                       HttpServletRequest request) {
         try {
             if (customerDetails.getCountryCode() == null) {
                 customerDetails.setCountryCode(Constant.COUNTRY_CODE);
@@ -189,12 +191,14 @@ public class AccountEndPoint {
                 if (customer.getPassword().equals(customerDetails.getPassword())) {
                     String tokenKey = "authToken_" + customerDetails.getMobileNumber();
                     String existingToken = (String) session.getAttribute(tokenKey);
-
-                    if (existingToken != null && jwtUtil.validateToken(existingToken, customCustomerService)) {
+                    String ipAddress = request.getRemoteAddr();
+                    String userAgent = request.getHeader("User-Agent");
+                    if (existingToken != null && jwtUtil.validateToken(existingToken, customCustomerService, ipAddress, userAgent)) {
 
                         return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(existingToken, customer,existingCustomer));
                     } else {
-                       String token = jwtUtil.generateToken(customerDetails.getMobileNumber(), "USER", customerDetails.getCountryCode());
+
+                       String token = jwtUtil.generateToken(existingCustomer.getId(), "USER",ipAddress,userAgent);
                         session.setAttribute(tokenKey, token);
                         return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(token, existingCustomer,existingCustomer));
                     }

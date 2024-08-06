@@ -1,18 +1,19 @@
 package com.community.api.component;
-import org.springframework.stereotype.Component;
-import java.util.concurrent.ConcurrentHashMap;
+import org.springframework.stereotype.Service;
 
-@Component
+import java.util.HashSet;
+import java.util.Set;
+
+@Service
 public class TokenBlacklist {
 
-    private final ConcurrentHashMap<String, String> blacklist = new ConcurrentHashMap<>();
+    private final Set<String> blacklistedTokens = new HashSet<>();
 
-    public void addTokenToBlacklist(String token, String phoneNumber) {
-        blacklist.put(token, phoneNumber);
+    public void blacklistToken(String tokenId) {
+        blacklistedTokens.add(tokenId);
     }
 
-    public boolean isTokenBlacklisted(String token) {
-        return blacklist.containsKey(token);
+    public boolean isTokenBlacklisted(String tokenId) {
+        return blacklistedTokens.contains(tokenId);
     }
-
 }

@@ -18,7 +18,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import javax.persistence.EntityManager;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import javax.transaction.Transactional;
 import java.io.UnsupportedEncodingException;
 
 @RestController
@@ -104,8 +106,10 @@ public class OtpEndpoint {
     }
 
 
+    @Transactional
     @PostMapping("/verify-otp")
-    public ResponseEntity<?> verifyOTP(@RequestBody CustomCustomer customerDetails, @RequestParam("otpEntered") String otpEntered, HttpSession session) {
+    public ResponseEntity<?> verifyOTP(@RequestBody CustomCustomer customerDetails, @RequestParam("otpEntered") String otpEntered, HttpSession session,
+                                       HttpServletRequest request) {
         try {
 
             if (customerDetails.getMobileNumber() != null) {
@@ -135,7 +139,6 @@ public class OtpEndpoint {
 
             if (!customCustomerService.isValidMobileNumber(customerDetails.getMobileNumber())) {
                 return new ResponseEntity<>("Invalid mobile number", HttpStatus.NOT_FOUND);
-
             }
 
             if (otpEntered == null || otpEntered.trim().isEmpty()) {
@@ -143,20 +146,21 @@ public class OtpEndpoint {
             }
 
             CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(customerDetails.getMobileNumber(), customerDetails.getCountryCode());
-
-
             String storedOtp = existingCustomer.getOtp();
 
             Customer customer = customerService.readCustomerById(existingCustomer.getId());
             if (otpEntered.equals(storedOtp)) {
+                String ipAddress = request.getRemoteAddr();
+                String userAgent = request.getHeader("User-Agent");
                 String tokenKey = "authToken_" + customerDetails.getMobileNumber();
+                existingCustomer.setOtp(null);
+                em.persist(existingCustomer);
                 String existingToken = (String) session.getAttribute(tokenKey);
-                System.out.println(existingToken + " existingToken" + tokenKey);
-
-                if (existingToken != null && jwtUtil.validateToken(existingToken, customCustomerService)) {
+                if (existingToken != null && jwtUtil.validateToken(existingToken, customCustomerService, ipAddress,ipAddress)
+                ) {
                     return ResponseEntity.ok(createAuthResponse(existingToken, customer,existingCustomer));
                 } else {
-                    String newToken = jwtUtil.generateToken(customerDetails.getMobileNumber(), "USER", customerDetails.getCountryCode());
+                    String newToken = jwtUtil.generateToken(existingCustomer.getId(), "USER",ipAddress,userAgent);
                     session.setAttribute(tokenKey, newToken);
                     return ResponseEntity.ok(createAuthResponse(newToken, existingCustomer,existingCustomer));
                 }
@@ -176,7 +180,6 @@ public class OtpEndpoint {
         customerDTO.setLastName(customer.getLastName());
         customerDTO.setEmail(customer.getEmailAddress());
         customerDTO.setUsername(customer.getUsername());
-        customerDTO.setCustomerId(customer.getId());
         customerDTO.setMobileNumber(existingCustomer.getMobileNumber());
 
         AuthResponse authResponse = new AuthResponse(token, customerDTO);

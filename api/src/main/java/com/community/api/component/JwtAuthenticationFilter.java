@@ -1,9 +1,9 @@
 package com.community.api.component;
-
-import com.community.api.endpoint.customer.CustomCustomer;
 import com.community.api.services.CustomCustomerService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
+import org.broadleafcommerce.profile.core.domain.Customer;
+import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +32,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private JwtUtil jwtUtil;
     @Autowired
     private CustomCustomerService customCustomerService;
+
+    @Autowired
+    private CustomerService CustomerService;
     @Autowired
     private TokenBlacklist tokenBlacklistService;
     @Override
@@ -63,9 +66,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
+
+
     private boolean isUnsecuredUri(String requestURI) {
-        return requestURI.startsWith("/api/v1/account") || requestURI.startsWith("/api/v1/otp") || requestURI.startsWith("/api/v1/test");
+        return requestURI.startsWith("/api/v1/account")
+                || requestURI.startsWith("/api/v1/otp")
+                || requestURI.startsWith("/api/v1/test")
+                || requestURI.startsWith("/api/v1/swagger-ui.html")
+                || requestURI.startsWith("/v3/api-docs")
+                || requestURI.startsWith("/api/v1/images")
+                 || requestURI.startsWith("/api/v1/webjars");
     }
+
 
     private boolean authenticateUser(HttpServletRequest request, HttpServletResponse response) throws IOException {
         final String authorizationHeader = request.getHeader(AUTHORIZATION_HEADER);
@@ -80,40 +92,31 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String jwt = authorizationHeader.substring(BEARER_PREFIX_LENGTH);
-        String phoneNumber = jwtUtil.extractPhoneNumber(jwt);
-        String countryCode = jwtUtil.extractCountryCode(jwt);
+        Long id = jwtUtil.extractId(jwt);
 
-        if (phoneNumber == null) {
-            respondWithUnauthorized(response, "Invalid phoneNumber in token");
+        if (id == null) {
+            respondWithUnauthorized(response, "Invalid details in token");
             return true;
         }
+        String  ipAdress =request.getRemoteAddr();
+        String User_Agent =   request.getHeader("User-Agent");
 
-        if (!jwtUtil.validateToken(jwt, customCustomerService)) {
+        System.out.println(ipAdress + " ipAdress" + User_Agent + " User_Agent authenticateUser" );
+        if (!jwtUtil.validateToken(jwt, customCustomerService, ipAdress, User_Agent)) {
             respondWithUnauthorized(response, "Invalid JWT token");
             return true;
         }
 
-/*        if (tokenBlacklistService.isTokenBlacklisted(jwt)) {
-            respondWithUnauthorized(response, "JWT token is blacklisted you are not authorized");
-            return true;
-        }*/
-
-
-
-
-
-
-
-        if (phoneNumber != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            CustomCustomer customCustomer = customCustomerService.findCustomCustomerByPhone(phoneNumber, countryCode);
-            if (customCustomer != null && jwtUtil.validateToken(jwt, customCustomerService)) {
+        if (id != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            Customer customCustomer = CustomerService.readCustomerById(id);
+            if (customCustomer != null && jwtUtil.validateToken(jwt, customCustomerService, ipAdress, User_Agent)) {
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        phoneNumber, null, new ArrayList<>());
+                        customCustomer.getId(), null, new ArrayList<>());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authentication);
                 return false;
             } else {
-                respondWithUnauthorized(response, "Invalid data provided");
+                respondWithUnauthorized(response, "Invalid data provided for this customer");
                 return true;
             }
         }
