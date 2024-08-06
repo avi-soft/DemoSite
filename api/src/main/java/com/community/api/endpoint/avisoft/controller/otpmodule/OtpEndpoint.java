@@ -1,5 +1,6 @@
 package com.community.api.endpoint.avisoft.controller.otpmodule;
 import com.community.api.component.Constant;
+import com.community.api.component.JwtAuthenticationFilter;
 import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.customer.CustomCustomer;
 import com.community.api.endpoint.customer.CustomerDTO;
@@ -15,11 +16,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import javax.transaction.Transactional;
 import java.io.UnsupportedEncodingException;
 
 @RestController
@@ -54,7 +55,9 @@ public class OtpEndpoint {
 
     @PostMapping("/send-otp")
     public ResponseEntity<String> sendtOtp(@RequestBody CustomCustomer customerDetails, HttpSession session) throws UnsupportedEncodingException {
+
         try {
+
             if (customerDetails.getMobileNumber().isEmpty() || customerDetails.getMobileNumber() == null)
                 return new ResponseEntity<>("Enter mobile number", HttpStatus.UNPROCESSABLE_ENTITY);
 
@@ -136,6 +139,7 @@ public class OtpEndpoint {
 
             if (!customCustomerService.isValidMobileNumber(customerDetails.getMobileNumber())) {
                 return new ResponseEntity<>("Invalid mobile number", HttpStatus.NOT_FOUND);
+
             }
 
             if (otpEntered == null || otpEntered.trim().isEmpty()) {
@@ -143,23 +147,24 @@ public class OtpEndpoint {
             }
 
             CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(customerDetails.getMobileNumber(), customerDetails.getCountryCode());
-            String storedOtp = existingCustomer.getOtp();
 
+
+            String storedOtp = existingCustomer.getOtp();
+            String ipAddress = request.getRemoteAddr();
+            String userAgent = request.getHeader("User-Agent");
+            String tokenKey = "authToken_" + customerDetails.getMobileNumber();
             Customer customer = customerService.readCustomerById(existingCustomer.getId());
             if (otpEntered.equals(storedOtp)) {
-                String ipAddress = request.getRemoteAddr();
-                String userAgent = request.getHeader("User-Agent");
-                String tokenKey = "authToken_" + customerDetails.getMobileNumber();
                 existingCustomer.setOtp(null);
                 em.persist(existingCustomer);
                 String existingToken = (String) session.getAttribute(tokenKey);
-                if (existingToken != null && jwtUtil.validateToken(existingToken, customCustomerService, ipAddress,ipAddress)
-                ) {
-                    return ResponseEntity.ok(createAuthResponse(existingToken, customer,existingCustomer));
+
+                if (existingToken != null && jwtUtil.validateToken(existingToken, customCustomerService, ipAddress,ipAddress)){
+                    return ResponseEntity.ok(createAuthResponse(existingToken,customer));
                 } else {
                     String newToken = jwtUtil.generateToken(existingCustomer.getId(), "USER",ipAddress,userAgent);
                     session.setAttribute(tokenKey, newToken);
-                    return ResponseEntity.ok(createAuthResponse(newToken, existingCustomer,existingCustomer));
+                    return ResponseEntity.ok(createAuthResponse(newToken,customer));
                 }
             } else {
 
@@ -171,23 +176,16 @@ public class OtpEndpoint {
         }
     }
 
-    private ResponseEntity<AuthResponse> createAuthResponse(String token, Customer customer ,CustomCustomer existingCustomer) {
-        CustomerDTO customerDTO = new CustomerDTO();
-        customerDTO.setFirstName(customer.getFirstName());
-        customerDTO.setLastName(customer.getLastName());
-        customerDTO.setEmail(customer.getEmailAddress());
-        customerDTO.setUsername(customer.getUsername());
-        customerDTO.setMobileNumber(existingCustomer.getMobileNumber());
-
-        AuthResponse authResponse = new AuthResponse(token, customerDTO);
+    private ResponseEntity<AuthResponse> createAuthResponse(String token, Customer customer) {
+        AuthResponse authResponse = new AuthResponse(token, customer);
         return ResponseEntity.ok(authResponse);
     }
 
     public static class AuthResponse {
         private String token;
-        private CustomerDTO userDetails;
+        private Customer userDetails;
 
-        public AuthResponse(String token, CustomerDTO userDetails) {
+        public AuthResponse(String token, Customer userDetails) {
             this.token = token;
             this.userDetails = userDetails;
         }
@@ -196,7 +194,7 @@ public class OtpEndpoint {
             return token;
         }
 
-        public CustomerDTO getUserDetails() {
+        public Customer getUserDetails() {
             return userDetails;
         }
     }
