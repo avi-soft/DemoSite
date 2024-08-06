@@ -59,18 +59,19 @@ public class TwilioService {
             String completeMobileNumber = countryCode + mobileNumber;
             String otp = generateOTP();
 
-            System.out.println(completeMobileNumber + " completeMobileNumber");
 
-         /*  Message message = Message.creator(
+/*            Message message = Message.creator(
+
                             new PhoneNumber(completeMobileNumber),
                             new PhoneNumber(twilioPhoneNumber),
                             otp)
 
-                    .create();*/
+
+                    .create();
+*/
 
 
             CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(mobileNumber,countryCode);
-            System.out.println("existingCustomer : " + existingCustomer );
             if(existingCustomer == null){
                 CustomCustomer customerDetails = new CustomCustomer();
                 customerDetails.setId(customerService.findNextCustomerId());
@@ -85,8 +86,7 @@ public class TwilioService {
             }
 
 
-           return ResponseEntity.ok("OTP has been sent successfully " + otp);
-
+            return ResponseEntity.ok("OTP has been sent successfully " + otp);
 
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
@@ -118,12 +118,11 @@ public class TwilioService {
 
         if(existingCustomer!=null){
             String storedOtp = existingCustomer.getOtp();
-            System.out.println("storedOtp: " + storedOtp);
-                    if(storedOtp!=null){
-                        existingCustomer.setOtp(null);
-                        entityManager.merge(existingCustomer);
-                        return true;
-                    }
+            if(storedOtp!=null){
+                existingCustomer.setOtp(null);
+                entityManager.merge(existingCustomer);
+                return true;
+            }
         }
         return false;
     }

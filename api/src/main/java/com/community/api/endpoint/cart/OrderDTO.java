@@ -1,4 +1,4 @@
-package com.community.api.endpoint.customer;
+package com.community.api.endpoint.cart;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -11,8 +11,6 @@ import org.springframework.stereotype.Component;
 @Setter
 @Getter
 @Component
-public class CustomerDTO {
-
-//    todo :- need to add role here
-    private String username,password,oldPassword;
+public class OrderDTO {
+    String productName,productPrice,ProductId,ProductCategory;
 }
