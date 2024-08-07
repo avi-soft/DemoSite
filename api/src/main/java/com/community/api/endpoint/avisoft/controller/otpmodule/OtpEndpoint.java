@@ -5,8 +5,10 @@ import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.customer.CustomCustomer;
 import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.services.CustomCustomerService;
+import com.community.api.services.RateLimiterService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.TwilioService;
+import io.github.bucket4j.Bucket;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.slf4j.Logger;
@@ -14,8 +16,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import javax.persistence.EntityManager;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.io.UnsupportedEncodingException;
 
@@ -35,10 +39,14 @@ public class OtpEndpoint {
     @Autowired
     private JwtUtil jwtUtil;
 
-    public OtpEndpoint(TwilioService twilioService) {
+    public OtpEndpoint(TwilioService twilioService, RateLimiterService rateLimiterService) {
 
         this.twilioService = twilioService;
+        this.rateLimiterService = rateLimiterService;
     }
+
+    @Autowired
+    private final RateLimiterService rateLimiterService;
 
     @Autowired
     private EntityManager em;
@@ -60,10 +68,6 @@ public class OtpEndpoint {
                 mobileNumber = customerDetails.getMobileNumber();
             }
 
-            if (!customCustomerService.isValidMobileNumber(mobileNumber)) {
-                return ResponseEntity.badRequest().body("Invalid mobile number");
-            }
-
             String countryCode = null;
             if (customerDetails.getCountryCode() == null || customerDetails.getCountryCode().isEmpty()) {
 
@@ -72,11 +76,27 @@ public class OtpEndpoint {
                 countryCode = customerDetails.getCountryCode();
 
             }
+            CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhoneWithOtp(customerDetails.getMobileNumber(), countryCode);
             twilioService.setotp(mobileNumber, countryCode);
 
+            if(existingCustomer!=null){
+                return ResponseEntity.badRequest().body("Customer already exists ");
+            }
+            Bucket bucket = rateLimiterService.resolveBucket(customerDetails.getMobileNumber(),"/otp/send-otp");
+            if (bucket.tryConsume(1)) {
+                if (!customCustomerService.isValidMobileNumber(mobileNumber)) {
+                    return ResponseEntity.badRequest().body("Invalid mobile number");
+                }
 
-            ResponseEntity<String> otpResponse = twilioService.sendOtpToMobile(mobileNumber, countryCode);
-            return otpResponse;
+                ResponseEntity<String> otpResponse = twilioService.sendOtpToMobile(mobileNumber, countryCode);
+                return otpResponse;
+            } else {
+
+                ResponseEntity<String>  otpResponse =  ResponseEntity.ok("You can send otp only once in 1 minute" );
+                return  otpResponse;
+            }
+
+
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error sending OTP: " + e.getMessage());
@@ -86,8 +106,10 @@ public class OtpEndpoint {
     }
 
 
+    @Transactional
     @PostMapping("/verify-otp")
-    public ResponseEntity<?> verifyOTP(@RequestBody CustomCustomer customerDetails, @RequestParam("otpEntered") String otpEntered, HttpSession session) {
+    public ResponseEntity<?> verifyOTP(@RequestBody CustomCustomer customerDetails, @RequestParam("otpEntered") String otpEntered, HttpSession session,
+                                       HttpServletRequest request) {
         try {
 
             if (customerDetails.getMobileNumber() != null) {
@@ -128,19 +150,21 @@ public class OtpEndpoint {
 
 
             String storedOtp = existingCustomer.getOtp();
-
+            String ipAddress = request.getRemoteAddr();
+            String userAgent = request.getHeader("User-Agent");
+            String tokenKey = "authToken_" + customerDetails.getMobileNumber();
             Customer customer = customerService.readCustomerById(existingCustomer.getId());
             if (otpEntered.equals(storedOtp)) {
-                String tokenKey = "authToken_" + customerDetails.getMobileNumber();
+                existingCustomer.setOtp(null);
+                em.persist(existingCustomer);
                 String existingToken = (String) session.getAttribute(tokenKey);
-                System.out.println(existingToken + " existingToken" + tokenKey);
 
-                if (existingToken != null && jwtUtil.validateToken(existingToken, customCustomerService)) {
-                    return ResponseEntity.ok(createAuthResponse(existingToken, customer,existingCustomer));
+                if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, ipAddress)) {
+                    return ResponseEntity.ok(createAuthResponse(existingToken,customer));
                 } else {
-                    String newToken = jwtUtil.generateToken(customerDetails.getMobileNumber(), "USER", customerDetails.getCountryCode());
+                    String newToken = jwtUtil.generateToken(existingCustomer.getId(), "USER",ipAddress,userAgent);
                     session.setAttribute(tokenKey, newToken);
-                    return ResponseEntity.ok(createAuthResponse(newToken, existingCustomer,existingCustomer));
+                    return ResponseEntity.ok(createAuthResponse(newToken,customer));
                 }
             } else {
 
@@ -152,24 +176,16 @@ public class OtpEndpoint {
         }
     }
 
-    private ResponseEntity<AuthResponse> createAuthResponse(String token, Customer customer ,CustomCustomer existingCustomer) {
-        CustomerDTO customerDTO = new CustomerDTO();
-        customerDTO.setFirstName(customer.getFirstName());
-        customerDTO.setLastName(customer.getLastName());
-        customerDTO.setEmail(customer.getEmailAddress());
-        customerDTO.setUsername(customer.getUsername());
-        customerDTO.setCustomerId(customer.getId());
-        customerDTO.setMobileNumber(existingCustomer.getMobileNumber());
-
-        AuthResponse authResponse = new AuthResponse(token, customerDTO);
+    private ResponseEntity<AuthResponse> createAuthResponse(String token, Customer customer) {
+        AuthResponse authResponse = new AuthResponse(token, customer);
         return ResponseEntity.ok(authResponse);
     }
 
     public static class AuthResponse {
         private String token;
-        private CustomerDTO userDetails;
+        private Customer userDetails;
 
-        public AuthResponse(String token, CustomerDTO userDetails) {
+        public AuthResponse(String token, Customer userDetails) {
             this.token = token;
             this.userDetails = userDetails;
         }
@@ -178,7 +194,7 @@ public class OtpEndpoint {
             return token;
         }
 
-        public CustomerDTO getUserDetails() {
+        public Customer getUserDetails() {
             return userDetails;
         }
     }

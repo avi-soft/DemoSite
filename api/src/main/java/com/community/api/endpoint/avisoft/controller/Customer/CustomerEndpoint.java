@@ -1,6 +1,6 @@
 package com.community.api.endpoint.avisoft.controller.Customer;
 
-import com.community.api.component.Constant;
+import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.CustomCustomer;
 import com.community.api.endpoint.customer.CustomerDTO;
@@ -9,20 +9,20 @@ import com.community.api.services.TwilioService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
-import java.net.URLEncoder;
+import java.lang.reflect.Field;
+import java.util.Map;
 
 @RestController
-@RequestMapping(value = "/customer-custom",
+@RequestMapping(value = "/customer",
         produces = {
                 MediaType.APPLICATION_JSON_VALUE,
                 MediaType.APPLICATION_XML_VALUE
@@ -30,7 +30,8 @@ import java.net.URLEncoder;
 )
 
 public class CustomerEndpoint {
-    private static final Logger logger = LoggerFactory.getLogger(CustomerEndpoint.class);
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     @Autowired
     private CustomerService customerService;
     @Autowired
@@ -42,94 +43,45 @@ public class CustomerEndpoint {
     @Autowired
     private CustomCustomerService customCustomerService;
 
-    @RequestMapping(value = "getCustomer/{customerId}", method = RequestMethod.GET)
-    public ResponseEntity < Object > retrieveCustomerById(@PathVariable Long customerId) {
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @RequestMapping(value = "getCustomer", method = RequestMethod.GET)
+    public ResponseEntity<Object> retrieveCustomerById(@RequestParam Long customerId) {
         try {
             if (customerService == null) {
-                logger.error("Customer service is not initialized.");
-                return new ResponseEntity < > (HttpStatus.INTERNAL_SERVER_ERROR);
+                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
             }
             Customer customer = customerService.readCustomerById(customerId);
             if (customer == null) {
-                return new ResponseEntity < > ("Customer with this ID does not exist", HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>("Customer with this ID does not exist", HttpStatus.NOT_FOUND);
             } else {
-                CustomerDTO customerDTO = new CustomerDTO();
-                customerDTO.setFirstName(customer.getFirstName());
-                customerDTO.setLastName(customer.getLastName());
-                customerDTO.setEmail(customer.getEmailAddress());
-                customerDTO.setUsername(customer.getUsername());
-                customerDTO.setCustomerId(customer.getId());
-                CustomCustomer customCustomer = em.find(CustomCustomer.class, customer.getId());
-                if (customCustomer != null) {
-                    customerDTO.setMobileNumber(customCustomer.getMobileNumber());
-                    return new ResponseEntity < > (customerDTO, HttpStatus.OK);
-                } else {
-                    return new ResponseEntity < > ("Error fetching Customer Data", HttpStatus.NOT_FOUND);
-                }
+                customer.setPassword(null);
+                return new ResponseEntity<>(customer, HttpStatus.OK);
             }
         } catch (Exception e) {
 
             exceptionHandling.handleException(e);
-            return new ResponseEntity < > ("Error retrieving Customer", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("Error retrieving Customer", HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }
 
-    @Transactional
-    @RequestMapping(value = "register", method = RequestMethod.POST)
-    public ResponseEntity < String > addCustomer(@RequestBody CustomCustomer customerDetails) {
-        try {
-            if (customerService == null) {
-                logger.error("Customer service is not initialized.");
-                return new ResponseEntity < > ("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-            if (!customCustomerService.validateInput(customerDetails))
-                return new ResponseEntity < > ("One or more inputs invalid", HttpStatus.UNPROCESSABLE_ENTITY);
-
-            String countryCode = null;
-            if (customerDetails.getCountryCode() == null || customerDetails.getCountryCode().isEmpty()) {
-                countryCode = Constant.COUNTRY_CODE;
-            } else {
-                String encodedCountryCode = URLEncoder.encode(customerDetails.getCountryCode(), "UTF-8");
-
-                countryCode = encodedCountryCode;
-            }
-            String updated_mobile = null;
-            if (customerDetails.getMobileNumber().startsWith("0")) {
-                updated_mobile = customerDetails.getMobileNumber().substring(1);
-            } else {
-                updated_mobile = customerDetails.getMobileNumber();
-            }
-            CustomCustomer customerRecords = customCustomerService.findCustomCustomerByPhone(customerDetails.getMobileNumber(), countryCode);
-            if (customerRecords != null) {
-
-                return new ResponseEntity < > ("Data already exists", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
-            Customer customer = customerService.createCustomer();
-            customerDetails.setId(customerService.findNextCustomerId());
-            customerDetails.setMobileNumber(updated_mobile);
-            customerDetails.setCountryCode(countryCode);
-
-            em.persist(customerDetails);
-            return new ResponseEntity < > ("Customer Created succesfully with Id" + customer.getId(), HttpStatus.OK);
-        } catch (Exception e) {
-            exceptionHandling.handleException(e);
-            return new ResponseEntity < > ("Error saving", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
 
     @Transactional
-    @RequestMapping(value = "update/{customerId}", method = RequestMethod.PATCH)
-    public ResponseEntity < String > updateCustomer(@RequestBody CustomCustomer customerDetails, @PathVariable Long customerId) {
+    @RequestMapping(value = "update", method = RequestMethod.POST)
+    public ResponseEntity<?> updateCustomer(@RequestBody CustomCustomer customerDetails, @RequestParam Long customerId) {
         try {
             if (customerService == null) {
-                return new ResponseEntity < > ("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
+                return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
             CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
+            if (customCustomer == null) {
+                return new ResponseEntity<>("No data found for this customerId", HttpStatus.NOT_FOUND);
+            }
             if (customerDetails.getMobileNumber() != null) {
                 if (customCustomerService.isValidMobileNumber(customerDetails.getMobileNumber()) == false)
-                    return new ResponseEntity < > ("Cannot update phoneNumber", HttpStatus.INTERNAL_SERVER_ERROR);
+                    return new ResponseEntity<>("Cannot update phoneNumber", HttpStatus.INTERNAL_SERVER_ERROR);
             }
             Customer existingCustomerByUsername = null;
             Customer existingCustomerByEmail = null;
@@ -139,27 +91,123 @@ public class CustomerEndpoint {
             if (customerDetails.getEmailAddress() != null) {
                 existingCustomerByEmail = customerService.readCustomerByEmail(customerDetails.getEmailAddress());
             }
-            if ((existingCustomerByUsername!=null) || existingCustomerByEmail!=null)  {
+            if ((existingCustomerByUsername != null) || existingCustomerByEmail != null) {
                 if (existingCustomerByUsername != null && !existingCustomerByUsername.getId().equals(customerId)) {
-                    return new ResponseEntity < > ("Username is not available", HttpStatus.BAD_REQUEST);
+                    return new ResponseEntity<>("Username is not available", HttpStatus.BAD_REQUEST);
                 }
                 if (existingCustomerByEmail != null && !existingCustomerByEmail.getId().equals(customerId)) {
-                    return new ResponseEntity < > ("Email not available", HttpStatus.BAD_REQUEST);
+                    return new ResponseEntity<>("Email not available", HttpStatus.BAD_REQUEST);
                 }
             }
             customerDetails.setId(customerId);
             customerDetails.setMobileNumber(customCustomer.getMobileNumber());
-            em.merge(customerDetails);
-            return new ResponseEntity < > ("Customer Updated", HttpStatus.OK);
-        } catch (Exception e) {
+            customerDetails.setQualificationList(customCustomer.getQualificationList());
+
+
+
+
+            customerDetails.setCountryCode(customCustomer.getCountryCode());
+            Customer customer = customerService.readCustomerById(customerId);
+            //using reflections
+            for (Field field : CustomCustomer.class.getDeclaredFields()) {
+                field.setAccessible(true);
+                Object newValue = field.get(customerDetails);
+                if (newValue != null) {
+                    field.set(customCustomer, newValue);
+                }
+            }
+            if (customerDetails.getFirstName() != null || customerDetails.getLastName() != null) {
+                customer.setFirstName(customerDetails.getFirstName());
+                customer.setLastName(customerDetails.getLastName());
+            }
+            if(customerDetails.getEmailAddress()!=null){
+                customer.setEmailAddress(customerDetails.getEmailAddress());
+            }
+            em.merge(customCustomer);
+            return new ResponseEntity<>(customer, HttpStatus.OK);
+        }
+        catch (Exception e) {
             exceptionHandling.handleException(e);
-            return new ResponseEntity < > ("Error updating", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("Error updating", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Transactional
-    @RequestMapping(value = "delete/{customerId}", method = RequestMethod.DELETE)
-    public ResponseEntity < String > updateCustomer(@PathVariable Long customerId) {
+    @RequestMapping(value = "update-username", method = RequestMethod.POST)
+    public ResponseEntity<?> updateCustomerUsername(@RequestBody CustomerDTO customerDTO, @RequestParam Long customerId) {
+        try {
+            if (customerService == null) {
+                return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            Customer customer=customerService.readCustomerById(customerId);
+            if (customer == null) {
+                return new ResponseEntity<>("No data found for this customerId", HttpStatus.NOT_FOUND);
+            }
+            String username=customerDTO.getUsername();
+            Customer existingCustomerByUsername = null;
+            if ( username != null) {
+                existingCustomerByUsername = customerService.readCustomerByUsername(username);
+            }
+            else
+                new ResponseEntity<>("username Empty", HttpStatus.BAD_REQUEST);
+
+            if ((existingCustomerByUsername != null)&&!existingCustomerByUsername.getId().equals(customerId)) {
+                return new ResponseEntity<>("Username is not available", HttpStatus.BAD_REQUEST);
+            }
+            else
+            {
+                customer.setUsername(username);
+                em.merge(customer);
+                return new ResponseEntity<>(customer,HttpStatus.OK);
+            }
+        } catch (Exception exception) {
+            exceptionHandling.handleException(exception);
+            return new ResponseEntity<>("Error updating username", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @Transactional
+    @RequestMapping(value = "update-password", method = RequestMethod.POST)
+    public ResponseEntity<?> updateCustomerPassword(@RequestBody CustomerDTO customerDTO, @RequestParam Long customerId) {
+        try {
+            if (customerService == null) {
+                return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            Customer customer=customerService.readCustomerById(customerId);
+            if (customer == null) {
+                return new ResponseEntity<>("No data found for this customerId", HttpStatus.NOT_FOUND);
+            }
+            if(customer.getPassword()==null||customer.getPassword().isEmpty())
+            {
+                customer.setPassword(passwordEncoder.encode(customerDTO.getPassword()));
+                em.merge(customer);
+                return new ResponseEntity<>(customer, HttpStatus.NOT_FOUND);
+            }
+            String password= customerDTO.getPassword();
+            if (customerDTO.getPassword() != null&&customerDTO.getOldPassword()!=null) {
+                if (passwordEncoder.matches(customerDTO.getOldPassword(),customer.getPassword())) {
+                    if(!customerDTO.getPassword().equals(customerDTO.getOldPassword())) {
+                        customer.setPassword(passwordEncoder.encode(password));
+                        em.merge(customer);
+                        return new ResponseEntity<>(customer, HttpStatus.OK);
+                    }
+                    else
+                        return new ResponseEntity<>("Old password and new password can not be same!", HttpStatus.BAD_REQUEST);
+                }
+                else
+                    return new ResponseEntity<>("The old password you provided is incorrect. Please try again with the correct old password", HttpStatus.BAD_REQUEST);
+            }
+            else
+            {
+                return new ResponseEntity<>("Empty Password",HttpStatus.BAD_REQUEST);
+            }
+        } catch (Exception exception) {
+            exceptionHandling.handleException(exception);
+            return new ResponseEntity<>("Error updating password", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @Transactional
+    @RequestMapping(value = "delete", method = RequestMethod.DELETE)
+    public ResponseEntity < String > updateCustomer(@RequestParam Long customerId) {
         try {
             if (customerService == null) {
                 return new ResponseEntity < > ("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -180,16 +228,25 @@ public class CustomerEndpoint {
         }
     }
 
-    public static ResponseEntity<OtpEndpoint.AuthResponse> createAuthResponse(String token, Customer customer , CustomCustomer existingCustomer) {
-        CustomerDTO customerDTO = new CustomerDTO();
-        customerDTO.setFirstName(customer.getFirstName());
-        customerDTO.setLastName(customer.getLastName());
-        customerDTO.setEmail(customer.getEmailAddress());
-        customerDTO.setUsername(customer.getUsername());
-        customerDTO.setCustomerId(customer.getId());
-        customerDTO.setMobileNumber(existingCustomer.getMobileNumber());
-
-        OtpEndpoint.AuthResponse authResponse = new OtpEndpoint.AuthResponse(token, customerDTO);
+    public static ResponseEntity<OtpEndpoint.AuthResponse> createAuthResponse(String token, Customer customer ) {
+        customer.setPassword(null);
+        OtpEndpoint.AuthResponse authResponse = new OtpEndpoint.AuthResponse(token, customer);
         return ResponseEntity.ok(authResponse);
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@RequestBody Map<String, String> request) {
+        String token = request.get("token");
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.badRequest().body("Token is required");
+        }
+        try {
+            jwtUtil.logoutUser(token);
+
+            return ResponseEntity.ok("Logged out successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during logout");
+        }
+    }
+
 }

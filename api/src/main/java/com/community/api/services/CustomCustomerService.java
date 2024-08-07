@@ -48,6 +48,21 @@ public class CustomCustomerService {
                 .orElse(null);
     }
 
+    public CustomCustomer findCustomCustomerByPhoneWithOtp(String mobileNumber,String countryCode) {
+
+        if (countryCode == null) {
+            countryCode = Constant.COUNTRY_CODE;
+        }
+
+        return em.createQuery(Constant.PHONE_QUERY_OTP, CustomCustomer.class)
+                .setParameter("mobileNumber", mobileNumber)
+                .setParameter("countryCode", countryCode)
+                .setParameter("otp", null)
+                .getResultStream()
+                .findFirst()
+                .orElse(null);
+    }
+
     public String formatDate(String dateString) {
 
         DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
@@ -59,8 +74,4 @@ public class CustomCustomerService {
         return dateTime.format(outputFormatter);
     }
 
-/*    public Customer readCustomerByEmail(String phonenumber) {
-        List<Customer> customers = this.findCustomCustomerByPhone(phonenumber,null);
-        return CollectionUtils.isEmpty(customers) ? null : (Customer)customers.get(0);
-    }*/
 }
