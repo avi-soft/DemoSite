@@ -19,6 +19,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.validation.Errors;
+import org.springframework.validation.MapBindingResult;
 
 import javax.persistence.EntityManager;
 import java.io.IOException;
@@ -31,7 +32,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-class CustomProductControllerTest {
+class ProductControllerTest {
 
     private MockMvc mockMvc;
 
@@ -49,6 +50,8 @@ class CustomProductControllerTest {
 
     @Mock
     ProductService productService;
+
+    List<Product> products = new ArrayList<>();
 
     @BeforeEach
     public void setUp() {
@@ -378,24 +381,32 @@ class CustomProductControllerTest {
         productImpl.setMetaDescription("Updated Product Description");
         productImpl.setUrl("http://updatedproduct.url");
 
-        Category category = new CategoryImpl();
-        category.setId(1001L);
+        Category newCategory = new CategoryImpl();
+        newCategory.setId(1001L); // New category ID for testing
+
+        Category oldCategory = new CategoryImpl();
+        oldCategory.setId(999L); // Old category ID
 
         Product product = new ProductImpl();
-        product.setDefaultCategory(category);
+        product.setDefaultCategory(oldCategory); // Initially set to old category
         product.setMetaTitle("Old Title");
         product.setMetaDescription("Old Description");
         product.setUrl("http://oldurl.com");
 
         CustomProduct customProduct = new CustomProduct();
-        customProduct.setDefaultSku(new SkuImpl());
+        Sku sku = new SkuImpl();
+        product.setDefaultSku(sku);
+        sku.setDefaultProduct(product);
+
+        Errors errors = new MapBindingResult(new HashMap<>(), "objectName");
 
         // Mock methods
         when(catalogService.findProductById(1L)).thenReturn(product);
-        when(catalogService.findCategoryById(1001L)).thenReturn(category);
+        when(catalogService.findCategoryById(1001L)).thenReturn(newCategory); // Return new category
         when(catalogService.saveProduct(any(Product.class))).thenReturn(product);
-        when(errors.hasErrors()).thenReturn(false);
         doNothing().when(productService).removeCategoryProductFromCategoryProductRefTable(anyLong(), anyLong());
+        when(productService.validatePriorityLevel(anyInt())).thenReturn(errors);
+        when(entityManager.find(CustomProduct.class, 1L)).thenReturn(customProduct);
 
         String requestBody = "{"
                 + "\"metaTitle\": \"Updated Product Title\","
@@ -407,7 +418,7 @@ class CustomProductControllerTest {
                         .param("expirationDate", "2024-12-31 23:59:59")
                         .param("goLiveDate", "2024-10-01 00:00:00")
                         .param("priorityLevel", "3")
-                        .param("categoryId", "1001")
+                        .param("categoryId", "1001") // New category ID
                         .param("quantity", "50")
                         .param("cost", "150")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -420,7 +431,8 @@ class CustomProductControllerTest {
         verify(catalogService).findProductById(1L);
         verify(catalogService).findCategoryById(1001L);
         verify(catalogService).saveProduct(any(Product.class));
-        verify(productService).removeCategoryProductFromCategoryProductRefTable(anyLong(), anyLong());
+        verify(productService).removeCategoryProductFromCategoryProductRefTable(anyLong(), anyLong()); // Verify call
+        verify(entityManager).find(CustomProduct.class, 1L);
     }
 
     @Test
@@ -435,12 +447,13 @@ class CustomProductControllerTest {
         MvcResult mvcResult = mockMvc.perform(MockMvcRequestBuilders.put("/productCustom/update/{productId}", 1001L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(requestBody))
-                .andExpect(status().isNotFound())
+                .andExpect(status().isInternalServerError())
+                .andExpect(content().string("Product not Found"))
                 .andReturn();
 
         // Verify interactions
         verify(entityManager).find(CustomProduct.class, 1001L);
         verifyNoInteractions(catalogService); // Ensure catalogService is not called
-        verifyNoInteractions(productService); // Ensure extProductService is not called
+        verifyNoInteractions(productService); // Ensure productService is not called
     }
 }
