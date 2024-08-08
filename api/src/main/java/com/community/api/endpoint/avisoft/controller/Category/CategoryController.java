@@ -28,7 +28,7 @@ import java.util.*;
 public class CategoryController extends CatalogEndpoint {
 
     private static final String CATALOGSERVICENOTINITIALIZED = "Catalog service is not initialized.";
-
+    private static final String CATEGORYCANNOTBELESSTHANOREQAULZERO = "CategoryId cannot be <= 0";
     @Autowired
     private ExceptionHandlingService exceptionHandlingService;
 
@@ -46,12 +46,12 @@ public class CategoryController extends CatalogEndpoint {
                 return new ResponseEntity<>(CATALOGSERVICENOTINITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            if (categoryImpl.getName() == null || categoryImpl.getName().trim().isEmpty()) {
+            if (categoryImpl.getName().trim().isEmpty()) {
                 return new ResponseEntity<>("CategoryTitle cannot be empty or null", HttpStatus.INTERNAL_SERVER_ERROR);
             }
             categoryImpl.setName(categoryImpl.getName().trim());
-            if (categoryImpl.getDisplayTemplate() == null || categoryImpl.getDisplayTemplate().trim().isEmpty()) {
-                return new ResponseEntity<>("CategoryDisplayTemplate cannot be empty or null", HttpStatus.INTERNAL_SERVER_ERROR);
+            if (categoryImpl.getDisplayTemplate().trim().isEmpty()) {
+                return new ResponseEntity<>("CategoryDisplayTemplate cannot be empty", HttpStatus.INTERNAL_SERVER_ERROR);
             }
             categoryImpl.setDisplayTemplate(categoryImpl.getDisplayTemplate().trim());
             categoryImpl.setDescription(categoryImpl.getDescription().trim());
@@ -119,14 +119,15 @@ public class CategoryController extends CatalogEndpoint {
     }
 
     @GetMapping(value = "/getProductsByCategoryId/{categoryId}")
-    public ResponseEntity<?> getProductsByCategoryId(HttpServletRequest request, @PathVariable Long categoryId) {
+    public ResponseEntity<?> getProductsByCategoryId(HttpServletRequest request, @PathVariable String id) {
         try {
             if (catalogService == null) {
                 return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            if (categoryId == null) {
-                return new ResponseEntity<>("Null CategoryId", HttpStatus.INTERNAL_SERVER_ERROR);
+            Long categoryId = Long.parseLong(id);
+            if(categoryId <= 0){
+                return new ResponseEntity<>(CATEGORYCANNOTBELESSTHANOREQAULZERO, HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             Category category = this.catalogService.findCategoryById(categoryId);
@@ -162,13 +163,17 @@ public class CategoryController extends CatalogEndpoint {
     }
 
     @DeleteMapping(value = "/remove/{categoryId}")
-    public ResponseEntity<?> removeCategoryById(HttpServletRequest request, @PathVariable("categoryId") Long id, @RequestParam(value = "productLimit", defaultValue = "20") int productLimit, @RequestParam(value = "productOffset", defaultValue = "1") int productOffset, @RequestParam(value = "subcategoryLimit", defaultValue = "20") int subcategoryLimit, @RequestParam(value = "subcategoryOffset", defaultValue = "1") int subcategoryOffset) {
+    public ResponseEntity<?> removeCategoryById(HttpServletRequest request, @PathVariable("categoryId") String id, @RequestParam(value = "productLimit", defaultValue = "20") int productLimit, @RequestParam(value = "productOffset", defaultValue = "1") int productOffset, @RequestParam(value = "subcategoryLimit", defaultValue = "20") int subcategoryLimit, @RequestParam(value = "subcategoryOffset", defaultValue = "1") int subcategoryOffset) {
         try {
             if (catalogService == null) {
                 return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            Category category = this.catalogService.findCategoryById(id);
+            Long categoryId = Long.parseLong(id);
+            if(categoryId <= 0){
+                return new ResponseEntity<>(CATEGORYCANNOTBELESSTHANOREQAULZERO, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            Category category = this.catalogService.findCategoryById(categoryId);
 
             if (category != null) {
 
@@ -187,13 +192,19 @@ public class CategoryController extends CatalogEndpoint {
     }
 
     @PatchMapping(value = "/update/{categoryId}")
-    public ResponseEntity<?> updateCategoryById(HttpServletRequest request, @RequestBody CategoryImpl categoryImpl, @PathVariable("categoryId") Long id) {
+    public ResponseEntity<?> updateCategoryById(HttpServletRequest request, @RequestBody CategoryImpl categoryImpl, @PathVariable("categoryId") String id) {
         try {
-            if (catalogService == null) {
-                throw BroadleafWebServicesException.build(404).addMessage("Catalog service is not initialized.");
+
+            Long categoryId = Long.parseLong(id);
+            if(categoryId <= 0){
+                return new ResponseEntity<>(CATEGORYCANNOTBELESSTHANOREQAULZERO, HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            Category category = this.catalogService.findCategoryById(id);
+            if (catalogService == null) {
+                return new ResponseEntity<>(CATALOGSERVICENOTINITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            Category category = this.catalogService.findCategoryById(categoryId);
 
             if (category != null) {
 
