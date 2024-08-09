@@ -176,7 +176,8 @@ public class CategoryController extends CatalogEndpoint {
     }
 
     @PatchMapping(value = "/update/{categoryId}")
-    public ResponseEntity<?> updateCategoryById(HttpServletRequest request, @RequestBody CategoryImpl categoryImpl, @PathVariable("categoryId") String id) {
+    public ResponseEntity<?> updateCategoryById(HttpServletRequest request, @RequestBody CategoryImpl categoryImpl, @PathVariable("categoryId") String id)
+    {
         try {
 
             Long categoryId = Long.parseLong(id);
