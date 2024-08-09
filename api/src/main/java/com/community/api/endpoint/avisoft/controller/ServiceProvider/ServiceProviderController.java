@@ -4,13 +4,9 @@ import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/service-providers")

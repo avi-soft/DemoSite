@@ -2,8 +2,6 @@ package com.community.api.services.ServiceProvider;
 
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.endpoint.serviceProvider.ServiceProviderStatus;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.social.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
