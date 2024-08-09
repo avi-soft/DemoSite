@@ -288,5 +288,4 @@ public class CustomCategoryEndpoint extends CatalogEndpoint {
 
         }
     }
-
 }
