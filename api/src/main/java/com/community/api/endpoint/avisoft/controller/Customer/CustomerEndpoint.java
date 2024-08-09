@@ -1,6 +1,7 @@
 package com.community.api.endpoint.avisoft.controller.Customer;
 
-import com.broadleafcommerce.rest.api.wrapper.AddressWrapper;
+
+import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.AddressDTO;
 import com.community.api.endpoint.customer.CustomCustomer;
@@ -64,6 +65,8 @@ public class CustomerEndpoint {
         this.addressService = addressService;
         this.customerAddressService = customerAddressService;
     }
+    @Autowired
+    private JwtUtil jwtUtil;
     @RequestMapping(value = "getCustomer", method = RequestMethod.GET)
     public ResponseEntity<Object> retrieveCustomerById(@RequestParam Long customerId) {
         try {
@@ -119,14 +122,16 @@ public class CustomerEndpoint {
             customerDetails.setId(customerId);
             customerDetails.setMobileNumber(customCustomer.getMobileNumber());
             customerDetails.setQualificationList(customCustomer.getQualificationList());
-            customerDetails.setMobileNumber(customCustomer.getMobileNumber());
+
+
+
+
             customerDetails.setCountryCode(customCustomer.getCountryCode());
             Customer customer = customerService.readCustomerById(customerId);
             //using reflections
             for (Field field : CustomCustomer.class.getDeclaredFields()) {
                 field.setAccessible(true);
                 Object newValue = field.get(customerDetails);
-                System.out.println(field);
                 if (newValue != null) {
                     field.set(customCustomer, newValue);
                 }
@@ -134,6 +139,9 @@ public class CustomerEndpoint {
             if (customerDetails.getFirstName() != null || customerDetails.getLastName() != null) {
                 customer.setFirstName(customerDetails.getFirstName());
                 customer.setLastName(customerDetails.getLastName());
+            }
+            if(customerDetails.getEmailAddress()!=null){
+                customer.setEmailAddress(customerDetails.getEmailAddress());
             }
             em.merge(customCustomer);
             return new ResponseEntity<>(customer, HttpStatus.OK);
@@ -163,6 +171,7 @@ public class CustomerEndpoint {
 
             if ((existingCustomerByUsername != null) && !existingCustomerByUsername.getId().equals(customerId)) {
                 return new ResponseEntity<>("Username is not available", HttpStatus.BAD_REQUEST);
+
             } else {
                 customer.setUsername(username);
                 em.merge(customer);
@@ -343,4 +352,20 @@ public class CustomerEndpoint {
         OtpEndpoint.AuthResponse authResponse = new OtpEndpoint.AuthResponse(token, customer);
         return ResponseEntity.ok(authResponse);
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@RequestBody Map<String, String> request) {
+        String token = request.get("token");
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.badRequest().body("Token is required");
+        }
+        try {
+            jwtUtil.logoutUser(token);
+
+            return ResponseEntity.ok("Logged out successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during logout");
+        }
+    }
+
 }

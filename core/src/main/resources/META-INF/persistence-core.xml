@@ -26,7 +26,7 @@
         <non-jta-data-source>jdbc/web</non-jta-data-source>
 
         <!-- Added this line -->
-        <class>com.community.api.endpoint.avisoft.custom.CustomProduct</class>
+        <class>com.community.api.entity.CustomProduct</class>
 
         <exclude-unlisted-classes/>
     </persistence-unit>

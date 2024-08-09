@@ -74,8 +74,4 @@ public class CustomCustomerService {
         return dateTime.format(outputFormatter);
     }
 
-/*    public Customer readCustomerByEmail(String phonenumber) {
-        List<Customer> customers = this.findCustomCustomerByPhone(phonenumber,null);
-        return CollectionUtils.isEmpty(customers) ? null : (Customer)customers.get(0);
-    }*/
 }

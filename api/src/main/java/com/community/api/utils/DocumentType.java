@@ -13,11 +13,10 @@ import javax.persistence.*;
 @Getter
 @Setter
 public class DocumentType {
-    @GeneratedValue
     @Id
-    private long documentTypeId;
+    private Integer documentTypeId;
     private String description;
-    @OneToOne
+    /*@OneToOne
     @JoinColumn(name = "document_id")
-    private Document document;
+    private Document document;*/
 }
