@@ -118,7 +118,7 @@ public class CategoryController extends CatalogEndpoint {
         }
     }
 
-    @GetMapping(value = "/getProductsByCategoryId/{categoryId}")
+    @GetMapping(value = "/getProductsByCategoryId/{id}")
     public ResponseEntity<?> getProductsByCategoryId(HttpServletRequest request, @PathVariable String id) {
         try {
             if (catalogService == null) {
@@ -209,18 +209,24 @@ public class CategoryController extends CatalogEndpoint {
             if (category != null) {
 
                 // setting the attributes manually
-                if (categoryImpl.getName() != null && !categoryImpl.getName().trim().isEmpty()) { // trim works on nonNull values only.
-                    category.setName(category.getName().trim());
+                if (!categoryImpl.getName().isEmpty() && !categoryImpl.getName().trim().isEmpty()) { // trim works on nonNull values only.
+                    category.setName(categoryImpl.getName().trim());
                 }
                 if (categoryImpl.getDescription() != null && !categoryImpl.getDescription().trim().isEmpty()) {
-                    category.setDescription(category.getDescription().trim());
+                    category.setDescription(categoryImpl.getDescription().trim());
+                }
+                if (categoryImpl.getActiveEndDate() != null && !categoryImpl.getActiveEndDate().after(categoryImpl.getActiveStartDate()) && !categoryImpl.getActiveEndDate().after(new Date())) {
+                    return new ResponseEntity<>("ActiveEndDate cannot be before or equal to ActiveStartDate(CurrentDate)", HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+                if (categoryImpl.getDisplayTemplate() != null && !categoryImpl.getDisplayTemplate().trim().isEmpty()) {
+                    category.setDisplayTemplate(categoryImpl.getDescription().trim());
                 }
 
                 // Save the updated category
                 category = catalogService.saveCategory(category);
 
                 // Wrap and return the updated category details
-                CategoryWrapper wrapper = context.getBean(CategoryWrapper.class);
+                CustomCategoryWrapper wrapper = new CustomCategoryWrapper();
                 wrapper.wrapDetails(category, request);
                 return ResponseEntity.ok(wrapper);
 
