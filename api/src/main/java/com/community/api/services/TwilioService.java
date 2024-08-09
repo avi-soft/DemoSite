@@ -60,7 +60,7 @@ public class TwilioService {
             String otp = generateOTP();
 
 
-/*            Message message = Message.creator(
+            Message message = Message.creator(
 
                             new PhoneNumber(completeMobileNumber),
                             new PhoneNumber(twilioPhoneNumber),
@@ -68,7 +68,6 @@ public class TwilioService {
 
 
                     .create();
-*/
 
 
             CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(mobileNumber,countryCode);

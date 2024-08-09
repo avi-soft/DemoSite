@@ -180,7 +180,6 @@ public class CartEndPoint extends BaseEndpoint {
             if (customer == null) {
                 return new ResponseEntity<>("Invalid request: Customer does not exist", HttpStatus.INTERNAL_SERVER_ERROR);
             }
-
             Order cart = orderService.findOrderById(orderId);
             if (cart == null || cart.getOrderItems() == null) {
                 return new ResponseEntity<>("Cart Empty", HttpStatus.NOT_FOUND);
