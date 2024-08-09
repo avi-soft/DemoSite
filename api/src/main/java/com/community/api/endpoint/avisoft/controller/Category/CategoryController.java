@@ -66,24 +66,9 @@ public class CategoryController extends CatalogEndpoint {
 
             Category category = catalogService.saveCategory(categoryImpl);
 
-//            categoryWrapper is alternative to show data however it's not used as it is not showing the data i want to show.
-//            CustomCategoryWrapper wrapper = (CustomCategoryWrapper) this.context.getBean(CustomCategoryWrapper.class.getName());
             CustomCategoryWrapper wrapper = new CustomCategoryWrapper();
             wrapper.wrapDetails(category, request);
             return ResponseEntity.ok(wrapper);
-
-//            // Construct a JSON response
-//            Map<String, Object> response = new HashMap<>();
-//            response.put("categoryId", category.getId());
-//            response.put("categoryName", category.getName());
-//            response.put("archived", ((Status) category).getArchived());
-//            response.put("displayTemplate", category.getDisplayTemplate());
-//            response.put("description", category.getDescription());
-//            response.put("ActiveStartDate", category.getActiveStartDate());
-//            response.put("ActiveEndDate", category.getActiveEndDate());
-//            response.put("Url-Key", category.getUrlKey());
-//
-//            return new ResponseEntity<>(response, HttpStatus.OK);
 
         } catch (Exception e) {
             return new ResponseEntity<>("Some Exception Occurred: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
