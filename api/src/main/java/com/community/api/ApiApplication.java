@@ -29,7 +29,7 @@ import org.springframework.context.annotation.Configuration;
  */
 @SpringBootApplication
 @EnableAutoConfiguration
-@EntityScan(basePackages = "com.community.api.services.ServiceProvider")
+@EntityScan(basePackages = "com.community.api.services.ServiceProvider.ServiceProviderService")
 public class ApiApplication {
 
     @Configuration

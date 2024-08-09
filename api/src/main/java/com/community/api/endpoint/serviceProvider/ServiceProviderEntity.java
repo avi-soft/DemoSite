@@ -11,7 +11,6 @@ import lombok.Setter;
 import org.ehcache.impl.serialization.ByteArraySerializer;
 
 import javax.persistence.*;
-import javax.swing.text.Document;
 import javax.validation.constraints.*;
 import java.util.Date;
 import java.util.Set;
@@ -48,6 +47,8 @@ public class ServiceProviderEntity {
 //    @JsonDeserialize(using = Base64ToByteArrayDeserializer.class)
 //    @Lob
 //    @Column(name = "personalPhoto", columnDefinition="BLOB")
+//    @OneToOne(cascade = CascadeType.ALL)
+//    @JoinColumn(name = "personal_photo_id")
     private String personalPhoto;
 
 
@@ -97,6 +98,8 @@ public class ServiceProviderEntity {
 
 //    @Lob
 //    @Column(name = "businessPhoto", columnDefinition="BLOB")
+//    @OneToOne(cascade = CascadeType.ALL)
+//    @JoinColumn(name = "business_photo_id")
     private String businessPhoto;
 
     private Boolean isCFormAvailable;
@@ -105,6 +108,8 @@ public class ServiceProviderEntity {
 
 //    @Lob
 //    @Column(name = "cFormPhoto", columnDefinition="BLOB")
+//    @OneToOne(cascade = CascadeType.ALL)
+//    @JoinColumn(name = "c_form_photo_id")
     private String cFormPhoto;
 
     @ElementCollection(targetClass = Equipment.class)
@@ -126,26 +131,19 @@ public class ServiceProviderEntity {
     @Column(name = "skill")
     private Set<Skill> skills;
 
-    public @Size(min = 1, max = 3) Integer getStatus() {
+    public ServiceProviderStatus getStatus() {
         return status;
     }
 
-    public void setStatus(@Size(min = 1, max = 3) Integer status) {
+    public void setStatus( ServiceProviderStatus status) {
         this.status = status;
     }
 
-    @Size(min = 1, max = 3)
-    private Integer status = 1;
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "status_id", referencedColumnName = "statusId")
+    private ServiceProviderStatus status;
 
 //    private String otherSkill;
-
-    public @Size(min = 6, max = 6) String getPinCode() {
-        return pinCode;
-    }
-
-    public void setPinCode(@Size(min = 6, max = 6) String pinCode) {
-        this.pinCode = pinCode;
-    }
 
     public Long getUserID() {
         return userID;
@@ -251,11 +249,19 @@ public class ServiceProviderEntity {
         this.city = city;
     }
 
-    public @NotBlank @Size(min = 9, max = 13) String getPrimaryMobileNumber() {
+    public @Size(min = 6, max = 6) String getPinCode() {
+        return pinCode;
+    }
+
+    public void setPinCode(@Size(min = 6, max = 6) String pinCode) {
+        this.pinCode = pinCode;
+    }
+
+    public @NotBlank(message = "Primary Phone number should not be blank") @Size(min = 9, max = 13) String getPrimaryMobileNumber() {
         return primaryMobileNumber;
     }
 
-    public void setPrimaryMobileNumber(@NotBlank @Size(min = 9, max = 13) String primaryMobileNumber) {
+    public void setPrimaryMobileNumber(@NotBlank(message = "Primary Phone number should not be blank") @Size(min = 9, max = 13) String primaryMobileNumber) {
         this.primaryMobileNumber = primaryMobileNumber;
     }
 
@@ -402,6 +408,4 @@ public class ServiceProviderEntity {
     public void setSkills(Set<Skill> skills) {
         this.skills = skills;
     }
-
-    // Getters and Setters
 }
