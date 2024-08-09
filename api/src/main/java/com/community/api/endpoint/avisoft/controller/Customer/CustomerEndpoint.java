@@ -1,16 +1,15 @@
 package com.community.api.endpoint.avisoft.controller.Customer;
 
+import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.CustomCustomer;
 import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.services.CustomCustomerService;
 import com.community.api.services.TwilioService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
-import org.apache.http.protocol.HTTP;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -20,8 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.lang.reflect.Field;
-import java.net.URLEncoder;
-import java.security.Principal;
+import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/customer",
@@ -44,6 +42,9 @@ public class CustomerEndpoint {
     private TwilioService twilioService;
     @Autowired
     private CustomCustomerService customCustomerService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
 
     @RequestMapping(value = "getCustomer", method = RequestMethod.GET)
     public ResponseEntity<Object> retrieveCustomerById(@RequestParam Long customerId) {
@@ -101,21 +102,26 @@ public class CustomerEndpoint {
             customerDetails.setId(customerId);
             customerDetails.setMobileNumber(customCustomer.getMobileNumber());
             customerDetails.setQualificationList(customCustomer.getQualificationList());
-            customerDetails.setMobileNumber(customCustomer.getMobileNumber());
+
+
+
+
             customerDetails.setCountryCode(customCustomer.getCountryCode());
             Customer customer = customerService.readCustomerById(customerId);
             //using reflections
             for (Field field : CustomCustomer.class.getDeclaredFields()) {
                 field.setAccessible(true);
                 Object newValue = field.get(customerDetails);
-                System.out.println(field);
                 if (newValue != null) {
                     field.set(customCustomer, newValue);
                 }
             }
-            if (customerDetails.getFathersName() != null || customerDetails.getLastName() != null) {
+            if (customerDetails.getFirstName() != null || customerDetails.getLastName() != null) {
                 customer.setFirstName(customerDetails.getFirstName());
                 customer.setLastName(customerDetails.getLastName());
+            }
+            if(customerDetails.getEmailAddress()!=null){
+                customer.setEmailAddress(customerDetails.getEmailAddress());
             }
             em.merge(customCustomer);
             return new ResponseEntity<>(customer, HttpStatus.OK);
@@ -147,13 +153,13 @@ public class CustomerEndpoint {
 
             if ((existingCustomerByUsername != null)&&!existingCustomerByUsername.getId().equals(customerId)) {
                 return new ResponseEntity<>("Username is not available", HttpStatus.BAD_REQUEST);
-                }
-                else
-                {
-                    customer.setUsername(username);
-                    em.merge(customer);
-                    return new ResponseEntity<>(customer,HttpStatus.OK);
-                }
+            }
+            else
+            {
+                customer.setUsername(username);
+                em.merge(customer);
+                return new ResponseEntity<>(customer,HttpStatus.OK);
+            }
         } catch (Exception exception) {
             exceptionHandling.handleException(exception);
             return new ResponseEntity<>("Error updating username", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -227,4 +233,20 @@ public class CustomerEndpoint {
         OtpEndpoint.AuthResponse authResponse = new OtpEndpoint.AuthResponse(token, customer);
         return ResponseEntity.ok(authResponse);
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(@RequestBody Map<String, String> request) {
+        String token = request.get("token");
+        if (token == null || token.isEmpty()) {
+            return ResponseEntity.badRequest().body("Token is required");
+        }
+        try {
+            jwtUtil.logoutUser(token);
+
+            return ResponseEntity.ok("Logged out successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during logout");
+        }
+    }
+
 }
