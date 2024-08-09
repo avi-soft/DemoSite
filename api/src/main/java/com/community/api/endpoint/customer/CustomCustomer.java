@@ -67,21 +67,6 @@ public class CustomCustomer extends CustomerImpl {
     @OneToOne(mappedBy = "customCustomer", cascade = CascadeType.ALL, orphanRemoval = true)
     private Document ews;
 
-    @Column(name = "address")
-    private String address;
-
-    @Column(name = "state")
-    private String state;
-
-    @Column(name = "district")
-    private String district;
-
-    @Column(name = "city")
-    private String city;
-
-    @Column(name = "pin_code")
-    private String pinCode;
-
     @Column(name = "secondary_mobile_number")
     private String secondaryMobileNumber;
 
