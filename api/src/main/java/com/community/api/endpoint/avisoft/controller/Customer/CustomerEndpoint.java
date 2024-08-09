@@ -180,7 +180,7 @@ public class CustomerEndpoint {
             {
                 customer.setPassword(passwordEncoder.encode(customerDTO.getPassword()));
                 em.merge(customer);
-                return new ResponseEntity<>(customer, HttpStatus.NOT_FOUND);
+                return new ResponseEntity<>(customer, HttpStatus.OK);
             }
             String password= customerDTO.getPassword();
             if (customerDTO.getPassword() != null&&customerDTO.getOldPassword()!=null) {
