@@ -1,8 +1,6 @@
 package com.community.api.endpoint.avisoft.controller.Category;
 
 import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
-import com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException;
-import com.broadleafcommerce.rest.api.wrapper.CategoryWrapper;
 import com.community.api.entity.CategoryDao;
 import com.community.api.entity.CustomCategoryWrapper;
 import com.community.api.entity.CustomProduct;
@@ -29,6 +27,7 @@ public class CategoryController extends CatalogEndpoint {
 
     private static final String CATALOGSERVICENOTINITIALIZED = "Catalog service is not initialized.";
     private static final String CATEGORYCANNOTBELESSTHANOREQAULZERO = "CategoryId cannot be <= 0";
+
     @Autowired
     private ExceptionHandlingService exceptionHandlingService;
 
