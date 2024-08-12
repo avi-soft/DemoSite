@@ -1,7 +1,9 @@
 package com.community.api.endpoint.avisoft.controller.product;
 
 import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
+import com.community.api.entity.CustomCategoryWrapper;
 import com.community.api.entity.CustomProduct;
+import com.community.api.entity.CustomProductWrapper;
 import com.community.api.services.ProductService;
 import com.community.api.services.exception.ExceptionHandlingService;
 import org.broadleafcommerce.common.money.Money;
@@ -52,7 +54,7 @@ public class ProductController extends CatalogEndpoint {
 
     @Transactional
     @PostMapping("/add")
-    public ResponseEntity<String> addProduct(HttpServletRequest request,
+    public ResponseEntity<?> addProduct(HttpServletRequest request,
                                              @RequestBody ProductImpl productImpl,
                                              @RequestParam(value = "expirationDate") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date activeEndDate,
                                              @RequestParam(value = "goLiveDate") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date goLiveDate,
@@ -143,6 +145,7 @@ public class ProductController extends CatalogEndpoint {
             }
 
             Product product = catalogService.saveProduct(productImpl); // Save or update the product with values from requestBody.
+            Long productId = product.getId();
 
             // Find or create the SKU
             Sku sku = null;
@@ -177,13 +180,18 @@ public class ProductController extends CatalogEndpoint {
             product.setDefaultSku(sku); // Set default SKU in the product
 
             productService.saveCustomProduct(goLiveDate, priorityLevel, product.getId()); // Save external product with provided dates and get status code
+            entityManager.find(CustomProduct.class, productId);
 
-            return ResponseEntity.ok("Product added successfully");
+            // Wrap and return the updated product details
+            CustomProductWrapper wrapper = new CustomProductWrapper();
+            wrapper.wrapDetails(product, priorityLevel, goLiveDate);
+
+            return ResponseEntity.ok(wrapper);
 
         } catch (UnsupportedEncodingException unsupportedEncodingException) {
             return new ResponseEntity<>("UnsupportedEncodingException Occurred: " + unsupportedEncodingException.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (NumberFormatException numberFormatException) {
-            return new ResponseEntity<>("NumberFormatException: " + numberFormatException.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("NumberFormatException Occurred: " + numberFormatException.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception exception) {
             return new ResponseEntity<>(SOMEEXCEPTIONOCCURED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }

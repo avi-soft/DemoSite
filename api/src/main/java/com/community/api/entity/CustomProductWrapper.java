@@ -74,12 +74,35 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.activeEndDate = product.getDefaultSku().getActiveEndDate();
         this.promoMessage = product.getPromoMessage();
         this.archived = ((Status) product).getArchived();
-        this.categoryName = product.getDefaultSku().getName();
+        this.categoryName = product.getDefaultCategory().getName();
         this.active = product.isActive();
+        this.cost = product.getDefaultSku().getCost().doubleValue();
 
         if (product.getDefaultCategory() != null) {
             this.defaultCategoryId = product.getDefaultCategory().getId();
         }
+    }
+
+    public void wrapDetails(Product product, Integer priorityLevel, Date activeGoLiveDate) {
+        this.id = product.getId();
+        this.metaTitle = product.getMetaTitle();
+        this.metaDescription = product.getMetaDescription();
+        this.longDescription = product.getLongDescription();
+        this.url = product.getUrl();
+        this.activeStartDate = product.getDefaultSku().getActiveStartDate();
+        this.activeEndDate = product.getDefaultSku().getActiveEndDate();
+        this.promoMessage = product.getPromoMessage();
+        this.archived = ((Status) product).getArchived();
+        this.categoryName = product.getDefaultCategory().getName();
+        this.active = product.isActive();
+        this.activeGoLiveDate = activeGoLiveDate;
+        this.priorityLevel = priorityLevel;
+        this.cost = product.getDefaultSku().getCost().doubleValue();
+
+        if (product.getDefaultCategory() != null) {
+            this.defaultCategoryId = product.getDefaultCategory().getId();
+        }
+
     }
 
     public void wrapSummary(Product model, HttpServletRequest request) {
