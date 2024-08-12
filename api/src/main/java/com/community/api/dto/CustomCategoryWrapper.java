@@ -1,4 +1,4 @@
-package com.community.api.entity;
+package com.community.api.dto;
 
 import com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException;
 import java.util.ArrayList;
@@ -19,7 +19,6 @@ import org.broadleafcommerce.common.rest.api.wrapper.APIWrapper;
 import org.broadleafcommerce.common.rest.api.wrapper.BaseWrapper;
 import org.broadleafcommerce.core.catalog.domain.Category;
 import org.broadleafcommerce.core.catalog.domain.Product;
-import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.broadleafcommerce.core.search.domain.SearchCriteria;
 import org.broadleafcommerce.core.search.domain.SearchResult;
 import org.broadleafcommerce.core.search.service.SearchService;

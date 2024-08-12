@@ -1,10 +1,10 @@
 package com.community.api.endpoint.avisoft.controller.Category;
 
 import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
-import com.community.api.entity.CategoryDao;
-import com.community.api.entity.CustomCategoryWrapper;
+import com.community.api.dto.CategoryDto;
+import com.community.api.dto.CustomCategoryWrapper;
 import com.community.api.entity.CustomProduct;
-import com.community.api.entity.CustomProductWrapper;
+import com.community.api.dto.CustomProductWrapper;
 import com.community.api.services.CategoryService;
 import com.community.api.services.exception.ExceptionHandlingService;
 import org.broadleafcommerce.common.persistence.Status;
@@ -127,13 +127,16 @@ public class CategoryController extends CatalogEndpoint {
 
             for (BigInteger productId : productIdList) {
                 CustomProduct customProduct = entityManager.find(CustomProduct.class, productId.longValue());
+                System.out.println(customProduct);
 
-                CustomProductWrapper wrapper = new CustomProductWrapper();
-                wrapper.wrapDetails(customProduct, request);
-                products.add(wrapper);
+                if(customProduct != null) {
+                    CustomProductWrapper wrapper = new CustomProductWrapper();
+                    wrapper.wrapDetails(customProduct);
+                    products.add(wrapper);
+                }
             }
 
-            CategoryDao categoryDao = new CategoryDao();
+            CategoryDto categoryDao = new CategoryDto();
             categoryDao.setCategoryId(category.getId());
             categoryDao.setCategoryName(category.getName());
             categoryDao.setProducts(products);

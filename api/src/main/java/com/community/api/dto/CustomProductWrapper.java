@@ -1,8 +1,9 @@
-package com.community.api.entity;
+package com.community.api.dto;
 
 import java.util.Date;
 import javax.servlet.http.HttpServletRequest;
 
+import com.community.api.entity.CustomProduct;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.broadleafcommerce.common.rest.api.wrapper.APIWrapper;
@@ -57,6 +58,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.priorityLevel = model.getPriorityLevel();
         this.categoryName = model.getDefaultCategory().getName();
         this.active = model.isActive();
+        this.activeGoLiveDate = model.getGoLiveDate();
 
         if (model.getDefaultCategory() != null) {
             this.defaultCategoryId = model.getDefaultCategory().getId();

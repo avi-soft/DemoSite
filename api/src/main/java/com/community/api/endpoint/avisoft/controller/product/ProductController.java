@@ -1,12 +1,12 @@
 package com.community.api.endpoint.avisoft.controller.product;
 
 import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
-import com.community.api.entity.CustomCategoryWrapper;
 import com.community.api.entity.CustomProduct;
-import com.community.api.entity.CustomProductWrapper;
+import com.community.api.dto.CustomProductWrapper;
 import com.community.api.services.ProductService;
 import com.community.api.services.exception.ExceptionHandlingService;
 import org.broadleafcommerce.common.money.Money;
+import org.broadleafcommerce.common.persistence.Status;
 import org.broadleafcommerce.core.catalog.domain.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -20,7 +20,6 @@ import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -55,14 +54,14 @@ public class ProductController extends CatalogEndpoint {
     @Transactional
     @PostMapping("/add")
     public ResponseEntity<?> addProduct(HttpServletRequest request,
-                                             @RequestBody ProductImpl productImpl,
-                                             @RequestParam(value = "expirationDate") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date activeEndDate,
-                                             @RequestParam(value = "goLiveDate") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date goLiveDate,
-                                             @RequestParam(value = "priorityLevel", required = false, defaultValue = "5") String priorityLevelParam,
-                                             @RequestParam(value = "categoryId") String categoryIdParam,
-                                             @RequestParam(value = "skuId", required = false) String skuIdParam,
-                                             @RequestParam(value = "quantity", required = false) String quantityParam,
-                                             @RequestParam(value = "cost") String costParam) {
+                                        @RequestBody ProductImpl productImpl,
+                                        @RequestParam(value = "expirationDate") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date activeEndDate,
+                                        @RequestParam(value = "goLiveDate") @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date goLiveDate,
+                                        @RequestParam(value = "priorityLevel", required = false, defaultValue = "5") String priorityLevelParam,
+                                        @RequestParam(value = "categoryId") String categoryIdParam,
+                                        @RequestParam(value = "skuId", required = false) String skuIdParam,
+                                        @RequestParam(value = "quantity", required = false) String quantityParam,
+                                        @RequestParam(value = "cost") String costParam) {
 
 
         try {
@@ -70,25 +69,7 @@ public class ProductController extends CatalogEndpoint {
             // Get the query string from the request
             String queryString = request.getQueryString();
             if (queryString != null) {
-
-                String[] params = queryString.split("&"); // Split the query string by '&' to get each parameter
-
-                // Create a map to hold parameters
-                Map<String, String> paramMap = new HashMap<>();
-
-                // Process each parameter
-                for (String param : params) {
-                    String[] keyValue = param.split("=");
-                    if (keyValue.length == 2) {
-                        String key = keyValue[0];
-                        String value = keyValue[1];
-
-                        // Encode the value to UTF-8
-                        value = URLEncoder.encode(value, "UTF-8"); // may throw exception.
-
-                        paramMap.put(key, value);
-                    }
-                }
+                Map<String, String> paramMap = productService.getRequestParamBasedOnQueryString(queryString);
 
                 priorityLevelParam = paramMap.get("priorityLevel");
                 skuIdParam = paramMap.get("skuId");
@@ -199,7 +180,7 @@ public class ProductController extends CatalogEndpoint {
     }
 
     @GetMapping("/getProductById/{productId}")
-    public ResponseEntity<?> retrieveProductById(@PathVariable("productId") String productIdPath) {
+    public ResponseEntity<?> retrieveProductById(HttpServletRequest request, @PathVariable("productId") String productIdPath) {
 
         try {
 
@@ -218,24 +199,16 @@ public class ProductController extends CatalogEndpoint {
                 return new ResponseEntity<>("product not found", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            // Assuming CustomProduct has a direct reference to Product
-            catalogService.findProductById(productId);
+            if ((((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))){
 
-            // Construct a JSON response
-            Map<String, Object> response = new HashMap<>();
-            response.put("productId", customProduct.getId());
-            response.put("archived", customProduct.getArchived());
-            response.put("metaTitle", customProduct.getMetaTitle());
-            response.put("metaDescription", customProduct.getMetaDescription());
-            response.put("cost", customProduct.getDefaultSku().getCost().doubleValue());
-            response.put("defaultCategoryId", customProduct.getDefaultCategory().getId());
-            response.put("categoryName", customProduct.getDefaultCategory().getName());
-            response.put("ActiveCreatedDate", customProduct.getDefaultSku().getActiveStartDate());
-            response.put("ActiveExpirationDate", customProduct.getDefaultSku().getActiveEndDate());
-            response.put("goLiveDate", customProduct.getGoLiveDate());
-            response.put("priorityLevel", customProduct.getPriorityLevel());
+    //             Wrap and return the updated product details
+                CustomProductWrapper wrapper = new CustomProductWrapper();
+                wrapper.wrapDetails(customProduct);
+                return ResponseEntity.ok(wrapper);
 
-            return ResponseEntity.ok(response);
+            }else{
+                return ResponseEntity.ok("Product is either Archived or Expired");
+            }
 
         } catch (NumberFormatException numberFormatException) {
             return new ResponseEntity<>("NumberFormatException: " + numberFormatException.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -260,7 +233,7 @@ public class ProductController extends CatalogEndpoint {
                 return new ResponseEntity<>("product not found", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            List<Map<String, Object>> responses = new ArrayList<>();
+            List<CustomProductWrapper> responses = new ArrayList<>();
             for (Product product : products) {
 
                 // finding customProduct that resembles with productId.
@@ -268,20 +241,12 @@ public class ProductController extends CatalogEndpoint {
 
                 if (customProduct != null) {
 
-                    Map<String, Object> response = new HashMap<>();
-                    response.put("productId", customProduct.getId());
-                    response.put("archived", customProduct.getArchived());
-                    response.put("metaTitle", customProduct.getMetaTitle());
-                    response.put("metaDescription", customProduct.getMetaDescription());
-                    response.put("cost", customProduct.getDefaultSku().getCost().doubleValue());
-                    response.put("defaultCategoryId", customProduct.getDefaultCategory().getId());
-                    response.put("categoryName", customProduct.getDefaultCategory().getName());
-                    response.put("ActiveCreatedDate", customProduct.getDefaultSku().getActiveStartDate());
-                    response.put("ActiveExpirationDate", customProduct.getDefaultSku().getActiveEndDate());
-                    response.put("goLiveDate", customProduct.getGoLiveDate());
-                    response.put("priorityLevel", customProduct.getPriorityLevel());
+                    if ((((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))){
 
-                    responses.add(response);
+                        CustomProductWrapper wrapper = new CustomProductWrapper();
+                        wrapper.wrapDetails(customProduct);
+                        responses.add(wrapper);
+                    }
                 }
             }
 
@@ -310,24 +275,7 @@ public class ProductController extends CatalogEndpoint {
             String queryString = request.getQueryString();
 
             if (queryString != null) {
-                // Split the query string by '&' to get each parameter
-                String[] params = queryString.split("&");
-
-                // Create a map to hold parameters
-                Map<String, String> paramMap = new HashMap<>();
-
-                // Process each parameter
-                for (String param : params) {
-                    String[] keyValue = param.split("=");
-                    if (keyValue.length == 2) {
-                        String key = keyValue[0];
-                        String value = keyValue[1];
-
-                        value = URLEncoder.encode(value, "UTF-8"); // Encode the value to UTF-8
-
-                        paramMap.put(key, value);
-                    }
-                }
+                Map<String, String> paramMap = productService.getRequestParamBasedOnQueryString(queryString);
 
                 priorityLevelParam = paramMap.get("priorityLevel");
                 categoryIdParam = paramMap.get("categoryId");
