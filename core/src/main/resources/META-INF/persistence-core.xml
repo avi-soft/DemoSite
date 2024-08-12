@@ -46,10 +46,11 @@
         <!-- Added this line -->
         <class>com.community.api.endpoint.customer.CustomCustomer</class>
         <class>com.community.api.utils.Document</class>
+        <class>com.community.api.utils.DocumentType</class>
         <class>com.community.api.endpoint.customer.Qualification</class>
         <class>com.community.api.endpoint.serviceProvider.ServiceProviderEntity</class>
         <class>com.community.api.endpoint.serviceProvider.ServiceProviderStatus</class>
-
+        <class>com.community.api.entity.CustomOtp</class>
         <exclude-unlisted-classes/>
     </persistence-unit>
 

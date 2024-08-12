@@ -77,7 +77,7 @@ public class CustomerEndpoint {
             if (customer == null) {
                 return new ResponseEntity<>("Customer with this ID does not exist", HttpStatus.NOT_FOUND);
             } else {
-                customer.setPassword(null);
+    
                 return new ResponseEntity<>(customer, HttpStatus.OK);
             }
         } catch (Exception e) {
@@ -348,7 +348,6 @@ public class CustomerEndpoint {
         return addressDTO;
     }
     public static ResponseEntity<OtpEndpoint.AuthResponse> createAuthResponse(String token, Customer customer ) {
-        customer.setPassword(null);
         OtpEndpoint.AuthResponse authResponse = new OtpEndpoint.AuthResponse(token, customer);
         return ResponseEntity.ok(authResponse);
     }
