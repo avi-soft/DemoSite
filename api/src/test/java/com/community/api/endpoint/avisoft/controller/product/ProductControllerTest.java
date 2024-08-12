@@ -283,6 +283,7 @@
 //        Map<String, Object> responseBody = parseJson2(content);
 //        assertNotNull(responseBody);
 //
+//
 //        // Verify response content
 //        assertEquals(customProduct.getId().toString(), responseBody.get("productId").toString());
 //        assertEquals(customProduct.getArchived().toString(), responseBody.get("archived").toString());
