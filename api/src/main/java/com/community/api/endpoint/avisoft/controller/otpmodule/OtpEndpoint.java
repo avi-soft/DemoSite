@@ -136,7 +136,6 @@ public class OtpEndpoint {
                 return new ResponseEntity<>("Invalid data", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-
             if (!customCustomerService.isValidMobileNumber(customerDetails.getMobileNumber())) {
                 return new ResponseEntity<>("Invalid mobile number", HttpStatus.NOT_FOUND);
 
