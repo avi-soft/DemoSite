@@ -21,8 +21,6 @@ public class Document {
 
     private String name;
 
-
-
     @Lob
     private byte[] data;
 
