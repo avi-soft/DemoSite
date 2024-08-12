@@ -1,8 +1,10 @@
 package com.community.api.dto;
 
 import java.util.Date;
+import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 
+import com.broadleafcommerce.rest.api.wrapper.MediaWrapper;
 import com.community.api.entity.CustomProduct;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -42,6 +44,8 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
     protected Long defaultCategoryId;
 
     protected Character archived;
+
+    protected List<MediaWrapper> media;
 
     public void wrapDetails(CustomProduct model) {
         this.id = model.getId();

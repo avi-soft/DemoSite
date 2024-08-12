@@ -34,6 +34,8 @@ public class ProductController extends CatalogEndpoint {
     private static final String CATEGORYNOTFOUND = "Category not Found";
     private static final String PRODUCTTITLENOTGIVEN = "Product MetaTitle not Given";
     private static final String SOMEEXCEPTIONOCCURED = "Some Exception Occurred";
+    private static final String NUMBERFORMATEXCEPTION = "NumberFormatException";
+    private static final String UNSUPPORTEDENCODINGEXCEPTION = "UnsupportedEncodingException";
 
     @Autowired
     protected ExceptionHandlingService exceptionHandlingService;
@@ -170,10 +172,13 @@ public class ProductController extends CatalogEndpoint {
             return ResponseEntity.ok(wrapper);
 
         } catch (UnsupportedEncodingException unsupportedEncodingException) {
-            return new ResponseEntity<>("UnsupportedEncodingException Occurred: " + unsupportedEncodingException.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            exceptionHandlingService.handleException(unsupportedEncodingException);
+            return new ResponseEntity<>(UNSUPPORTEDENCODINGEXCEPTION + ": " + unsupportedEncodingException.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (NumberFormatException numberFormatException) {
-            return new ResponseEntity<>("NumberFormatException Occurred: " + numberFormatException.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            exceptionHandlingService.handleException(numberFormatException);
+            return new ResponseEntity<>( NUMBERFORMATEXCEPTION + ": " + numberFormatException.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
             return new ResponseEntity<>(SOMEEXCEPTIONOCCURED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -196,7 +201,7 @@ public class ProductController extends CatalogEndpoint {
             CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
 
             if (customProduct == null) {
-                return new ResponseEntity<>("product not found", HttpStatus.INTERNAL_SERVER_ERROR);
+                return new ResponseEntity<>(PRODUCTNOTFOUND, HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             if ((((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))){
@@ -211,8 +216,10 @@ public class ProductController extends CatalogEndpoint {
             }
 
         } catch (NumberFormatException numberFormatException) {
-            return new ResponseEntity<>("NumberFormatException: " + numberFormatException.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            exceptionHandlingService.handleException(numberFormatException);
+            return new ResponseEntity<>(NUMBERFORMATEXCEPTION + ": "  + numberFormatException.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
             return new ResponseEntity<>(SOMEEXCEPTIONOCCURED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -252,14 +259,15 @@ public class ProductController extends CatalogEndpoint {
 
             return ResponseEntity.ok(responses);
 
-        } catch (Exception e) {
-            return new ResponseEntity<>(SOMEEXCEPTIONOCCURED + ": " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return new ResponseEntity<>(SOMEEXCEPTIONOCCURED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Transactional
     @PutMapping("/update/{productId}")
-    public ResponseEntity<String> updateProduct(HttpServletRequest request,
+    public ResponseEntity<?> updateProduct(HttpServletRequest request,
                                                 @RequestBody ProductImpl productImpl,
                                                 @RequestParam(value = "expirationDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date activeEndDate,
                                                 @RequestParam(value = "goLiveDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date goLiveDate,
@@ -391,13 +399,20 @@ public class ProductController extends CatalogEndpoint {
             catalogService.saveProduct(product);
             entityManager.merge(customProduct);
 
-            return ResponseEntity.ok("Product Updated Successfully");
+            // Wrap and return the updated product details
+            CustomProductWrapper wrapper = new CustomProductWrapper();
+            wrapper.wrapDetails(product, customProduct.getPriorityLevel(), customProduct.getGoLiveDate());
+
+            return ResponseEntity.ok(wrapper);
 
         } catch (UnsupportedEncodingException unsupportedEncodingException) {
+            exceptionHandlingService.handleException(unsupportedEncodingException);
             return new ResponseEntity<>("UnsupportedEncodingException Occurred: " + unsupportedEncodingException.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (NumberFormatException numberFormatException) {
+            exceptionHandlingService.handleException(numberFormatException);
             return new ResponseEntity<>("NumberFormatException: " + numberFormatException.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
             return new ResponseEntity<>(SOMEEXCEPTIONOCCURED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
@@ -424,8 +439,10 @@ public class ProductController extends CatalogEndpoint {
             return ResponseEntity.ok("Product Deleted Successfully");
 
         } catch (NumberFormatException numberFormatException) {
-            return new ResponseEntity<>("NumberFormatException: " + numberFormatException.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            exceptionHandlingService.handleException(numberFormatException);
+            return new ResponseEntity<>(NUMBERFORMATEXCEPTION + ": " + numberFormatException.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
             return new ResponseEntity<>(SOMEEXCEPTIONOCCURED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
