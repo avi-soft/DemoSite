@@ -24,3 +24,5 @@ public class CustomProductState {
     String productState;
 
 }
+
+

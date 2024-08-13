@@ -1,5 +1,8 @@
 package com.community.api.entity;
 
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.NonNull;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.catalog.domain.ProductImpl;
 
@@ -11,6 +14,8 @@ import java.util.List;
 
 @Entity
 @Table(name = "custom_product")
+@Data
+@NoArgsConstructor
 public class CustomProduct extends ProductImpl {
 
     @Column(name = "go_live_date")
@@ -22,28 +27,16 @@ public class CustomProduct extends ProductImpl {
     @Max(value = 5, message = "Value must be between 1 and 5")
     protected int priorityLevel;
 
-    public CustomProduct() {
-    }
+    @ManyToOne
+    @NonNull
+    @JoinColumn(name = "product_state_id")
+    protected CustomProductState productState;
 
-    public CustomProduct(Date goLiveDate, Integer priorityLevel) {
+    public CustomProduct(Date goLiveDate, Integer priorityLevel, CustomProductState customProductState) {
         this.goLiveDate = goLiveDate;
         this.priorityLevel = priorityLevel;
+        this.productState = customProductState;
     }
 
-    public Date getGoLiveDate() {
-        return goLiveDate;
-    }
-
-    public void setGoLiveDate(Date goLiveDate) {
-        this.goLiveDate = goLiveDate;
-    }
-
-    public int getPriorityLevel() {
-        return priorityLevel;
-    }
-
-    public void setPriorityLevel(int priorityLevel) {
-        this.priorityLevel = priorityLevel;
-    }
 
 }
