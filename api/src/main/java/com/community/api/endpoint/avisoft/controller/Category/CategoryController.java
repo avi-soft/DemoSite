@@ -1,10 +1,10 @@
 package com.community.api.endpoint.avisoft.controller.Category;
 
 import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
-import com.community.api.entity.CategoryDao;
-import com.community.api.entity.CustomCategoryWrapper;
+import com.community.api.dto.CategoryDto;
+import com.community.api.dto.CustomCategoryWrapper;
 import com.community.api.entity.CustomProduct;
-import com.community.api.entity.CustomProductWrapper;
+import com.community.api.dto.CustomProductWrapper;
 import com.community.api.services.CategoryService;
 import com.community.api.services.exception.ExceptionHandlingService;
 import org.broadleafcommerce.common.persistence.Status;
@@ -27,17 +27,22 @@ public class CategoryController extends CatalogEndpoint {
 
     private static final String CATALOGSERVICENOTINITIALIZED = "Catalog service is not initialized.";
     private static final String CATEGORYCANNOTBELESSTHANOREQAULZERO = "CategoryId cannot be <= 0";
+    private static final String SOMEEXCEPTIONOCCURRED = "Some Exception Occurred";
 
     @Autowired
     private ExceptionHandlingService exceptionHandlingService;
 
     @Autowired
-    private CategoryService customCategoryService;
+    private CategoryService categoryService;
 
     @PersistenceContext
     private EntityManager entityManager;
 
+    public CategoryController(CategoryService categoryService, EntityManager entityManager){
+        this.entityManager = entityManager;
+        this.categoryService = categoryService;
 
+    }
     @PostMapping("/add")
     public ResponseEntity<?> addCategory(HttpServletRequest request, @RequestBody CategoryImpl categoryImpl) {
         try {
@@ -70,8 +75,9 @@ public class CategoryController extends CatalogEndpoint {
             wrapper.wrapDetails(category, request);
             return ResponseEntity.ok(wrapper);
 
-        } catch (Exception e) {
-            return new ResponseEntity<>("Some Exception Occurred: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return new ResponseEntity<>(SOMEEXCEPTIONOCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -97,8 +103,9 @@ public class CategoryController extends CatalogEndpoint {
             }
 
             return new ResponseEntity<>(activeCategories, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>("Some Exception Occurred: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return new ResponseEntity<>(SOMEEXCEPTIONOCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -122,18 +129,20 @@ public class CategoryController extends CatalogEndpoint {
                 return new ResponseEntity<>("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            List<BigInteger> productIdList = customCategoryService.getAllProductsByCategoryId(categoryId);
+            List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
             List<CustomProductWrapper> products = new ArrayList<>();
 
             for (BigInteger productId : productIdList) {
                 CustomProduct customProduct = entityManager.find(CustomProduct.class, productId.longValue());
 
-                CustomProductWrapper wrapper = new CustomProductWrapper();
-                wrapper.wrapDetails(customProduct, request);
-                products.add(wrapper);
+                if(customProduct != null && (((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
+                    CustomProductWrapper wrapper = new CustomProductWrapper();
+                    wrapper.wrapDetails(customProduct);
+                    products.add(wrapper);
+                }
             }
 
-            CategoryDao categoryDao = new CategoryDao();
+            CategoryDto categoryDao = new CategoryDto();
             categoryDao.setCategoryId(category.getId());
             categoryDao.setCategoryName(category.getName());
             categoryDao.setProducts(products);
@@ -141,8 +150,9 @@ public class CategoryController extends CatalogEndpoint {
 
             return ResponseEntity.status(HttpStatus.OK).body(categoryDao);
 
-        } catch (Exception e) {
-            return new ResponseEntity<>("Some Exception Occurred: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return new ResponseEntity<>(SOMEEXCEPTIONOCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -169,14 +179,16 @@ public class CategoryController extends CatalogEndpoint {
                 return new ResponseEntity<>("category not found", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-        } catch (Exception e) {
-            return new ResponseEntity<>("Some Exception Occurred: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return new ResponseEntity<>(SOMEEXCEPTIONOCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }
 
     @PatchMapping(value = "/update/{categoryId}")
-    public ResponseEntity<?> updateCategoryById(HttpServletRequest request, @RequestBody CategoryImpl categoryImpl, @PathVariable("categoryId") String id) {
+    public ResponseEntity<?> updateCategoryById(HttpServletRequest request, @RequestBody CategoryImpl categoryImpl, @PathVariable("categoryId") String id)
+    {
         try {
 
             Long categoryId = Long.parseLong(id);
@@ -217,8 +229,9 @@ public class CategoryController extends CatalogEndpoint {
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Category not found.");
             }
-        } catch (Exception e) {
-            return new ResponseEntity<>("Some Exception Occurred: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return new ResponseEntity<>(SOMEEXCEPTIONOCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }

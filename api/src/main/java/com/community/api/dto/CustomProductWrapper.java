@@ -1,8 +1,11 @@
-package com.community.api.entity;
+package com.community.api.dto;
 
 import java.util.Date;
+import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 
+import com.broadleafcommerce.rest.api.wrapper.MediaWrapper;
+import com.community.api.entity.CustomProduct;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.broadleafcommerce.common.rest.api.wrapper.APIWrapper;
@@ -42,6 +45,8 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
 
     protected Character archived;
 
+    protected List<MediaWrapper> media;
+
     public void wrapDetails(CustomProduct model) {
         this.id = model.getId();
         this.metaTitle = model.getMetaTitle();
@@ -57,6 +62,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.priorityLevel = model.getPriorityLevel();
         this.categoryName = model.getDefaultCategory().getName();
         this.active = model.isActive();
+        this.activeGoLiveDate = model.getGoLiveDate();
 
         if (model.getDefaultCategory() != null) {
             this.defaultCategoryId = model.getDefaultCategory().getId();
@@ -74,12 +80,35 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.activeEndDate = product.getDefaultSku().getActiveEndDate();
         this.promoMessage = product.getPromoMessage();
         this.archived = ((Status) product).getArchived();
-        this.categoryName = product.getDefaultSku().getName();
+        this.categoryName = product.getDefaultCategory().getName();
         this.active = product.isActive();
+        this.cost = product.getDefaultSku().getCost().doubleValue();
 
         if (product.getDefaultCategory() != null) {
             this.defaultCategoryId = product.getDefaultCategory().getId();
         }
+    }
+
+    public void wrapDetails(Product product, Integer priorityLevel, Date activeGoLiveDate) {
+        this.id = product.getId();
+        this.metaTitle = product.getMetaTitle();
+        this.metaDescription = product.getMetaDescription();
+        this.longDescription = product.getLongDescription();
+        this.url = product.getUrl();
+        this.activeStartDate = product.getDefaultSku().getActiveStartDate();
+        this.activeEndDate = product.getDefaultSku().getActiveEndDate();
+        this.promoMessage = product.getPromoMessage();
+        this.archived = ((Status) product).getArchived();
+        this.categoryName = product.getDefaultCategory().getName();
+        this.active = product.isActive();
+        this.activeGoLiveDate = activeGoLiveDate;
+        this.priorityLevel = priorityLevel;
+        this.cost = product.getDefaultSku().getCost().doubleValue();
+
+        if (product.getDefaultCategory() != null) {
+            this.defaultCategoryId = product.getDefaultCategory().getId();
+        }
+
     }
 
     public void wrapSummary(Product model, HttpServletRequest request) {

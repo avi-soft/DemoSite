@@ -7,9 +7,13 @@ import org.springframework.stereotype.Service;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.transaction.Transactional;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Date;
 import java.sql.Timestamp;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.Errors;
@@ -31,7 +35,7 @@ public class ProductService {
             throw new IllegalArgumentException("Validation error: " + errors.getFieldError().getDefaultMessage());
         }
 
-        String sql = "INSERT INTO ext_product (goliveDate, prioritylevel, product_id) VALUES (:goLiveDate, :priorityLevel, :productId)";
+        String sql = "INSERT INTO custom_product (go_live_date, priority_level, product_id) VALUES (:goLiveDate, :priorityLevel, :productId)";
 
         try {
             entityManager.createNativeQuery(sql)
@@ -40,7 +44,7 @@ public class ProductService {
                     .setParameter("productId", productId)
                     .executeUpdate();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to save Ext Product: " + e.getMessage(), e);
+            throw new RuntimeException("Failed to save Custom Product: " + e.getMessage(), e);
         }
     }
 
@@ -60,7 +64,7 @@ public class ProductService {
     }
 
     public List<CustomProduct> getCustomProducts() {
-        String sql = "SELECT * FROM ext_product";
+        String sql = "SELECT * FROM custom_product";
 
         return entityManager.createNativeQuery(sql, CustomProduct.class).getResultList();
     }
@@ -75,6 +79,33 @@ public class ProductService {
                     .executeUpdate();
         } catch (Exception e) {
             throw new RuntimeException("Failed to Delete Category_Product: " + e.getMessage(), e);
+        }
+    }
+
+    public Map<String, String> getRequestParamBasedOnQueryString(String queryString) throws UnsupportedEncodingException {
+        if (queryString != null) {
+
+            String[] params = queryString.split("&"); // Split the query string by '&' to get each parameter
+
+            // Create a map to hold parameters
+            Map<String, String> paramMap = new HashMap<>();
+
+            // Process each parameter
+            for (String param : params) {
+                String[] keyValue = param.split("=");
+                if (keyValue.length == 2) {
+                    String key = keyValue[0];
+                    String value = keyValue[1];
+
+                    // Encode the value to UTF-8
+                    value = URLEncoder.encode(value, "UTF-8"); // may throw exception.
+
+                    paramMap.put(key, value);
+                }
+            }
+            return paramMap;
+        }else{
+            return null;
         }
     }
 
