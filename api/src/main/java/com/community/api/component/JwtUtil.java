@@ -80,9 +80,10 @@ public class JwtUtil {
     }
 
     public Boolean validateToken(String token, String ipAddress, String userAgent) {
-        Long id = extractId(token);
+
 
         try {
+            Long id = extractId(token);
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
                     .build()

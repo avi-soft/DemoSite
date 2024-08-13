@@ -81,7 +81,7 @@ public class AccountEndPoint {
                     return ResponseEntity.badRequest().body("Mobile number is not valid");
                 }
             } else {
-                return loginWithUsername(customer, session);
+                return loginWithUsername(customer, session,request);
             }
         } catch (Exception e) {
             exceptionHandling.handleException(e);
@@ -127,7 +127,7 @@ public class AccountEndPoint {
 
     @Transactional
     @RequestMapping(value = "login-with-username", method = RequestMethod.POST)
-    private ResponseEntity<String> loginWithUsername(@RequestBody CustomCustomer customerDetails, HttpSession session) {
+    public ResponseEntity<?> loginWithUsername(@RequestBody CustomCustomer customerDetails, HttpSession session ,HttpServletRequest request) {
         try {
             if (customerService == null) {
                 return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -137,7 +137,21 @@ public class AccountEndPoint {
                 return new ResponseEntity<>("No records found for the provided username.", HttpStatus.NOT_FOUND);
             }
             if (passwordEncoder.matches(customerDetails.getPassword(), customer.getPassword())) {
-                return ResponseEntity.ok("Login successful");
+
+                String tokenKey = "authToken_" + customerDetails.getMobileNumber();
+                String existingToken = (String) session.getAttribute(tokenKey);
+                String ipAddress = request.getRemoteAddr();
+                String userAgent = request.getHeader("User-Agent");
+                if (existingToken != null && jwtUtil.validateToken(existingToken,  ipAddress, userAgent)) {
+
+                    return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(existingToken, customer));
+                } else {
+
+                    String token = jwtUtil.generateToken(customer.getId(), "USER",ipAddress,userAgent);
+                    session.setAttribute(tokenKey, token);
+                    return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(token,customer));
+
+                }
             } else {
                 return ResponseEntity.badRequest().body("Invalid password");
             }
@@ -199,7 +213,8 @@ public class AccountEndPoint {
 
                        String token = jwtUtil.generateToken(existingCustomer.getId(), "USER",ipAddress,userAgent);
                         session.setAttribute(tokenKey, token);
-                        return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(token, existingCustomer));
+                        return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(token,customer));
+
                     }
 
                 } else {
