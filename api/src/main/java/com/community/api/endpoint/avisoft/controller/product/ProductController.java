@@ -93,8 +93,6 @@ public class ProductController extends CatalogEndpoint {
                 categoryIdParam = paramMap.get("categoryId");
                 quantityParam = paramMap.get("quantity");
                 costParam = paramMap.get("cost");
-            } else {
-                return new ResponseEntity<>("queryString is empty(URL)", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             if (catalogService == null) {

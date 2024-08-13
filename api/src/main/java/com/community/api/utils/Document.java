@@ -17,11 +17,9 @@ public class Document {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long documentId;
 
     private String name;
-
-    private String value;
 
     @Lob
     private byte[] data;
@@ -29,4 +27,7 @@ public class Document {
     @OneToOne
     @JoinColumn(name = "custom_customer_id")
     private CustomCustomer customCustomer;
+    @OneToOne
+    @JoinColumn(name = "document_type_Id")
+    private DocumentType documentType;
 }

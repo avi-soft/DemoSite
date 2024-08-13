@@ -1,7 +1,10 @@
 package com.community.api.component;
 import com.community.api.services.CustomCustomerService;
+import com.community.api.services.exception.ExceptionHandlingImplement;
+import com.community.api.services.exception.ExceptionHandlingService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
+import org.apache.solr.client.solrj.io.stream.SolrStream;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.slf4j.Logger;
@@ -35,8 +38,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Autowired
     private CustomerService CustomerService;
+
     @Autowired
-    private TokenBlacklist tokenBlacklistService;
+    private ExceptionHandlingImplement exceptionHandling;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws IOException, ServletException {
@@ -59,16 +64,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
-        } catch (ExpiredJwtException e) {
-            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "JWT token is expired");
-            logger.error("ExpiredJwtException caught: {}", e.getMessage());
-        } catch (MalformedJwtException e) {
-            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JWT token");
-            logger.error("MalformedJwtException caught: {}", e.getMessage());
-        } catch (Exception e) {
-            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
-            logger.error("Exception caught: {}", e.getMessage());
-        }
+
+    } catch (ExpiredJwtException e) {
+        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "JWT token is expired");
+        exceptionHandling.handleException(e);
+        logger.error("ExpiredJwtException caught: {}", e.getMessage());
+    } catch (MalformedJwtException e) {
+        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JWT token");
+        exceptionHandling.handleException(e);
+        logger.error("MalformedJwtException caught: {}", e.getMessage());
+    } catch (Exception e) {
+        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+        exceptionHandling.handleException(e);
+
+        logger.error("Exception caught: {}", e.getMessage());
+    }
     }
 
 
@@ -106,7 +116,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String  ipAdress =request.getRemoteAddr();
         String User_Agent =   request.getHeader("User-Agent");
 
-        System.out.println(ipAdress + " ipAdress" + User_Agent + " User_Agent authenticateUser" );
         if (!jwtUtil.validateToken(jwt, ipAdress, User_Agent)) {
             respondWithUnauthorized(response, "Invalid JWT token");
             return true;

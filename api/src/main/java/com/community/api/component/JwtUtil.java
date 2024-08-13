@@ -35,8 +35,7 @@ public class JwtUtil {
 
     @PostConstruct
     public void init() {
-        byte[] secretKeyBytes = DatatypeConverter.parseBase64Binary(secretKeyString);
-        this.secretKey = Keys.hmacShaKeyFor(secretKeyBytes);
+        this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
     }
 
     public String generateToken(Long id, String role, String ipAddress, String userAgent) {
@@ -48,10 +47,10 @@ public class JwtUtil {
                     .setId(uniqueTokenId)
                     .claim("id", id)
                     .claim("role", role)
-                    .claim("ipAddress", ipAddress)
-                    .claim("userAgent", userAgent)
+                    /*.claim("ipAddress", ipAddress)
+                    .claim("userAgent", userAgent)*/
                     .setIssuedAt(new Date())
-                    .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))  // 10 hours expiration
+                    .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
                     .signWith(secretKey, SignatureAlgorithm.HS256)
                     .compact();
         } catch (Exception e) {
@@ -61,10 +60,11 @@ public class JwtUtil {
     }
 
     public Long extractId(String token) {
-        if (token == null || token.isEmpty()) {
-            throw new IllegalArgumentException("Token is required");
-        }
+
         try {
+            if (token == null || token.isEmpty()) {
+                throw new IllegalArgumentException("Token is required");
+            }
             return Jwts.parserBuilder()
                     .setSigningKey(secretKey)
                     .build()
@@ -80,9 +80,9 @@ public class JwtUtil {
     }
 
     public Boolean validateToken(String token, String ipAddress, String userAgent) {
-        Long id = extractId(token);
 
         try {
+            Long id = extractId(token);
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
                     .build()

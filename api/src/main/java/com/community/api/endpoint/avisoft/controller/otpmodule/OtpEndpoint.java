@@ -136,7 +136,6 @@ public class OtpEndpoint {
                 return new ResponseEntity<>("Invalid data", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-
             if (!customCustomerService.isValidMobileNumber(customerDetails.getMobileNumber())) {
                 return new ResponseEntity<>("Invalid mobile number", HttpStatus.NOT_FOUND);
 
@@ -159,7 +158,7 @@ public class OtpEndpoint {
                 em.persist(existingCustomer);
                 String existingToken = (String) session.getAttribute(tokenKey);
 
-                if (existingToken != null && jwtUtil.validateToken(existingToken,  ipAddress,ipAddress)){
+                if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, ipAddress)) {
                     return ResponseEntity.ok(createAuthResponse(existingToken,customer));
                 } else {
                     String newToken = jwtUtil.generateToken(existingCustomer.getId(), "USER",ipAddress,userAgent);
