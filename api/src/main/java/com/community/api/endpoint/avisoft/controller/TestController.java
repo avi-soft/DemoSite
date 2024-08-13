@@ -2,7 +2,7 @@ package com.community.api.endpoint.avisoft.controller;
 
 import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
-import com.community.api.endpoint.customer.CustomCustomer;
+import com.community.api.entity.CustomCustomer;
 import com.community.api.services.CustomCustomerService;
 import com.community.api.services.RateLimiterService;
 import io.github.bucket4j.Bucket;

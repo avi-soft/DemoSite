@@ -1,4 +1,4 @@
-package com.community.api.utils;
+package com.community.api.endpoint.serviceProvider;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,10 +10,14 @@ import javax.persistence.*;
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter
 @Setter
-public class DocumentType {
+@Getter
+public class ServiceProviderStatus {
+
     @Id
-    private Integer documentTypeId;
+    private Integer statusId;
+
     private String description;
+    @OneToOne(mappedBy = "status")
+    private ServiceProviderEntity serviceProviderEntity;
 }

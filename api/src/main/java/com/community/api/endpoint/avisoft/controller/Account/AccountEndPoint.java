@@ -3,7 +3,7 @@ package com.community.api.endpoint.avisoft.controller.Account;
 import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.avisoft.controller.Customer.CustomerEndpoint;
-import com.community.api.endpoint.customer.CustomCustomer;
+import com.community.api.entity.CustomCustomer;
 import com.community.api.services.CustomCustomerService;
 import com.community.api.services.TwilioService;
 import com.community.api.services.exception.ExceptionHandlingImplement;

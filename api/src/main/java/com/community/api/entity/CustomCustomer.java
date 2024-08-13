@@ -1,5 +1,6 @@
-package com.community.api.endpoint.customer;
+package com.community.api.entity;
 
+import com.community.api.endpoint.customer.Qualification;
 import com.community.api.utils.Document;
 import io.micrometer.core.lang.Nullable;
 import lombok.AllArgsConstructor;

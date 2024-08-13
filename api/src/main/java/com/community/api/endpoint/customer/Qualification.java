@@ -1,4 +1,5 @@
 package com.community.api.endpoint.customer;
+import com.community.api.entity.CustomCustomer;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
