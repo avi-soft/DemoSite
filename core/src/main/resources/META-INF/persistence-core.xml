@@ -27,7 +27,7 @@
 
         <!-- Added this line -->
         <class>com.community.api.entity.CustomProduct</class>
-
+        <class>com.community.api.entity.CustomProductState</class>
         <exclude-unlisted-classes/>
     </persistence-unit>
     

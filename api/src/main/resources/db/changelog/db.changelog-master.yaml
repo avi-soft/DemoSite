@@ -1,3 +1,5 @@
 databaseChangeLog:
   - include:
       file: db/changelog/V1__add_column_to_blc_Customer_table.sql
+  - include:
+      file: db/changelog/V1__insert_data_into_Custom_Product_State_table.sql
