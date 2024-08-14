@@ -2,6 +2,7 @@ package com.community.api.endpoint.avisoft.controller.otpmodule;
 import com.community.api.component.Constant;
 import com.community.api.component.JwtAuthenticationFilter;
 import com.community.api.component.JwtUtil;
+import com.community.api.dto.OTPRequest;
 import com.community.api.endpoint.customer.CustomCustomer;
 import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.services.CustomCustomerService;
@@ -108,72 +109,52 @@ public class OtpEndpoint {
 
     @Transactional
     @PostMapping("/verify-otp")
-    public ResponseEntity<?> verifyOTP(@RequestBody CustomCustomer customerDetails, @RequestParam("otpEntered") String otpEntered, HttpSession session,
-                                       HttpServletRequest request) {
+    public ResponseEntity<?> verifyOTP(@RequestBody OTPRequest otpRequest, HttpSession session, HttpServletRequest request) {
         try {
+            String otpEntered = otpRequest.getOtpEntered();
+            String mobileNumber = otpRequest.getMobileNumber();
 
-            if (customerDetails.getMobileNumber() != null) {
-
-                customerDetails.setMobileNumber(customerDetails.getMobileNumber());
-
-            } else if (customerDetails.getUsername() != null) {
-                if (customerService == null) {
-                    return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-                Customer customer = customerService.readCustomerByUsername(customerDetails.getUsername());
-                if (customer == null) {
-                    return new ResponseEntity<>("No records found for the provided username.", HttpStatus.NOT_FOUND);
-                }
-                CustomCustomer customCustomer = em.find(CustomCustomer.class, customer.getId());
-
-                if (customCustomer != null) {
-                    customerDetails.setMobileNumber(customCustomer.getMobileNumber());
-                } else {
-                    return new ResponseEntity<>("No records found", HttpStatus.NO_CONTENT);
-                }
-
-            } else {
-                return new ResponseEntity<>("Invalid data", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
-            if (!customCustomerService.isValidMobileNumber(customerDetails.getMobileNumber())) {
-                return new ResponseEntity<>("Invalid mobile number", HttpStatus.NOT_FOUND);
-
+            if (mobileNumber == null || mobileNumber.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Mobile number cannot be empty");
             }
 
             if (otpEntered == null || otpEntered.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("OTP can not be empty");
+                return ResponseEntity.badRequest().body("OTP cannot be empty");
             }
 
-            CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(customerDetails.getMobileNumber(), customerDetails.getCountryCode());
+            CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(mobileNumber, otpRequest.getCountry_code());
 
+            if (existingCustomer == null) {
+                return new ResponseEntity<>("No records found for the provided mobile number.", HttpStatus.NOT_FOUND);
+            }
 
             String storedOtp = existingCustomer.getOtp();
             String ipAddress = request.getRemoteAddr();
             String userAgent = request.getHeader("User-Agent");
-            String tokenKey = "authToken_" + customerDetails.getMobileNumber();
+            String tokenKey = "authToken_" + mobileNumber;
             Customer customer = customerService.readCustomerById(existingCustomer.getId());
+
             if (otpEntered.equals(storedOtp)) {
                 existingCustomer.setOtp(null);
                 em.persist(existingCustomer);
                 String existingToken = (String) session.getAttribute(tokenKey);
 
                 if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, ipAddress)) {
-                    return ResponseEntity.ok(createAuthResponse(existingToken,customer));
+                    return ResponseEntity.ok(createAuthResponse(existingToken, customer));
                 } else {
-                    String newToken = jwtUtil.generateToken(existingCustomer.getId(), "USER",ipAddress,userAgent);
+                    String newToken = jwtUtil.generateToken(existingCustomer.getId(), "USER", ipAddress, userAgent);
                     session.setAttribute(tokenKey, newToken);
-                    return ResponseEntity.ok(createAuthResponse(newToken,customer));
+                    return ResponseEntity.ok(createAuthResponse(newToken, customer));
                 }
             } else {
-
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid OTP");
             }
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return new ResponseEntity<>("Error saving customer", HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("Error verifying OTP", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 
     private ResponseEntity<AuthResponse> createAuthResponse(String token, Customer customer) {
         AuthResponse authResponse = new AuthResponse(token, customer);

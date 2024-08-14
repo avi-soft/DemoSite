@@ -50,6 +50,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 chain.doFilter(request, response);
                 return;
             }
+            if(isApiKeyRequiredUri(request)){
+                chain.doFilter(request, response);
+                return;
+            }
 
             boolean responseHandled = authenticateUser(request, response);
             if (!responseHandled) {
@@ -59,18 +63,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
 
-    } catch (ExpiredJwtException e) {
-        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "JWT token is expired");
-        logger.error("ExpiredJwtException caught: {}", e.getMessage());
-    } catch (MalformedJwtException e) {
-        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JWT token");
-        logger.error("MalformedJwtException caught: {}", e.getMessage());
-    } catch (Exception e) {
-        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
-        logger.error("Exception caught: {}", e.getMessage());
-    }
+        } catch (ExpiredJwtException e) {
+            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "JWT token is expired");
+            logger.error("ExpiredJwtException caught: {}", e.getMessage());
+        } catch (MalformedJwtException e) {
+            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JWT token");
+            logger.error("MalformedJwtException caught: {}", e.getMessage());
+        } catch (Exception e) {
+            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+            logger.error("Exception caught: {}", e.getMessage());
+        }
+
     }
 
+    private boolean isApiKeyRequiredUri(HttpServletRequest request) {
+
+
+        String requestURI = request.getRequestURI();
+        String path = requestURI.split("\\?")[0];
+        System.out.println(path + " path");
+        return path.startsWith("/api/v1/categoryCustom/getProductsByCategoryId");
+
+    }
 
 
     private boolean isUnsecuredUri(String requestURI) {
@@ -80,7 +94,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 || requestURI.startsWith("/api/v1/swagger-ui.html")
                 || requestURI.startsWith("/v3/api-docs")
                 || requestURI.startsWith("/api/v1/images")
-                 || requestURI.startsWith("/api/v1/webjars");
+                || requestURI.startsWith("/api/v1/webjars");
     }
 
 
@@ -130,14 +144,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private void respondWithUnauthorized(HttpServletResponse response, String message) throws IOException {
         if (!response.isCommitted()) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write(message);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"status\":401,\"message\":\"" + message + "\"}");
+            response.getWriter().flush();
         }
     }
 
     private void handleException(HttpServletResponse response, int statusCode, String message) throws IOException {
         if (!response.isCommitted()) {
             response.setStatus(statusCode);
-            response.getWriter().write(message);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"status\":" + statusCode + ",\"message\":\"" + message + "\"}");
+            response.getWriter().flush();
         }
     }
 }
