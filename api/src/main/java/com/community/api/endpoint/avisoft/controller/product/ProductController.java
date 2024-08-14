@@ -3,6 +3,7 @@ package com.community.api.endpoint.avisoft.controller.product;
 import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
 import com.community.api.entity.CustomProduct;
 import com.community.api.dto.CustomProductWrapper;
+import com.community.api.entity.CustomProductState;
 import com.community.api.services.ProductService;
 import com.community.api.services.exception.ExceptionHandlingService;
 import org.broadleafcommerce.common.money.Money;
@@ -162,8 +163,8 @@ public class ProductController extends CatalogEndpoint {
 
             product.setDefaultSku(sku); // Set default SKU in the product
 
-            productService.saveCustomProduct(goLiveDate, priorityLevel, product.getId()); // Save external product with provided dates and get status code
-            entityManager.find(CustomProduct.class, productId);
+            CustomProductState customProductState = productService.getCustomProductStateById(1L);
+            productService.saveCustomProduct(goLiveDate, priorityLevel, product.getId(), customProductState); // Save external product with provided dates and get status code
 
             // Wrap and return the updated product details
             CustomProductWrapper wrapper = new CustomProductWrapper();
