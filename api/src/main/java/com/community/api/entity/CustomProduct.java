@@ -1,5 +1,6 @@
 package com.community.api.entity;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
@@ -18,6 +19,7 @@ import java.util.List;
 @Table(name = "custom_product")
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class CustomProduct extends ProductImpl {
 
     @Column(name = "go_live_date")
@@ -29,16 +31,19 @@ public class CustomProduct extends ProductImpl {
     @Max(value = 5, message = "Value must be between 1 and 5")
     protected int priorityLevel;
 
+    @Column(name = "job_group")
+    protected Character jobGroup;
+
+    @Column(name = "platform_fee")
+    protected Double platformFee;
+
+    @Column(name = "exam_date")
+    protected Date examDate;
+
     @ManyToOne
     @NotNull
     @JoinColumn(name = "product_state_id")
     protected CustomProductState productState;
-
-    public CustomProduct(Date goLiveDate, Integer priorityLevel, CustomProductState customProductState) {
-        this.goLiveDate = goLiveDate;
-        this.priorityLevel = priorityLevel;
-        this.productState = customProductState;
-    }
 
 
 }
