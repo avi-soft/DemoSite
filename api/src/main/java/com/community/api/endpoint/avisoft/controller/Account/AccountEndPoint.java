@@ -30,20 +30,49 @@ import static org.apache.commons.lang.StringUtils.isNumeric;
         produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }
 )
 public class AccountEndPoint {
-    @Autowired
     private CustomerService customerService;
-    @Autowired
     private JwtUtil jwtUtil;
-    @Autowired
     private ExceptionHandlingImplement exceptionHandling;
-    @Autowired
     private EntityManager em;
-    @Autowired
     private TwilioService twilioService;
-    @Autowired
     private CustomCustomerService customCustomerService;
-    @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    public void setCustomerService(CustomerService customerService) {
+        this.customerService = customerService;
+    }
+
+    @Autowired
+    public void setJwtUtil(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+    }
+
+    @Autowired
+    public void setExceptionHandling(ExceptionHandlingImplement exceptionHandling) {
+        this.exceptionHandling = exceptionHandling;
+    }
+
+    @Autowired
+    public void setEntityManager(EntityManager em) {
+        this.em = em;
+    }
+
+    @Autowired
+    public void setTwilioService(TwilioService twilioService) {
+        this.twilioService = twilioService;
+    }
+
+    @Autowired
+    public void setCustomCustomerService(CustomCustomerService customCustomerService) {
+        this.customCustomerService = customCustomerService;
+    }
+
+    @Autowired
+    public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
+    }
+
     @PostMapping("/loginWithOtp")
     @ResponseBody
     public ResponseEntity<String> verifyAndLogin(@RequestBody CustomCustomer customer, HttpSession session) {
