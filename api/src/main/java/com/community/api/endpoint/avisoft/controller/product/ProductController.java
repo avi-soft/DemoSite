@@ -1,9 +1,9 @@
 package com.community.api.endpoint.avisoft.controller.product;
 
 import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
+import com.community.api.dto.AddProductDto;
 import com.community.api.entity.CustomProduct;
 import com.community.api.dto.CustomProductWrapper;
-import com.community.api.entity.CustomProductState;
 import com.community.api.services.ProductService;
 import com.community.api.services.exception.ExceptionHandlingService;
 import org.broadleafcommerce.common.money.Money;
@@ -21,7 +21,6 @@ import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.io.UnsupportedEncodingException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 @RestController
@@ -53,8 +52,22 @@ public class ProductController extends CatalogEndpoint {
 
      */
 
+    ProductImpl
 
     @Transactional
+    @RequestMapping(value = "/add/requestBody", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> addProduct(HttpServletRequest request,
+                                        @RequestBody AddProductDto addProductDto) {
+
+//        System.out.println(addProductDto.getCustomProduct().getGoLiveDate());
+        System.out.println(addProductDto.getSku().getCost());
+//        System.out.println(addProductDto.getProductImpl().getMetaTitle());
+
+        return new ResponseEntity<>("SUCCESS", HttpStatus.OK);
+    }
+
+
+    /*@Transactional
     @PostMapping("/add")
     public ResponseEntity<?> addProduct(HttpServletRequest request,
                                         @RequestBody ProductImpl productImpl,
@@ -183,7 +196,7 @@ public class ProductController extends CatalogEndpoint {
             return new ResponseEntity<>(SOMEEXCEPTIONOCCURED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-    }
+    }*/
 
     @GetMapping("/getProductById/{productId}")
     public ResponseEntity<?> retrieveProductById(HttpServletRequest request, @PathVariable("productId") String productIdPath) {

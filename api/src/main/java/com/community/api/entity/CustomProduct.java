@@ -37,8 +37,11 @@ public class CustomProduct extends ProductImpl {
     @Column(name = "platform_fee")
     protected Double platformFee;
 
-    @Column(name = "exam_date")
-    protected Date examDate;
+    @Column(name = "exam_date_from")
+    protected Date examDateFrom;
+
+    @Column(name = "exam_date_to")
+    protected Date examDateTo;
 
     @ManyToOne
     @NotNull
