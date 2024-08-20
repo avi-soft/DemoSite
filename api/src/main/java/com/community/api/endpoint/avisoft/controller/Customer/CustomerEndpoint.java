@@ -39,34 +39,61 @@ import java.util.Map;
 )
 
 public class CustomerEndpoint {
-    private final PasswordEncoder passwordEncoder;
-    private final CustomerService customerService;
-    private final ExceptionHandlingImplement exceptionHandling;
-    private final EntityManager em;
-    private final TwilioService twilioService;
-    private final CustomCustomerService customCustomerService;
-    private final AddressService addressService;
-    private final CustomerAddressService customerAddressService;
+    private PasswordEncoder passwordEncoder;
+    private CustomerService customerService;
+    private ExceptionHandlingImplement exceptionHandling;
+    private EntityManager em;
+    private TwilioService twilioService;
+    private CustomCustomerService customCustomerService;
+    private AddressService addressService;
+    private CustomerAddressService customerAddressService;
+    private JwtUtil jwtUtil;
 
-    public CustomerEndpoint(PasswordEncoder passwordEncoder,
-                     CustomerService customerService,
-                     ExceptionHandlingImplement exceptionHandling,
-                     EntityManager em,
-                     TwilioService twilioService,
-                     CustomCustomerService customCustomerService,
-                     AddressService addressService,
-                     CustomerAddressService customerAddressService) {
+    @Autowired
+    public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
+    }
+
+    @Autowired
+    public void setCustomerService(CustomerService customerService) {
         this.customerService = customerService;
+    }
+
+    @Autowired
+    public void setExceptionHandling(ExceptionHandlingImplement exceptionHandling) {
         this.exceptionHandling = exceptionHandling;
+    }
+
+    @Autowired
+    public void setEm(EntityManager em) {
         this.em = em;
+    }
+
+    @Autowired
+    public void setTwilioService(TwilioService twilioService) {
         this.twilioService = twilioService;
+    }
+
+    @Autowired
+    public void setCustomCustomerService(CustomCustomerService customCustomerService) {
         this.customCustomerService = customCustomerService;
+    }
+
+    @Autowired
+    public void setAddressService(AddressService addressService) {
         this.addressService = addressService;
+    }
+
+    @Autowired
+    public void setCustomerAddressService(CustomerAddressService customerAddressService) {
         this.customerAddressService = customerAddressService;
     }
+
     @Autowired
-    private JwtUtil jwtUtil;
+    public void setJwtUtil(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+    }
+
     @RequestMapping(value = "getCustomer", method = RequestMethod.GET)
     public ResponseEntity<Object> retrieveCustomerById(@RequestParam Long customerId) {
         try {

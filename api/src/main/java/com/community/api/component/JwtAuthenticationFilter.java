@@ -7,6 +7,7 @@ import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -19,6 +20,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -27,6 +30,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
     private static final int BEARER_PREFIX_LENGTH = BEARER_PREFIX.length();
+
+    @Value("${api.key}")
+    private String apiKey;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -50,7 +56,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 chain.doFilter(request, response);
                 return;
             }
-            if(isApiKeyRequiredUri(request)){
+            if (isApiKeyRequiredUri(request) && validateApiKey(request)) {
                 chain.doFilter(request, response);
                 return;
             }
@@ -77,15 +83,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean isApiKeyRequiredUri(HttpServletRequest request) {
-
-
         String requestURI = request.getRequestURI();
-        String path = requestURI.split("\\?")[0];
-        System.out.println(path + " path");
-        return path.startsWith("/api/v1/categoryCustom/getProductsByCategoryId");
+        String path = requestURI.split("\\?")[0].trim();
 
+        List<String> bypassUris = Arrays.asList(
+                "/api/v1/categoryCustom/getProductsByCategoryId",
+                "/api/v1/categoryCustom/getAllCategories"
+        );
+        boolean isBypassed = bypassUris.stream().anyMatch(path::equals);
+        return isBypassed;
     }
 
+    private boolean validateApiKey(HttpServletRequest request) {
+        String requestApiKey = request.getHeader("x-api-key");
+        return apiKey.equals(requestApiKey);
+    }
 
     private boolean isUnsecuredUri(String requestURI) {
         return requestURI.startsWith("/api/v1/account")

@@ -114,7 +114,6 @@ public class CategoryController extends CatalogEndpoint {
         try {
             if (catalogService == null) {
                 return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
-
             }
 
             Long categoryId = Long.parseLong(id);
