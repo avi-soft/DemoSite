@@ -109,11 +109,12 @@ public class CategoryController extends CatalogEndpoint {
         }
     }
 
-    @GetMapping(value = "/getProductsByCategoryId/{id}")
-    public ResponseEntity<?> getProductsByCategoryId(HttpServletRequest request, @PathVariable String id) {
+    @GetMapping(value = "/getProductsByCategoryId")
+    public ResponseEntity<?> getProductsByCategoryId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
         try {
             if (catalogService == null) {
                 return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
+
             }
 
             Long categoryId = Long.parseLong(id);

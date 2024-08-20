@@ -42,8 +42,6 @@ public class TwilioService {
     private EntityManager entityManager;
     @Autowired
     private HttpSession httpSession;
-
-
     @Autowired
     private CustomerService customerService;
 
