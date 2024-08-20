@@ -52,15 +52,13 @@ public class ProductController extends CatalogEndpoint {
 
      */
 
-    ProductImpl
-
     @Transactional
     @RequestMapping(value = "/add/requestBody", method = RequestMethod.POST, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> addProduct(HttpServletRequest request,
                                         @RequestBody AddProductDto addProductDto) {
 
 //        System.out.println(addProductDto.getCustomProduct().getGoLiveDate());
-        System.out.println(addProductDto.getSku().getCost());
+        System.out.println(addProductDto.getCost());
 //        System.out.println(addProductDto.getProductImpl().getMetaTitle());
 
         return new ResponseEntity<>("SUCCESS", HttpStatus.OK);

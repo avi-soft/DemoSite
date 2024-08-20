@@ -1,16 +1,22 @@
 package com.community.api.entity;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
+@Table(name = "custom_reserve_category")
 @Data
-@Table(name = "custom_reserved_category")
+@AllArgsConstructor
+@NoArgsConstructor
 public class CustomReserveCategory {
 
+    @Id
     @Column(name = "reserve_category_id")
     protected Long reserveCategoryId;
 

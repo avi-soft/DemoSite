@@ -28,6 +28,9 @@
         <!-- Added this line -->
         <class>com.community.api.entity.CustomProduct</class>
         <class>com.community.api.entity.CustomProductState</class>
+        <class>com.community.api.entity.CustomNotifyingAuthority</class>
+        <class>com.community.api.entity.CustomReserveCategory</class>
+
         <exclude-unlisted-classes/>
     </persistence-unit>
     
