@@ -12,4 +12,5 @@ public class OTPRequest {
     private String otpEntered;
     private String mobileNumber;
     private String country_code;
+    private String username;
 }
