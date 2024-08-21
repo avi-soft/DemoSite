@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.mycompany-community</groupId>
+        <artifactId>boot-community-demo</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+    <artifactId>avisoft</artifactId>
+    <packaging>pom</packaging>
+    <name>Avisoft</name>
+    <description>BroadleafCommerce Core Mid Level Project</description>
+    <url>https://www.broadleafcommerce.com</url>
+   <!-- <properties>
+        <project.uri>${project.baseUri}/../</project.uri>
+    </properties>-->
+    <licenses>
+        <license>
+            <name>Broadleaf Fair Use 1.0</name>
+            <url>http://license.broadleafcommerce.org/fair_use_license-1.0.txt</url>
+            <distribution>repo</distribution>
+            <comments>Fair Use Community License</comments>
+        </license>
+    </licenses>
+    <modules>
+        <module>broadleaf-profile</module>
+        <module>broadleaf-profile-web</module>
+        <module>broadleaf-framework</module>
+        <module>broadleaf-framework-web</module>
+  </modules>
+</project>
