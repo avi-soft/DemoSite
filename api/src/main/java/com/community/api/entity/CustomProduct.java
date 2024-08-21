@@ -29,7 +29,7 @@ public class CustomProduct extends ProductImpl {
     @Column(name = "priority_level")
     @Min(value = 1, message = "Value must be between 1 and 5")
     @Max(value = 5, message = "Value must be between 1 and 5")
-    protected int priorityLevel;
+    protected Integer priorityLevel;
 
     @Column(name = "job_group")
     protected Character jobGroup;
@@ -47,6 +47,5 @@ public class CustomProduct extends ProductImpl {
     @NotNull
     @JoinColumn(name = "product_state_id")
     protected CustomProductState productState;
-
 
 }
