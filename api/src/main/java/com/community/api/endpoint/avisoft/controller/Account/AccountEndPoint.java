@@ -5,8 +5,11 @@ import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.avisoft.controller.Customer.CustomerEndpoint;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.services.CustomCustomerService;
+import com.community.api.services.RoleService;
+import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
 import com.community.api.services.TwilioService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
+import io.swagger.models.auth.In;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +25,7 @@ import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Map;
 
 import static org.apache.commons.lang.StringUtils.isNumeric;
 
@@ -44,21 +48,23 @@ public class AccountEndPoint {
     private CustomCustomerService customCustomerService;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private RoleService roleService;
+    @Autowired
+    private ServiceProviderServiceImpl serviceProviderService;
     @PostMapping("/loginWithOtp")
     @ResponseBody
-    public ResponseEntity<String> verifyAndLogin(@RequestBody CustomCustomer customer, HttpSession session) {
+    public ResponseEntity<?> verifyAndLogin(@RequestBody Map<String,Object>loginDetails, HttpSession session) {
         try {
-            if (customer.getCountryCode() == null || customer.getCountryCode().isEmpty()) {
-                customer.setCountryCode(Constant.COUNTRY_CODE);
-            }
-            if (customer.getMobileNumber() != null) {
-                if (customCustomerService.isValidMobileNumber(customer.getMobileNumber()) && isNumeric(customer.getMobileNumber())) {
-                    return loginWithPhoneOtp(customer, session);
+            String mobileNumber = (String) loginDetails.get("mobileNumber");
+            if (mobileNumber != null) {
+                if (customCustomerService.isValidMobileNumber(mobileNumber) && isNumeric(mobileNumber)) {
+                    return loginWithPhoneOtp(loginDetails, session);
                 } else {
                     return ResponseEntity.badRequest().body("Mobile number is not valid");
                 }
             } else {
-                return loginWithUsernameOtp(customer, session);
+                return loginWithUsernameOtp(loginDetails, session);
             }
         } catch (Exception e) {
             exceptionHandling.handleException(e);
@@ -69,99 +75,169 @@ public class AccountEndPoint {
 
     @PostMapping("/loginWithPassword")
     @ResponseBody
-    public ResponseEntity<?> loginWithPassword(@RequestBody CustomCustomer customer, HttpSession session,HttpServletRequest request) {
+    public ResponseEntity<?> loginWithPassword(@RequestBody Map<String,Object>loginDetails, HttpSession session,HttpServletRequest request) {
         try {
-            if (customer.getMobileNumber() != null) {
-                if (customer.getCountryCode() == null || customer.getCountryCode().isEmpty()) {
-                    customer.setCountryCode(Constant.COUNTRY_CODE);
-                }
-                if (customCustomerService.isValidMobileNumber(customer.getMobileNumber()) && isNumeric(customer.getMobileNumber())) {
-                    return loginWithCustomerPassword(customer, session, request);
+                String mobileNumber = (String) loginDetails.get("mobileNumber");
+                String username = (String) loginDetails.get("username");
+                if(mobileNumber!=null)
+                {
+                if (customCustomerService.isValidMobileNumber(mobileNumber) && isNumeric(mobileNumber)) {
+                    return loginWithCustomerPassword(loginDetails, session, request);
                 } else {
                     return ResponseEntity.badRequest().body("Mobile number is not valid");
                 }
-            } else {
-                return loginWithUsername(customer, session);
+            } else if(username!=null) {
+                return loginWithUsername(loginDetails, session,request);
             }
+                else
+                    return new ResponseEntity<>("Invalid request", HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some issue in login: " + e.getMessage());
         }
     }
     @RequestMapping(value = "phone-otp", method = RequestMethod.POST)
-    private ResponseEntity<String> loginWithPhoneOtp(@RequestBody CustomCustomer customerDetails, HttpSession session) throws UnsupportedEncodingException, UnsupportedEncodingException {
+    private ResponseEntity<String> loginWithPhoneOtp(@RequestBody Map<String,Object> loginDetails, HttpSession session) throws UnsupportedEncodingException, UnsupportedEncodingException {
+        try {
+            if (loginDetails == null) {
+                return new ResponseEntity<>("Login details cannot be null", HttpStatus.BAD_REQUEST);
+            }
+            String mobileNumber = (String) loginDetails.get("mobileNumber");
+            String countryCode = (String) loginDetails.get("countryCode");
+            Integer role = (Integer) loginDetails.get("role");
+            if(mobileNumber==null||role==null)
+            {
+                return new ResponseEntity<>("Mobile number cannot be empty",HttpStatus.BAD_REQUEST);
+            }
+            if (countryCode == null || countryCode.isEmpty()) {
+                countryCode = Constant.COUNTRY_CODE;
+            }
+            String updated_mobile = mobileNumber;
+            if (mobileNumber.startsWith("0")) {
+                updated_mobile = mobileNumber.substring(1);
+            }
+            if(roleService.findRoleName(role).equals(Constant.roleUser)) {
+                CustomCustomer customerRecords = customCustomerService.findCustomCustomerByPhone(mobileNumber, countryCode);
+                if (customerRecords == null) {
+                    return new ResponseEntity<>("No Records found", HttpStatus.NOT_FOUND);
+                }
+                if (customerService == null) {
+                    return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+                Customer customer = customerService.readCustomerById(customerRecords.getId());
+                if (customer != null) {
+                    twilioService.sendOtpToMobile(updated_mobile, countryCode);
 
-        String countryCode = Constant.COUNTRY_CODE;
-        if (customerDetails.getCountryCode() == null || customerDetails.getCountryCode().isEmpty()) {
-            countryCode = Constant.COUNTRY_CODE;
-        }else{
-
-            countryCode = customerDetails.getCountryCode();
+                    String storedOtp = customerRecords.getOtp();
+                    return new ResponseEntity<>("OTP Sent on " + mobileNumber + " storedOtp is " + storedOtp, HttpStatus.OK);
+                } else {
+                    return ResponseEntity.badRequest().body("Mobile number not found");
+                }
+            } else if (roleService.findRoleName(role).equals(Constant.roleServiceProvider)) {
+                return serviceProviderService.sendOtp(loginDetails, session);
+            }
+            else
+                return new ResponseEntity<>("Role not specified",HttpStatus.BAD_REQUEST);
         }
-        String updated_mobile = customerDetails.getMobileNumber();
-        if (customerDetails.getMobileNumber().startsWith("0")) {
-            updated_mobile = customerDetails.getMobileNumber().substring(1);
-        }else{
-            updated_mobile = customerDetails.getMobileNumber();
-        }
-        CustomCustomer customerRecords = customCustomerService.findCustomCustomerByPhone(customerDetails.getMobileNumber(),customerDetails.getCountryCode());
-        if (customerRecords == null) {
-            return new ResponseEntity<>("No Records found", HttpStatus.NOT_FOUND);
-        }
-
-
-        if (customerService == null) {
-            return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        Customer customer = customerService.readCustomerById(customerRecords.getId());
-        if (customer != null) {
-            twilioService.sendOtpToMobile(updated_mobile,countryCode);
-
-            String storedOtp = customerRecords.getOtp();
-            return new ResponseEntity<>("OTP Sent on " + customerDetails.getMobileNumber() + " storedOtp is " + storedOtp, HttpStatus.OK);
-        } else {
-            return ResponseEntity.badRequest().body("Mobile number not found");
-
-        }
+       catch (Exception e) {
+                exceptionHandling.handleException(e);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some issue in login: " + e.getMessage());
+            }
     }
 
     @Transactional
     @RequestMapping(value = "login-with-username", method = RequestMethod.POST)
-    private ResponseEntity<String> loginWithUsername(@RequestBody CustomCustomer customerDetails, HttpSession session) {
+    public ResponseEntity<?> loginWithUsername(@RequestBody Map<String,Object> loginDetails, HttpSession session ,HttpServletRequest request) {
         try {
+            if (loginDetails == null) {
+                return new ResponseEntity<>("Login details cannot be null", HttpStatus.BAD_REQUEST);
+            }
+            String username = (String) loginDetails.get("username");
+            String password = (String) loginDetails.get("password");
+            Integer role = (Integer) loginDetails.get("role");
+            if(username==null||password==null||role==null)
+            {
+                return new ResponseEntity<>("username/password number cannot be empty",HttpStatus.BAD_REQUEST);
+            }
+            if(roleService.findRoleName(role).equals(Constant.roleUser))
+            {
             if (customerService == null) {
                 return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
-            Customer customer = customerService.readCustomerByUsername(customerDetails.getUsername());
+
+            Customer customer = customerService.readCustomerByUsername(username);
             if (customer == null) {
                 return new ResponseEntity<>("No records found for the provided username.", HttpStatus.NOT_FOUND);
             }
-            if (passwordEncoder.matches(customerDetails.getPassword(), customer.getPassword())) {
-                return ResponseEntity.ok("Login successful");
+            CustomCustomer customCustomer=em.find(CustomCustomer.class,customer.getId());
+            if (passwordEncoder.matches(password, customer.getPassword())) {
+
+                String tokenKey = "authToken_" + customCustomer.getMobileNumber();
+                String existingToken = (String) session.getAttribute(tokenKey);
+                String ipAddress = request.getRemoteAddr();
+                String userAgent = request.getHeader("User-Agent");
+                if (existingToken != null && jwtUtil.validateToken(existingToken,  ipAddress, userAgent)) {
+
+                    return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(existingToken, customer));
+                } else {
+
+                    String token = jwtUtil.generateToken(customer.getId(), "USER",ipAddress,userAgent);
+                    session.setAttribute(tokenKey, token);
+                    return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(token,customer));
+
+                }
             } else {
                 return ResponseEntity.badRequest().body("Invalid password");
             }
-        } catch (Exception e) {
+        }
+        else if(roleService.findRoleName(role).equals(Constant.roleServiceProvider))
+            {
+                return serviceProviderService.loginWithPassword(loginDetails,session);
+            }
+        else {
+            return new ResponseEntity<>("Invalid role",HttpStatus.BAD_REQUEST);
+            }
+        }
+        catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some issue in login: " + e.getMessage());
         }
     }
     @RequestMapping(value = "username-otp", method = RequestMethod.POST)
-    private ResponseEntity<String> loginWithUsernameOtp(
-            @RequestBody CustomCustomer customerDetails,HttpSession session) {
+    private ResponseEntity<?> loginWithUsernameOtp(
+            @RequestBody Map<String,Object>loginDetails,HttpSession session) {
         try {
+            if (loginDetails == null) {
+                return new ResponseEntity<>("Login details cannot be null", HttpStatus.BAD_REQUEST);
+            }
+            String username = (String) loginDetails.get("username");
+            Integer role = (Integer) loginDetails.get("role");
+            if(username==null||role==null)
+            {
+                return new ResponseEntity<>("username number cannot be empty",HttpStatus.BAD_REQUEST);
+            }
             if (customerService == null) {
                 return new ResponseEntity<>("customerService is null ", HttpStatus.INTERNAL_SERVER_ERROR);
             }
-            Customer customer = customerService.readCustomerByUsername(customerDetails.getUsername());
-            if (customer == null) {
-                return new ResponseEntity<>("No records found for the provided username.", HttpStatus.NOT_FOUND);
+            if(roleService.findRoleName(role).equals(Constant.roleUser)) {
+                Customer customer = customerService.readCustomerByUsername(username);
+                if (customer == null) {
+                    return new ResponseEntity<>("No records found for the provided username.", HttpStatus.NOT_FOUND);
+                }
+                CustomCustomer customCustomer = em.find(CustomCustomer.class, customer.getId());
+                if (customCustomer != null) {
+                    return twilioService.sendOtpToMobile(customCustomer.getMobileNumber(), Constant.COUNTRY_CODE);
+                } else {
+                    return new ResponseEntity<>("No records found", HttpStatus.NO_CONTENT);
+                }
             }
-            CustomCustomer customCustomer = em.find(CustomCustomer.class, customer.getId());
-            if (customCustomer != null) {
-                return twilioService.sendOtpToMobile(customCustomer.getMobileNumber(), Constant.COUNTRY_CODE);
-            } else {
-                return new ResponseEntity<>("No records found", HttpStatus.NO_CONTENT);
+            else if(roleService.findRoleName(role).equals(Constant.roleServiceProvider))
+            {
+                return serviceProviderService.loginWithUsernameAndOTP(loginDetails,session);
+            }
+            else
+            {
+                return new ResponseEntity<>("Invalid role provided",HttpStatus.BAD_REQUEST);
             }
         }catch (Exception e)
         {
@@ -170,25 +246,38 @@ public class AccountEndPoint {
         }
     }
     @RequestMapping(value = "login-with-password", method = RequestMethod.POST)
-    public ResponseEntity<?> loginWithCustomerPassword(@RequestBody CustomCustomer customerDetails, HttpSession session,
+    public ResponseEntity<?> loginWithCustomerPassword(@RequestBody Map<String,Object>loginDetails, HttpSession session,
                                                        HttpServletRequest request) {
         try {
-            if (customerDetails.getCountryCode() == null) {
-                customerDetails.setCountryCode(Constant.COUNTRY_CODE);
+            if (loginDetails == null) {
+                return new ResponseEntity<>("Login details cannot be null", HttpStatus.BAD_REQUEST);
+            }
+            String mobileNumber = (String) loginDetails.get("mobileNumber");
+            String password = (String) loginDetails.get("password");
+            String countryCode=(String)loginDetails.get("countryCode");
+            Integer role = (Integer)loginDetails.get("role");
+
+            if(mobileNumber==null||password==null||role==null)
+            {
+                return new ResponseEntity<>("number/password number cannot be empty",HttpStatus.BAD_REQUEST);
+            }
+            if (countryCode == null) {
+                countryCode=Constant.COUNTRY_CODE;
             }
             if (customerService == null) {
                 return new ResponseEntity<>("customerService is null", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            if (customerDetails.getMobileNumber() == null || customerDetails.getPassword() == null) {
+            /*if (customerDetails.getMobileNumber() == null || customerDetails.getPassword() == null) {
                 return new ResponseEntity<>("Invalid mobile number or password", HttpStatus.BAD_REQUEST);
-            }
-
-            CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(customerDetails.getMobileNumber(), customerDetails.getCountryCode());
+            }*/
+            if(roleService.findRoleName(role).equals(Constant.roleUser))
+            {
+            CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(mobileNumber, countryCode);
             if (existingCustomer != null) {
                 Customer customer = customerService.readCustomerById(existingCustomer.getId());
-                if (passwordEncoder.matches(customerDetails.getPassword(), existingCustomer.getPassword())) {
-                    String tokenKey = "authToken_" + customerDetails.getMobileNumber();
+                if (passwordEncoder.matches(password, existingCustomer.getPassword())) {
+                    String tokenKey = "authToken_" + mobileNumber;
                     String existingToken = (String) session.getAttribute(tokenKey);
                     String ipAddress = request.getRemoteAddr();
                     String userAgent = request.getHeader("User-Agent");
@@ -199,7 +288,8 @@ public class AccountEndPoint {
 
                        String token = jwtUtil.generateToken(existingCustomer.getId(), "USER",ipAddress,userAgent);
                         session.setAttribute(tokenKey, token);
-                        return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(token, existingCustomer));
+                        return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(token,customer));
+
                     }
 
                 } else {
@@ -208,7 +298,13 @@ public class AccountEndPoint {
             } else {
                 return new ResponseEntity<>("Customer does not exist", HttpStatus.NOT_FOUND);
             }
-        } catch (Exception e) {
+        }
+            else if(roleService.findRoleName(role).equals(Constant.roleServiceProvider))
+            {
+                return serviceProviderService.loginWithPassword(loginDetails,session);
+            }
+            else return new ResponseEntity<>("Invalid role specified",HttpStatus.BAD_REQUEST);
+        }catch (Exception e) {
             exceptionHandling.handleException(e);
             return new ResponseEntity<>("Error retrieving Customer", HttpStatus.INTERNAL_SERVER_ERROR);
         }

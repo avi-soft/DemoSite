@@ -1,3 +1,4 @@
+/*
 package com.community.api.endpoint.avisoft.controller.ServiceProvider;
 
 import com.community.api.component.Constant;
@@ -149,3 +150,4 @@ public class ServiceProviderLoginController {
         }
     }
 }
+*/

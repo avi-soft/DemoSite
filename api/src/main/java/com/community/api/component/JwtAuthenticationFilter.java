@@ -58,16 +58,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
-        } catch (ExpiredJwtException e) {
-            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "JWT token is expired");
-            logger.error("ExpiredJwtException caught: {}", e.getMessage());
-        } catch (MalformedJwtException e) {
-            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JWT token");
-            logger.error("MalformedJwtException caught: {}", e.getMessage());
-        } catch (Exception e) {
-            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
-            logger.error("Exception caught: {}", e.getMessage());
-        }
+
+    } catch (ExpiredJwtException e) {
+        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "JWT token is expired");
+        logger.error("ExpiredJwtException caught: {}", e.getMessage());
+    } catch (MalformedJwtException e) {
+        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JWT token");
+        logger.error("MalformedJwtException caught: {}", e.getMessage());
+    } catch (Exception e) {
+        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+        logger.error("Exception caught: {}", e.getMessage());
+    }
     }
 
 

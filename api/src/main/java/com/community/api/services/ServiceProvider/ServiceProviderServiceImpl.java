@@ -4,9 +4,13 @@ import com.community.api.component.Constant;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.endpoint.serviceProvider.ServiceProviderStatus;
+import com.community.api.entity.StateCode;
+import com.community.api.services.RateLimiterService;
+import com.community.api.services.TwilioServiceForServiceProvider;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.twilio.Twilio;
 import com.twilio.exception.ApiException;
+import io.github.bucket4j.Bucket;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,13 +18,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.social.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.HttpClientErrorException;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.regex.Pattern;
 
@@ -35,10 +47,12 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     private CustomerService customerService;
     @Value("${twilio.accountSid}")
     private String accountSid;
-
     @Value("${twilio.authToken}")
     private String authToken;
-
+    @Autowired
+    private  TwilioServiceForServiceProvider twilioService;
+    @Autowired
+    private  RateLimiterService rateLimiterService;
     @Value("${twilio.phoneNumber}")
     private String twilioPhoneNumber;
     @Override
@@ -61,8 +75,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         if (existingServiceProvider == null) {
             throw new Exception("ServiceProvider with ID " + userId + " not found");
         }
+        serviceProviderEntity.setMobileNumber(existingServiceProvider.getMobileNumber());
 
-        serviceProviderEntity.setPrimary_mobile_number(existingServiceProvider.getPrimary_mobile_number());
         for(Field field:ServiceProviderEntity.class.getDeclaredFields())
         {
             field.setAccessible(true);
@@ -72,6 +86,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 field.set(existingServiceProvider,newValue);
             }
         }
+
 
         entityManager.merge(existingServiceProvider);
         return existingServiceProvider;
@@ -108,9 +123,9 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             ServiceProviderEntity existingServiceProvider=findServiceProviderByPhone(mobileNumber,countryCode);
             if(existingServiceProvider == null){
                 ServiceProviderEntity serviceProviderEntity=new ServiceProviderEntity();
-                serviceProviderEntity.setUser_ID(customerService.findNextCustomerId());
+                serviceProviderEntity.setService_provider_id(customerService.findNextCustomerId());
                 serviceProviderEntity.setCountry_code(Constant.COUNTRY_CODE);
-                serviceProviderEntity.setPrimary_mobile_number(mobileNumber);
+                serviceProviderEntity.setMobileNumber(mobileNumber);
                serviceProviderEntity.setOtp(otp);
                 entityManager.persist(serviceProviderEntity);
 
@@ -139,7 +154,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         }
     }
 
-    private synchronized String generateOTP() {
+    public synchronized String generateOTP() {
         Random random = new Random();
         int otp = 1000 + random.nextInt(8999);
         return String.valueOf(otp);
@@ -172,8 +187,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     public ServiceProviderEntity findServiceProviderByPhone(String mobileNumber,String countryCode) {
 
         return entityManager.createQuery(Constant.PHONE_QUERY_SERVICE_PROVIDER, ServiceProviderEntity.class)
-                .setParameter("primaryMobileNumber", mobileNumber)
-                .setParameter("countryCode",countryCode)
+                .setParameter("mobileNumber", mobileNumber)
+                .setParameter("country_code",countryCode)
                 .getResultStream()
                 .findFirst()
                 .orElse(null);
@@ -208,4 +223,158 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             return new ResponseEntity<>("Invalid Password", HttpStatus.UNAUTHORIZED);
         }
     }
+    public ResponseEntity<?> loginWithPassword(@RequestBody Map<String, Object> serviceProviderDetails, HttpSession session) {
+        try {
+            String mobileNumber = (String) serviceProviderDetails.get("mobileNumber");
+            String username = (String) serviceProviderDetails.get("username");
+            String password = (String) serviceProviderDetails.get("password");
+            String countryCode = (String) serviceProviderDetails.getOrDefault("countryCode", Constant.COUNTRY_CODE);
+            // Check for empty password
+            if (password == null || password.isEmpty()) {
+                return new ResponseEntity<>("Password cannot be empty", HttpStatus.BAD_REQUEST);
+            }
+            if (mobileNumber != null && !mobileNumber.isEmpty()) {
+                return authenticateByPhone(mobileNumber, countryCode, password);
+            } else if (username != null && !username.isEmpty()) {
+                return authenticateByUsername(username, password);
+            } else {
+                return new ResponseEntity<>("Empty Phone Number or username", HttpStatus.BAD_REQUEST);
+            }
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred: " + e.getMessage());
+        }
+    }
+    @PostMapping("username-otp-login")
+    public ResponseEntity<?>loginWithUsernameAndOTP(@RequestBody Map<String, Object> serviceProviderDetails,HttpSession seesion)
+    {
+        try {
+            String username = (String) serviceProviderDetails.get("username");
+            if (username == null || username.isEmpty()) {
+                return new ResponseEntity<>("Empty Credentials", HttpStatus.BAD_REQUEST);
+            }
+            ServiceProviderEntity existingServiceProivder = findServiceProviderByUserName(username);
+            if (existingServiceProivder == null)
+                return new ResponseEntity<>("No records found", HttpStatus.NOT_FOUND);
+            if (existingServiceProivder.getMobileNumber() == null) {
+                return new ResponseEntity<>("No mobile Number registerd for this account", HttpStatus.NOT_FOUND);
+            }
+            Map<String, Object> updatedDetails = new HashMap<>();
+            updatedDetails.put("mobileNumber", existingServiceProivder.getMobileNumber());
+            return new ResponseEntity<>(sendOtp(updatedDetails, seesion),HttpStatus.OK);
+        }catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error sending OTP: " + e.getMessage());
+        }
+    }
+    @PostMapping("/send-otp")
+    public ResponseEntity<String> sendOtp(@RequestBody Map<String, Object> serviceProviderDetails, HttpSession session) throws UnsupportedEncodingException {
+        try {
+            if (((String)serviceProviderDetails.get("mobileNumber")).isEmpty()) {
+                return new ResponseEntity<>("Enter mobile number", HttpStatus.UNPROCESSABLE_ENTITY);
+            }
+            String mobileNumber=((String)serviceProviderDetails.get("mobileNumber"));
+            mobileNumber = mobileNumber.startsWith("0")
+                    ? mobileNumber.substring(1)
+                    : mobileNumber;
+            //ServiceProviderEntity existingServiceProvider = serviceProviderService.findServiceProviderByPhoneWithOtp(mobileNumber);
+            String countryCode = (serviceProviderDetails.get("countryCode")) == null || ((String)serviceProviderDetails.get("countryCode")).isEmpty()
+                    ? Constant.COUNTRY_CODE
+                    : ((String)serviceProviderDetails.get("countryCode"));
+
+            Bucket bucket = rateLimiterService.resolveBucket(mobileNumber, "/service-provider/otp/send-otp");
+            if (bucket.tryConsume(1)) {
+                if (!isValidMobileNumber(mobileNumber)) {
+                    return ResponseEntity.badRequest().body("Invalid mobile number");
+                }
+
+                ResponseEntity<String> otpResponse = twilioService.sendOtpToMobile(mobileNumber,countryCode);
+                return otpResponse;
+            } else {
+                return ResponseEntity.ok("You can send OTP only once in 1 minute");
+            }
+
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error sending OTP: " + e.getMessage());
+        }
+    }
+    public String generateUsernameForServiceProvider(ServiceProviderEntity serviceProviderDetails)
+    {
+        String firstName = serviceProviderDetails.getFirst_name();
+        String lastName = serviceProviderDetails.getLast_name();
+        String state = serviceProviderDetails.getSpAddresses().get(0).getState();
+        String username=null;
+        StateCode stateDetails;
+        if (firstName != null && lastName != null && state != null)
+        {
+            stateDetails=findStateCode(state);
+            username=stateDetails.getState_code()+firstName+lastName;
+            //suffix check
+            //if a user already exist with username like PBRajSharma
+            if(!findServiceProviderByUsername(username).isEmpty())
+            {
+                List<ServiceProviderEntity>listOfSp=findServiceProviderByUsername(username);
+                ServiceProviderEntity serviceProvider=listOfSp.get(listOfSp.size()-1);
+                String suffix=serviceProvider.getUser_name().substring(serviceProvider.getUser_name().length()-2);
+                int suffixValue=Integer.parseInt(suffix);
+                if(suffixValue<9)
+                    username=username+"0"+Integer.toString(suffixValue+1);
+                else
+                    username=username+Integer.toString(suffixValue+1);
+            }
+            //simply adding 01 if there are no users for the given username
+            else
+                username=username+"01";
+        }
+        return username;
+    }
+    @Transactional
+    public ResponseEntity<?> verifyOtp(Map<String ,Object> serviceProviderDetails,String otpEntered, HttpSession session, HttpServletRequest request) {
+        try {
+
+            String mobileNumber = ((String)serviceProviderDetails.get("mobileNumber"));
+            String countryCode = ((String)serviceProviderDetails.get("countryCode")) == null || ((String)serviceProviderDetails.get("mobileNumber")).isEmpty()
+                    ? Constant.COUNTRY_CODE
+                    : (String)serviceProviderDetails.get("mobileNumber");
+            ServiceProviderEntity existingServiceProvider = findServiceProviderByPhone(mobileNumber,countryCode);
+
+            if (!isValidMobileNumber(mobileNumber)) {
+                return new ResponseEntity<>("Invalid mobile number", HttpStatus.NOT_FOUND);
+            }
+
+            if (otpEntered == null || otpEntered.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("OTP cannot be empty");
+            }
+
+            String storedOtp = existingServiceProvider.getOtp();
+            if (otpEntered.equals(storedOtp)) {
+                existingServiceProvider.setOtp(null);
+                entityManager.merge(existingServiceProvider);
+                // Create and return JWT token as per your requirement
+                return ResponseEntity.ok(existingServiceProvider);
+            } else {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid OTP");
+            }
+
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return new ResponseEntity<>("Error verifying OTP", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    public StateCode findStateCode(String state_name) {
+
+        return entityManager.createQuery(Constant.STATE_CODE_QUERY, StateCode.class)
+                .setParameter("state_name",state_name)
+                .getResultStream()
+                .findFirst()
+                .orElse(null);
+    }
+    public List<ServiceProviderEntity> findServiceProviderByUsername(String username) {
+        username=username+"%";
+        return entityManager.createQuery(Constant.SP_USERNAME_QUERY, ServiceProviderEntity.class)
+                .setParameter("username",username)
+                .getResultList();
+    }
+
 }

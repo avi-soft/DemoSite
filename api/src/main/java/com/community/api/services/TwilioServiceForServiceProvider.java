@@ -64,7 +64,7 @@ public class TwilioServiceForServiceProvider {
                 ServiceProviderEntity serviceProviderDetails = new ServiceProviderEntity();
                 // Populate other necessary fields
                 serviceProviderDetails.setCountry_code(countryCode);
-                serviceProviderDetails.setPrimary_mobile_number(mobileNumber);
+                serviceProviderDetails.setMobileNumber(mobileNumber);
                 serviceProviderDetails.setOtp(otp);
                 entityManager.persist(serviceProviderDetails);
             } else {

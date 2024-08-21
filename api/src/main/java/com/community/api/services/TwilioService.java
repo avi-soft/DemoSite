@@ -79,7 +79,6 @@ public class TwilioService {
                 customerDetails.setMobileNumber(mobileNumber);
                 customerDetails.setOtp(otp);
                 entityManager.persist(customerDetails);
-
             }else{
                 existingCustomer.setOtp(otp);
                 entityManager.merge(existingCustomer);

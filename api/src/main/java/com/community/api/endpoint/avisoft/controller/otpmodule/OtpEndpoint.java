@@ -6,6 +6,7 @@ import com.community.api.entity.CustomCustomer;
 import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.services.CustomCustomerService;
 import com.community.api.services.RateLimiterService;
+import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.TwilioService;
 import io.github.bucket4j.Bucket;
@@ -22,6 +23,7 @@ import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.io.UnsupportedEncodingException;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/otp")
@@ -38,7 +40,8 @@ public class OtpEndpoint {
     private CustomCustomerService customCustomerService;
     @Autowired
     private JwtUtil jwtUtil;
-
+    @Autowired
+    private ServiceProviderServiceImpl serviceProviderService;
     public OtpEndpoint(TwilioService twilioService, RateLimiterService rateLimiterService) {
 
         this.twilioService = twilioService;
@@ -108,36 +111,41 @@ public class OtpEndpoint {
 
     @Transactional
     @PostMapping("/verify-otp")
-    public ResponseEntity<?> verifyOTP(@RequestBody CustomCustomer customerDetails, @RequestParam("otpEntered") String otpEntered, HttpSession session,
+    public ResponseEntity<?> verifyOTP(@RequestBody Map<String,Object> loginDetails, @RequestParam("otpEntered") String otpEntered, HttpSession session,
                                        HttpServletRequest request) {
         try {
+            if (loginDetails == null) {
+                return new ResponseEntity<>("Login details cannot be null", HttpStatus.BAD_REQUEST);
+            }
+            String mobileNumber = (String) loginDetails.get("mobileNumber");
+            String role=(String) loginDetails.get("role");
+            String countryCode=(String) loginDetails.get("countryCode");
+            String username=(String) loginDetails.get("username");
 
-            if (customerDetails.getMobileNumber() != null) {
+            /*if (customerDetails.getMobileNumber() != null) {
 
                 customerDetails.setMobileNumber(customerDetails.getMobileNumber());
 
-            } else if (customerDetails.getUsername() != null) {
+            } else*/
+            if(role.equals("customer"))
+            {
+            if (username != null) {
                 if (customerService == null) {
                     return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
                 }
-                Customer customer = customerService.readCustomerByUsername(customerDetails.getUsername());
+                Customer customer = customerService.readCustomerByUsername(username);
                 if (customer == null) {
-                    return new ResponseEntity<>("No records found for the provided username.", HttpStatus.NOT_FOUND);
+                    return new ResponseEntity<>("No records found",HttpStatus.NOT_FOUND);
                 }
                 CustomCustomer customCustomer = em.find(CustomCustomer.class, customer.getId());
+                if(customCustomer!=null)
+                    mobileNumber=customCustomer.getMobileNumber();
 
-                if (customCustomer != null) {
-                    customerDetails.setMobileNumber(customCustomer.getMobileNumber());
-                } else {
-                    return new ResponseEntity<>("No records found", HttpStatus.NO_CONTENT);
-                }
-
-            } else {
+            } /*else {
                 return new ResponseEntity<>("Invalid data", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
+            }*/
 
-
-            if (!customCustomerService.isValidMobileNumber(customerDetails.getMobileNumber())) {
+            if (!customCustomerService.isValidMobileNumber(mobileNumber)) {
                 return new ResponseEntity<>("Invalid mobile number", HttpStatus.NOT_FOUND);
 
             }
@@ -146,13 +154,13 @@ public class OtpEndpoint {
                 return ResponseEntity.badRequest().body("OTP can not be empty");
             }
 
-            CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(customerDetails.getMobileNumber(), customerDetails.getCountryCode());
+            CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(mobileNumber, countryCode);
 
 
             String storedOtp = existingCustomer.getOtp();
             String ipAddress = request.getRemoteAddr();
             String userAgent = request.getHeader("User-Agent");
-            String tokenKey = "authToken_" + customerDetails.getMobileNumber();
+            String tokenKey = "authToken_" + mobileNumber;
             Customer customer = customerService.readCustomerById(existingCustomer.getId());
             if (otpEntered.equals(storedOtp)) {
                 existingCustomer.setOtp(null);
@@ -170,7 +178,16 @@ public class OtpEndpoint {
 
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid OTP");
             }
-        } catch (Exception e) {
+        }
+        else if(role.equals("serviceProvider"))
+            {
+                return serviceProviderService.verifyOtp(loginDetails,otpEntered,session,request);
+            }
+        else
+            {
+                return new ResponseEntity<>("Invalid role defined",HttpStatus.BAD_REQUEST);
+            }
+        }catch (Exception e) {
             exceptionHandling.handleException(e);
             return new ResponseEntity<>("Error saving customer", HttpStatus.INTERNAL_SERVER_ERROR);
         }

@@ -1,10 +1,14 @@
 package com.community.api.endpoint.serviceProvider;
 
-import com.community.api.endpoint.serviceProvider.enums.Equipment;
-import com.community.api.endpoint.serviceProvider.enums.Skill;
+
+import com.community.api.entity.Privileges;
+import com.community.api.entity.ServiceProviderAddress;
+import com.community.api.entity.Skill;
 import com.community.api.utils.Document;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import io.micrometer.core.lang.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -29,13 +33,14 @@ public class ServiceProviderEntity  {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long user_ID;
+    private Long service_provider_id;
 
     private String user_name;
 
     private String first_name;
 
     private String last_name;
+    //@TODO-countryCode to country_code for both customer and service provider
     private String country_code;
     private String father_name;
 
@@ -45,25 +50,10 @@ public class ServiceProviderEntity  {
 
     @Size(min = 10, max = 10)
     private String pan_number;
+    @OneToOne(cascade = CascadeType.ALL)
     private Document personal_photo;
-
-
-   /* private String residentialAddress;
-
-
-    private String state;
-
-
-    private String district;
-
-
-    private String city;
-
-    @Size(min = 6, max = 6)
-    private String pinCode;*/
-
     @Size(min = 9, max = 13)
-    private String primary_mobile_number;
+    private String mobileNumber;
     private String otp;
     @Size(min = 9, max = 13)
     private String secondary_mobile_number;
@@ -91,6 +81,7 @@ public class ServiceProviderEntity  {
 //    @Column(name = "businessPhoto", columnDefinition="BLOB")
 //    @OneToOne(cascade = CascadeType.ALL)
 //    @JoinColumn(name = "business_photo_id")
+    @OneToOne(cascade = CascadeType.ALL)
     private Document business_photo;
 
     private Boolean isCFormAvailable;
@@ -101,10 +92,12 @@ public class ServiceProviderEntity  {
 //    @Column(name = "cFormPhoto", columnDefinition="BLOB")
 //    @OneToOne(cascade = CascadeType.ALL)
 //    @JoinColumn(name = "c_form_photo_id")
+
+    @OneToOne(cascade = CascadeType.ALL)
     private Document cFormPhoto;
 
-    @OneToMany(cascade = CascadeType.ALL,orphanRemoval = true)
-    private List<Equipment> equipment;
+   /*@OneToMany(cascade = CascadeType.ALL,orphanRemoval = true)
+    private List<Equipment> equipment;*/
 
     private Boolean has_technical_knowledge;
 
@@ -114,10 +107,24 @@ public class ServiceProviderEntity  {
     private String highest_qualification;
 
     @OneToMany
+    @JoinTable(
+            name = "service_provider_skill", // The name of the join table
+            joinColumns = @JoinColumn(name = "service_provider_id"), // Foreign key for ServiceProvider
+            inverseJoinColumns = @JoinColumn(name = "skill_id")) // Foreign key for Skill
     private List<Skill> skills;
+    @JsonBackReference
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "service_provider_id")
+    private List<ServiceProviderAddress> spAddresses;
 
     @OneToOne(cascade = CascadeType.ALL,orphanRemoval = true)
     @JoinColumn(name = "status_id", referencedColumnName = "statusId")
     private ServiceProviderStatus status;
 
+    @OneToMany
+    @JoinTable(
+            name = "service_provider_privileges", // The name of the join table
+            joinColumns = @JoinColumn(name = "service_provider_id"), // Foreign key for ServiceProvider
+            inverseJoinColumns = @JoinColumn(name = "privilege_id")) // Foreign key for Privilege
+    private List<Privileges> privileges;
 }
