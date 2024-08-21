@@ -14,6 +14,9 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 
@@ -57,11 +60,28 @@ public class ProductController extends CatalogEndpoint {
     public ResponseEntity<?> addProduct(HttpServletRequest request,
                                         @RequestBody AddProductDto addProductDto) {
 
-//        System.out.println(addProductDto.getCustomProduct().getGoLiveDate());
-        System.out.println(addProductDto.getCost());
-//        System.out.println(addProductDto.getProductImpl().getMetaTitle());
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        return new ResponseEntity<>("SUCCESS", HttpStatus.OK);
+        // Check if the user has the "ROLE_ADMIN" role
+        if (authentication.getAuthorities().contains(new SimpleGrantedAuthority("ROLE_ADMIN"))) {
+            // User has the ROLE_ADMIN, proceed with the request handling
+            System.out.println(addProductDto.getCost());
+            return new ResponseEntity<>("SUCCESS", HttpStatus.OK);
+        } else {
+            // User does not have the required role, return a 403 Forbidden response
+            return new ResponseEntity<>("Access Denied", HttpStatus.FORBIDDEN);
+        }
+
+    }
+    @GetMapping("/check-role")
+    public ResponseEntity<?> checkUserRole(@RequestHeader("Authorization") String token) {
+        // Remove "Bearer " prefix if present
+        if (token.startsWith("Bearer ")) {
+            token = token.substring(7);
+        }
+
+        List<String> roles = jwtTokenUtil.getRolesFromToken(token);
+        return ResponseEntity.ok(roles);
     }
 
 
