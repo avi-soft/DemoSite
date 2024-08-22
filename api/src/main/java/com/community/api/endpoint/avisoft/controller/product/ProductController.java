@@ -16,6 +16,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -66,17 +67,20 @@ public class ProductController extends CatalogEndpoint {
 
     @Transactional
     @PostMapping("/add/{categoryId}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('SERVICE_PROVIDER')")
     public ResponseEntity<?> addProduct(HttpServletRequest request,
                                         @RequestBody AddProductDto addProductDto,
                                         @PathVariable Long categoryId) {
 
+
+
         try {
 
-            // Authorization Check
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication == null || !isAuthorized(authentication, "ROLE_ADMIN")) {
-                return new ResponseEntity<>("Access Denied: You do not have the required permissions", HttpStatus.FORBIDDEN);
-            }
+//            // Authorization Check
+//            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//            if (authentication == null || !isAuthorized(authentication, "ROLE_ADMIN")) {
+//                return new ResponseEntity<>("Access Denied: You do not have the required permissions", HttpStatus.FORBIDDEN);
+//            }
 
             if (catalogService == null) {
                 return new ResponseEntity<>(CATALOGSERVICENOTINITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
