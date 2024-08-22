@@ -444,7 +444,7 @@ public class CustomerEndpoint {
         }
     }
 
-    @GetMapping(value = "/getProductsByCategoryId")
+    @GetMapping(value = "/getProductsByUserId")
     public ResponseEntity<?> getProductsByCategoryId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
         try {
             if (catalogService == null) {
