@@ -67,7 +67,6 @@ public class ProductController extends CatalogEndpoint {
 
     @Transactional
     @PostMapping("/add/{categoryId}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('SERVICE_PROVIDER')")
     public ResponseEntity<?> addProduct(HttpServletRequest request,
                                         @RequestBody AddProductDto addProductDto,
                                         @PathVariable Long categoryId) {
