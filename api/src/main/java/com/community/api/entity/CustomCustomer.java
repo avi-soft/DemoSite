@@ -31,6 +31,7 @@ public class CustomCustomer extends CustomerImpl {
     @Column(name = "otp", unique = true)
     private String otp;
 
+
     @Column(name = "father_name")
     private String fathersName;
 

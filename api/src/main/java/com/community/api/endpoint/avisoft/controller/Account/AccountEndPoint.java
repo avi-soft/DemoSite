@@ -34,24 +34,56 @@ import static org.apache.commons.lang.StringUtils.isNumeric;
         produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }
 )
 public class AccountEndPoint {
-    @Autowired
     private CustomerService customerService;
-    @Autowired
     private JwtUtil jwtUtil;
-    @Autowired
     private ExceptionHandlingImplement exceptionHandling;
-    @Autowired
     private EntityManager em;
-    @Autowired
     private TwilioService twilioService;
-    @Autowired
     private CustomCustomerService customCustomerService;
-    @Autowired
     private PasswordEncoder passwordEncoder;
+
     @Autowired
     private RoleService roleService;
     @Autowired
     private ServiceProviderServiceImpl serviceProviderService;
+
+
+    @Autowired
+    public void setCustomerService(CustomerService customerService) {
+        this.customerService = customerService;
+    }
+
+    @Autowired
+    public void setJwtUtil(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+    }
+
+    @Autowired
+    public void setExceptionHandling(ExceptionHandlingImplement exceptionHandling) {
+        this.exceptionHandling = exceptionHandling;
+    }
+
+    @Autowired
+    public void setEntityManager(EntityManager em) {
+        this.em = em;
+    }
+
+    @Autowired
+    public void setTwilioService(TwilioService twilioService) {
+        this.twilioService = twilioService;
+    }
+
+    @Autowired
+    public void setCustomCustomerService(CustomCustomerService customCustomerService) {
+        this.customCustomerService = customCustomerService;
+    }
+
+    @Autowired
+    public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
+    }
+
+
     @PostMapping("/loginWithOtp")
     @ResponseBody
     public ResponseEntity<?> verifyAndLogin(@RequestBody Map<String,Object>loginDetails, HttpSession session) {
@@ -134,7 +166,7 @@ public class AccountEndPoint {
                     return ResponseEntity.badRequest().body("Mobile number not found");
                 }
             } else if (roleService.findRoleName(role).equals(Constant.roleServiceProvider)) {
-                return serviceProviderService.sendOtp(loginDetails, session);
+                return serviceProviderService.sendOtp(mobileNumber,countryCode,session);
             }
             else
                 return new ResponseEntity<>("Role not specified",HttpStatus.BAD_REQUEST);
@@ -233,7 +265,7 @@ public class AccountEndPoint {
             }
             else if(roleService.findRoleName(role).equals(Constant.roleServiceProvider))
             {
-                return serviceProviderService.loginWithUsernameAndOTP(loginDetails,session);
+                return serviceProviderService.loginWithUsernameAndOTP(username,session);
             }
             else
             {

@@ -57,7 +57,7 @@ public class ServiceProviderEntity  {
     private String otp;
     @Size(min = 9, max = 13)
     private String secondary_mobile_number;
-
+    private int role;
     @Size(min = 9, max = 13)
     private String whatsapp_number;
     @Email

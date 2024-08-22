@@ -50,24 +50,20 @@ public class TwilioServiceForServiceProvider {
             String completeMobileNumber = countryCode + mobileNumber;
             String otp = generateOTP();
 
-            // Uncomment and use Twilio API to send OTP
-            /*
-            Message message = Message.creator(
-                    new PhoneNumber(completeMobileNumber),
-                    new PhoneNumber(twilioPhoneNumber),
-                    "Your OTP code is: " + otp)
-                    .create();
-            */
 
             ServiceProviderEntity existingServiceProvider = serviceProviderService.findServiceProviderByPhone(mobileNumber,countryCode);
+
             if (existingServiceProvider == null) {
-                ServiceProviderEntity serviceProviderDetails = new ServiceProviderEntity();
+                System.out.println(existingServiceProvider + " existingServiceProvider");
+                existingServiceProvider = new ServiceProviderEntity();
                 // Populate other necessary fields
-                serviceProviderDetails.setCountry_code(countryCode);
-                serviceProviderDetails.setMobileNumber(mobileNumber);
-                serviceProviderDetails.setOtp(otp);
-                entityManager.persist(serviceProviderDetails);
+                existingServiceProvider.setCountry_code(countryCode);
+                existingServiceProvider.setMobileNumber(mobileNumber);
+                existingServiceProvider.setOtp(otp);
+                entityManager.persist(existingServiceProvider);
             } else {
+                System.out.println(existingServiceProvider + " existingServiceProvider");
+                existingServiceProvider.setOtp(null);
                 existingServiceProvider.setOtp(otp);
                 entityManager.merge(existingServiceProvider);
             }
