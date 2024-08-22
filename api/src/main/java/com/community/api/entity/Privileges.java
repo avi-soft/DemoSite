@@ -1,4 +1,4 @@
-package com.community.api.utils;
+package com.community.api.entity;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -12,8 +12,9 @@ import javax.persistence.*;
 @NoArgsConstructor
 @Getter
 @Setter
-public class DocumentType {
+public class Privileges {
     @Id
-    private Integer documentTypeId;
-    private String description;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    int privilege_id;
+    String privilege_name,description;
 }
