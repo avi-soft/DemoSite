@@ -1,5 +1,4 @@
 package com.community.api.endpoint.avisoft.controller;
-
 import com.community.api.component.JwtUtil;
 import com.community.api.services.CustomCustomerService;
 import com.community.api.services.CustomEmailService;
