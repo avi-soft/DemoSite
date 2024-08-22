@@ -1,10 +1,8 @@
 package com.community.api.endpoint.avisoft.controller.otpmodule;
 import com.community.api.component.Constant;
-import com.community.api.component.JwtAuthenticationFilter;
 import com.community.api.component.JwtUtil;
 import com.community.api.dto.OTPRequest;
 import com.community.api.endpoint.customer.CustomCustomer;
-import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.services.CustomCustomerService;
 import com.community.api.services.RateLimiterService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
@@ -17,16 +15,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.io.UnsupportedEncodingException;
-import java.util.ArrayList;
 
 @RestController
 @RequestMapping("/otp")
