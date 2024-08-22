@@ -16,6 +16,9 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 
@@ -55,6 +58,12 @@ public class ProductController extends CatalogEndpoint {
 
      */
 
+    // Helper method to check if the user has the required role
+    private boolean isAuthorized(Authentication authentication, String role) {
+        List<GrantedAuthority> authorities = (List<GrantedAuthority>) authentication.getAuthorities();
+        return authorities.stream().anyMatch(auth -> auth.getAuthority().equals(role));
+    }
+
     @Transactional
     @PostMapping("/add/{categoryId}")
     public ResponseEntity<?> addProduct(HttpServletRequest request,
@@ -62,6 +71,12 @@ public class ProductController extends CatalogEndpoint {
                                         @PathVariable Long categoryId) {
 
         try {
+
+            // Authorization Check
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || !isAuthorized(authentication, "ROLE_ADMIN")) {
+                return new ResponseEntity<>("Access Denied: You do not have the required permissions", HttpStatus.FORBIDDEN);
+            }
 
             if (catalogService == null) {
                 return new ResponseEntity<>(CATALOGSERVICENOTINITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
