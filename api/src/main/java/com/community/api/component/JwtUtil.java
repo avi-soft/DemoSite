@@ -33,10 +33,14 @@ public class JwtUtil {
     @Autowired
     private CustomerService customerService;
 
-    @PostConstruct
+/*    @PostConstruct
     public void init() {
         byte[] secretKeyBytes = DatatypeConverter.parseBase64Binary(secretKeyString);
         this.secretKey = Keys.hmacShaKeyFor(secretKeyBytes);
+    }*/
+    @PostConstruct
+    public void init() {
+        this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
     }
 
     public String generateToken(Long id, String role, String ipAddress, String userAgent) {
@@ -51,7 +55,7 @@ public class JwtUtil {
                     .claim("ipAddress", ipAddress)
                     .claim("userAgent", userAgent)
                     .setIssuedAt(new Date())
-                    .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))  // 10 hours expiration
+                    .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
                     .signWith(secretKey, SignatureAlgorithm.HS256)
                     .compact();
         } catch (Exception e) {
@@ -61,10 +65,11 @@ public class JwtUtil {
     }
 
     public Long extractId(String token) {
-        if (token == null || token.isEmpty()) {
-            throw new IllegalArgumentException("Token is required");
-        }
+
         try {
+            if (token == null || token.isEmpty()) {
+                throw new IllegalArgumentException("Token is required");
+            }
             return Jwts.parserBuilder()
                     .setSigningKey(secretKey)
                     .build()

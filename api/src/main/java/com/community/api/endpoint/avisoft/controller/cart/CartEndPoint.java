@@ -28,25 +28,50 @@ import java.util.List;
         produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }
 )
 public class CartEndPoint extends BaseEndpoint {
-    private final CustomerService customerService;
-    private final OrderService orderService;
-    private final CatalogService catalogService;
-    private final ExceptionHandlingImplement exceptionHandling;
-    private final EntityManager entityManager;
-    private final OrderItemService orderItemService;
-    private final CartService cartService;
+    private CustomerService customerService;
+    private OrderService orderService;
+    private CatalogService catalogService;
+    private ExceptionHandlingImplement exceptionHandling;
+    private EntityManager entityManager;
+    private OrderItemService orderItemService;
+    private CartService cartService;
+
+    // Setter-based injection
     @Autowired
-    public CartEndPoint(CustomerService customerService, OrderService orderService, CatalogService catalogService,
-                        ExceptionHandlingImplement exceptionHandling, EntityManager entityManager,
-                        OrderItemService orderItemService, CartService cartService) {
+    public void setCustomerService(CustomerService customerService) {
         this.customerService = customerService;
+    }
+
+    @Autowired
+    public void setOrderService(OrderService orderService) {
         this.orderService = orderService;
+    }
+
+    @Autowired
+    public void setCatalogService(CatalogService catalogService) {
         this.catalogService = catalogService;
+    }
+
+    @Autowired
+    public void setExceptionHandling(ExceptionHandlingImplement exceptionHandling) {
         this.exceptionHandling = exceptionHandling;
+    }
+
+    @Autowired
+    public void setEntityManager(EntityManager entityManager) {
         this.entityManager = entityManager;
+    }
+
+    @Autowired
+    public void setOrderItemService(OrderItemService orderItemService) {
         this.orderItemService = orderItemService;
+    }
+
+    @Autowired
+    public void setCartService(CartService cartService) {
         this.cartService = cartService;
     }
+
 
     @RequestMapping(value = "empty", method = RequestMethod.DELETE)
     public ResponseEntity<String> emptyTheCart(@RequestParam Long customerId) {
