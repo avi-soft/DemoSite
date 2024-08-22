@@ -153,6 +153,7 @@
 
         <dependency>
             <groupId>org.liquibase</groupId>
+
             <artifactId>liquibase-core</artifactId>
             <version>4.20.0</version> <!-- Or the latest version -->
             <exclusions>
@@ -168,5 +169,6 @@
             <artifactId>snakeyaml</artifactId>
             <version>2.0</version> <!-- Or the version compatible with Liquibase -->
         </dependency>
+
     </dependencies>
 </project>
