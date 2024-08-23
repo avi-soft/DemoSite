@@ -291,6 +291,7 @@ public class OtpEndpoint {
         }
     }
     public static class AuthResponse {
+
         private String token;
         private Customer userDetails;
 
