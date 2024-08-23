@@ -143,7 +143,6 @@ public class OtpEndpoint {
 
     }
 
-
     @Transactional
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOTP(@RequestBody Map<String,Object> loginDetails, HttpSession session,
@@ -213,7 +212,7 @@ public class OtpEndpoint {
                 if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
                     return ResponseEntity.ok(createAuthResponse(existingToken, customer));
                 } else {
-                    String newToken = jwtUtil.generateToken(existingCustomer.getId(), "USER", ipAddress, userAgent);
+                    String newToken = jwtUtil.generateToken(existingCustomer.getId(), role, ipAddress, userAgent);
                     session.setAttribute(tokenKey, newToken);
                     return ResponseEntity.ok(createAuthResponse(newToken, customer));
                 }
