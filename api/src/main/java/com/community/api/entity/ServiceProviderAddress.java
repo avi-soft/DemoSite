@@ -9,7 +9,7 @@ import lombok.Setter;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "service_provider_address")
+@Table(name = "custom_service_provider_address")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter

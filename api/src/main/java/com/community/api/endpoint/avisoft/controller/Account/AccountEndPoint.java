@@ -137,9 +137,11 @@ public class AccountEndPoint {
             String mobileNumber = (String) loginDetails.get("mobileNumber");
             String countryCode = (String) loginDetails.get("countryCode");
             Integer role = (Integer) loginDetails.get("role");
-            if(mobileNumber==null||role==null)
+            if(mobileNumber==null)
             {
                 return new ResponseEntity<>("Mobile number cannot be empty",HttpStatus.BAD_REQUEST);
+            }else if(role==null) {
+                return new ResponseEntity<>("role cannot be empty", HttpStatus.BAD_REQUEST);
             }
             if (countryCode == null || countryCode.isEmpty()) {
                 countryCode = Constant.COUNTRY_CODE;
@@ -166,7 +168,10 @@ public class AccountEndPoint {
                     return ResponseEntity.badRequest().body("Mobile number not found");
                 }
             } else if (roleService.findRoleName(role).equals(Constant.roleServiceProvider)) {
+                if(serviceProviderService.findServiceProviderByPhone(mobileNumber,countryCode)!=null)
                 return serviceProviderService.sendOtp(mobileNumber,countryCode,session);
+                else return
+                new ResponseEntity<>("No records found",HttpStatus.NOT_FOUND);
             }
             else
                 return new ResponseEntity<>("Role not specified",HttpStatus.BAD_REQUEST);
