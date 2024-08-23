@@ -1,10 +1,7 @@
 package com.community.api.endpoint.avisoft.controller.otpmodule;
 import com.community.api.component.Constant;
-import com.community.api.component.JwtAuthenticationFilter;
 import com.community.api.component.JwtUtil;
-
 import com.community.api.entity.CustomCustomer;
-
 import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.services.CustomCustomerService;
 import com.community.api.services.RateLimiterService;
@@ -27,7 +24,9 @@ import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.io.UnsupportedEncodingException;
+
 import java.util.Map;
+
 
 @RestController
 @RequestMapping("/otp")
@@ -144,7 +143,6 @@ public class OtpEndpoint {
 
     }
 
-
     @Transactional
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOTP(@RequestBody Map<String,Object> loginDetails, HttpSession session,
@@ -214,7 +212,7 @@ public class OtpEndpoint {
                 if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
                     return ResponseEntity.ok(createAuthResponse(existingToken, customer));
                 } else {
-                    String newToken = jwtUtil.generateToken(existingCustomer.getId(), "USER", ipAddress, userAgent);
+                    String newToken = jwtUtil.generateToken(existingCustomer.getId(), role, ipAddress, userAgent);
                     session.setAttribute(tokenKey, newToken);
                     return ResponseEntity.ok(createAuthResponse(newToken, customer));
                 }

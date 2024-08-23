@@ -1,12 +1,15 @@
 package com.community.api.endpoint.avisoft.controller.product;
 
 import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
+import com.community.api.component.JwtUtil;
 import com.community.api.dto.AddProductDto;
 import com.community.api.entity.CustomProduct;
 import com.community.api.dto.CustomProductWrapper;
 import com.community.api.entity.CustomProductState;
 import com.community.api.services.ProductService;
 import com.community.api.services.exception.ExceptionHandlingService;
+import com.twilio.jwt.Jwt;
+import io.jsonwebtoken.Claims;
 import org.broadleafcommerce.common.money.Money;
 import org.broadleafcommerce.common.persistence.Status;
 import org.broadleafcommerce.core.catalog.domain.*;
@@ -20,6 +23,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 
@@ -51,6 +55,9 @@ public class ProductController extends CatalogEndpoint {
     protected EntityManager entityManager;
 
     @Autowired
+    protected JwtUtil jwtTokenUtil;
+
+    @Autowired
     protected ProductService productService;
 
     /*
@@ -60,26 +67,29 @@ public class ProductController extends CatalogEndpoint {
      */
 
     // Helper method to check if the user has the required role
-    private boolean isAuthorized(Authentication authentication, String role) {
-        List<GrantedAuthority> authorities = (List<GrantedAuthority>) authentication.getAuthorities();
-        return authorities.stream().anyMatch(auth -> auth.getAuthority().equals(role));
-    }
+//    private boolean isAuthorized(Authentication authentication, String role) {
+//        List<GrantedAuthority> authorities = (List<GrantedAuthority>) authentication.getAuthorities();
+//        return authorities.stream().anyMatch(auth -> auth.getAuthority().equals(role));
+//    }
 
     @Transactional
     @PostMapping("/add/{categoryId}")
     public ResponseEntity<?> addProduct(HttpServletRequest request,
                                         @RequestBody AddProductDto addProductDto,
-                                        @PathVariable Long categoryId) {
+                                        @PathVariable Long categoryId,
+                                        @RequestHeader(value = "Authorization") String authHeader) {
 
 
 
         try {
 
-//            // Authorization Check
-//            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-//            if (authentication == null || !isAuthorized(authentication, "ROLE_ADMIN")) {
-//                return new ResponseEntity<>("Access Denied: You do not have the required permissions", HttpStatus.FORBIDDEN);
-//            }
+            String jwtToken = authHeader.substring(7);
+            System.out.println("sagar is "+ jwtToken);
+
+//            Claims claims = jwtTokenUtil.getUserDetailsFromToken(jwtToken);
+//            String roleId = claims.get("roleId", String.class);
+//            System.out.println(roleId);
+
 
             if (catalogService == null) {
                 return new ResponseEntity<>(CATALOGSERVICENOTINITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
