@@ -101,18 +101,21 @@ public class ServiceProviderController {
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error deleting: " + e.getMessage());
         }}
-    @PostMapping("create-or-update-password")
-    public ResponseEntity<?>deleteServiceProvider(@RequestParam Map<String,Object>passwordDetails,@RequestParam long userId)
+    @Transactional
+    @PostMapping("createOrUpdatePassword")
+    public ResponseEntity<?>deleteServiceProvider(@RequestBody Map<String,Object>passwordDetails,@RequestParam long userId)
     {
         try {
             String password = (String) passwordDetails.get("password");
             String newPassword = (String) passwordDetails.get("newPassword");
-
+            System.out.println(password);
+            System.out.println(newPassword);
             ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, userId);
             if (serviceProvider == null)
                 return new ResponseEntity<>("No records found", HttpStatus.NOT_FOUND);
             if (serviceProvider.getPassword() == null) {
                 serviceProvider.setPassword(passwordEncoder.encode(password));
+                entityManager.merge(serviceProvider);
                 return new ResponseEntity<>("Password created", HttpStatus.OK);
             } else {
                 if (password == null || newPassword == null)

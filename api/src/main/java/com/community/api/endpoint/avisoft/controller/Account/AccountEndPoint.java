@@ -169,7 +169,11 @@ public class AccountEndPoint {
                 }
             } else if (roleService.findRoleName(role).equals(Constant.roleServiceProvider)) {
                 if(serviceProviderService.findServiceProviderByPhone(mobileNumber,countryCode)!=null)
-                return serviceProviderService.sendOtp(mobileNumber,countryCode,session);
+                {
+                    if(serviceProviderService.findServiceProviderByPhone(mobileNumber,countryCode).getOtp()!=null)
+                        return new ResponseEntity<>("Number not registered",HttpStatus.NOT_FOUND);
+                    return serviceProviderService.sendOtp(mobileNumber, countryCode, session);
+                }
                 else return
                 new ResponseEntity<>("No records found",HttpStatus.NOT_FOUND);
             }
@@ -249,6 +253,7 @@ public class AccountEndPoint {
             }
             String username = (String) loginDetails.get("username");
             Integer role = (Integer) loginDetails.get("role");
+            System.out.println(username);
             if(username==null||role==null)
             {
                 return new ResponseEntity<>("username number cannot be empty",HttpStatus.BAD_REQUEST);
