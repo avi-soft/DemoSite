@@ -1,6 +1,6 @@
 package com.community.api.services;
 import com.community.api.component.Constant;
-import com.community.api.endpoint.customer.CustomCustomer;
+import com.community.api.entity.CustomCustomer;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.springframework.beans.factory.annotation.Autowired;

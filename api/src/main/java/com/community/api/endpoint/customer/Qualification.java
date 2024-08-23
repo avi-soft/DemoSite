@@ -1,4 +1,5 @@
 package com.community.api.endpoint.customer;
+import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.Examination;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;

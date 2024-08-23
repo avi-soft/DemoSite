@@ -1,8 +1,5 @@
 package com.community.api.endpoint.avisoft.controller;
-
 import com.community.api.component.JwtUtil;
-import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
-import com.community.api.endpoint.customer.CustomCustomer;
 import com.community.api.services.CustomCustomerService;
 import com.community.api.services.RateLimiterService;
 import io.github.bucket4j.Bucket;
@@ -15,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import java.security.Key;
 import java.util.Base64;
 
@@ -36,6 +32,7 @@ public class TestController {
         this.jwtUtil=jwtUtil;
         this.customCustomerService=customCustomerService;
     }
+
 
 
     @GetMapping("/catch-error")
@@ -71,5 +68,6 @@ public class TestController {
             return "Rate limit exceeded!";
         }
     }
+
 
 }

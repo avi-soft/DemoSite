@@ -16,7 +16,4 @@ public class DocumentType {
     @Id
     private Integer documentTypeId;
     private String description;
-    /*@OneToOne
-    @JoinColumn(name = "document_id")
-    private Document document;*/
 }

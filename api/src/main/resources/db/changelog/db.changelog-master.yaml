@@ -1,3 +1,19 @@
 databaseChangeLog:
   - include:
+
       file: db/changelog/V1__insert_data_into_Examination.sql
+  - include:
+      file: db/changelog/V1__insert_data_into_state.sql
+
+  - include:
+      file: db/changelog/V1__insert_data_into_district_table.sql
+
+  - include:
+      file: db/changelog/V1__insert_into_privileges_table.sql
+
+  - include:
+      file: db/changelog/V1__insert_into_role_table.sql
+
+  - include:
+      file: db/changelog/V1__insert_into_address_type_table.sql
+

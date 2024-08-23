@@ -1,5 +1,6 @@
-package com.community.api.endpoint.customer;
+package com.community.api.entity;
 
+import com.community.api.endpoint.customer.Qualification;
 import com.community.api.utils.Document;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micrometer.core.lang.Nullable;
@@ -30,6 +31,7 @@ public class CustomCustomer extends CustomerImpl {
 
     @Column(name = "otp", unique = true)
     private String otp;
+
 
     @Column(name = "father_name")
     private String fathersName;

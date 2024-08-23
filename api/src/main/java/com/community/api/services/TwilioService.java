@@ -1,6 +1,6 @@
 package com.community.api.services;
 
-import com.community.api.endpoint.customer.CustomCustomer;
+import com.community.api.entity.CustomCustomer;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.broadleafcommerce.profile.core.service.CustomerService;
@@ -39,6 +39,9 @@ public class TwilioService {
     private CustomCustomerService customCustomerService;
     private EntityManager entityManager;
     private HttpSession httpSession;
+
+    @Autowired
+
     private CustomerService customerService;
 
     public TwilioService(ExceptionHandlingImplement exceptionHandlingImplement,CustomCustomerService customCustomerService,EntityManager entityManager,HttpSession httpSession,CustomerService customerService)
@@ -62,7 +65,7 @@ public class TwilioService {
             String completeMobileNumber = countryCode + mobileNumber;
             String otp = generateOTP();
 
-
+//@TODO:-NEED TO REMOVE THE COMMENTED CODE
 /*            Message message = Message.creator(
 
                             new PhoneNumber(completeMobileNumber),
@@ -82,7 +85,6 @@ public class TwilioService {
                 customerDetails.setMobileNumber(mobileNumber);
                 customerDetails.setOtp(otp);
                 entityManager.persist(customerDetails);
-
             }else{
                 existingCustomer.setOtp(otp);
                 entityManager.merge(existingCustomer);

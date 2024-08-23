@@ -1,11 +1,11 @@
 package com.community.api.services;
 
 import com.community.api.entity.CustomProduct;
+import com.community.api.entity.CustomProductState;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+import javax.persistence.*;
 import javax.transaction.Transactional;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -31,20 +31,22 @@ public class ProductService {
         this.validator= validator;
     }
 
-    public void saveCustomProduct(Date goLiveDate, Integer priorityLevel, Long productId) {
-        // Validate priorityLevel
+    public void saveCustomProduct(Date goLiveDate, Integer priorityLevel, Long productId, CustomProductState customProductStateId) {
+
+        // Validate the CustomProduct instance
         Errors errors = validatePriorityLevel(priorityLevel);
         if (errors.hasErrors()) {
-            throw new IllegalArgumentException("Validation error: " + errors.getFieldError().getDefaultMessage());
+            throw new IllegalArgumentException("Validation error: " + errors.getFieldError());
         }
 
-        String sql = "INSERT INTO custom_product (go_live_date, priority_level, product_id) VALUES (:goLiveDate, :priorityLevel, :productId)";
+        String sql = "INSERT INTO custom_product (go_live_date, priority_level, product_id, product_state_id) VALUES (:goLiveDate, :priorityLevel, :productId, :customProductStateId)";
 
         try {
             entityManager.createNativeQuery(sql)
                     .setParameter("goLiveDate", goLiveDate != null ? new Timestamp(goLiveDate.getTime()) : null)
                     .setParameter("priorityLevel", priorityLevel)
                     .setParameter("productId", productId)
+                    .setParameter("customProductStateId", customProductStateId)
                     .executeUpdate();
         } catch (Exception e) {
             throw new RuntimeException("Failed to save Custom Product: " + e.getMessage(), e);
@@ -57,9 +59,11 @@ public class ProductService {
        @param priorityLevel The priority level to validate.
        @return Errors object containing validation errors, if any.
      */
+
     public Errors validatePriorityLevel(Integer priorityLevel) {
         CustomProduct product = new CustomProduct();
         product.setPriorityLevel(priorityLevel);
+        product.setProductState(new CustomProductState());
 
         Errors errors = new BeanPropertyBindingResult(product, "customProduct");
         validator.validate(product, errors);
@@ -71,6 +75,22 @@ public class ProductService {
 
         return entityManager.createNativeQuery(sql, CustomProduct.class).getResultList();
     }
+
+    public CustomProductState getCustomProductStateById(Long productStateId) {
+        String sql = "SELECT * FROM custom_product_state WHERE product_state_id = :productStateId";
+        try {
+            Query query = entityManager.createNativeQuery(sql, CustomProductState.class);
+            query.setParameter("productStateId", productStateId);
+
+            // Assuming that the query should return a single result
+            return (CustomProductState) query.getSingleResult();
+        }catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
 
     @Transactional
     public void removeCategoryProductFromCategoryProductRefTable(Long categoryId, Long productId) {

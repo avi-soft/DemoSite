@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.xml.bind.DatatypeConverter;
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import java.util.UUID;
@@ -35,11 +34,21 @@ public class JwtUtil {
 
     @PostConstruct
     public void init() {
-        byte[] secretKeyBytes = DatatypeConverter.parseBase64Binary(secretKeyString);
-        this.secretKey = Keys.hmacShaKeyFor(secretKeyBytes);
+        try {
+            byte[] secretKeyBytes = DatatypeConverter.parseBase64Binary(secretKeyString);
+            this.secretKey = Keys.hmacShaKeyFor(secretKeyBytes);
+        }  catch (Exception e) {
+            exceptionHandling.handleException(e);
+            throw new RuntimeException("Error generating JWT token", e);
+        }
     }
 
-    public String generateToken(Long id, String role, String ipAddress, String userAgent) {
+   /* @PostConstruct
+    public void init() {
+        this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    }*/
+
+    public String generateToken(Long id, Integer role, String ipAddress, String userAgent) {
         try {
             String uniqueTokenId = UUID.randomUUID().toString();
 
@@ -51,7 +60,7 @@ public class JwtUtil {
                     .claim("ipAddress", ipAddress)
                     .claim("userAgent", userAgent)
                     .setIssuedAt(new Date())
-                    .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))  // 10 hours expiration
+                    .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
                     .signWith(secretKey, SignatureAlgorithm.HS256)
                     .compact();
         } catch (Exception e) {
@@ -61,10 +70,11 @@ public class JwtUtil {
     }
 
     public Long extractId(String token) {
-        if (token == null || token.isEmpty()) {
-            throw new IllegalArgumentException("Token is required");
-        }
+
         try {
+            if (token == null || token.isEmpty()) {
+                throw new IllegalArgumentException("Token is required");
+            }
             return Jwts.parserBuilder()
                     .setSigningKey(secretKey)
                     .build()
