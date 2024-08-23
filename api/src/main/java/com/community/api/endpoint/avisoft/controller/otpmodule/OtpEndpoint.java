@@ -262,10 +262,8 @@ public class OtpEndpoint {
                 serviceProviderEntity.setOtp(otp);
                 serviceProviderEntity.setRole(4);//4 corresponds to service provider
                 entityManager.persist(serviceProviderEntity);
-            } else {
-                // Existing entity, use merge
-                existingServiceProvider.setOtp(otp);
-                entityManager.merge(existingServiceProvider);
+            } else if(existingServiceProvider.getOtp()!=null){
+                return new ResponseEntity<>("Mobile Number Already Registred",HttpStatus.BAD_REQUEST);
             }
 
             return ResponseEntity.ok("OTP has been sent successfully " + otp);

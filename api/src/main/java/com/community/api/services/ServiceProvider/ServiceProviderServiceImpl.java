@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.social.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -58,7 +59,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     private String authToken;
     @Autowired
     private  TwilioServiceForServiceProvider twilioService;
-
+    @Autowired
+    private PasswordEncoder passwordEncoder;
     @Autowired
     private JwtUtil jwtUtil;
 
@@ -243,7 +245,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         if (serviceProvider == null) {
             return new ResponseEntity<>("No Records Found", HttpStatus.NOT_FOUND);
         }
-        if (serviceProvider.getPassword().equals(password)) {
+        if (passwordEncoder.matches(password,serviceProvider.getPassword())) {
             return new ResponseEntity<>(serviceProvider, HttpStatus.OK);
         } else {
             return new ResponseEntity<>("Invalid Password", HttpStatus.UNAUTHORIZED);
@@ -371,7 +373,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             if (!isValidMobileNumber(mobileNumber)) {
                 return new ResponseEntity<>("Invalid mobile number", HttpStatus.BAD_REQUEST);
             }
-
+            if(mobileNumber.startsWith("0"))
+                mobileNumber= mobileNumber.substring(1);
             ServiceProviderEntity existingServiceProvider = findServiceProviderByPhone(mobileNumber, countryCode);
             String storedOtp =  existingServiceProvider.getOtp();
             String ipAddress = request.getRemoteAddr();
