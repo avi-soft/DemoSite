@@ -1,6 +1,6 @@
 package com.community.api.endpoint.avisoft.controller.Qualification;
 
-import com.community.api.endpoint.customer.CustomCustomer;
+import com.community.api.entity.CustomCustomer;
 import com.community.api.services.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;

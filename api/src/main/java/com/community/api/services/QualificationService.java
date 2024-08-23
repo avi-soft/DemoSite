@@ -2,7 +2,7 @@ package com.community.api.services;
 
 import com.community.api.component.Constant;
 import com.community.api.endpoint.avisoft.controller.Qualification.ExaminationController;
-import com.community.api.endpoint.customer.CustomCustomer;
+import com.community.api.entity.CustomCustomer;
 import com.community.api.endpoint.customer.Qualification;
 import com.community.api.entity.Examination;
 import com.community.api.services.exception.CustomerDoesNotExistsException;
