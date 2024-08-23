@@ -74,11 +74,6 @@ public class ProductController extends CatalogEndpoint {
 
      */
 
-    // Helper method to check if the user has the required role
-//    private boolean isAuthorized(Authentication authentication, String role) {
-//        List<GrantedAuthority> authorities = (List<GrantedAuthority>) authentication.getAuthorities();
-//        return authorities.stream().anyMatch(auth -> auth.getAuthority().equals(role));
-//    }
 
     @Transactional
     @PostMapping("/add/{categoryId}")
@@ -92,7 +87,6 @@ public class ProductController extends CatalogEndpoint {
         try {
 
             String jwtToken = authHeader.substring(7);
-            System.out.println("token is "+ jwtToken);
 
             Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
             String role = roleService.findRoleName(roleId);
@@ -102,9 +96,12 @@ public class ProductController extends CatalogEndpoint {
                 accessGrant = true;
             }else if(role.equals("SERVICE_PROVIDER")) {
                 Long userId = jwtTokenUtil.extractId(jwtToken);
-                boolean privledge = privilegeService.getPrivilege(userId, roleId);
-                if(privledge){
-                    accessGrant = true;
+                List<Integer> privileges = privilegeService.getPrivilege(userId);
+                for(Integer apiId: privileges) {
+                    if(apiId == 1){
+                        accessGrant = true;
+                        break;
+                    }
                 }
             }
 

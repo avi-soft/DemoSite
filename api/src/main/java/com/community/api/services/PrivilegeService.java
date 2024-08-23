@@ -1,10 +1,10 @@
 package com.community.api.services;
 
+import com.community.api.component.Constant;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.Privileges;
 import com.community.api.entity.Role;
 import com.community.api.services.exception.ExceptionHandlingImplement;
-import io.swagger.models.auth.In;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,7 +12,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import javax.transaction.Transactional;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -76,7 +78,7 @@ public class PrivilegeService {
                 if (spPrivileges.contains(privilege))
                     spPrivileges.remove(privilege);
                 else
-                    return new ResponseEntity<>("Privilage not assigned", HttpStatus.UNAUTHORIZED);
+                    return new ResponseEntity<>("Privilege not assigned", HttpStatus.UNAUTHORIZED);
                 serviceProvider.setPrivileges(spPrivileges);
                 entityManager.merge(serviceProvider);
                 return new ResponseEntity<>(serviceProvider, HttpStatus.OK);
@@ -101,13 +103,17 @@ public class PrivilegeService {
         }
     }
 
-    public boolean getPrivilege(Long userId, Integer roleId) {
+    public List<Integer> getPrivilege(Long userId) {
         try {
 
+            Query query = entityManager.createNativeQuery(Constant.serviceProviderRoles);
+            query.setParameter("serviceProviderId", userId);
+
+            return query.getResultList();
 
         } catch (Exception e) {
-
+            exceptionHandling.handleException(e);
+            return Collections.emptyList();
         }
-        return true;
     }
 }
