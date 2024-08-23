@@ -164,4 +164,24 @@ public class JwtUtil {
 
         }
     }
+
+    public Integer extractRoleId(String token) {
+        try {
+            if (token == null || token.isEmpty()) {
+                throw new IllegalArgumentException("Token is required");
+            }
+            return Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .get("role", Integer.class);
+
+        } catch (SignatureException e) {
+            throw new RuntimeException("Invalid JWT signature.");
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            throw new RuntimeException("Error in JWT token", e);
+        }
+    }
 }
