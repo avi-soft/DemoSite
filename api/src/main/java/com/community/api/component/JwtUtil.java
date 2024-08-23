@@ -165,7 +165,7 @@ public class JwtUtil {
         }
     }
 
-    public String extractRoleId(String token) {
+    public Integer extractRoleId(String token) {
         try {
             if (token == null || token.isEmpty()) {
                 throw new IllegalArgumentException("Token is required");
@@ -175,7 +175,7 @@ public class JwtUtil {
                     .build()
                     .parseClaimsJws(token)
                     .getBody()
-                    .get("role", String.class);
+                    .get("role", Integer.class);
 
         } catch (SignatureException e) {
             throw new RuntimeException("Invalid JWT signature.");

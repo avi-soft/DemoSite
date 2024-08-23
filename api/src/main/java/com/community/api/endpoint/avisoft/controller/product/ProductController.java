@@ -6,7 +6,9 @@ import com.community.api.dto.AddProductDto;
 import com.community.api.entity.CustomProduct;
 import com.community.api.dto.CustomProductWrapper;
 import com.community.api.entity.CustomProductState;
+import com.community.api.services.PrivilegeService;
 import com.community.api.services.ProductService;
+import com.community.api.services.RoleService;
 import com.community.api.services.exception.ExceptionHandlingService;
 import com.twilio.jwt.Jwt;
 import io.jsonwebtoken.Claims;
@@ -60,6 +62,12 @@ public class ProductController extends CatalogEndpoint {
     @Autowired
     protected ProductService productService;
 
+    @Autowired
+    protected RoleService roleService;
+
+    @Autowired
+    protected PrivilegeService privilegeService;
+
     /*
 
             WHAT THIS CLASS DOES FOR EACH FUNCTION WE HAVE TO THAT.
@@ -86,13 +94,24 @@ public class ProductController extends CatalogEndpoint {
             String jwtToken = authHeader.substring(7);
             System.out.println("token is "+ jwtToken);
 
-            String role = jwtTokenUtil.extractRoleId(jwtToken);
-//            String roleId = claims.get("roleId", String.class);
+            Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
+            String role = roleService.findRoleName(roleId);
+            boolean accessGrant = false;
 
+            if(role.equals("SUPER_ADMIN") || role.equals("ADMIN")){
+                accessGrant = true;
+            }else if(role.equals("SERVICE_PROVIDER")) {
+                Long userId = jwtTokenUtil.extractId(jwtToken);
+                String privledge = privilegeService.getPriviledge(userId, roleId);
+                if(privledge){
+                    accessGrant = true;
+                }
+            }
 
-            if(role.equals("USER")){
+            if(!accessGrant){
                 return new ResponseEntity<>("Not Authorized to add product", HttpStatus.INTERNAL_SERVER_ERROR);
             }
+
             if (catalogService == null) {
                 return new ResponseEntity<>(CATALOGSERVICENOTINITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
             }

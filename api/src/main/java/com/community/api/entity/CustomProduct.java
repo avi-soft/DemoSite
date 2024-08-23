@@ -49,7 +49,6 @@ public class CustomProduct extends ProductImpl {
     protected CustomProductState productState;
 
     @ManyToOne
-    @NotNull
     @JoinColumn(name = "notifying_authority_id")
     protected CustomNotifyingAuthority customNotifyingAuthority;
 
