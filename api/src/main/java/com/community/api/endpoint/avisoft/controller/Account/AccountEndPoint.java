@@ -216,7 +216,7 @@ public class AccountEndPoint {
                     return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(existingToken, customer));
                 } else {
 
-                    String token = jwtUtil.generateToken(customer.getId(), "USER",ipAddress,userAgent);
+                    String token = jwtUtil.generateToken(customer.getId(), role,ipAddress,userAgent);
                     session.setAttribute(tokenKey, token);
                     return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(token,customer));
 
@@ -321,7 +321,7 @@ public class AccountEndPoint {
                         return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(existingToken, customer));
                     } else {
 
-                       String token = jwtUtil.generateToken(existingCustomer.getId(), "USER",ipAddress,userAgent);
+                       String token = jwtUtil.generateToken(existingCustomer.getId(), role,ipAddress,userAgent);
                         session.setAttribute(tokenKey, token);
                         return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(token,customer));
 
