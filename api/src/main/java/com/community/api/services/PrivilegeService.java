@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
+
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.util.List;
@@ -20,6 +21,7 @@ public class PrivilegeService {
     private EntityManager entityManager;
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
+
     @Transactional
     public ResponseEntity<?> assignPrivilege(@RequestParam Integer privilege_id, @RequestParam Long id, @RequestParam Integer role_id) {
         try {
@@ -97,5 +99,15 @@ public class PrivilegeService {
             exceptionHandling.handleException(e);
             return new ResponseEntity<>("Error removing ", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    public boolean getPrivilege(Long userId, Integer roleId) {
+        try {
+
+
+        } catch (Exception e) {
+
+        }
+        return true;
     }
 }

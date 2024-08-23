@@ -44,6 +44,7 @@ public class CustomProduct extends ProductImpl {
     protected Date examDateTo;
 
     @ManyToOne
+    @NotNull
     @JoinColumn(name = "product_state_id")
     protected CustomProductState productState;
 
