@@ -129,58 +129,6 @@ public class ServiceProviderController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error changing/updating password: " + e.getMessage());
             }
     }
-    /*@PostMapping("/signup")
-    @Transactional
-    public ResponseEntity<String> sendOtpToMobile(@RequestBody Map<String, Object> signupDetails) {
-        try {
-            String mobileNumber = (String) signupDetails.get("mobileNumber");
-            String countryCode = (String) signupDetails.get("countryCode");
-
-            if (mobileNumber == null || mobileNumber.isEmpty()) {
-                throw new IllegalArgumentException("Mobile number cannot be null or empty");
-            }
-
-            if (countryCode == null || countryCode.isEmpty()) {
-                countryCode = Constant.COUNTRY_CODE;
-            }
-
-            Twilio.init(accountSid, authToken);
-            String completeMobileNumber = countryCode + mobileNumber;
-            String otp = serviceProviderService.generateOTP();
-
-            ServiceProviderEntity existingServiceProvider = serviceProviderService.findServiceProviderByPhone(mobileNumber, countryCode);
-
-            if (existingServiceProvider == null) {
-                // New entity, use persist
-                ServiceProviderEntity serviceProviderEntity = new ServiceProviderEntity();
-                serviceProviderEntity.setCountry_code(countryCode); // Make sure to use the provided or default country code
-                serviceProviderEntity.setMobileNumber(mobileNumber);
-                serviceProviderEntity.setOtp(otp);
-                serviceProviderEntity.setRole(4);//4 corresponds to service provider
-                entityManager.persist(serviceProviderEntity);
-            } else {
-                // Existing entity, use merge
-                existingServiceProvider.setOtp(otp);
-                entityManager.merge(existingServiceProvider);
-            }
-
-            return ResponseEntity.ok("OTP has been sent successfully " + otp);
-
-        } catch (HttpClientErrorException e) {
-            if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized access: Please check your API key");
-            } else {
-                exceptionHandling.handleHttpClientErrorException(e);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error occurred");
-            }
-        } catch (ApiException e) {
-            exceptionHandling.handleApiException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error sending OTP: " + e.getMessage());
-        } catch (Exception e) {
-            exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error sending OTP: " + e.getMessage());
-        }
-    }
     @GetMapping("getServiceProivider")
     public ResponseEntity<?> getServiceProviderById(@RequestParam Long userId) throws Exception {
         try {
@@ -193,7 +141,7 @@ public class ServiceProviderController {
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some fetching account " + e.getMessage());
         }
-    }*/
+    }
     @Transactional
     @PostMapping("/addAddress")
     public ResponseEntity<?> addAddress(@RequestParam long serviceProviderId,@RequestBody ServiceProviderAddress serviceProviderAddress) throws Exception {

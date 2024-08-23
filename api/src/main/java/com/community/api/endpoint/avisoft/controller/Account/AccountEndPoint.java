@@ -166,7 +166,10 @@ public class AccountEndPoint {
                     return ResponseEntity.badRequest().body("Mobile number not found");
                 }
             } else if (roleService.findRoleName(role).equals(Constant.roleServiceProvider)) {
+                if(serviceProviderService.findServiceProviderByPhone(mobileNumber,countryCode)!=null)
                 return serviceProviderService.sendOtp(mobileNumber,countryCode,session);
+                else return
+                new ResponseEntity<>("No records found",HttpStatus.NOT_FOUND);
             }
             else
                 return new ResponseEntity<>("Role not specified",HttpStatus.BAD_REQUEST);

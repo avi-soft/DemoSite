@@ -225,7 +225,7 @@ public class OtpEndpoint {
         AuthResponse authResponse = new AuthResponse(token, customer);
         return ResponseEntity.ok(authResponse);
     }
-    @PostMapping("/signup")
+    @PostMapping("/service-provider-signup")
     @javax.transaction.Transactional
     public ResponseEntity<String> sendOtpToMobile(@RequestBody Map<String, Object> signupDetails) {
         try {
