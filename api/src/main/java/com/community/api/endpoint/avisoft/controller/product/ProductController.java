@@ -84,13 +84,15 @@ public class ProductController extends CatalogEndpoint {
         try {
 
             String jwtToken = authHeader.substring(7);
-            System.out.println("sagar is "+ jwtToken);
+            System.out.println("token is "+ jwtToken);
 
-//            Claims claims = jwtTokenUtil.getUserDetailsFromToken(jwtToken);
+            String role = jwtTokenUtil.extractRoleId(jwtToken);
 //            String roleId = claims.get("roleId", String.class);
-//            System.out.println(roleId);
 
 
+            if(role.equals("USER")){
+                return new ResponseEntity<>("Not Authorized to add product", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
             if (catalogService == null) {
                 return new ResponseEntity<>(CATALOGSERVICENOTINITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
             }
@@ -161,7 +163,7 @@ public class ProductController extends CatalogEndpoint {
 
             sku.setQuantityAvailable(addProductDto.getQuantity());
             sku.setActiveStartDate(activeStartDate);
-            sku.setName(addProductDto.getMetaTitle());
+            sku.setName(addProductDto.getMetaTitle().trim());
             sku.setQuantityAvailable(addProductDto.getQuantity());
             sku.setDescription(addProductDto.getMetaDescription());
             sku.setActiveEndDate(addProductDto.getActiveEndDate());
