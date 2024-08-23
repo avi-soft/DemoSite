@@ -8,7 +8,7 @@ import lombok.Setter;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "role_table")
+@Table(name = "custom_role_table")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter

@@ -13,3 +13,15 @@ databaseChangeLog:
 
   - include:
       file: db/changelog/V1__insert_into_address_type_table.sql
+
+  - include:
+      file: db/changelog/V1__insert_into_document_type.sql
+
+  - include:
+      file: db/changelog/V1__insert_into_service_provider_infra.sql
+
+  - include:
+      file: db/changelog/V1__insert_into_service_provider_language.sql
+
+  - include:
+      file: db/changelog/V1__insert_into_skills.sql

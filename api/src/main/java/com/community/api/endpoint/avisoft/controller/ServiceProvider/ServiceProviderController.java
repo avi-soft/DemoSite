@@ -129,7 +129,7 @@ public class ServiceProviderController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error changing/updating password: " + e.getMessage());
             }
     }
-    @PostMapping("/signup")
+    /*@PostMapping("/signup")
     @Transactional
     public ResponseEntity<String> sendOtpToMobile(@RequestBody Map<String, Object> signupDetails) {
         try {
@@ -193,7 +193,7 @@ public class ServiceProviderController {
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some fetching account " + e.getMessage());
         }
-    }
+    }*/
     @Transactional
     @PostMapping("/addAddress")
     public ResponseEntity<?> addAddress(@RequestParam long serviceProviderId,@RequestBody ServiceProviderAddress serviceProviderAddress) throws Exception {
