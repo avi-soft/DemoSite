@@ -25,17 +25,18 @@ public class TestController {
 
     private final RateLimiterService rateLimiterService;
 
-    public TestController(RateLimiterService rateLimiterService) {
-        this.rateLimiterService = rateLimiterService;
-    }
-
-    @Autowired
     private ExceptionHandlingImplement exceptionHandling;
 
-    @Autowired
     private JwtUtil jwtUtil;
-    @Autowired
+
     private CustomCustomerService customCustomerService;
+    public TestController(RateLimiterService rateLimiterService,ExceptionHandlingImplement exceptionHandling,JwtUtil jwtUtil,CustomCustomerService customCustomerService) {
+        this.rateLimiterService = rateLimiterService;
+        this.exceptionHandling = exceptionHandling;
+        this.jwtUtil=jwtUtil;
+        this.customCustomerService=customCustomerService;
+    }
+
 
     @GetMapping("/catch-error")
     public ResponseEntity<String> catcherror() {

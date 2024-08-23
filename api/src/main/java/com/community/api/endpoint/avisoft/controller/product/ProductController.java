@@ -37,14 +37,18 @@ public class ProductController extends CatalogEndpoint {
     private static final String NUMBERFORMATEXCEPTION = "NumberFormatException";
     private static final String UNSUPPORTEDENCODINGEXCEPTION = "UnsupportedEncodingException";
 
-    @Autowired
     protected ExceptionHandlingService exceptionHandlingService;
 
-    @Autowired
     protected EntityManager entityManager;
 
-    @Autowired
     protected ProductService productService;
+
+    public ProductController(ExceptionHandlingService exceptionHandlingService,EntityManager entityManager,ProductService productService)
+    {
+        this.exceptionHandlingService=exceptionHandlingService;
+        this.entityManager=entityManager;
+        this.productService=productService;
+    }
 
     /*
 

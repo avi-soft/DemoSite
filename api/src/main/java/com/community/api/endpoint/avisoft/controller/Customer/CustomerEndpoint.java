@@ -47,6 +47,7 @@ public class CustomerEndpoint {
     private final CustomCustomerService customCustomerService;
     private final AddressService addressService;
     private final CustomerAddressService customerAddressService;
+    private JwtUtil jwtUtil;
 
     public CustomerEndpoint(PasswordEncoder passwordEncoder,
                      CustomerService customerService,
@@ -55,7 +56,8 @@ public class CustomerEndpoint {
                      TwilioService twilioService,
                      CustomCustomerService customCustomerService,
                      AddressService addressService,
-                     CustomerAddressService customerAddressService) {
+                     CustomerAddressService customerAddressService,
+                     JwtUtil jwtUtil       ) {
         this.passwordEncoder = passwordEncoder;
         this.customerService = customerService;
         this.exceptionHandling = exceptionHandling;
@@ -64,9 +66,9 @@ public class CustomerEndpoint {
         this.customCustomerService = customCustomerService;
         this.addressService = addressService;
         this.customerAddressService = customerAddressService;
+        this.jwtUtil= jwtUtil;
     }
-    @Autowired
-    private JwtUtil jwtUtil;
+
     @RequestMapping(value = "getCustomer", method = RequestMethod.GET)
     public ResponseEntity<Object> retrieveCustomerById(@RequestParam Long customerId) {
         try {

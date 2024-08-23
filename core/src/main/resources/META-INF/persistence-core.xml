@@ -51,6 +51,7 @@
         <class>com.community.api.endpoint.serviceProvider.ServiceProviderEntity</class>
         <class>com.community.api.endpoint.serviceProvider.ServiceProviderStatus</class>
         <class>com.community.api.entity.CustomOtp</class>
+        <class>com.community.api.entity.Examination</class>
         <exclude-unlisted-classes/>
     </persistence-unit>
 

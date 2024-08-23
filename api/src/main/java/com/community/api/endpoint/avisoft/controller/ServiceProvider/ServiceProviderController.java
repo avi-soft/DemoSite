@@ -12,8 +12,12 @@ import javax.validation.Valid;
 @RequestMapping("/service-providers")
 public class ServiceProviderController {
 
-    @Autowired
     private ServiceProviderServiceImpl serviceProviderService;
+
+    public ServiceProviderController(ServiceProviderServiceImpl serviceProviderService)
+    {
+        this.serviceProviderService=serviceProviderService;
+    }
 
     @PostMapping
     public ResponseEntity<ServiceProviderEntity> createServiceProvider(@RequestBody ServiceProviderEntity serviceProviderEntity) throws Exception {

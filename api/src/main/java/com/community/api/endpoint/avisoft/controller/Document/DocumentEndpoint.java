@@ -13,10 +13,14 @@ import javax.transaction.Transactional;
 @RestController
 @RequestMapping(value = "/document")
 public class DocumentEndpoint {
-    @Autowired
     private EntityManager entityManager;
-    @Autowired
     private ExceptionHandlingImplement exceptionHandling;
+
+    public DocumentEndpoint(EntityManager entityManager,ExceptionHandlingImplement exceptionHandling)
+    {
+        this.entityManager=entityManager;
+        this.exceptionHandling= exceptionHandling;
+    }
     @Transactional
     @RequestMapping(value = "create-document-type", method = RequestMethod.POST)
     public ResponseEntity<Object> createDocumentType(@RequestBody DocumentType documentType) {

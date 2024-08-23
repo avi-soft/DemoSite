@@ -1,8 +1,13 @@
 package com.community.api.endpoint.customer;
+import com.community.api.entity.Examination;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 
 @Entity
 @Data
@@ -11,9 +16,6 @@ public class Qualification {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(nullable = false)
-    private String examinationName;
 
     @Column(nullable = false)
     private String institutionName;
@@ -37,8 +39,11 @@ public class Qualification {
     private int marksTotal;
     @Column(nullable = false)
     private int marksObtained;
+    private String examinationName;
+
 
     @ManyToOne
+//    @JsonIgnore
     @JoinColumn(name = "custom_customer_id")
     private CustomCustomer customCustomer;
 }

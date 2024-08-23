@@ -9,9 +9,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/service-providers-status")
 public class ServiceProviderStatusController {
 
-    @Autowired
     private com.community.api.services.ServiceProvider.ServiceProviderStatusService serviceProviderStatusService;
-
+    public ServiceProviderStatusController(com.community.api.services.ServiceProvider.ServiceProviderStatusService serviceProviderStatusService)
+    {
+        this.serviceProviderStatusService=serviceProviderStatusService;
+    }
 
     @PostMapping("/add-status")
     public ResponseEntity<?> addStatus(@RequestBody ServiceProviderStatus serviceProviderStatus) {

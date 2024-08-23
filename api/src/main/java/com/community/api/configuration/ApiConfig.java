@@ -28,9 +28,13 @@ import org.springframework.context.annotation.Import;
 
 import com.community.core.config.CoreConfig;
 import com.community.core.config.StringFactoryBean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * @author Elbert Bautista (elbertbautista)
@@ -71,5 +75,33 @@ public class ApiConfig {
         connector.setPort(port);
         return connector;
     }
+
+    @Bean
+    @Primary
+    public JavaMailSender blMailSender() {
+        // Configuration properties
+        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
+
+        // Set your mail server host and port
+        mailSender.setHost("smtp.gmail.com");
+        mailSender.setPort(587);
+
+        // Set your mail server credentials
+        mailSender.setUsername("simranjit.kaur@avisoft.io");
+        mailSender.setPassword("uP@8cCe!");
+
+        // Configure additional mail properties if needed
+        Properties props = mailSender.getJavaMailProperties();
+        props.put("mail.transport.protocol", "smtp");
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.debug", "true"); // Enable to see mail sending logs
+        props.put("mail.smtp.ssl.protocols", "TLSv1.2");
+        props.put("mail.smtp.ssl.trust", "smtp.gmail.com");
+
+
+        return mailSender;
+    }
+
 
 }

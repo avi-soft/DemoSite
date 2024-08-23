@@ -13,11 +13,15 @@ import javax.persistence.EntityManager;
 @Service
 public class ServiceProviderStatusService {
 
-    @Autowired
     private EntityManager entityManager;
 
-    @Autowired
     private ExceptionHandlingImplement exceptionHandling;
+
+    public ServiceProviderStatusService(EntityManager entityManager,ExceptionHandlingImplement exceptionHandling)
+    {
+        this.entityManager = entityManager;
+        this.exceptionHandling = exceptionHandling;
+    }
 
     @Transactional
     public ResponseEntity<?> addStatus(ServiceProviderStatus serviceProviderStatus) {

@@ -1,7 +1,7 @@
 package com.community.api.endpoint.serviceProvider;
 
-import com.community.api.endpoint.serviceProvider.enums.Equipment;
-import com.community.api.endpoint.serviceProvider.enums.Skill;
+//import com.community.api.endpoint.serviceProvider.enums.Equipment;
+//import com.community.api.endpoint.serviceProvider.enums.Skill;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.AllArgsConstructor;
@@ -111,12 +111,12 @@ public class ServiceProviderEntity {
 //    @OneToOne(cascade = CascadeType.ALL)
 //    @JoinColumn(name = "c_form_photo_id")
     private String cFormPhoto;
-
-    @ElementCollection(targetClass = Equipment.class)
-    @CollectionTable(name = "service_provider_equipment", joinColumns = @JoinColumn(name = "user_id"))
-    @Enumerated(EnumType.STRING)
-    @Column(name = "equipment")
-    private Set<Equipment> equipment;
+//
+//    @ElementCollection(targetClass = Equipment.class)
+//    @CollectionTable(name = "service_provider_equipment", joinColumns = @JoinColumn(name = "user_id"))
+//    @Enumerated(EnumType.STRING)
+//    @Column(name = "equipment")
+//    private Set<Equipment> equipment;
 
     private Boolean hasTechnicalKnowledge;
 
@@ -125,11 +125,11 @@ public class ServiceProviderEntity {
 
     private String highestQualification;
 
-    @ElementCollection(targetClass = Skill.class)
-    @CollectionTable(name = "service_provider_skills", joinColumns = @JoinColumn(name = "user_id"))
-    @Enumerated(EnumType.STRING)
-    @Column(name = "skill")
-    private Set<Skill> skills;
+//    @ElementCollection(targetClass = Skill.class)
+//    @CollectionTable(name = "service_provider_skills", joinColumns = @JoinColumn(name = "user_id"))
+//    @Enumerated(EnumType.STRING)
+//    @Column(name = "skill")
+//    private Set<Skill> skills;
 
     public ServiceProviderStatus getStatus() {
         return status;
@@ -369,13 +369,13 @@ public class ServiceProviderEntity {
         this.cFormPhoto = cFormPhoto;
     }
 
-    public Set<Equipment> getEquipment() {
-        return equipment;
-    }
+//    public Set<Equipment> getEquipment() {
+//        return equipment;
+//    }
 
-    public void setEquipment(Set<Equipment> equipment) {
-        this.equipment = equipment;
-    }
+//    public void setEquipment(Set<Equipment> equipment) {
+//        this.equipment = equipment;
+//    }
 
     public Boolean getHasTechnicalKnowledge() {
         return hasTechnicalKnowledge;
@@ -401,11 +401,11 @@ public class ServiceProviderEntity {
         this.highestQualification = highestQualification;
     }
 
-    public Set<Skill> getSkills() {
-        return skills;
-    }
+//    public Set<Skill> getSkills() {
+//        return skills;
+//    }
 
-    public void setSkills(Set<Skill> skills) {
-        this.skills = skills;
-    }
+//    public void setSkills(Set<Skill> skills) {
+//        this.skills = skills;
+//    }
 }

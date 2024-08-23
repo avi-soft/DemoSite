@@ -28,30 +28,28 @@ import java.io.UnsupportedEncodingException;
 public class OtpEndpoint {
 
     private static final Logger log = LoggerFactory.getLogger(OtpEndpoint.class);
-    @Autowired
     private ExceptionHandlingImplement exceptionHandling;
 
     private final TwilioService twilioService;
     private static final Logger logger = LoggerFactory.getLogger(OtpEndpoint.class);
 
-    @Autowired
     private CustomCustomerService customCustomerService;
-    @Autowired
     private JwtUtil jwtUtil;
+    private final RateLimiterService rateLimiterService;
+    private EntityManager em;
+    private CustomerService customerService;
 
-    public OtpEndpoint(TwilioService twilioService, RateLimiterService rateLimiterService) {
+    public OtpEndpoint(TwilioService twilioService, RateLimiterService rateLimiterService, ExceptionHandlingImplement exceptionHandling,CustomCustomerService customCustomerService,JwtUtil jwtUtil,EntityManager em,CustomerService customerService) {
 
         this.twilioService = twilioService;
         this.rateLimiterService = rateLimiterService;
+        this.exceptionHandling=exceptionHandling;
+        this.customCustomerService=customCustomerService;
+        this.jwtUtil=jwtUtil;
+        this.em= em;
+        this.customerService=customerService;
     }
 
-    @Autowired
-    private final RateLimiterService rateLimiterService;
-
-    @Autowired
-    private EntityManager em;
-    @Autowired
-    private CustomerService customerService;
 
     @PostMapping("/send-otp")
     public ResponseEntity<String> sendtOtp(@RequestBody CustomCustomer customerDetails, HttpSession session) throws UnsupportedEncodingException {

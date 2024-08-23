@@ -30,20 +30,24 @@ import static org.apache.commons.lang.StringUtils.isNumeric;
         produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }
 )
 public class AccountEndPoint {
-    @Autowired
     private CustomerService customerService;
-    @Autowired
     private JwtUtil jwtUtil;
-    @Autowired
     private ExceptionHandlingImplement exceptionHandling;
-    @Autowired
     private EntityManager em;
-    @Autowired
     private TwilioService twilioService;
-    @Autowired
     private CustomCustomerService customCustomerService;
-    @Autowired
     private PasswordEncoder passwordEncoder;
+
+    public AccountEndPoint(CustomerService customerService, JwtUtil jwtUtil,ExceptionHandlingImplement exceptionHandling,EntityManager em,TwilioService twilioService,CustomCustomerService customCustomerService,PasswordEncoder passwordEncoder)
+    {
+        this.customerService=customerService;
+        this.jwtUtil=jwtUtil;
+        this.exceptionHandling=exceptionHandling;
+        this.em=em;
+        this.twilioService=twilioService;
+        this.customCustomerService=customCustomerService;
+        this.passwordEncoder=passwordEncoder;
+    }
     @PostMapping("/loginWithOtp")
     @ResponseBody
     public ResponseEntity<String> verifyAndLogin(@RequestBody CustomCustomer customer, HttpSession session) {
