@@ -1,6 +1,8 @@
 package com.community.api.services.ServiceProvider;
 
 import com.community.api.component.Constant;
+import com.community.api.component.JwtUtil;
+import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.endpoint.serviceProvider.ServiceProviderStatus;
@@ -56,6 +58,10 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     private String authToken;
     @Autowired
     private  TwilioServiceForServiceProvider twilioService;
+
+    @Autowired
+    private JwtUtil jwtUtil;
+
     @Autowired
     private  RateLimiterService rateLimiterService;
     @Value("${twilio.phoneNumber}")
@@ -310,6 +316,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error sending OTP: " + e.getMessage());
         }
     }
+//    todo:- need to test with same user details with atleast 10 users
     public String generateUsernameForServiceProvider(ServiceProviderEntity serviceProviderDetails)
     {
         String firstName = serviceProviderDetails.getFirst_name();
@@ -347,7 +354,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             String otpEntered = (String) serviceProviderDetails.get("otpEntered");
             String mobileNumber = (String) serviceProviderDetails.get("mobileNumber");
             String countryCode = (String) serviceProviderDetails.get("countryCode");
-
+            Integer role=(Integer) serviceProviderDetails.get("role");
             if (countryCode == null || countryCode.isEmpty()) {
                 countryCode = Constant.COUNTRY_CODE; // Default value if not provided
             }
@@ -368,7 +375,9 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
             ServiceProviderEntity existingServiceProvider = findServiceProviderByPhone(mobileNumber, countryCode);
             String storedOtp =  existingServiceProvider.getOtp();
-
+            String ipAddress = request.getRemoteAddr();
+            String userAgent = request.getHeader("User-Agent");
+            String tokenKey = "authTokenServiceProvider_" + mobileNumber;
 
 
             if (otpEntered == null || otpEntered.trim().isEmpty()) {
@@ -377,8 +386,16 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             if (otpEntered.equals(storedOtp)) {
                 existingServiceProvider.setOtp(null); // Clear the OTP after successful verification
                 entityManager.merge(existingServiceProvider); // Persist the changes
-                // Return the service provider entity or create and return JWT token as needed
-                return ResponseEntity.ok(existingServiceProvider);
+
+                String existingToken = (String) session.getAttribute(tokenKey);
+
+                if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
+                    return ResponseEntity.ok(createAuthResponse(existingToken, existingServiceProvider));
+                } else {
+                    String newToken = jwtUtil.generateToken(existingServiceProvider.getService_provider_id(), role, ipAddress, userAgent);
+                    session.setAttribute(tokenKey, newToken);
+                    return ResponseEntity.ok(createAuthResponse(newToken, existingServiceProvider));
+                }
             } else {
                 // Return a more informative error message if needed
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid OTP");
@@ -389,6 +406,12 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             return new ResponseEntity<>("Error verifying OTP", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    private ResponseEntity<AuthResponseServiceProvider> createAuthResponse(String token, ServiceProviderEntity serviceProviderEntity) {
+        AuthResponseServiceProvider authResponse = new AuthResponseServiceProvider(token, serviceProviderEntity);
+        return ResponseEntity.ok(authResponse);
+    }
+
 
     public StateCode findStateCode(String state_name) {
 
@@ -413,4 +436,21 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 .getResultList();
     }
 
+    private class AuthResponseServiceProvider {
+        private String token;
+        private ServiceProviderEntity serviceProviderDetails;
+
+        public AuthResponseServiceProvider(String token, ServiceProviderEntity userDetails) {
+            this.token = token;
+            this.serviceProviderDetails = serviceProviderDetails;
+        }
+
+        public String getToken() {
+            return token;
+        }
+
+        public ServiceProviderEntity getUserDetails() {
+            return serviceProviderDetails;
+        }
+    }
 }

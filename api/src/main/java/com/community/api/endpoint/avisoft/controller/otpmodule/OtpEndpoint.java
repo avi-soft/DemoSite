@@ -146,6 +146,10 @@ public class OtpEndpoint {
                 customerDetails.setMobileNumber(customerDetails.getMobileNumber());
 
             } else*/
+            if(role==null)
+            {
+                return new ResponseEntity<>("Role cannot be empty",HttpStatus.BAD_REQUEST);
+            }
             if(roleService.findRoleName(role).equals(Constant.roleUser))
             {
             if (username != null) {

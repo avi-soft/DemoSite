@@ -137,9 +137,11 @@ public class AccountEndPoint {
             String mobileNumber = (String) loginDetails.get("mobileNumber");
             String countryCode = (String) loginDetails.get("countryCode");
             Integer role = (Integer) loginDetails.get("role");
-            if(mobileNumber==null||role==null)
+            if(mobileNumber==null)
             {
                 return new ResponseEntity<>("Mobile number cannot be empty",HttpStatus.BAD_REQUEST);
+            }else if(role==null) {
+                return new ResponseEntity<>("role cannot be empty", HttpStatus.BAD_REQUEST);
             }
             if (countryCode == null || countryCode.isEmpty()) {
                 countryCode = Constant.COUNTRY_CODE;
