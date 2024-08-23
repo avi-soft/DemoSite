@@ -2,14 +2,23 @@ package com.community.api.endpoint.avisoft.controller.Customer;
 
 
 import com.community.api.component.JwtUtil;
+import com.community.api.dto.CategoryDto;
+import com.community.api.dto.CustomCategoryWrapper;
+import com.community.api.dto.CustomProductWrapper;
 import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.AddressDTO;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.endpoint.customer.CustomerDTO;
+import com.community.api.entity.CustomProduct;
+import com.community.api.services.CategoryService;
 import com.community.api.services.CustomCustomerService;
 import com.community.api.services.TwilioService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
+import com.community.api.services.exception.ExceptionHandlingService;
 import org.apache.commons.math3.analysis.function.Add;
+import org.broadleafcommerce.common.persistence.Status;
+import org.broadleafcommerce.core.catalog.domain.Category;
+import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.broadleafcommerce.profile.core.domain.Address;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.domain.CustomerAddress;
@@ -24,11 +33,12 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.math.BigInteger;
+import java.util.*;
 
 @RestController
 @RequestMapping(value = "/customer",
@@ -48,6 +58,18 @@ public class CustomerEndpoint {
     private AddressService addressService;
     private CustomerAddressService customerAddressService;
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private ExceptionHandlingService exceptionHandlingService;
+
+    @Autowired
+    private CategoryService categoryService;
+
+    @Autowired
+    private CatalogService catalogService;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Autowired
     public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
@@ -391,6 +413,81 @@ public class CustomerEndpoint {
             return ResponseEntity.ok("Logged out successfully");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during logout");
+        }
+    }
+
+    @GetMapping(value = "/getAllCategories")
+    public ResponseEntity<?> getCategories(HttpServletRequest request, @RequestParam(value = "limit", defaultValue = "20") int limit) {
+        try {
+            if (catalogService == null) {
+                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            List<Category> categories = this.catalogService.findAllCategories();
+            List<CustomCategoryWrapper> activeCategories = new ArrayList<>();
+
+            Iterator<Category> iterator = categories.iterator();
+            while (iterator.hasNext()) {
+                Category category = iterator.next();
+                if ((((Status) category).getArchived() != 'Y' && category.getActiveEndDate() == null) || (((Status) category).getArchived() != 'Y' && category.getActiveEndDate().after(new Date()))) {
+
+                    CustomCategoryWrapper wrapper = new CustomCategoryWrapper();
+                    wrapper.wrapDetails(category, request);
+                    activeCategories.add(wrapper);
+                }
+            }
+
+            return new ResponseEntity<>(activeCategories, HttpStatus.OK);
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED" + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping(value = "/getProductsByUserId")
+    public ResponseEntity<?> getProductsByCategoryId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
+        try {
+            if (catalogService == null) {
+                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            Long categoryId = Long.parseLong(id);
+            if(categoryId <= 0){
+                return new ResponseEntity<>("CATEGORYCANNOTBELESSTHANOREQAULZERO", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            Category category = this.catalogService.findCategoryById(categoryId);
+
+            if (category == null) {
+                return new ResponseEntity<>("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
+            } else if (((Status) category).getArchived() == 'Y') {
+                return new ResponseEntity<>("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
+            List<CustomProductWrapper> products = new ArrayList<>();
+
+            for (BigInteger productId : productIdList) {
+                CustomProduct customProduct = entityManager.find(CustomProduct.class, productId.longValue());
+
+                if(customProduct != null && (((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
+                    CustomProductWrapper wrapper = new CustomProductWrapper();
+                    wrapper.wrapDetails(customProduct);
+                    products.add(wrapper);
+                }
+            }
+
+            CategoryDto categoryDao = new CategoryDto();
+            categoryDao.setCategoryId(category.getId());
+            categoryDao.setCategoryName(category.getName());
+            categoryDao.setProducts(products);
+            categoryDao.setTotalProducts(Long.valueOf(products.size()));
+
+            return ResponseEntity.status(HttpStatus.OK).body(categoryDao);
+
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

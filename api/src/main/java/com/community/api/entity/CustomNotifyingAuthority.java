@@ -10,19 +10,17 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
+@Table(name="custom_notifying_authority")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "custom_product_state")
-public class CustomProductState {
+public class CustomNotifyingAuthority {
 
     @Id
-    @Column(name = "product_state_id")
-    Long productStateId;
+    @Column(name="notifying_authority_id")
+    protected Long notifying_authority_id;
 
-    @Column(name = "product_state")
-    String productState;
+    @Column(name="notifying_authority")
+    protected String notifying_authority;
 
 }
-
-
