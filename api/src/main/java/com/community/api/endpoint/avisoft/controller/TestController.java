@@ -1,7 +1,6 @@
 package com.community.api.endpoint.avisoft.controller;
 import com.community.api.component.JwtUtil;
 import com.community.api.services.CustomCustomerService;
-import com.community.api.services.CustomEmailService;
 import com.community.api.services.RateLimiterService;
 import io.github.bucket4j.Bucket;
 import io.jsonwebtoken.security.Keys;
@@ -34,8 +33,6 @@ public class TestController {
     @Autowired
     private CustomCustomerService customCustomerService;
 
-    @Autowired
-    private CustomEmailService emailService;
 
     @GetMapping("/catch-error")
     public ResponseEntity<String> catcherror() {
@@ -71,19 +68,5 @@ public class TestController {
         }
     }
 
-    @PostMapping("/send-mail")
-    public ResponseEntity<String> sendEmail(@RequestParam String to,
-                                            @RequestParam String subject,
-                                            @RequestParam String text) {
-        try {
-            String result = emailService.sendmail(to, subject, text);
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-
-            System.err.println("Error handling email request: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to send email: " + e.getMessage());
-        }
-    }
 
 }
