@@ -22,5 +22,4 @@ public class Constant {
     public static String FETCH_ROLE = "SELECT r.role_name FROM Role r WHERE r.role_id = :role_id";
     public static String roleUser="CUSTOMER";
     public static String roleServiceProvider="SERVICE_PROVIDER";
-    public static String OTP_SERVICE_PROVIDER = "SELECT c.otp FROM ServiceProviderEntity c WHERE c.mobileNumber = :mobileNumber";
 }
