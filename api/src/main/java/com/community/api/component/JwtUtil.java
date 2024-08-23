@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.xml.bind.DatatypeConverter;
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import java.util.UUID;
@@ -33,17 +32,23 @@ public class JwtUtil {
     @Autowired
     private CustomerService customerService;
 
-/*    @PostConstruct
-    public void init() {
-        byte[] secretKeyBytes = DatatypeConverter.parseBase64Binary(secretKeyString);
-        this.secretKey = Keys.hmacShaKeyFor(secretKeyBytes);
-    }*/
     @PostConstruct
     public void init() {
-        this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+        try {
+            byte[] secretKeyBytes = DatatypeConverter.parseBase64Binary(secretKeyString);
+            this.secretKey = Keys.hmacShaKeyFor(secretKeyBytes);
+        }  catch (Exception e) {
+            exceptionHandling.handleException(e);
+            throw new RuntimeException("Error generating JWT token", e);
+        }
     }
 
-    public String generateToken(Long id, String role, String ipAddress, String userAgent) {
+   /* @PostConstruct
+    public void init() {
+        this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    }*/
+
+    public String generateToken(Long id, Integer role, String ipAddress, String userAgent) {
         try {
             String uniqueTokenId = UUID.randomUUID().toString();
 
