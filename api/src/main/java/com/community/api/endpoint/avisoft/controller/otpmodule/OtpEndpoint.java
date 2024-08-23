@@ -41,68 +41,41 @@ public class OtpEndpoint {
 
     private static final Logger log = LoggerFactory.getLogger(OtpEndpoint.class);
     private final Logger logger = LoggerFactory.getLogger(OtpEndpoint.class);
-
+    @Autowired
     private ExceptionHandlingImplement exceptionHandling;
+
+    @Autowired
     private TwilioService twilioService;
+
+    @Autowired
     private CustomCustomerService customCustomerService;
+
+    @Autowired
     private JwtUtil jwtUtil;
 
+    @Autowired
     private RateLimiterService rateLimiterService;
+
+    @Autowired
     private EntityManager em;
+
+    @Autowired
     private CustomerService customerService;
-    private ServiceProviderServiceImpl serviceProviderService;
-    private RoleService roleService;
+
     @Autowired
     private EntityManager entityManager;
+
+    @Autowired
+    private ServiceProviderServiceImpl serviceProviderService;
+
+    @Autowired
+    private RoleService roleService;
+
     @Value("${twilio.authToken}")
     private String authToken;
+
     @Value("${twilio.accountSid}")
     private String accountSid;
-    @Value("${twilio.authToken}")
-    @Autowired
-    public void setExceptionHandling(ExceptionHandlingImplement exceptionHandling) {
-        this.exceptionHandling = exceptionHandling;
-    }
-    @Autowired
-    public void setroleService(RoleService roleService) {
-        this.roleService = roleService;
-    }
-    @Autowired
-    public void setServiceProviderServiceImpl(ServiceProviderServiceImpl serviceProviderService) {
-        this.serviceProviderService = serviceProviderService;
-    }
-
-
-
-    @Autowired
-    public void setTwilioService(TwilioService twilioService) {
-        this.twilioService = twilioService;
-    }
-
-    @Autowired
-    public void setCustomCustomerService(CustomCustomerService customCustomerService) {
-        this.customCustomerService = customCustomerService;
-    }
-
-    @Autowired
-    public void setJwtUtil(JwtUtil jwtUtil) {
-        this.jwtUtil = jwtUtil;
-    }
-
-    @Autowired
-    public void setRateLimiterService(RateLimiterService rateLimiterService) {
-        this.rateLimiterService = rateLimiterService;
-    }
-
-    @Autowired
-    public void setEntityManager(EntityManager em) {
-        this.em = em;
-    }
-
-    @Autowired
-    public void setCustomerService(CustomerService customerService) {
-        this.customerService = customerService;
-    }
 
 
     @PostMapping("/send-otp")
