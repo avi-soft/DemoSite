@@ -101,11 +101,13 @@ public class PrivilegeService {
         }
     }
 
-    public String getPrivilege(Long userId, Integer roleId) {
+    public boolean getPrivilege(Long userId, Integer roleId) {
         try {
+
 
         } catch (Exception e) {
 
         }
+        return true;
     }
 }

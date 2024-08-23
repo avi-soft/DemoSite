@@ -102,7 +102,7 @@ public class ProductController extends CatalogEndpoint {
                 accessGrant = true;
             }else if(role.equals("SERVICE_PROVIDER")) {
                 Long userId = jwtTokenUtil.extractId(jwtToken);
-                String privledge = privilegeService.getPriviledge(userId, roleId);
+                boolean privledge = privilegeService.getPrivilege(userId, roleId);
                 if(privledge){
                     accessGrant = true;
                 }
