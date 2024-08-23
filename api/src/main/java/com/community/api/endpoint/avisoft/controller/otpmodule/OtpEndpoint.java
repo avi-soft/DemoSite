@@ -227,13 +227,19 @@ public class OtpEndpoint {
         AuthResponse authResponse = new AuthResponse(token, customer);
         return ResponseEntity.ok(authResponse);
     }
-    @PostMapping("/service-provider-signup")
+    @PostMapping("/serviceProviderSignup")
     @javax.transaction.Transactional
     public ResponseEntity<String> sendOtpToMobile(@RequestBody Map<String, Object> signupDetails) {
         try {
             String mobileNumber = (String) signupDetails.get("mobileNumber");
             String countryCode = (String) signupDetails.get("countryCode");
-
+            mobileNumber = mobileNumber.startsWith("0")
+                    ? mobileNumber.substring(1)
+                    : mobileNumber;
+            if(countryCode==null)
+                countryCode=Constant.COUNTRY_CODE;
+            if(!serviceProviderService.isValidMobileNumber(mobileNumber))
+                return new ResponseEntity<>("Invalid mobile number",HttpStatus.BAD_REQUEST);
             if (mobileNumber == null || mobileNumber.isEmpty()) {
                 throw new IllegalArgumentException("Mobile number cannot be null or empty");
             }

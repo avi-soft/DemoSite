@@ -297,7 +297,6 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             mobileNumber = mobileNumber.startsWith("0")
                     ? mobileNumber.substring(1)
                     : mobileNumber;
-
             if(countryCode==null)
                 countryCode=Constant.COUNTRY_CODE;
             Bucket bucket = rateLimiterService.resolveBucket(mobileNumber, "/service-provider/otp/send-otp");
