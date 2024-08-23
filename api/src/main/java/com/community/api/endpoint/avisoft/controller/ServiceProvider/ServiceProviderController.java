@@ -101,18 +101,21 @@ public class ServiceProviderController {
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error deleting: " + e.getMessage());
         }}
-    @PostMapping("create-or-update-password")
-    public ResponseEntity<?>deleteServiceProvider(@RequestParam Map<String,Object>passwordDetails,@RequestParam long userId)
+    @Transactional
+    @PostMapping("createOrUpdatePassword")
+    public ResponseEntity<?>deleteServiceProvider(@RequestBody Map<String,Object>passwordDetails,@RequestParam long userId)
     {
         try {
             String password = (String) passwordDetails.get("password");
             String newPassword = (String) passwordDetails.get("newPassword");
-
+            System.out.println(password);
+            System.out.println(newPassword);
             ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, userId);
             if (serviceProvider == null)
                 return new ResponseEntity<>("No records found", HttpStatus.NOT_FOUND);
             if (serviceProvider.getPassword() == null) {
                 serviceProvider.setPassword(passwordEncoder.encode(password));
+                entityManager.merge(serviceProvider);
                 return new ResponseEntity<>("Password created", HttpStatus.OK);
             } else {
                 if (password == null || newPassword == null)
@@ -128,58 +131,6 @@ public class ServiceProviderController {
                 exceptionHandling.handleException(e);
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error changing/updating password: " + e.getMessage());
             }
-    }
-    @PostMapping("/signup")
-    @Transactional
-    public ResponseEntity<String> sendOtpToMobile(@RequestBody Map<String, Object> signupDetails) {
-        try {
-            String mobileNumber = (String) signupDetails.get("mobileNumber");
-            String countryCode = (String) signupDetails.get("countryCode");
-
-            if (mobileNumber == null || mobileNumber.isEmpty()) {
-                throw new IllegalArgumentException("Mobile number cannot be null or empty");
-            }
-
-            if (countryCode == null || countryCode.isEmpty()) {
-                countryCode = Constant.COUNTRY_CODE;
-            }
-
-            Twilio.init(accountSid, authToken);
-            String completeMobileNumber = countryCode + mobileNumber;
-            String otp = serviceProviderService.generateOTP();
-
-            ServiceProviderEntity existingServiceProvider = serviceProviderService.findServiceProviderByPhone(mobileNumber, countryCode);
-
-            if (existingServiceProvider == null) {
-                // New entity, use persist
-                ServiceProviderEntity serviceProviderEntity = new ServiceProviderEntity();
-                serviceProviderEntity.setCountry_code(countryCode); // Make sure to use the provided or default country code
-                serviceProviderEntity.setMobileNumber(mobileNumber);
-                serviceProviderEntity.setOtp(otp);
-                serviceProviderEntity.setRole(4);//4 corresponds to service provider
-                entityManager.persist(serviceProviderEntity);
-            } else {
-                // Existing entity, use merge
-                existingServiceProvider.setOtp(otp);
-                entityManager.merge(existingServiceProvider);
-            }
-
-            return ResponseEntity.ok("OTP has been sent successfully " + otp);
-
-        } catch (HttpClientErrorException e) {
-            if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized access: Please check your API key");
-            } else {
-                exceptionHandling.handleHttpClientErrorException(e);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error occurred");
-            }
-        } catch (ApiException e) {
-            exceptionHandling.handleApiException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error sending OTP: " + e.getMessage());
-        } catch (Exception e) {
-            exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error sending OTP: " + e.getMessage());
-        }
     }
     @GetMapping("getServiceProivider")
     public ResponseEntity<?> getServiceProviderById(@RequestParam Long userId) throws Exception {

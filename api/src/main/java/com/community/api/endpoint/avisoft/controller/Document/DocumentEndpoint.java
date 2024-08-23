@@ -21,7 +21,7 @@ public class DocumentEndpoint {
     @RequestMapping(value = "create-document-type", method = RequestMethod.POST)
     public ResponseEntity<Object> createDocumentType(@RequestBody DocumentType documentType) {
         try {
-            if (documentType.getDocumentTypeId() == null || documentType.getDescription() == null) {
+            if (documentType.getDocument_type_id() == null || documentType.getDescription() == null) {
                 return new ResponseEntity<>("Cannot create Document Type : Fields Empty", HttpStatus.BAD_REQUEST);
             }
             entityManager.persist(documentType);
