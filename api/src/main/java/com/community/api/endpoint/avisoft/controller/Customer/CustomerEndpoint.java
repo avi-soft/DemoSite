@@ -465,7 +465,7 @@ public class CustomerEndpoint {
             return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    @GetMapping(value = "/recommendations/Forms/getProductsByUserId")
+    @GetMapping(value = "/recommendations/getProductsByUserId")
     public ResponseEntity<?> getRecommendationsBYUserId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
         try {
             if (catalogService == null) {
