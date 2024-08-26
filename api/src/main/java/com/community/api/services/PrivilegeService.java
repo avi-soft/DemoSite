@@ -4,6 +4,7 @@ import com.community.api.component.Constant;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.Privileges;
 import com.community.api.entity.Role;
+import com.community.api.entity.Skill;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 import java.util.Collections;
 import java.util.List;
@@ -95,14 +97,20 @@ public class PrivilegeService {
         try {
             if (privilege.getPrivilege_name() == null || privilege.getDescription() == null)
                 return new ResponseEntity<>("Incomplete details", HttpStatus.BAD_REQUEST);
-            entityManager.persist(privilege);
+                int count=(int)findCount();
+                privilege.setPrivilege_id(++count);
+                entityManager.persist(privilege);
             return new ResponseEntity<>(privilege, HttpStatus.OK);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return new ResponseEntity<>("Error removing ", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
+    public long findCount() {
+        String queryString = Constant.GET_PRIVILEGES_COUNT;
+        TypedQuery<Long> query = entityManager.createQuery(queryString, Long.class);
+        return query.getSingleResult();
+    }
     public List<Integer> getPrivilege(Long userId) {
         try {
 
@@ -115,5 +123,9 @@ public class PrivilegeService {
             exceptionHandling.handleException(e);
             return Collections.emptyList();
         }
+    }
+    public List<Privileges> findAllPrivilegeList() {
+        TypedQuery<Privileges> query = entityManager.createQuery(Constant.GET_ALL_PRIVILEGES,Privileges.class);
+        return query.getResultList();
     }
 }
