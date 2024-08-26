@@ -37,7 +37,6 @@ public class ProductController extends CatalogEndpoint {
     private static final String PRODUCTTITLENOTGIVEN = "Product MetaTitle not Given";
     private static final String SOMEEXCEPTIONOCCURED = "Some Exception Occurred";
     private static final String NUMBERFORMATEXCEPTION = "NumberFormatException";
-    private static final String UNSUPPORTEDENCODINGEXCEPTION = "UnsupportedEncodingException";
 
     @Autowired
     protected ExceptionHandlingService exceptionHandlingService;
@@ -243,10 +242,6 @@ public class ProductController extends CatalogEndpoint {
                 addProductDto.setMetaDescription(addProductDto.getMetaDescription().trim());
                 product.setMetaDescription(addProductDto.getMetaDescription());
             }
-//            if(addProductDto.getUrl() != null){
-//                addProductDto.setUrl(addProductDto.getUrl().trim());
-//                product.setUrl(addProductDto.getUrl());
-//            }
 
 //            product = catalogService.saveProduct(product); // Save or update the product with values from requestBody.
             CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
