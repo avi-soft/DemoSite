@@ -26,4 +26,5 @@ public class Constant {
     public static String GET_ALL_SKILLS = "SELECT s FROM Skill s";
     public static String GET_LANGUAGES_COUNT = "SELECT COUNT(*) FROM ServiceProviderLanguage";
     public static String GET_ALL_LANGUAGES = "SELECT s FROM ServiceProviderLanguage s";
+    public static String OTP_SERVICE_PROVIDER = "SELECT c.otp FROM ServiceProviderEntity c WHERE c.mobileNumber = :mobileNumber";
 }
