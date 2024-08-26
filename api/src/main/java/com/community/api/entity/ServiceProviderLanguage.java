@@ -15,7 +15,6 @@ import javax.persistence.*;
 @Setter
 public class ServiceProviderLanguage {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "language_id")
     private int langauge_id;
     @Column(name = "language_name")
