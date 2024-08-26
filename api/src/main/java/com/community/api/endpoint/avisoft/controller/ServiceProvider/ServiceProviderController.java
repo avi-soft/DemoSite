@@ -108,8 +108,6 @@ public class ServiceProviderController {
         try {
             String password = (String) passwordDetails.get("password");
             String newPassword = (String) passwordDetails.get("newPassword");
-            System.out.println(password);
-            System.out.println(newPassword);
             ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, userId);
             if (serviceProvider == null)
                 return new ResponseEntity<>("No records found", HttpStatus.NOT_FOUND);

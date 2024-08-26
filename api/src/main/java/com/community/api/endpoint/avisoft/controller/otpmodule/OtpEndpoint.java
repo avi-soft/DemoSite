@@ -227,8 +227,8 @@ public class OtpEndpoint {
         AuthResponse authResponse = new AuthResponse(token, customer);
         return ResponseEntity.ok(authResponse);
     }
+    @Transactional
     @PostMapping("/serviceProviderSignup")
-    @javax.transaction.Transactional
     public ResponseEntity<String> sendOtpToMobile(@RequestBody Map<String, Object> signupDetails) {
         try {
             String mobileNumber = (String) signupDetails.get("mobileNumber");
@@ -262,7 +262,7 @@ public class OtpEndpoint {
                 serviceProviderEntity.setOtp(otp);
                 serviceProviderEntity.setRole(4);//4 corresponds to service provider
                 entityManager.persist(serviceProviderEntity);
-            } else if(existingServiceProvider.getOtp()!=null){
+            } else{
                 return new ResponseEntity<>("Mobile Number Already Registred",HttpStatus.BAD_REQUEST);
             }
 
