@@ -442,7 +442,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         private String token;
         private ServiceProviderEntity serviceProviderDetails;
 
-        public AuthResponseServiceProvider(String token, ServiceProviderEntity userDetails) {
+        public AuthResponseServiceProvider(String token, ServiceProviderEntity serviceProviderDetails) {
             this.token = token;
             this.serviceProviderDetails = serviceProviderDetails;
         }

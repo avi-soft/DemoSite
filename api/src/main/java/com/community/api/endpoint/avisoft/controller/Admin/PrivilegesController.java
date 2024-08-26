@@ -58,5 +58,14 @@ public class PrivilegesController {
             return new ResponseEntity<>("Error removing ", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    @RequestMapping(value = "create-privilege", method = RequestMethod.GET)
+    public ResponseEntity<?> getAllPrivileges(@RequestBody Privileges privilege) {
+        try {
+            return privilegeService.createPrivilege(privilege);
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return new ResponseEntity<>("Error removing ", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
 
