@@ -30,7 +30,7 @@
         <class>com.community.api.entity.Skill</class>
         <class>com.community.api.utils.Document</class>
         <class>com.community.api.utils.DocumentType</class>
-        <class>com.community.api.endpoint.customer.Qualification</class>
+        <class>com.community.api.entity.Qualification</class>
         <class>com.community.api.endpoint.serviceProvider.ServiceProviderEntity</class>
         <class>com.community.api.endpoint.serviceProvider.ServiceProviderStatus</class>
         <class>com.community.api.entity.CustomOtp</class>
@@ -68,10 +68,11 @@
         <class>com.community.api.entity.Skill</class>
         <class>com.community.api.utils.Document</class>
         <class>com.community.api.utils.DocumentType</class>
-        <class>com.community.api.endpoint.customer.Qualification</class>
+        <class>com.community.api.entity.Qualification</class>
         <class>com.community.api.endpoint.serviceProvider.ServiceProviderEntity</class>
         <class>com.community.api.endpoint.serviceProvider.ServiceProviderStatus</class>
         <class>com.community.api.entity.CustomOtp</class>
+        <class>com.community.api.entity.Examination</class>
         <class>com.community.api.entity.StateCode</class>
         <class>com.community.api.entity.ServiceProviderAddress</class>
         <class>com.community.api.entity.ServiceProviderAddressRef</class>

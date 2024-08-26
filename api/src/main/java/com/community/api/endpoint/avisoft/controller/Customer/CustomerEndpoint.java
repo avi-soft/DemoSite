@@ -54,6 +54,7 @@ import java.util.*;
 )
 
 public class CustomerEndpoint {
+
     private PasswordEncoder passwordEncoder;
     private CustomerService customerService;
     private ExceptionHandlingImplement exceptionHandling;
@@ -114,7 +115,9 @@ public class CustomerEndpoint {
     @Autowired
     public void setCustomerAddressService(CustomerAddressService customerAddressService) {
         this.customerAddressService = customerAddressService;
+        this.jwtUtil= jwtUtil;
     }
+
 
     @Autowired
     public void setJwtUtil(JwtUtil jwtUtil) {
