@@ -1,6 +1,5 @@
-package com.community.api.endpoint.avisoft.controller.Qualification;
+package com.community.api.endpoint.avisoft.controller.notification;
 
-import com.community.api.entity.CustomCustomer;
 import com.community.api.services.NotificationService;
 import com.community.api.services.exception.CustomerDoesNotExistsException;
 import com.community.api.services.exception.ExceptionHandlingImplement;
@@ -12,7 +11,7 @@ import javax.persistence.EntityManager;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/api/notifications")
+@RequestMapping("notification")
 public class NotificationController
 {
         @Autowired
