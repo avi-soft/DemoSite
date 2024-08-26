@@ -10,29 +10,18 @@ import com.community.api.services.PrivilegeService;
 import com.community.api.services.ProductService;
 import com.community.api.services.RoleService;
 import com.community.api.services.exception.ExceptionHandlingService;
-import com.twilio.jwt.Jwt;
-import io.jsonwebtoken.Claims;
-import org.broadleafcommerce.common.money.Money;
 import org.broadleafcommerce.common.persistence.Status;
 import org.broadleafcommerce.core.catalog.domain.*;
 import org.broadleafcommerce.core.catalog.service.type.ProductType;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
-import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -94,20 +83,21 @@ public class ProductController extends CatalogEndpoint {
 
             if(role.equals("SUPER_ADMIN") || role.equals("ADMIN")){
                 accessGrant = true;
-            }else if(role.equals("SERVICE_PROVIDER")) {
-                Long userId = jwtTokenUtil.extractId(jwtToken);
-                List<Integer> privileges = privilegeService.getPrivilege(userId);
-                for(Integer apiId: privileges) {
-                    if(apiId == 1){
-                        accessGrant = true;
-                        break;
-                    }
-                }
             }
+//            else if(role.equals("SERVICE_PROVIDER")) {
+//                Long userId = jwtTokenUtil.extractId(jwtToken);
+//                List<Integer> privileges = privilegeService.getPrivilege(userId);
+//                for(Integer apiId: privileges) {
+//                    if(apiId == 1){
+//                        accessGrant = true;
+//                        break;
+//                    }
+//                }
+//            }
 
-            if(!accessGrant){
-                return new ResponseEntity<>("Not Authorized to add product", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
+//            if(!accessGrant){
+//                return new ResponseEntity<>("Not Authorized to add product", HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
 
             if (catalogService == null) {
                 return new ResponseEntity<>(CATALOGSERVICENOTINITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -246,16 +236,17 @@ public class ProductController extends CatalogEndpoint {
                     return new ResponseEntity<>(PRODUCTTITLENOTGIVEN, HttpStatus.INTERNAL_SERVER_ERROR);
                 }
                 product.setMetaTitle(addProductDto.getMetaTitle().trim());
+                product.setName(addProductDto.getMetaTitle().trim());
             }
 
             if (addProductDto.getMetaDescription() != null) {
                 addProductDto.setMetaDescription(addProductDto.getMetaDescription().trim());
                 product.setMetaDescription(addProductDto.getMetaDescription());
             }
-            if(addProductDto.getUrl() != null){
-                addProductDto.setUrl(addProductDto.getUrl().trim());
-                product.setUrl(addProductDto.getUrl());
-            }
+//            if(addProductDto.getUrl() != null){
+//                addProductDto.setUrl(addProductDto.getUrl().trim());
+//                product.setUrl(addProductDto.getUrl());
+//            }
 
 //            product = catalogService.saveProduct(product); // Save or update the product with values from requestBody.
             CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
@@ -283,7 +274,7 @@ public class ProductController extends CatalogEndpoint {
             }else if(addProductDto.getActiveEndDate() != null) {
                 if (!addProductDto.getActiveEndDate().after(customProduct.getActiveStartDate())) {
                     return new ResponseEntity<>("Expiration date cannot be before or equal of activeStartDate", HttpStatus.INTERNAL_SERVER_ERROR);
-                } else if (!addProductDto.getActiveEndDate().after(customProduct.getGoLiveDate()) || !customProduct.getGoLiveDate().after(addProductDto.getActiveStartDate())) {
+                } else if (!addProductDto.getActiveEndDate().after(customProduct.getGoLiveDate()) || !customProduct.getGoLiveDate().after(customProduct.getActiveStartDate())) {
                     return new ResponseEntity<>("Expiration date cannot be before or equal of goLive date and before or equal of current date", HttpStatus.INTERNAL_SERVER_ERROR);
                 }
 
@@ -295,7 +286,7 @@ public class ProductController extends CatalogEndpoint {
 
             // Wrap and return the updated product details
             CustomProductWrapper wrapper = new CustomProductWrapper();
-            wrapper.wrapDetails(customProduct);
+            wrapper.wrapDetails(entityManager.find(CustomProduct.class, productId));
 
             return ResponseEntity.ok(wrapper);
 
