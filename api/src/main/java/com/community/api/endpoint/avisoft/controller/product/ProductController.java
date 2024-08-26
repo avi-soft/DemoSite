@@ -198,9 +198,24 @@ public class ProductController extends CatalogEndpoint {
     @PutMapping("/update/{productId}")
     public ResponseEntity<?> updateProduct(HttpServletRequest request,
                                         @RequestBody AddProductDto addProductDto,
-                                        @PathVariable Long productId) {
+                                        @PathVariable Long productId,
+                                        @RequestHeader(value = "Authorization") String authHeader) {
 
         try {
+
+            String jwtToken = authHeader.substring(7);
+
+            Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
+            String role = roleService.findRoleName(roleId);
+            boolean accessGrant = false;
+
+            if(role.equals("SUPER_ADMIN") || role.equals("ADMIN")){
+                accessGrant = true;
+            }
+
+            if(!accessGrant){
+                return new ResponseEntity<>("Not Authorized to add product", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
 
             if (catalogService == null) {
                 return new ResponseEntity<>(CATALOGSERVICENOTINITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
