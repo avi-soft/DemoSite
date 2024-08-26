@@ -22,9 +22,10 @@ public class CustomProductStateService implements CommandLineRunner {
         // Check if data already exists to avoid duplication
         if (entityManager.createQuery("SELECT COUNT(c) FROM CustomProductState c", Long.class).getSingleResult() == 0) {
             entityManager.persist(new CustomProductState(1L, "New"));
-            entityManager.persist(new CustomProductState(2L, "Live"));
-            entityManager.persist(new CustomProductState(3L, "Expired"));
-            entityManager.persist(new CustomProductState(4L, "Rejected"));
+            entityManager.persist(new CustomProductState(2L, "Approved"));
+            entityManager.persist(new CustomProductState(3L, "Live"));
+            entityManager.persist(new CustomProductState(4L, "Expired"));
+            entityManager.persist(new CustomProductState(5L, "Rejected"));
         }
 
         if (entityManager.createQuery("SELECT COUNT(c) FROM CustomNotifyingAuthority c", Long.class).getSingleResult() == 0) {
