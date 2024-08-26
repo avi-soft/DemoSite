@@ -84,20 +84,20 @@ public class ProductController extends CatalogEndpoint {
             if(role.equals("SUPER_ADMIN") || role.equals("ADMIN")){
                 accessGrant = true;
             }
-//            else if(role.equals("SERVICE_PROVIDER")) {
-//                Long userId = jwtTokenUtil.extractId(jwtToken);
-//                List<Integer> privileges = privilegeService.getPrivilege(userId);
-//                for(Integer apiId: privileges) {
-//                    if(apiId == 1){
-//                        accessGrant = true;
-//                        break;
-//                    }
-//                }
-//            }
+            else if(role.equals("SERVICE_PROVIDER")) {
+                Long userId = jwtTokenUtil.extractId(jwtToken);
+                List<Integer> privileges = privilegeService.getPrivilege(userId);
+                for(Integer apiId: privileges) {
+                    if(apiId == 1){
+                        accessGrant = true;
+                        break;
+                    }
+                }
+            }
 
-//            if(!accessGrant){
-//                return new ResponseEntity<>("Not Authorized to add product", HttpStatus.INTERNAL_SERVER_ERROR);
-//            }
+            if(!accessGrant){
+                return new ResponseEntity<>("Not Authorized to add product", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
 
             if (catalogService == null) {
                 return new ResponseEntity<>(CATALOGSERVICENOTINITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
