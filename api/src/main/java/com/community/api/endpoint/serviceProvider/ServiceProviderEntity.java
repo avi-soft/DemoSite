@@ -1,9 +1,7 @@
 package com.community.api.endpoint.serviceProvider;
 
 
-import com.community.api.entity.Privileges;
-import com.community.api.entity.ServiceProviderAddress;
-import com.community.api.entity.Skill;
+import com.community.api.entity.*;
 import com.community.api.utils.Document;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -106,7 +104,7 @@ public class ServiceProviderEntity  {
 
     private String highest_qualification;
 
-    @OneToMany
+    @ManyToMany
     @JoinTable(
             name = "service_provider_skill", // The name of the join table
             joinColumns = @JoinColumn(name = "service_provider_id"), // Foreign key for ServiceProvider
@@ -121,10 +119,22 @@ public class ServiceProviderEntity  {
     @JoinColumn(name = "status_id", referencedColumnName = "statusId")
     private ServiceProviderStatus status;
 
-    @OneToMany
+    @ManyToMany
     @JoinTable(
             name = "service_provider_privileges", // The name of the join table
             joinColumns = @JoinColumn(name = "service_provider_id"), // Foreign key for ServiceProvider
             inverseJoinColumns = @JoinColumn(name = "privilege_id")) // Foreign key for Privilege
     private List<Privileges> privileges;
+    @ManyToMany
+    @JoinTable(
+            name = "service_provider_infra", // The name of the join table
+            joinColumns = @JoinColumn(name = "service_provider_id"), // Foreign key for ServiceProvider
+            inverseJoinColumns = @JoinColumn(name = "infra_id")) // Foreign key for Skill
+    private List<ServiceProviderInfra> infra;
+    @ManyToMany
+    @JoinTable(
+            name = "service_provider_languages", // The name of the join table
+            joinColumns = @JoinColumn(name = "service_provider_id"), // Foreign key for ServiceProvider
+            inverseJoinColumns = @JoinColumn(name = "language_id")) // Foreign key for Skill
+    private List<ServiceProviderLanguage> languages;
 }
