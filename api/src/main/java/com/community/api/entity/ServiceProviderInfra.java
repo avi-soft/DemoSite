@@ -8,16 +8,16 @@ import lombok.Setter;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "custom_role_table")
+@Table(name = "custom_service_provider_infra")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-public class Role
-{
-@Id
-@GeneratedValue(strategy= GenerationType.IDENTITY)
-    private int role_id;
-    private String role_name;
-    private String created_at,updated_at,created_by;
-}
+public class ServiceProviderInfra {
+        @Id
+        @Column(name = "infra_id")
+        private int infra_id;
+        @Column(name = "infra_name")
+        private String infra_name;
+    }
+

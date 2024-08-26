@@ -7,10 +7,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
+
 import javax.transaction.Transactional;
 
 @RestController
@@ -48,9 +50,18 @@ public class PrivilegesController {
 
     @Transactional
     @RequestMapping(value = "create-privilege", method = RequestMethod.POST)
-    public ResponseEntity<?> createPrivilege(Privileges privilege) {
+    public ResponseEntity<?> createPrivilege(@RequestBody Privileges privilege) {
         try {
            return privilegeService.createPrivilege(privilege);
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return new ResponseEntity<>("Error removing ", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @RequestMapping(value = "create-privilege", method = RequestMethod.GET)
+    public ResponseEntity<?> getAllPrivileges(@RequestBody Privileges privilege) {
+        try {
+            return privilegeService.createPrivilege(privilege);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return new ResponseEntity<>("Error removing ", HttpStatus.INTERNAL_SERVER_ERROR);

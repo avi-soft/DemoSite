@@ -8,13 +8,13 @@ import lombok.Setter;
 import javax.persistence.*;
 
 @Entity
+@Table(name = "custom_privileges")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
 public class Privileges {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     int privilege_id;
     String privilege_name,description;
 }

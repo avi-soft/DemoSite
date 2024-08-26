@@ -78,6 +78,8 @@
         <class>com.community.api.entity.Privileges</class>
         <class>com.community.api.entity.Role</class>
         <class>com.community.api.entity.Districts</class>
+        <class>com.community.api.entity.ServiceProviderInfra</class>
+        <class>com.community.api.entity.ServiceProviderLanguage</class>
         <exclude-unlisted-classes/>
     </persistence-unit>
 

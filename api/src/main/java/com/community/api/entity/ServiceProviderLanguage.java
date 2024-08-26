@@ -8,16 +8,15 @@ import lombok.Setter;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "custom_role_table")
+@Table(name = "custom_service_provider_language")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-public class Role
-{
-@Id
-@GeneratedValue(strategy= GenerationType.IDENTITY)
-    private int role_id;
-    private String role_name;
-    private String created_at,updated_at,created_by;
+public class ServiceProviderLanguage {
+    @Id
+    @Column(name = "language_id")
+    private int langauge_id;
+    @Column(name = "language_name")
+    private String language_name;
 }
