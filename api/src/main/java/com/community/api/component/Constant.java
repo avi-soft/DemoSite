@@ -30,5 +30,7 @@ public class Constant {
     public static String serviceProviderRoles = "SELECT c.privilege_id FROM service_provider_privileges c WHERE c.service_provider_id = :serviceProviderId";
     public static String GET_PRIVILEGES_COUNT = "SELECT COUNT(*) FROM Privileges";
     public static String GET_ALL_PRIVILEGES = "SELECT p FROM Privileges s";
+    public static String GET_INFRA_COUNT = "SELECT COUNT(*) FROM ServiceProviderInfra";
+    public static String GET_INFRA_LIST = "SELECT s FROM ServiceProviderInfra s";
 }
 
