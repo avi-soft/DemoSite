@@ -8,7 +8,7 @@ import lombok.Setter;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "state_codes")
+@Table(name = "custom_state_codes")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter

@@ -9,7 +9,7 @@ import lombok.Setter;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "skill_set")
+@Table(name = "custom_skill_set")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
@@ -18,6 +18,7 @@ public class Skill
 {
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    @Column(name = "skill_id")
     private int skill_id;
     @Column(name = "skill_Name")
     private String skill_name;

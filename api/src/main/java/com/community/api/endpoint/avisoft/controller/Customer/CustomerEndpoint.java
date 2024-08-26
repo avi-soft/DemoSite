@@ -416,36 +416,101 @@ public class CustomerEndpoint {
         }
     }
 
-    @GetMapping(value = "/getAllCategories")
-    public ResponseEntity<?> getCategories(HttpServletRequest request, @RequestParam(value = "limit", defaultValue = "20") int limit) {
+    @GetMapping(value = "/savedForms/getProductsByUserId")
+    public ResponseEntity<?> getSavedFormsByUserId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
         try {
             if (catalogService == null) {
                 return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            List<Category> categories = this.catalogService.findAllCategories();
-            List<CustomCategoryWrapper> activeCategories = new ArrayList<>();
+            Long categoryId = Long.parseLong(id);
+            if(categoryId <= 0){
+                return new ResponseEntity<>("CATEGORYCANNOTBELESSTHANOREQAULZERO", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
 
-            Iterator<Category> iterator = categories.iterator();
-            while (iterator.hasNext()) {
-                Category category = iterator.next();
-                if ((((Status) category).getArchived() != 'Y' && category.getActiveEndDate() == null) || (((Status) category).getArchived() != 'Y' && category.getActiveEndDate().after(new Date()))) {
+            Category category = this.catalogService.findCategoryById(categoryId);
 
-                    CustomCategoryWrapper wrapper = new CustomCategoryWrapper();
-                    wrapper.wrapDetails(category, request);
-                    activeCategories.add(wrapper);
+            if (category == null) {
+                return new ResponseEntity<>("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
+            } else if (((Status) category).getArchived() == 'Y') {
+                return new ResponseEntity<>("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
+            List<CustomProductWrapper> products = new ArrayList<>();
+
+            for (BigInteger productId : productIdList) {
+                CustomProduct customProduct = entityManager.find(CustomProduct.class, productId.longValue());
+
+                if(customProduct != null && (((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
+                    CustomProductWrapper wrapper = new CustomProductWrapper();
+                    wrapper.wrapDetails(customProduct);
+                    products.add(wrapper);
                 }
             }
 
-            return new ResponseEntity<>(activeCategories, HttpStatus.OK);
+            CategoryDto categoryDao = new CategoryDto();
+            categoryDao.setCategoryId(category.getId());
+            categoryDao.setCategoryName(category.getName());
+            categoryDao.setProducts(products);
+            categoryDao.setTotalProducts(Long.valueOf(products.size()));
+
+            return ResponseEntity.status(HttpStatus.OK).body(categoryDao);
+
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED" + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @GetMapping(value = "/recommendations/getProductsByUserId")
+    public ResponseEntity<?> getRecommendationsBYUserId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
+        try {
+            if (catalogService == null) {
+                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            Long categoryId = Long.parseLong(id);
+            if(categoryId <= 0){
+                return new ResponseEntity<>("CATEGORYCANNOTBELESSTHANOREQAULZERO", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            Category category = this.catalogService.findCategoryById(categoryId);
+
+            if (category == null) {
+                return new ResponseEntity<>("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
+            } else if (((Status) category).getArchived() == 'Y') {
+                return new ResponseEntity<>("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
+            List<CustomProductWrapper> products = new ArrayList<>();
+
+            for (BigInteger productId : productIdList) {
+                CustomProduct customProduct = entityManager.find(CustomProduct.class, productId.longValue());
+
+                if(customProduct != null && (((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
+                    CustomProductWrapper wrapper = new CustomProductWrapper();
+                    wrapper.wrapDetails(customProduct);
+                    products.add(wrapper);
+                }
+            }
+
+            CategoryDto categoryDao = new CategoryDto();
+            categoryDao.setCategoryId(category.getId());
+            categoryDao.setCategoryName(category.getName());
+            categoryDao.setProducts(products);
+            categoryDao.setTotalProducts(Long.valueOf(products.size()));
+
+            return ResponseEntity.status(HttpStatus.OK).body(categoryDao);
+
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @GetMapping(value = "/getProductsByUserId")
-    public ResponseEntity<?> getProductsByCategoryId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
+    @GetMapping(value = "/filledForms/getProductsByUserId")
+    public ResponseEntity<?> getFilledFormsByUserId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
         try {
             if (catalogService == null) {
                 return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);

@@ -137,9 +137,11 @@ public class AccountEndPoint {
             String mobileNumber = (String) loginDetails.get("mobileNumber");
             String countryCode = (String) loginDetails.get("countryCode");
             Integer role = (Integer) loginDetails.get("role");
-            if(mobileNumber==null||role==null)
+            if(mobileNumber==null)
             {
                 return new ResponseEntity<>("Mobile number cannot be empty",HttpStatus.BAD_REQUEST);
+            }else if(role==null) {
+                return new ResponseEntity<>("role cannot be empty", HttpStatus.BAD_REQUEST);
             }
             if (countryCode == null || countryCode.isEmpty()) {
                 countryCode = Constant.COUNTRY_CODE;
@@ -166,7 +168,14 @@ public class AccountEndPoint {
                     return ResponseEntity.badRequest().body("Mobile number not found");
                 }
             } else if (roleService.findRoleName(role).equals(Constant.roleServiceProvider)) {
-                return serviceProviderService.sendOtp(mobileNumber,countryCode,session);
+                if(serviceProviderService.findServiceProviderByPhone(mobileNumber,countryCode)!=null)
+                {
+                    if(serviceProviderService.findServiceProviderByPhone(mobileNumber,countryCode).getOtp()!=null)
+                        return new ResponseEntity<>("Number not registered",HttpStatus.NOT_FOUND);
+                    return serviceProviderService.sendOtp(mobileNumber, countryCode, session);
+                }
+                else return
+                new ResponseEntity<>("No records found",HttpStatus.NOT_FOUND);
             }
             else
                 return new ResponseEntity<>("Role not specified",HttpStatus.BAD_REQUEST);
@@ -244,6 +253,7 @@ public class AccountEndPoint {
             }
             String username = (String) loginDetails.get("username");
             Integer role = (Integer) loginDetails.get("role");
+            System.out.println(username);
             if(username==null||role==null)
             {
                 return new ResponseEntity<>("username number cannot be empty",HttpStatus.BAD_REQUEST);

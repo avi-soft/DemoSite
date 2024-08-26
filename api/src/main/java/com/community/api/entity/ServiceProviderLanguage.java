@@ -8,14 +8,16 @@ import lombok.Setter;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "custom_privileges")
+@Table(name = "custom_service_provider_language")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
-public class Privileges {
+public class ServiceProviderLanguage {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    int privilege_id;
-    String privilege_name,description;
+    @Column(name = "language_id")
+    private int langauge_id;
+    @Column(name = "language_name")
+    private String language_name;
 }
