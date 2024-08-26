@@ -45,31 +45,20 @@ public class QualificationController
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Something went wrong");
         }
     }
-    @GetMapping("/getAllQualifications")
-    public ResponseEntity<List<Qualification>> getAllQualifications() throws Exception {
-        if(qualificationService.getAllQualifications()!=null)
-        {
-            List<Qualification> qualifications=qualificationService.getAllQualifications();
-            return ResponseEntity.status(HttpStatus.OK).body(qualifications);
-        }
-        else {
-            throw new Exception("Qualification list is empty");
-        }
 
-    }
 
-    @GetMapping("/getQualificationById/{customCustomerId}/{qualificationId}")
-    public ResponseEntity<?> getQualificationById(@PathVariable Long customCustomerId,@PathVariable Long qualificationId) throws EntityDoesNotExistsException {
+    @GetMapping("/getQualificationsByCustomerId/{customCustomerId}")
+    public ResponseEntity<?> getQualificationById(@PathVariable Long customCustomerId) {
         try
         {
-            Qualification qualificationToFind = qualificationService.getQualificationById(customCustomerId,qualificationId);
-            return ResponseEntity.status(HttpStatus.OK).body(Map.of("success",true, "message", "Qualification is founded.", "qualification", qualificationToFind));
+            List<Qualification> qualifications = qualificationService.getQualificationsByCustomerId(customCustomerId);
+            return ResponseEntity.status(HttpStatus.OK).body(Map.of("success",true, "message", "Qualifications are found .", "qualification", qualifications));
         }
-        catch(EntityDoesNotExistsException exception )
-        {
-            exceptionHandling.handleException(exception);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Qualification does not exists with id "+ qualificationId+" for customer with id "+ customCustomerId);
-        } catch (CustomerDoesNotExistsException e) {
+        catch (RuntimeException e) {
+            exceptionHandling.handleException(e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer with id "+customCustomerId+" does not have any qualification");
+        }
+        catch (CustomerDoesNotExistsException e) {
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer does not exists with id "+ customCustomerId);
         }
@@ -79,7 +68,7 @@ public class QualificationController
         }
     }
 
-    @DeleteMapping("/deleteQualification/{qualificationId}")
+    @DeleteMapping("/deleteQualification/{customCustomerId}/{qualificationId}")
     public ResponseEntity<?> deleteQualificationById(@PathVariable Long customCustomerId,@PathVariable Long qualificationId) throws EntityDoesNotExistsException {
         try
         {

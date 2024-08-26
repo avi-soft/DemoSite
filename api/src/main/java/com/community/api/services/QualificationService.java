@@ -61,43 +61,22 @@ public class QualificationService
         qualification.setExaminationName(examinationToAdd);
         qualification.setCustomCustomer(customCustomer);
         customCustomer.getQualificationList().add(qualification);
-        entityManager.merge(customCustomer);
         entityManager.persist(qualification);
         return qualification;
     }
 
-    public List<Qualification> getAllQualifications() {
-            // Create a TypedQuery using the predefined JPQL query
-            TypedQuery<Qualification> query = entityManager.createQuery(FIND_ALL_QUALIFICATIONS_QUERY, Qualification.class);
-
-            // Execute the query and get the result list
-            List<Qualification> qualifications = query.getResultList();
-            if(query.getResultList().isEmpty()) {
-               return null;
-            }
-        return qualifications;
-    }
-
-    public Qualification getQualificationById(Long customCustomerId,Long qualificationId) throws EntityDoesNotExistsException, CustomerDoesNotExistsException {
+    public List<Qualification> getQualificationsByCustomerId(Long customCustomerId) throws EntityDoesNotExistsException, CustomerDoesNotExistsException {
         CustomCustomer customCustomer= entityManager.find(CustomCustomer.class,customCustomerId);
         if(customCustomer==null)
         {
             throw new CustomerDoesNotExistsException("Customer does not exist with id "+ customCustomerId);
         }
        List<Qualification> qualifications= customCustomer.getQualificationList();
-        Qualification qualificationToGet=null;
-        for(Qualification qualification1 : qualifications)
+        if(qualifications.isEmpty())
         {
-            if(qualification1.getId()==qualificationId)
-            {
-                qualificationToGet=qualification1;
-                break;
-            }
+              throw new RuntimeException();
         }
-        if (qualificationToGet == null) {
-            throw new EntityDoesNotExistsException("Qualification with id " + qualificationId+ " does not exists");
-        }
-        return qualificationToGet;
+        return qualifications;
     }
 
     @Transactional
@@ -108,21 +87,21 @@ public class QualificationService
             throw new CustomerDoesNotExistsException("Customer does not exist with id "+ customCustomerId);
         }
         List<Qualification> qualifications= customCustomer.getQualificationList();
-        Qualification qualificationToGet=null;
+        Qualification qualificationToDelete=null;
         for(Qualification qualification1 : qualifications)
         {
             if(qualification1.getId()==qualificationId)
             {
-                qualificationToGet=qualification1;
+                qualificationToDelete=qualification1;
                 break;
             }
         }
-        if (qualificationToGet == null) {
+        if (qualificationToDelete == null) {
             throw new EntityDoesNotExistsException("Qualification with id " + qualificationId+ " does not exists");
         }
-        entityManager.remove(qualificationToGet);
-        entityManager.merge(customCustomer);
-        return qualificationToGet;
+        qualifications.remove(qualificationToDelete);
+        entityManager.remove(qualificationToDelete);
+        return qualificationToDelete;
     }
 
    @Transactional
@@ -168,10 +147,10 @@ public class QualificationService
             qualificationToUpdate.setBoardOrUniversity(qualification.getBoardOrUniversity());
         }
        if (Objects.nonNull(qualification.getMarksObtained())) {
-           qualificationToUpdate.setBoardOrUniversity(String.valueOf(qualification.getMarksObtained()));
+           qualificationToUpdate.setMarksObtained(qualification.getMarksObtained());
        }
        if (Objects.nonNull(qualification.getMarksTotal())) {
-           qualificationToUpdate.setBoardOrUniversity(String.valueOf(qualification.getMarksTotal()));
+           qualificationToUpdate.setMarksTotal(qualification.getMarksTotal());
        }
        if (Objects.nonNull(qualification.getSubjectStream())) {
            qualificationToUpdate.setSubjectStream(qualification.getSubjectStream());
