@@ -20,10 +20,13 @@ public class Constant {
     public static String FIND_DISTRICT = "SELECT d.district_name from Districts d where d.district_id = :district_id";
     public static String FIND_STATE = "SELECT s.state_name from StateCode s where s.state_id = :state_id";
     public static String FETCH_ROLE = "SELECT r.role_name FROM Role r WHERE r.role_id = :role_id";
-    public static String roleUser="CUSTOMER";
-    public static String roleServiceProvider="SERVICE_PROVIDER";
-
+    public static String roleUser = "CUSTOMER";
+    public static String roleServiceProvider = "SERVICE_PROVIDER";
+    public static String GET_SKILLS_COUNT = "SELECT COUNT(*) FROM Skill";
+    public static String GET_ALL_SKILLS = "SELECT s FROM Skill s";
+    public static String GET_LANGUAGES_COUNT = "SELECT COUNT(*) FROM ServiceProviderLanguage";
+    public static String GET_ALL_LANGUAGES = "SELECT s FROM ServiceProviderLanguage s";
     public static String OTP_SERVICE_PROVIDER = "SELECT c.otp FROM ServiceProviderEntity c WHERE c.mobileNumber = :mobileNumber";
     public static String serviceProviderRoles = "SELECT c.privilege_id FROM service_provider_privileges c WHERE c.service_provider_id = :serviceProviderId";
-
 }
+

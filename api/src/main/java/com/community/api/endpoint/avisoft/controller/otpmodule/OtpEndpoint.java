@@ -23,7 +23,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.client.HttpClientErrorException;
 
 import javax.persistence.EntityManager;
@@ -227,8 +232,8 @@ public class OtpEndpoint {
         AuthResponse authResponse = new AuthResponse(token, customer);
         return ResponseEntity.ok(authResponse);
     }
+    @Transactional
     @PostMapping("/serviceProviderSignup")
-    @javax.transaction.Transactional
     public ResponseEntity<String> sendOtpToMobile(@RequestBody Map<String, Object> signupDetails) {
         try {
             String mobileNumber = (String) signupDetails.get("mobileNumber");
@@ -262,7 +267,7 @@ public class OtpEndpoint {
                 serviceProviderEntity.setOtp(otp);
                 serviceProviderEntity.setRole(4);//4 corresponds to service provider
                 entityManager.persist(serviceProviderEntity);
-            } else if(existingServiceProvider.getOtp()!=null){
+            } else{
                 return new ResponseEntity<>("Mobile Number Already Registred",HttpStatus.BAD_REQUEST);
             }
 
