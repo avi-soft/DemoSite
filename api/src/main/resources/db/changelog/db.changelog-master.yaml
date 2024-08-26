@@ -1,5 +1,4 @@
 databaseChangeLog:
-- include:file: db/changelog/V1__insert_data_into_Examination.sql
-
-- include:file: db/changelog/V1__insert_default_data.sql
+- include:
+    file: db/changelog/V1__insert_default_data.sql
 

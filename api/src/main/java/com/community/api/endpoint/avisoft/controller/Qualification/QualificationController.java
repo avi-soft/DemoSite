@@ -1,14 +1,12 @@
 package com.community.api.endpoint.avisoft.controller.Qualification;
 
-import com.community.api.endpoint.customer.Qualification;
+import com.community.api.entity.Qualification;
 import com.community.api.services.QualificationService;
 import com.community.api.services.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,46 +15,51 @@ import java.util.Map;
 public class QualificationController
 {
     protected QualificationService qualificationService;
-    protected ExceptionHandlingService exceptionHandlingService;
-    public QualificationController(QualificationService qualificationService,ExceptionHandlingService exceptionHandlingService)
+    protected ExceptionHandlingImplement exceptionHandling;
+
+    public QualificationController(QualificationService qualificationService,ExceptionHandlingImplement exceptionHandling)
     {
         this.qualificationService=qualificationService;
-        this.exceptionHandlingService=exceptionHandlingService;
+        this.exceptionHandling=exceptionHandling;
     }
 
-    @PostMapping("/{customCustomerId}")
-    public ResponseEntity<Map<String,Object>> addQualification( @PathVariable Long customCustomerId ,@Valid @RequestBody Qualification qualification) throws MethodArgumentNotValidException {
+    @PostMapping("/addQualification/{customCustomerId}")
+    public ResponseEntity<?> addQualification( @PathVariable Long customCustomerId ,@RequestBody Qualification qualification)  {
         try
         {
             Qualification newQualification= qualificationService.addQualification(customCustomerId,qualification);
             return  ResponseEntity.status(HttpStatus.CREATED).body(Map.of("success",true, "message", "Qualification is added successfully.", "qualification", newQualification));
         }
         catch (EntityAlreadyExistsException exception) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Qualification already exists with examinationName"+ qualification.getExaminationName());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            exceptionHandling.handleException(exception);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Qualification already exist with examination name"+" " +qualification.getExaminationName());
         } catch (EntityDoesNotExistsException e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Customer does not exists with customerId "+ customCustomerId);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            exceptionHandling.handleException(e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer does not exist with customer Id"+" "+customCustomerId);
         } catch (ExaminationDoesNotExistsException e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Examination does not exists with examinationName "+ qualification.getExaminationName());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            exceptionHandling.handleException(e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Examination does not found with examinationName"+" " + qualification.getExaminationName());
+        }
+        catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Something went wrong");
         }
     }
-    @GetMapping("")
-    public ResponseEntity<List<Qualification>> getAllQualifications()
-    {
-        List<Qualification> qualifications=qualificationService.getAllQualifications();
-        return ResponseEntity.status(HttpStatus.OK).body(qualifications);
+    @GetMapping("/getAllQualifications")
+    public ResponseEntity<List<Qualification>> getAllQualifications() throws Exception {
+        if(qualificationService.getAllQualifications()!=null)
+        {
+            List<Qualification> qualifications=qualificationService.getAllQualifications();
+            return ResponseEntity.status(HttpStatus.OK).body(qualifications);
+        }
+        else {
+            throw new Exception("Qualification list is empty");
+        }
+
     }
 
-    @GetMapping("/{customCustomerId}/{qualificationId}")
-    public ResponseEntity<Map<String,Object>> getQualificationById(@PathVariable Long customCustomerId,@PathVariable Long qualificationId) throws EntityDoesNotExistsException {
+    @GetMapping("/getQualificationById/{customCustomerId}/{qualificationId}")
+    public ResponseEntity<?> getQualificationById(@PathVariable Long customCustomerId,@PathVariable Long qualificationId) throws EntityDoesNotExistsException {
         try
         {
             Qualification qualificationToFind = qualificationService.getQualificationById(customCustomerId,qualificationId);
@@ -64,36 +67,42 @@ public class QualificationController
         }
         catch(EntityDoesNotExistsException exception )
         {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Qualification does not exists with id "+ qualificationId+" for customer with id"+ customCustomerId);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            exceptionHandling.handleException(exception);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Qualification does not exists with id "+ qualificationId+" for customer with id "+ customCustomerId);
         } catch (CustomerDoesNotExistsException e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Customer does not exists with id "+ customCustomerId);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            exceptionHandling.handleException(e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer does not exists with id "+ customCustomerId);
+        }
+        catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Something went wrong");
         }
     }
 
-    @DeleteMapping("/{qualificationId}")
-    public ResponseEntity<Map<String,Object>> deleteQualificationById(@PathVariable Long qualificationId) throws EntityDoesNotExistsException {
+    @DeleteMapping("/deleteQualification/{qualificationId}")
+    public ResponseEntity<?> deleteQualificationById(@PathVariable Long customCustomerId,@PathVariable Long qualificationId) throws EntityDoesNotExistsException {
         try
         {
-            Qualification qualificationToDelete = qualificationService.deleteQualification(qualificationId);
+            Qualification qualificationToDelete = qualificationService.deleteQualification(customCustomerId,qualificationId);
             return ResponseEntity.status(HttpStatus.OK).body(Map.of("success",true, "message", "Qualification is deleted successfully.", "qualification", qualificationToDelete));
         }
         catch(EntityDoesNotExistsException exception )
         {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Qualification does not exists with id "+ qualificationId);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            exceptionHandling.handleException(exception);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body( "Qualification does not exists with id "+ qualificationId);
+        }
+        catch (CustomerDoesNotExistsException e) {
+            exceptionHandling.handleException(e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer does not exists with id "+ customCustomerId);
+        }
+        catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Something went wrong");
         }
     }
 
-    @PutMapping("/{customCustomerId}/{qualificationId}")
-    public ResponseEntity<Map<String,Object>> updateQualificationById(@PathVariable Long customCustomerId,@PathVariable Long qualificationId, @Valid @RequestBody Qualification qualification) throws EntityDoesNotExistsException, MethodArgumentNotValidException {
+    @PutMapping("/updateQualification/{customCustomerId}/{qualificationId}")
+    public ResponseEntity<?> updateQualificationById(@PathVariable Long customCustomerId,@PathVariable Long qualificationId, @RequestBody Qualification qualification) throws EntityDoesNotExistsException {
         try
         {
             Qualification qualificationToUpdate = qualificationService.updateQualification( customCustomerId,qualificationId,qualification);
@@ -101,26 +110,22 @@ public class QualificationController
         }
         catch(EntityDoesNotExistsException exception )
         {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Qualification does not exists with id "+ qualificationId);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            exceptionHandling.handleException(exception);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Qualification does not exists with id "+ qualificationId);
         }
         catch (EntityAlreadyExistsException exception) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Qualification already exists");
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+            exceptionHandling.handleException(exception);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Qualification already exists");
         } catch (ExaminationDoesNotExistsException e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Examination does not exists with Examination name "+ qualification.getExaminationName());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            exceptionHandling.handleException(e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body( "Examination does not exists with Examination name "+ qualification.getExaminationName());
         } catch (CustomerDoesNotExistsException e) {
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", false);
-            response.put("message", "Customer does not exists with customer id "+ qualification.getExaminationName());
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+            exceptionHandling.handleException(e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer does not exists with customer id "+ qualification.getExaminationName());
+        }
+        catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Something went wrong");
         }
     }
 }

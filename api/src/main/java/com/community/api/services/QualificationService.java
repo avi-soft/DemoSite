@@ -1,24 +1,16 @@
 package com.community.api.services;
 
-import com.community.api.component.Constant;
 import com.community.api.endpoint.avisoft.controller.Qualification.ExaminationController;
 import com.community.api.entity.CustomCustomer;
-import com.community.api.endpoint.customer.Qualification;
+import com.community.api.entity.Qualification;
 import com.community.api.entity.Examination;
-import com.community.api.services.exception.CustomerDoesNotExistsException;
-import com.community.api.services.exception.EntityDoesNotExistsException;
-import com.community.api.services.exception.EntityAlreadyExistsException;
-import com.community.api.services.exception.ExaminationDoesNotExistsException;
-import org.springframework.http.ResponseEntity;
+import com.community.api.services.exception.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
-import java.lang.reflect.Field;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 import static com.community.api.component.Constant.FIND_ALL_QUALIFICATIONS_QUERY;
@@ -36,7 +28,7 @@ public class QualificationService
     }
     @Transactional
     public Qualification addQualification(Long customCustomerId, Qualification qualification)
-            throws MethodArgumentNotValidException, EntityDoesNotExistsException, EntityAlreadyExistsException, ExaminationDoesNotExistsException {
+            throws EntityDoesNotExistsException, EntityAlreadyExistsException, ExaminationDoesNotExistsException {
 
         CustomCustomer customCustomer = entityManager.find(CustomCustomer.class, customCustomerId);
         if (customCustomer == null) {
@@ -75,12 +67,14 @@ public class QualificationService
     }
 
     public List<Qualification> getAllQualifications() {
-        // Create a TypedQuery using the predefined JPQL query
-        TypedQuery<Qualification> query = entityManager.createQuery(FIND_ALL_QUALIFICATIONS_QUERY, Qualification.class);
+            // Create a TypedQuery using the predefined JPQL query
+            TypedQuery<Qualification> query = entityManager.createQuery(FIND_ALL_QUALIFICATIONS_QUERY, Qualification.class);
 
-        // Execute the query and get the result list
-        List<Qualification> qualifications = query.getResultList();
-
+            // Execute the query and get the result list
+            List<Qualification> qualifications = query.getResultList();
+            if(query.getResultList().isEmpty()) {
+               return null;
+            }
         return qualifications;
     }
 
@@ -107,13 +101,28 @@ public class QualificationService
     }
 
     @Transactional
-    public Qualification deleteQualification(Long qualificationId) throws EntityDoesNotExistsException {
-        Qualification qualification = entityManager.find(Qualification.class, qualificationId);
-        if (qualification == null) {
-            throw new EntityDoesNotExistsException("Qualification with id " + qualificationId+ " does not exist");
+    public Qualification deleteQualification(Long customCustomerId, Long qualificationId) throws EntityDoesNotExistsException, CustomerDoesNotExistsException {
+        CustomCustomer customCustomer= entityManager.find(CustomCustomer.class,customCustomerId);
+        if(customCustomer==null)
+        {
+            throw new CustomerDoesNotExistsException("Customer does not exist with id "+ customCustomerId);
         }
-        entityManager.remove(qualification);
-        return qualification;
+        List<Qualification> qualifications= customCustomer.getQualificationList();
+        Qualification qualificationToGet=null;
+        for(Qualification qualification1 : qualifications)
+        {
+            if(qualification1.getId()==qualificationId)
+            {
+                qualificationToGet=qualification1;
+                break;
+            }
+        }
+        if (qualificationToGet == null) {
+            throw new EntityDoesNotExistsException("Qualification with id " + qualificationId+ " does not exists");
+        }
+        entityManager.remove(qualificationToGet);
+        entityManager.merge(customCustomer);
+        return qualificationToGet;
     }
 
    @Transactional

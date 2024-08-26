@@ -164,3 +164,9 @@ INSERT INTO custom_skill_set (skill_id, skill_name) VALUES (2, 'Photoshop');
 INSERT INTO custom_skill_set (skill_id, skill_name) VALUES (3, 'Excel');
 INSERT INTO custom_skill_set (skill_id, skill_name) VALUES (4, 'Java Programming');
 INSERT INTO custom_skill_set (skill_id, skill_name) VALUES (5, 'Public Speaking');
+
+INSERT INTO examination(examination_id,examination_name) VALUES(1,'10th');
+INSERT INTO examination(examination_id,examination_name) VALUES(2,'10+2');
+INSERT INTO examination(examination_id,examination_name) VALUES(3,'Bachelors');
+INSERT INTO examination(examination_id,examination_name) VALUES(4,'Masters');
+INSERT INTO examination(examination_id,examination_name) VALUES(5,'PhD');

@@ -29,10 +29,6 @@
                 <artifactId>maven-dependency-plugin</artifactId>
             </plugin>
             <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
-            </plugin>
-            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
@@ -178,7 +174,7 @@
             <groupId>org.liquibase</groupId>
 
             <artifactId>liquibase-core</artifactId>
-            <version>4.20.0</version> <!-- Or the latest version -->
+            <version>4.24.0</version> <!-- Or the latest version -->
             <exclusions>
                 <exclusion>
                     <groupId>org.yaml</groupId>

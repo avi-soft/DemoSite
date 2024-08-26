@@ -1,14 +1,8 @@
-package com.community.api.endpoint.customer;
-import com.community.api.entity.CustomCustomer;
-import com.community.api.entity.Examination;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+package com.community.api.entity;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.Size;
 
 @Entity
 @Data
@@ -18,28 +12,29 @@ public class Qualification {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(name = "institution_name", nullable = false)
     private String institutionName;
 
-    @Column(nullable = false)
+    @Column(name ="year_of_passing", nullable = false)
     private int yearOfPassing;
 
-    @Column(nullable = false)
+    @Column(name ="board_or_university", nullable = false)
     private String boardOrUniversity;
 
-    @Column(nullable = false)
+    @Column(name = "subject_stream",nullable = false)
     private String subjectStream;
 
-    @Column(nullable = false)
+    @Column(name = "is_percentage", nullable = false)
     private boolean isPercentage;
 
-    @Column(nullable = false)
+    @Column(name = "grade_or_percentage_value",nullable = false)
     private String gradeOrPercentageValue;
 
-    @Column(nullable = false)
+    @Column(name = "total_marks",nullable = false)
     private int marksTotal;
-    @Column(nullable = false)
+    @Column(name = "marks_obtained", nullable = false)
     private int marksObtained;
+    @Column(name = "examination_name", nullable = false)
     private String examinationName;
 
 

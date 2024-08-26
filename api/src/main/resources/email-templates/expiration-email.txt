@@ -1,0 +1,6 @@
+Dear {firstName} {lastName},
+
+This is a reminder that your application form is about to expire. Please take necessary action to avoid any inconvenience.
+
+Best regards,
+Avisoft

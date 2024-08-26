@@ -43,6 +43,12 @@ import java.util.Properties;
 @Import({CoreConfig.class, ApiSecurityConfig.class})
 public class ApiConfig {
 
+    @Value("${email.from}")
+    private String fromEmail;
+
+    @Value("${email.password}")
+    private String emailPassword;
+
     @Bean
     @ConditionalOnProperty("jmx.app.name")
     public StringFactoryBean blJmxNamingBean() {
@@ -69,7 +75,6 @@ public class ApiConfig {
     public List<String> adminOverrideCache() {
         return Collections.singletonList("classpath:bl-override-ehcache.xml");
     }
-
     private Connector createStandardConnector(int port) {
         Connector connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
         connector.setPort(port);
@@ -79,27 +84,19 @@ public class ApiConfig {
     @Bean
     @Primary
     public JavaMailSender blMailSender() {
-        // Configuration properties
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
-
-        // Set your mail server host and port
         mailSender.setHost("smtp.gmail.com");
-        mailSender.setPort(587);
-
-        // Set your mail server credentials
-        mailSender.setUsername("simranjit.kaur@avisoft.io");
-        mailSender.setPassword("uP@8cCe!");
-
-        // Configure additional mail properties if needed
+        mailSender.setPort(465);
+        mailSender.setUsername(fromEmail);
+        mailSender.setPassword(emailPassword);
         Properties props = mailSender.getJavaMailProperties();
         props.put("mail.transport.protocol", "smtp");
         props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.starttls.enable", "true");
-        props.put("mail.debug", "true"); // Enable to see mail sending logs
-        props.put("mail.smtp.ssl.protocols", "TLSv1.2");
+        props.put("mail.smtp.ssl.enable", "true"); // Enable SSL
+        props.put("mail.smtp.socketFactory.port", "465"); // SSL Port
+        props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory"); // SSL Factory Class
+        props.put("mail.smtp.ssl.protocols", "TLSv1.3");
         props.put("mail.smtp.ssl.trust", "smtp.gmail.com");
-
-
         return mailSender;
     }
 
