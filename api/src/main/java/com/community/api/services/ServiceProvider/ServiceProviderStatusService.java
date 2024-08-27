@@ -18,13 +18,19 @@ import java.util.List;
 @Service
 public class ServiceProviderStatusService {
 
-    @Autowired
     private EntityManager entityManager;
 
-    @Autowired
     private ExceptionHandlingImplement exceptionHandling;
-    @Autowired
+
     private SharedUtilityService sharedUtilityService;
+
+    public ServiceProviderStatusService(EntityManager entityManager,ExceptionHandlingImplement exceptionHandling,SharedUtilityService sharedUtilityService)
+    {
+        this.entityManager = entityManager;
+        this.exceptionHandling = exceptionHandling;
+        this.sharedUtilityService=sharedUtilityService;
+    }
+
     @Transactional
     public ResponseEntity<?> addStatus(ServiceProviderStatus serviceProviderStatus) {
         try {

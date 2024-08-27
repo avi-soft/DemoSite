@@ -177,3 +177,8 @@ VALUES (3, 'APPROVAL_PENDING', 'Application is awaiting approval', CURRENT_TIMES
 INSERT INTO ServiceProviderStatus (status_id, status_name, description, created_at, updated_at, created_by)
 VALUES (4, 'APPROVED', 'Application has been approved', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'SUPER_ADMIN');
 
+INSERT INTO examination(examination_id,examination_name) VALUES(1,'10th');
+INSERT INTO examination(examination_id,examination_name) VALUES(2,'10+2');
+INSERT INTO examination(examination_id,examination_name) VALUES(3,'Bachelors');
+INSERT INTO examination(examination_id,examination_name) VALUES(4,'Masters');
+INSERT INTO examination(examination_id,examination_name) VALUES(5,'PhD');

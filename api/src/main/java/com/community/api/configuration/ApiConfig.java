@@ -28,9 +28,13 @@ import org.springframework.context.annotation.Import;
 
 import com.community.core.config.CoreConfig;
 import com.community.core.config.StringFactoryBean;
+import org.springframework.context.annotation.Primary;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * @author Elbert Bautista (elbertbautista)
@@ -38,6 +42,12 @@ import java.util.List;
 @Configuration
 @Import({CoreConfig.class, ApiSecurityConfig.class})
 public class ApiConfig {
+
+    @Value("${email.from}")
+    private String fromEmail;
+
+    @Value("${email.password}")
+    private String emailPassword;
 
     @Bean
     @ConditionalOnProperty("jmx.app.name")
@@ -65,11 +75,30 @@ public class ApiConfig {
     public List<String> adminOverrideCache() {
         return Collections.singletonList("classpath:bl-override-ehcache.xml");
     }
-
     private Connector createStandardConnector(int port) {
         Connector connector = new Connector("org.apache.coyote.http11.Http11NioProtocol");
         connector.setPort(port);
         return connector;
     }
+
+    @Bean
+    @Primary
+    public JavaMailSender blMailSender() {
+        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
+        mailSender.setHost("smtp.gmail.com");
+        mailSender.setPort(465);
+        mailSender.setUsername(fromEmail);
+        mailSender.setPassword(emailPassword);
+        Properties props = mailSender.getJavaMailProperties();
+        props.put("mail.transport.protocol", "smtp");
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.ssl.enable", "true"); // Enable SSL
+        props.put("mail.smtp.socketFactory.port", "465"); // SSL Port
+        props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory"); // SSL Factory Class
+        props.put("mail.smtp.ssl.protocols", "TLSv1.3");
+        props.put("mail.smtp.ssl.trust", "smtp.gmail.com");
+        return mailSender;
+    }
+
 
 }

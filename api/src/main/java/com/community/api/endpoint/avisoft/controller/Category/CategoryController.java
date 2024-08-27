@@ -8,7 +8,8 @@ import com.community.api.dto.CustomProductWrapper;
 import com.community.api.services.CategoryService;
 import com.community.api.services.exception.ExceptionHandlingService;
 import org.broadleafcommerce.common.persistence.Status;
-import org.broadleafcommerce.core.catalog.domain.*;
+import org.broadleafcommerce.core.catalog.domain.Category;
+import org.broadleafcommerce.core.catalog.domain.CategoryImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +27,10 @@ import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 
 @RestController
 @RequestMapping(value = "/categoryCustom")
@@ -36,11 +40,15 @@ public class CategoryController extends CatalogEndpoint {
     private static final String CATEGORYCANNOTBELESSTHANOREQAULZERO = "CategoryId cannot be <= 0";
     private static final String SOMEEXCEPTIONOCCURRED = "Some Exception Occurred";
 
-    @Autowired
     private ExceptionHandlingService exceptionHandlingService;
+    private CategoryService categoryService;
 
     @Autowired
-    private CategoryService categoryService;
+    public CategoryController(ExceptionHandlingService exceptionHandlingService,CategoryService categoryService)
+    {
+        this.exceptionHandlingService = exceptionHandlingService;
+        this.categoryService = categoryService;
+    }
 
     @PersistenceContext
     private EntityManager entityManager;

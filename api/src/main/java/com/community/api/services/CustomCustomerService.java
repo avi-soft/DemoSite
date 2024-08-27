@@ -13,8 +13,11 @@ import java.util.regex.Pattern;
 
 @Service
 public class CustomCustomerService {
-    @Autowired
     private EntityManager em;
+    public CustomCustomerService(EntityManager em)
+    {
+        this.em= em;
+    }
 
     public Boolean validateInput(CustomCustomer customer) {
         if (customer.getUsername().isEmpty() || customer.getUsername() == null || customer.getMobileNumber().isEmpty() || customer.getMobileNumber() == null || customer.getPassword() == null || customer.getPassword().isEmpty())
