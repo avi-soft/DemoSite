@@ -36,5 +36,7 @@ public class Constant {
     public static String GET_SERVICE_PROVIDER_DEFAULT_ADDRESS="SELECT a from ServiceProviderAddressRef a where address_name =:address_name";
     public static String GET_COUNT_OF_ROLES="Select COUNT(*) from Role";
     public static String GET_COUNT_OF_STATUS="Select COUNT(*) from ServiceProviderStatus";
-}
+    public static String GET_ALL_STATUS="Select s from ServiceProviderStatus s";
+    public static String GET_ALL_ROLES="Select r from Role r";
 
+}

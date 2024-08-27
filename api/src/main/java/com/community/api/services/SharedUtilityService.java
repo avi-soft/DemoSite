@@ -1,5 +1,7 @@
 package com.community.api.services;
 
+import com.community.api.component.Constant;
+import com.community.api.entity.Skill;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -7,6 +9,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Service
 public class SharedUtilityService {

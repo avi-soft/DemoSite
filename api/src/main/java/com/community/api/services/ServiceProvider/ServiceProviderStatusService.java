@@ -2,6 +2,7 @@ package com.community.api.services.ServiceProvider;
 
 import com.community.api.component.Constant;
 import com.community.api.endpoint.serviceProvider.ServiceProviderStatus;
+import com.community.api.entity.Role;
 import com.community.api.services.SharedUtilityService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
+import java.util.List;
 
 @Service
 public class ServiceProviderStatusService {
@@ -38,5 +41,9 @@ public class ServiceProviderStatusService {
             exceptionHandling.handleException(exception);
             return new ResponseEntity<>("Error Creating status: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+    public List<ServiceProviderStatus> findAllStatusList() {
+        TypedQuery<ServiceProviderStatus> query = entityManager.createQuery(Constant.GET_ALL_STATUS, ServiceProviderStatus.class);
+        return query.getResultList();
     }
 }

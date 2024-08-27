@@ -29,4 +29,13 @@ public class RoleController {
             return new ResponseEntity<>("Error aadding role", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    @GetMapping("/getRoleList")
+    public ResponseEntity<?> getRoleList() {
+        try{
+            return new ResponseEntity<>(roleService.findAllRoleList(),HttpStatus.OK);
+        }catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some updating: " + e.getMessage());
+        }
+    }
 }

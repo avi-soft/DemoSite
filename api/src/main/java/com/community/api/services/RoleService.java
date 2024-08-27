@@ -2,6 +2,7 @@ package com.community.api.services;
 
 import com.community.api.component.Constant;
 import com.community.api.entity.Role;
+import com.community.api.entity.Skill;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -9,9 +10,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Service
 public class RoleService {
@@ -46,6 +49,10 @@ public class RoleService {
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error saving role : " + e.getMessage());
         }
+    }
+    public List<Role> findAllRoleList() {
+        TypedQuery<Role> query = entityManager.createQuery(Constant.GET_ALL_ROLES, Role.class);
+        return query.getResultList();
     }
 
 }
