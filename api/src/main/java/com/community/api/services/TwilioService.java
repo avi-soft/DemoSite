@@ -25,7 +25,6 @@ import java.util.Random;
 @Service
 public class TwilioService {
 
-    @Autowired
     private ExceptionHandlingImplement exceptionHandling;
 
     @Value("${twilio.accountSid}")
@@ -36,14 +35,23 @@ public class TwilioService {
 
     @Value("${twilio.phoneNumber}")
     private String twilioPhoneNumber;
-    @Autowired
+
     private CustomCustomerService customCustomerService;
-    @Autowired
     private EntityManager entityManager;
-    @Autowired
     private HttpSession httpSession;
+
     @Autowired
+
     private CustomerService customerService;
+
+    public TwilioService(ExceptionHandlingImplement exceptionHandlingImplement,CustomCustomerService customCustomerService,EntityManager entityManager,HttpSession httpSession,CustomerService customerService)
+    {
+         this.exceptionHandling = exceptionHandlingImplement;
+         this.customCustomerService = customCustomerService;
+         this.entityManager = entityManager;
+         this.httpSession= httpSession;
+         this.customerService=customerService;
+    }
 
     @Transactional
     public ResponseEntity<String> sendOtpToMobile(String mobileNumber, String countryCode) {

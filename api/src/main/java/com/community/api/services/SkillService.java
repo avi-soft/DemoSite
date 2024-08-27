@@ -1,6 +1,7 @@
 package com.community.api.services;
 
 import com.community.api.component.Constant;
+import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.Districts;
 import com.community.api.entity.Skill;
 import com.community.api.services.exception.ExceptionHandlingImplement;

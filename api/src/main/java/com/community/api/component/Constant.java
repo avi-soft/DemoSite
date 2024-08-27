@@ -5,13 +5,16 @@ public class Constant {
     public static String PHONE_QUERY = "SELECT c FROM CustomCustomer c WHERE c.mobileNumber = :mobileNumber AND c.countryCode = :countryCode";
     public static String PHONE_QUERY_OTP = "SELECT c FROM CustomCustomer c WHERE c.mobileNumber = :mobileNumber AND c.countryCode = :countryCode AND c.otp=:otp";
     public static String ID_QUERY = "SELECT c FROM CustomCustomer c WHERE c.customer_id = :customer_id";
+    public static final String FIND_ALL_QUALIFICATIONS_QUERY = "SELECT q FROM Qualification q";
+    public static final String FIND_ALL_EXAMINATIONS_QUERY = "SELECT q FROM Examination q";
+    public static final String FIND_EXAMINATION_BY_NAME_QUERY = "SELECT e FROM Examination e WHERE e.examinationName = :examinationName";
     public static String PHONE_QUERY_SERVICE_PROVIDER = "SELECT c FROM ServiceProviderEntity c WHERE c.mobileNumber = :mobileNumber AND c.country_code = :country_code";
-    //role for creating
     public static String USERNAME_QUERY_SERVICE_PROVIDER = "SELECT c FROM ServiceProviderEntity c WHERE c.user_name = :username";
     public static final String ADMIN = "ADMIN";
     public static final String SUPER_ADMIN = "SUPER_ADMIN";
     public static final String SERVICE_PROVIDER = "SERVICE_PROVIDER";
     public static final String USER = "USER";
+    public static final int INITIAL_STATUS=1;
     public static String STATE_CODE_QUERY = "SELECT s FROM StateCode s WHERE s.state_name = :state_name";
     public static final String SP_USERNAME_QUERY = "SELECT s FROM ServiceProviderEntity s WHERE s.user_name LIKE :username";
     public static final String SP_EMAIL_QUERY = "SELECT s FROM ServiceProviderEntity s WHERE s.primary_email LIKE :email";
@@ -27,9 +30,23 @@ public class Constant {
     public static String GET_LANGUAGES_COUNT = "SELECT COUNT(*) FROM ServiceProviderLanguage";
     public static String GET_ALL_LANGUAGES = "SELECT s FROM ServiceProviderLanguage s";
     public static String OTP_SERVICE_PROVIDER = "SELECT c.otp FROM ServiceProviderEntity c WHERE c.mobileNumber = :mobileNumber";
+<<<<<<< HEAD
     public static String SERVICE_PROVIDER_PRIVILEGE = "SELECT c.privilege_id FROM service_provider_privileges c WHERE c.service_provider_id = :serviceProviderId";
+=======
+    public static String serviceProviderRoles = "SELECT c.privilege_id FROM service_provider_privileges c WHERE c.service_provider_id = :serviceProviderId";
+    public static String GET_PRIVILEGES_COUNT = "SELECT COUNT(*) FROM Privileges";
+    public static String GET_ALL_PRIVILEGES = "SELECT p FROM Privileges s";
+    public static String GET_INFRA_COUNT = "SELECT COUNT(*) FROM ServiceProviderInfra";
+    public static String GET_INFRA_LIST = "SELECT s FROM ServiceProviderInfra s";
+    public static String GET_SERVICE_PROVIDER_DEFAULT_ADDRESS="SELECT a from ServiceProviderAddressRef a where address_name =:address_name";
+    public static String GET_COUNT_OF_ROLES="Select COUNT(*) from Role";
+    public static String GET_COUNT_OF_STATUS="Select COUNT(*) from ServiceProviderStatus";
+    public static String GET_ALL_STATUS="Select s from ServiceProviderStatus s";
+    public static String GET_ALL_ROLES="Select r from Role r";
+>>>>>>> 37d5f340af50f36cb96d82666f797f9dfba4ed49
     public static String SOME_EXCEPTION_OCCURRED = "Some Exception Occurred";
     public static String NUMBER_FORMAT_EXCEPTION = "Number Format Exception";
     public static String CATALOG_SERVICE_NOT_INITIALIZED = "Catalog Service Not Initialized";
+
 }
 

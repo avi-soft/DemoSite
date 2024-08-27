@@ -140,16 +140,17 @@ INSERT INTO custom_privileges (privilege_id, privilege_name, description) VALUES
 
 
 INSERT INTO custom_role_table (role_id, role_name, created_at, updated_at, created_by) VALUES
-(1, 'SUPER_ADMIN', CURRENT_TIMESTAMP, NULL, 'SUPER_ADMIN'),
-(2, 'ADMIN', CURRENT_TIMESTAMP, NULL, 'SUPER_ADMIN'),
-(3, 'ADMIN_SERVICE_PROVIDER', CURRENT_TIMESTAMP, NULL, 'SUPER_ADMIN'),
-(4, 'SERVICE_PROVIDER', CURRENT_TIMESTAMP, NULL, 'SUPER_ADMIN'),
-(5, 'CUSTOMER', CURRENT_TIMESTAMP, NULL, 'SUPER_ADMIN');
+(1, 'SUPER_ADMIN', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'SUPER_ADMIN'),
+(2, 'ADMIN', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'SUPER_ADMIN'),
+(3, 'ADMIN_SERVICE_PROVIDER', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'SUPER_ADMIN'),
+(4, 'SERVICE_PROVIDER', CURRENT_TIMESTAMP,CURRENT_TIMESTAMP, 'SUPER_ADMIN'),
+(5, 'CUSTOMER', CURRENT_TIMESTAMP,CURRENT_TIMESTAMP, 'SUPER_ADMIN');
 
-INSERT INTO custom_service_provider_infra (infra_id, infra_name) VALUES (1, 'Computer');
-INSERT INTO custom_service_provider_infra (infra_id, infra_name) VALUES (2, 'Printer');
-INSERT INTO custom_service_provider_infra (infra_id, infra_name) VALUES (3, 'Scanner');
-INSERT INTO custom_service_provider_infra (infra_id, infra_name) VALUES (4, 'Broadband Internet');
+INSERT INTO custom_service_provider_infra (infra_id, infra_name) VALUES (1, 'DESKTOP');
+INSERT INTO custom_service_provider_infra (infra_id, infra_name) VALUES (2, 'SCANNER');
+INSERT INTO custom_service_provider_infra (infra_id, infra_name) VALUES (3, 'LAPTOP');
+INSERT INTO custom_service_provider_infra (infra_id, infra_name) VALUES (4, 'PRINTER');
+INSERT INTO custom_service_provider_infra (infra_id, infra_name) VALUES (5, 'INTERNET_BROADBAND');
 
 INSERT INTO custom_service_provider_language (language_id, language_name) VALUES (1, 'Hindi');
 INSERT INTO custom_service_provider_language (language_id, language_name) VALUES (2, 'Bengali');
@@ -159,8 +160,25 @@ INSERT INTO custom_service_provider_language (language_id, language_name) VALUES
 INSERT INTO custom_service_provider_language (language_id, language_name) VALUES (6, 'Gujarati');
 INSERT INTO custom_service_provider_language (language_id, language_name) VALUES (7, 'Punjabi');
 
-INSERT INTO custom_skill_set (skill_id, skill_name) VALUES (1, 'Typing');
-INSERT INTO custom_skill_set (skill_id, skill_name) VALUES (2, 'Photoshop');
-INSERT INTO custom_skill_set (skill_id, skill_name) VALUES (3, 'Excel');
-INSERT INTO custom_skill_set (skill_id, skill_name) VALUES (4, 'Java Programming');
-INSERT INTO custom_skill_set (skill_id, skill_name) VALUES (5, 'Public Speaking');
+INSERT INTO custom_skill_set (skill_id, skill_name) VALUES (1, 'Form Filling Knowledge/Expertise');
+INSERT INTO custom_skill_set (skill_id, skill_name) VALUES (2, 'Resizing & Uploading Image/Document');
+INSERT INTO custom_skill_set (skill_id, skill_name) VALUES (3, 'Executing Online Payment/Transactions');
+INSERT INTO custom_skill_set (skill_id, skill_name) VALUES (4, 'Apply To Various Government Schemes');
+
+INSERT INTO ServiceProviderStatus (status_id, status_name, description, created_at, updated_at, created_by)
+VALUES (1, 'DOCUMENTS_SUBMISSION_PENDING', 'Documents submission is pending', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'SUPER_ADMIN');
+
+INSERT INTO ServiceProviderStatus (status_id, status_name, description, created_at, updated_at, created_by)
+VALUES (2, 'APPLIED', 'Application has been submitted', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'SUPER_ADMIN');
+
+INSERT INTO ServiceProviderStatus (status_id, status_name, description, created_at, updated_at, created_by)
+VALUES (3, 'APPROVAL_PENDING', 'Application is awaiting approval', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'SUPER_ADMIN');
+
+INSERT INTO ServiceProviderStatus (status_id, status_name, description, created_at, updated_at, created_by)
+VALUES (4, 'APPROVED', 'Application has been approved', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'SUPER_ADMIN');
+
+INSERT INTO examination(examination_id,examination_name) VALUES(1,'10th');
+INSERT INTO examination(examination_id,examination_name) VALUES(2,'10+2');
+INSERT INTO examination(examination_id,examination_name) VALUES(3,'Bachelors');
+INSERT INTO examination(examination_id,examination_name) VALUES(4,'Masters');
+INSERT INTO examination(examination_id,examination_name) VALUES(5,'PhD');

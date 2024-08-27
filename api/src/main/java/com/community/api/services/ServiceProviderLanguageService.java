@@ -1,6 +1,7 @@
 package com.community.api.services;
 
 import com.community.api.component.Constant;
+import com.community.api.entity.ServiceProviderInfra;
 import com.community.api.entity.ServiceProviderLanguage;
 import com.community.api.entity.Skill;
 import com.community.api.services.exception.ExceptionHandlingImplement;
@@ -32,7 +33,7 @@ public class ServiceProviderLanguageService {
                 return new ResponseEntity<>("Error saving language : Language Name required", HttpStatus.BAD_REQUEST);
             ServiceProviderLanguage languageTobeSaved=new ServiceProviderLanguage();
             int id=(int)findCount();
-            languageTobeSaved.setLangauge_id(++id);
+            languageTobeSaved.setLanguage_id(++id);
             languageTobeSaved.setLanguage_name(languageName);
             entityManager.persist(languageTobeSaved);
             return new ResponseEntity<>(languageTobeSaved,HttpStatus.OK);
@@ -51,4 +52,5 @@ public class ServiceProviderLanguageService {
         TypedQuery<ServiceProviderLanguage> query = entityManager.createQuery(Constant.GET_ALL_LANGUAGES, ServiceProviderLanguage.class);
         return query.getResultList();
     }
+
 }
