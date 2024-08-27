@@ -20,7 +20,7 @@ public class RoleController {
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
     @PostMapping("addRole")
-    public ResponseEntity<?> getRoleList(@RequestBody Role role)
+    public ResponseEntity<?> addRole(@RequestBody Role role)
     {
         try{
             return roleService.addRole(role);
@@ -30,7 +30,7 @@ public class RoleController {
         }
     }
     @GetMapping("/getRoleList")
-    public ResponseEntity<?> getRoleList() {
+    public ResponseEntity<?> getRoles() {
         try{
             return new ResponseEntity<>(roleService.findAllRoleList(),HttpStatus.OK);
         }catch (Exception e) {
