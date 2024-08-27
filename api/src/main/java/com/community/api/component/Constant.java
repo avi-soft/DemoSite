@@ -40,5 +40,8 @@ public class Constant {
     public static String GET_COUNT_OF_STATUS="Select COUNT(*) from ServiceProviderStatus";
     public static String GET_ALL_STATUS="Select s from ServiceProviderStatus s";
     public static String GET_ALL_ROLES="Select r from Role r";
+    public static String SOME_EXCEPTION_OCCURRED = "Some Exception Occurred";
+    public static String NUMBER_FORMAT_EXCEPTION = "Number Format Exception";
+    public static String CATALOG_SERVICE_NOT_INITIALIZED = "Catalog Service Not Initialized";
 
 }
