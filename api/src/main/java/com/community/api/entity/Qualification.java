@@ -1,4 +1,5 @@
 package com.community.api.entity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -37,9 +38,8 @@ public class Qualification {
     @Column(name = "examination_name", nullable = false)
     private String examinationName;
 
-
     @ManyToOne
-//    @JsonIgnore
+    @JsonIgnore
     @JoinColumn(name = "custom_customer_id")
     private CustomCustomer customCustomer;
 }

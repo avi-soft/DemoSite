@@ -110,7 +110,7 @@ public class QualificationController
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body( "Examination does not exists with Examination name "+ qualification.getExaminationName());
         } catch (CustomerDoesNotExistsException e) {
             exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer does not exists with customer id "+ qualification.getExaminationName());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer does not exists with customer id "+ customCustomerId);
         }
         catch (Exception e) {
             exceptionHandling.handleException(e);
