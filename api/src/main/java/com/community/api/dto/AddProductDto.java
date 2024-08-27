@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.broadleafcommerce.common.money.Money;
 
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import java.util.Date;
 
 @Data
@@ -19,6 +21,20 @@ public class AddProductDto {
     Date activeEndDate;
     Date goLiveDate;
     Integer priorityLevel;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    Date examDateFrom;
+    @Temporal(TemporalType.TIMESTAMP)
+    Date examDateTo;
+    Long notifyingAuthorityId;
+    Money platformFee;
+    Character jobGroup;
+    Long reservedCategory;
+
+    @Temporal(TemporalType.TIMESTAMP)
+    Long bornAfter;
+    @Temporal(TemporalType.TIMESTAMP)
+    Long bornBefore;
 
     @JsonIgnore
     String url;
