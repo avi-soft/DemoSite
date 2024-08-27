@@ -68,8 +68,6 @@ public class ProductController extends CatalogEndpoint {
                                         @PathVariable Long categoryId,
                                         @RequestHeader(value = "Authorization") String authHeader) {
 
-
-
         try {
 
             String jwtToken = authHeader.substring(7);
@@ -172,6 +170,19 @@ public class ProductController extends CatalogEndpoint {
             sku.setActiveEndDate(addProductDto.getActiveEndDate());
             sku.setDefaultProduct(product);
             catalogService.saveSku(sku);
+
+            // validation for new entries in the product.
+            if(addProductDto.getJobGroup() == null || !(addProductDto.getJobGroup().equals('A') || addProductDto.getJobGroup().equals('B') || addProductDto.getJobGroup().equals('C') || addProductDto.getJobGroup().equals('D'))) {
+                return new ResponseEntity<>("Product Job Group cannot be null or other than A/B/C/D", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            if(addProductDto.getExamDateFrom() == null || addProductDto.getExamDateTo() == null){
+                return new ResponseEntity<>("Tentative examination date from-to cannot be null", HttpStatus.INTERNAL_SERVER_ERROR);
+            }else if(!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate()) || !addProductDto.getExamDateTo().after(addProductDto.getActiveEndDate())) {
+                return new ResponseEntity<>("Both Tentative examination data must be after GoLiveDate", HttpStatus.INTERNAL_SERVER_ERROR);
+            }else if(addProductDto.getExamDateTo().before(addProductDto.getExamDateFrom())){
+                return new ResponseEntity<>("Tentative Exam date To must be either equal or before of Tentative Exam date From", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
 
             product.setDefaultSku(sku); // Set default SKU in the product
             CustomProductState customProductState = productService.getCustomProductStateById(1L);

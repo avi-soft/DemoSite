@@ -30,10 +30,7 @@ public class Constant {
     public static String GET_LANGUAGES_COUNT = "SELECT COUNT(*) FROM ServiceProviderLanguage";
     public static String GET_ALL_LANGUAGES = "SELECT s FROM ServiceProviderLanguage s";
     public static String OTP_SERVICE_PROVIDER = "SELECT c.otp FROM ServiceProviderEntity c WHERE c.mobileNumber = :mobileNumber";
-<<<<<<< HEAD
     public static String SERVICE_PROVIDER_PRIVILEGE = "SELECT c.privilege_id FROM service_provider_privileges c WHERE c.service_provider_id = :serviceProviderId";
-=======
-    public static String serviceProviderRoles = "SELECT c.privilege_id FROM service_provider_privileges c WHERE c.service_provider_id = :serviceProviderId";
     public static String GET_PRIVILEGES_COUNT = "SELECT COUNT(*) FROM Privileges";
     public static String GET_ALL_PRIVILEGES = "SELECT p FROM Privileges s";
     public static String GET_INFRA_COUNT = "SELECT COUNT(*) FROM ServiceProviderInfra";
@@ -43,10 +40,9 @@ public class Constant {
     public static String GET_COUNT_OF_STATUS="Select COUNT(*) from ServiceProviderStatus";
     public static String GET_ALL_STATUS="Select s from ServiceProviderStatus s";
     public static String GET_ALL_ROLES="Select r from Role r";
->>>>>>> 37d5f340af50f36cb96d82666f797f9dfba4ed49
     public static String SOME_EXCEPTION_OCCURRED = "Some Exception Occurred";
     public static String NUMBER_FORMAT_EXCEPTION = "Number Format Exception";
     public static String CATALOG_SERVICE_NOT_INITIALIZED = "Catalog Service Not Initialized";
-
+    public static String GET_ALL_NOTIFYING_AUTHORITY = "SELECT * FROM custom_notifying_authority"
 }
 
