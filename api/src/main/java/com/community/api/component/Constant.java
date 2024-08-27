@@ -16,6 +16,7 @@ public class Constant {
     public static final String SUPER_ADMIN = "SUPER_ADMIN";
     public static final String SERVICE_PROVIDER = "SERVICE_PROVIDER";
     public static final String USER = "USER";
+    public static final int INITIAL_STATUS=1;
     public static String STATE_CODE_QUERY = "SELECT s FROM StateCode s WHERE s.state_name = :state_name";
     public static final String SP_USERNAME_QUERY = "SELECT s FROM ServiceProviderEntity s WHERE s.user_name LIKE :username";
     public static final String SP_EMAIL_QUERY = "SELECT s FROM ServiceProviderEntity s WHERE s.primary_email LIKE :email";
@@ -32,8 +33,16 @@ public class Constant {
     public static String GET_ALL_LANGUAGES = "SELECT s FROM ServiceProviderLanguage s";
     public static String OTP_SERVICE_PROVIDER = "SELECT c.otp FROM ServiceProviderEntity c WHERE c.mobileNumber = :mobileNumber";
     public static String serviceProviderRoles = "SELECT c.privilege_id FROM service_provider_privileges c WHERE c.service_provider_id = :serviceProviderId";
+    public static String GET_PRIVILEGES_COUNT = "SELECT COUNT(*) FROM Privileges";
+    public static String GET_ALL_PRIVILEGES = "SELECT p FROM Privileges s";
+    public static String GET_INFRA_COUNT = "SELECT COUNT(*) FROM ServiceProviderInfra";
+    public static String GET_INFRA_LIST = "SELECT s FROM ServiceProviderInfra s";
+    public static String GET_SERVICE_PROVIDER_DEFAULT_ADDRESS="SELECT a from ServiceProviderAddressRef a where address_name =:address_name";
+    public static String GET_COUNT_OF_ROLES="Select COUNT(*) from Role";
+    public static String GET_COUNT_OF_STATUS="Select COUNT(*) from ServiceProviderStatus";
+    public static String GET_ALL_STATUS="Select s from ServiceProviderStatus s";
+    public static String GET_ALL_ROLES="Select r from Role r";
     public static String SOME_EXCEPTION_OCCURRED = "Some Exception Occurred";
     public static String NUMBER_FORMAT_EXCEPTION = "Number Format Exception";
     public static String CATALOG_SERVICE_NOT_INITIALIZED = "Catalog Service Not Initialized";
 }
-

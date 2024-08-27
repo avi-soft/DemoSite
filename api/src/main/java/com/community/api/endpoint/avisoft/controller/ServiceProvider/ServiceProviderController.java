@@ -26,6 +26,8 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
+import javax.xml.crypto.Data;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -51,15 +53,7 @@ public class ServiceProviderController {
     private CustomerService customerService;
     @Autowired
     private DistrictService districtService;
-    /*@PostMapping
-    public ResponseEntity<ServiceProviderEntity> createServiceProvider(@RequestBody ServiceProviderEntity serviceProviderEntity) throws Exception {
-        ServiceProviderEntity savedServiceProvider = serviceProviderService.saveServiceProvider(serviceProviderEntity);
 
-        if (savedServiceProvider == null) {
-            throw new Exception("Service provider could not be created");
-        }
-        return ResponseEntity.ok(savedServiceProvider);
-    }*/
     @Transactional
     @PostMapping("/assign-skill")
     public ResponseEntity<?>addSkill(@RequestParam Long serviceProviderId,@RequestParam Long skillId)
@@ -77,8 +71,8 @@ public class ServiceProviderController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error assigning skill: " + e.getMessage());
         }
     }
-    @PatchMapping("update")
-    public ResponseEntity<?> updateServiceProvider(@RequestParam Long userId, @RequestBody ServiceProviderEntity serviceProviderDetails) throws Exception {
+    @PatchMapping("saveServiceProvider")
+    public ResponseEntity<?> updateServiceProvider(@RequestParam Long userId, @RequestBody Map<String,Object> serviceProviderDetails) throws Exception {
         try{
         return serviceProviderService.updateServiceProvider(userId,serviceProviderDetails);
     }catch (Exception e) {
@@ -143,6 +137,7 @@ public class ServiceProviderController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some fetching account " + e.getMessage());
         }
     }
+
     @Transactional
     @PostMapping("/addAddress")
     public ResponseEntity<?> addAddress(@RequestParam long serviceProviderId,@RequestBody ServiceProviderAddress serviceProviderAddress) throws Exception {
@@ -162,13 +157,7 @@ public class ServiceProviderController {
             addresses.add(serviceProviderAddress);
             existingServiceProvider.setSpAddresses(addresses);
             serviceProviderAddress.setServiceProviderEntity(existingServiceProvider);
-            if(existingServiceProvider.getUser_name()==null) {
-                String username=serviceProviderService.generateUsernameForServiceProvider(existingServiceProvider);
-                System.out.println(existingServiceProvider.toString());
-                existingServiceProvider.setUser_name(username);
-            }
             entityManager.persist(serviceProviderAddress);
-
             entityManager.merge(existingServiceProvider);
             return new ResponseEntity<>(serviceProviderAddress,HttpStatus.OK);
         }catch (Exception e) {
