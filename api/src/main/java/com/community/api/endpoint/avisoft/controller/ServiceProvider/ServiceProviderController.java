@@ -53,15 +53,7 @@ public class ServiceProviderController {
     private CustomerService customerService;
     @Autowired
     private DistrictService districtService;
-    /*@PostMapping
-    public ResponseEntity<ServiceProviderEntity> createServiceProvider(@RequestBody ServiceProviderEntity serviceProviderEntity) throws Exception {
-        ServiceProviderEntity savedServiceProvider = serviceProviderService.saveServiceProvider(serviceProviderEntity);
 
-        if (savedServiceProvider == null) {
-            throw new Exception("Service provider could not be created");
-        }
-        return ResponseEntity.ok(savedServiceProvider);
-    }*/
     @Transactional
     @PostMapping("/assign-skill")
     public ResponseEntity<?>addSkill(@RequestParam Long serviceProviderId,@RequestParam Long skillId)
@@ -165,13 +157,7 @@ public class ServiceProviderController {
             addresses.add(serviceProviderAddress);
             existingServiceProvider.setSpAddresses(addresses);
             serviceProviderAddress.setServiceProviderEntity(existingServiceProvider);
-            if(existingServiceProvider.getUser_name()==null) {
-                String username=serviceProviderService.generateUsernameForServiceProvider(existingServiceProvider);
-                System.out.println(existingServiceProvider.toString());
-                existingServiceProvider.setUser_name(username);
-            }
             entityManager.persist(serviceProviderAddress);
-
             entityManager.merge(existingServiceProvider);
             return new ResponseEntity<>(serviceProviderAddress,HttpStatus.OK);
         }catch (Exception e) {
@@ -190,60 +176,4 @@ public class ServiceProviderController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some issue in fetching addressNames " + e.getMessage());
         }
     }
-    /*@Transactional
-    @PostMapping("/addPersonalDetails")
-    public ResponseEntity<?>addPersonalDetails(@RequestBody Map<String,Object>personalDetails,@RequestParam long serviceProviderId)
-    {
-        try{
-            ServiceProviderEntity serviceProvider=entityManager.find(ServiceProviderEntity.class,serviceProviderId);
-            if(serviceProvider==null)
-                return new ResponseEntity<>("No records found for this customer",HttpStatus.NOT_FOUND);
-            String firstName=(String) personalDetails.get("first_name");
-            String lastName=(String)personalDetails.get("last_name");
-            String fathersName=(String) personalDetails.get("father_name");
-            Date dob=(Date) personalDetails.get("date_of_birth");
-            String adhar_number=(String) personalDetails.get("adhar_number");
-            String pan_number=(String) personalDetails.get("pan_number");
-            if(firstName==null||lastName==null||fathersName==null||dob==null||adhar_number==null||pan_number==null)
-                return new ResponseEntity<>("One or more Empty fields",HttpStatus.BAD_REQUEST);
-            else
-                serviceProvider.setFirst_name(firstName);
-            serviceProvider.setLast_name(lastName);
-            serviceProvider.setDate_of_birth(dob);
-            serviceProvider.setAadhaar_number(adhar_number);
-            serviceProvider.setPan_number(pan_number);
-            return new ResponseEntity<>(serviceProvider,HttpStatus.OK);
-        }catch (Exception e) {
-            exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some issue in fetching addressNames " + e.getMessage());
-        }
-    }*/
-    /*@Transactional
-    @PostMapping("/addPersonalDetails")
-    public ResponseEntity<?>addContactDetails(@RequestBody Map<String,Object>personalDetails,@RequestParam long serviceProviderId)
-    {
-        try{
-            ServiceProviderEntity serviceProvider=entityManager.find(ServiceProviderEntity.class,serviceProviderId);
-            if(serviceProvider==null)
-                return new ResponseEntity<>("No records found for this customer",HttpStatus.NOT_FOUND);
-            String firstName=(String) personalDetails.get("first_name");
-            String lastName=(String)personalDetails.get("last_name");
-            String fathersName=(String) personalDetails.get("father_name");
-            Date dob=(Date) personalDetails.get("date_of_birth");
-            String adhar_number=(String) personalDetails.get("adhar_number");
-            String pan_number=(String) personalDetails.get("pan_number");
-            if(firstName==null||lastName==null||fathersName==null||dob==null||adhar_number==null||pan_number==null)
-                return new ResponseEntity<>("One or more Empty fields",HttpStatus.BAD_REQUEST);
-            else
-                serviceProvider.setFirst_name(firstName);
-            serviceProvider.setLast_name(lastName);
-            serviceProvider.setDate_of_birth(dob);
-            serviceProvider.setAadhaar_number(adhar_number);
-            serviceProvider.setPan_number(pan_number);
-            return new ResponseEntity<>(serviceProvider,HttpStatus.OK);
-        }catch (Exception e) {
-            exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some issue in fetching addressNames " + e.getMessage());
-        }
-    }*/
 }

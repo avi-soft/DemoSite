@@ -13,7 +13,7 @@ import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 
 @RestController
-@RequestMapping("/service-providers-status")
+@RequestMapping("/serviceProvidersStatus")
 public class ServiceProviderStatusController {
     @Autowired
     EntityManager entityManager;
@@ -21,7 +21,7 @@ public class ServiceProviderStatusController {
     private com.community.api.services.ServiceProvider.ServiceProviderStatusService serviceProviderStatusService;
 
 
-    @PostMapping("/add-status")
+    @PostMapping("/addStatus")
     public ResponseEntity<?> addStatus(@RequestBody ServiceProviderStatus serviceProviderStatus) {
         return serviceProviderStatusService.addStatus(serviceProviderStatus);
     }

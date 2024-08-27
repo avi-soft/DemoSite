@@ -58,6 +58,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     @Autowired
     private JwtUtil jwtUtil;
     @Autowired
+    private DistrictService districtService;
+    @Autowired
     private SkillService skillService;
     @Autowired
     private ServiceProviderInfraService serviceProviderInfraService;
@@ -119,13 +121,16 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         List<Integer>infraList=getIntegerList(updates,"infra_list");
         List<Integer>skillList=getIntegerList(updates,"skill_list");
         List<Integer>languageList=getIntegerList(updates,"language_list");
-        for(int skill_id:skillList)
-        {
-        Skill skill=entityManager.find(Skill.class,skill_id);
-        if(skill!=null) {
-            if (!serviceProviderSkills.contains(skill))
-                serviceProviderSkills.add(skill);
-        }
+        if(updates.containsKey("has_technical_knowledge")) {
+            if ((boolean) updates.get("has_technical_knowledge").equals(true)) {
+                for (int skill_id : skillList) {
+                    Skill skill = entityManager.find(Skill.class, skill_id);
+                    if (skill != null) {
+                        if (!serviceProviderSkills.contains(skill))
+                            serviceProviderSkills.add(skill);
+                    }
+                }
+            }
         }
         for(int infra_id:infraList)
         {
@@ -149,7 +154,27 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         updates.remove("skill_list");
         updates.remove("infra_list");
         updates.remove("language_list");
-        // Update only the fields that are present in the map
+        if(updates.containsKey("district")&&updates.containsKey("state"))
+        {
+            ServiceProviderAddress serviceProviderAddress=new ServiceProviderAddress();
+            serviceProviderAddress.setAddress_type_id(findAddressName("CURRENT_ADDRESS").getAddress_type_Id());
+            serviceProviderAddress.setPincode((String)updates.get("pincode"));
+            serviceProviderAddress.setDistrict((String)updates.get("district"));
+            serviceProviderAddress.setState((String)updates.get("state"));
+            serviceProviderAddress.setCity((String)updates.get("city"));
+            serviceProviderAddress.setAddress_line((String)updates.get("residential_address"));
+            if(serviceProviderAddress.getAddress_line()!=null||serviceProviderAddress.getCity()!=null||serviceProviderAddress.getDistrict()!=null||serviceProviderAddress.getState()!=null||serviceProviderAddress.getPincode()!=null) {
+                addAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress);
+            }
+        }
+        //removing key for address
+            updates.remove("address_line");
+            updates.remove("city");
+            updates.remove("state");
+            updates.remove("district");
+            updates.remove("pincode");
+
+        // Update only the fields that are present in the map using reflections
         for (Map.Entry<String, Object> entry : updates.entrySet()) {
             String fieldName = entry.getKey();
             Object newValue = entry.getValue();
@@ -167,8 +192,12 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 return new ResponseEntity<>("Invalid field: " + fieldName, HttpStatus.BAD_REQUEST);
             }
         }
-
         // Merge the updated entity
+        entityManager.merge(existingServiceProvider);
+        if(existingServiceProvider.getUser_name()==null) {
+            String username=generateUsernameForServiceProvider(existingServiceProvider);
+            existingServiceProvider.setUser_name(username);
+        }
         entityManager.merge(existingServiceProvider);
         return new ResponseEntity<>(existingServiceProvider, HttpStatus.OK);
     }
@@ -484,6 +513,14 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 .findFirst()
                 .orElse(null);
     }
+    public ServiceProviderAddressRef findAddressName(String address_name) {
+
+        return entityManager.createQuery(Constant.GET_SERVICE_PROVIDER_DEFAULT_ADDRESS, ServiceProviderAddressRef.class)
+                .setParameter("address_name",address_name)
+                .getResultStream()
+                .findFirst()
+                .orElse(null);
+    }
     public List<ServiceProviderEntity> findServiceProviderListByUsername(String username) {
         username=username+"%";
         return entityManager.createQuery(Constant.SP_USERNAME_QUERY, ServiceProviderEntity.class)
@@ -526,5 +563,33 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
         // Return an empty list if the conditions are not met
         return Collections.emptyList();
+    }
+    @Transactional
+    public ResponseEntity<?> addAddress(long serviceProviderId,ServiceProviderAddress serviceProviderAddress) throws Exception {
+        try{
+            if(serviceProviderAddress==null)
+            {
+                return new ResponseEntity<>("Incomplete Details",HttpStatus.BAD_REQUEST);
+            }
+            ServiceProviderEntity existingServiceProvider=entityManager.find(ServiceProviderEntity.class,serviceProviderId);
+            if(existingServiceProvider==null)
+            {
+                return new ResponseEntity<>("Service Provider Not found",HttpStatus.BAD_REQUEST);
+            }
+            List<ServiceProviderAddress>addresses=existingServiceProvider.getSpAddresses();
+            serviceProviderAddress.setState(districtService.findStateById(Integer.parseInt(serviceProviderAddress.getState())));
+            serviceProviderAddress.setDistrict(districtService.findDistrictById(Integer.parseInt(serviceProviderAddress.getDistrict())));
+            addresses.add(serviceProviderAddress);
+            existingServiceProvider.setSpAddresses(addresses);
+            serviceProviderAddress.setServiceProviderEntity(existingServiceProvider);
+
+            entityManager.persist(serviceProviderAddress);
+
+            entityManager.merge(existingServiceProvider);
+            return new ResponseEntity<>(serviceProviderAddress,HttpStatus.OK);
+        }catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error adding address " + e.getMessage());
+        }
     }
 }

@@ -21,7 +21,7 @@ public class ServiceProviderAddress
     @Column(name = "address_Id")
     private long address_id;
     private int address_type_id;
-    private String district,street,state,landmark,pincode;
+    private String district,address_line,state,city,pincode;
 
     @ManyToOne(fetch = FetchType.LAZY) // Use lazy loading to improve performance if needed
     @JoinColumn(name = "service_provider_id") // Explicitly specify the foreign key column

@@ -2,6 +2,7 @@ package com.community.api.endpoint.avisoft.controller.otpmodule;
 import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
+import com.community.api.endpoint.serviceProvider.ServiceProviderStatus;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.services.CustomCustomerService;
@@ -265,6 +266,8 @@ public class OtpEndpoint {
                 serviceProviderEntity.setCountry_code(countryCode);
                 serviceProviderEntity.setMobileNumber(mobileNumber);
                 serviceProviderEntity.setOtp(otp);
+                ServiceProviderStatus serviceProviderStatus=entityManager.find(ServiceProviderStatus.class,Constant.INITIAL_STATUS);
+                serviceProviderEntity.setStatus(serviceProviderStatus);//initial status
                 serviceProviderEntity.setRole(4);//4 corresponds to service provider
                 entityManager.persist(serviceProviderEntity);
             } else{

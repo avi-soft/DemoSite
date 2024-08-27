@@ -116,7 +116,7 @@ public class ServiceProviderEntity  {
     private List<ServiceProviderAddress> spAddresses;
 
     @OneToOne(cascade = CascadeType.ALL,orphanRemoval = true)
-    @JoinColumn(name = "status_id", referencedColumnName = "statusId")
+    @JoinColumn(name = "status_id", referencedColumnName = "status_id")
     private ServiceProviderStatus status;
 
     @ManyToMany
