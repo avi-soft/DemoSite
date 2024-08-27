@@ -6,6 +6,7 @@ import com.community.api.entity.Privileges;
 import com.community.api.entity.Role;
 import com.community.api.entity.Skill;
 import com.community.api.services.exception.ExceptionHandlingImplement;
+import io.swagger.models.auth.In;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,6 +17,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -127,5 +129,22 @@ public class PrivilegeService {
     public List<Privileges> findAllPrivilegeList() {
         TypedQuery<Privileges> query = entityManager.createQuery(Constant.GET_ALL_PRIVILEGES,Privileges.class);
         return query.getResultList();
+    }
+    public List<Privileges> getServiceProviderPrivilege(Long userId) {
+        try {
+            List<Integer>listOfPrivilegeId=getPrivilege(userId);
+            List<Privileges>listOfPrivileges=new ArrayList<>();
+            for(int privilege_id:listOfPrivilegeId)
+            {
+                Privileges privilege=entityManager.find(Privileges.class,privilege_id);
+                if(privilege!=null)
+                    listOfPrivileges.add(privilege);
+            }
+            return listOfPrivileges;
+
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return Collections.emptyList();
+        }
     }
 }

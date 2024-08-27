@@ -45,3 +45,4 @@ public class Constant {
     public static String CATALOG_SERVICE_NOT_INITIALIZED = "Catalog Service Not Initialized";
 
 }
+

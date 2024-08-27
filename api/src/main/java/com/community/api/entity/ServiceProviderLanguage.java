@@ -16,7 +16,8 @@ import javax.persistence.*;
 public class ServiceProviderLanguage {
     @Id
     @Column(name = "language_id")
-    private int langauge_id;
+    private int language_id;
     @Column(name = "language_name")
     private String language_name;
 }
+
