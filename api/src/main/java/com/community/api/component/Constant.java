@@ -9,8 +9,6 @@ public class Constant {
     public static final String FIND_ALL_EXAMINATIONS_QUERY = "SELECT q FROM Examination q";
     public static final String FIND_EXAMINATION_BY_NAME_QUERY = "SELECT e FROM Examination e WHERE e.examinationName = :examinationName";
     public static String PHONE_QUERY_SERVICE_PROVIDER = "SELECT c FROM ServiceProviderEntity c WHERE c.mobileNumber = :mobileNumber AND c.country_code = :country_code";
-
-    //role for creating
     public static String USERNAME_QUERY_SERVICE_PROVIDER = "SELECT c FROM ServiceProviderEntity c WHERE c.user_name = :username";
     public static final String ADMIN = "ADMIN";
     public static final String SUPER_ADMIN = "SUPER_ADMIN";
@@ -45,4 +43,6 @@ public class Constant {
     public static String SOME_EXCEPTION_OCCURRED = "Some Exception Occurred";
     public static String NUMBER_FORMAT_EXCEPTION = "Number Format Exception";
     public static String CATALOG_SERVICE_NOT_INITIALIZED = "Catalog Service Not Initialized";
+
 }
+
