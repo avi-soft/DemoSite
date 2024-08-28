@@ -45,6 +45,10 @@ public class QualificationController
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Examination does not found with examinationName"+" " + qualification.getExaminationName());
         }
+        catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Something went wrong");
+        }
 
     }
 

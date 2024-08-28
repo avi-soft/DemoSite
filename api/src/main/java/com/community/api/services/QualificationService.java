@@ -14,8 +14,6 @@ import javax.persistence.TypedQuery;
 import java.util.List;
 import java.util.Objects;
 
-import static com.community.api.component.Constant.FIND_ALL_QUALIFICATIONS_QUERY;
-
 @Service
 public class QualificationService
 {
@@ -54,6 +52,9 @@ public class QualificationService
                 examinationToAdd=examination.getExamination_name();
                 break;
             }
+        }
+        if (examinationToAdd == null) {
+            throw new ExaminationDoesNotExistsException("Examination with name " + qualification.getExaminationName() + " does not exist");
         }
         qualification.setExaminationName(examinationToAdd);
         qualification.setCustomCustomer(customCustomer);
