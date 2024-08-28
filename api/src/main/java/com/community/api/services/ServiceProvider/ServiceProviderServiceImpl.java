@@ -101,6 +101,10 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             String userName = (String) updates.get("user_name");
             existingSPByUsername = findServiceProviderByUserName(userName);
         }
+        if (updates.containsKey("primary_mobile_number")) {
+            String userName = (String) updates.get("user_name");
+            existingSPByUsername = findServiceProviderByUserName(userName);
+        }
 
         if (updates.containsKey("primary_email")) {
             String primaryEmail = (String) updates.get("primary_email");
@@ -115,9 +119,9 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 return new ResponseEntity<>("Email not available", HttpStatus.BAD_REQUEST);
             }
         }
-        List<Skill>serviceProviderSkills=existingServiceProvider.getSkills();
-        List<ServiceProviderInfra>serviceProviderInfras=existingServiceProvider.getInfra();
-        List<ServiceProviderLanguage>serviceProviderLanguages=existingServiceProvider.getLanguages();
+        List<Skill>serviceProviderSkills=new ArrayList<>();
+        List<ServiceProviderInfra>serviceProviderInfras=new ArrayList<>();
+        List<ServiceProviderLanguage>serviceProviderLanguages=new ArrayList<>();
         List<Integer>infraList=getIntegerList(updates,"infra_list");
         List<Integer>skillList=getIntegerList(updates,"skill_list");
         List<Integer>languageList=getIntegerList(updates,"language_list");
@@ -131,7 +135,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                     }
                 }
             }
-        }
+        }else
+            existingServiceProvider.setSkills(null);
         for(int infra_id:infraList)
         {
             ServiceProviderInfra serviceProviderInfrastructure=entityManager.find(ServiceProviderInfra.class,infra_id);

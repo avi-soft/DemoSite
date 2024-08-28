@@ -56,7 +56,7 @@ public class ServiceProviderController {
 
     @Transactional
     @PostMapping("/assign-skill")
-    public ResponseEntity<?>addSkill(@RequestParam Long serviceProviderId,@RequestParam Long skillId)
+    public ResponseEntity<?>addSkill(@RequestParam Long serviceProviderId,@RequestParam int skillId)
     {
         try {
             Skill skill = entityManager.find(Skill.class, skillId);
@@ -80,6 +80,7 @@ public class ServiceProviderController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some updating: " + e.getMessage());
         }
     }
+    @Transactional
     @DeleteMapping("delete")
     public ResponseEntity<?>deleteServiceProvider(@RequestParam Long userId)
     {
