@@ -5,7 +5,10 @@ import com.community.api.utils.DocumentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
@@ -13,10 +16,14 @@ import javax.transaction.Transactional;
 @RestController
 @RequestMapping(value = "/document")
 public class DocumentEndpoint {
-    @Autowired
     private EntityManager entityManager;
-    @Autowired
     private ExceptionHandlingImplement exceptionHandling;
+
+    public DocumentEndpoint(EntityManager entityManager,ExceptionHandlingImplement exceptionHandling)
+    {
+        this.entityManager=entityManager;
+        this.exceptionHandling= exceptionHandling;
+    }
     @Transactional
     @RequestMapping(value = "create-document-type", method = RequestMethod.POST)
     public ResponseEntity<Object> createDocumentType(@RequestBody DocumentType documentType) {

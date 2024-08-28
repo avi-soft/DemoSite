@@ -1,5 +1,6 @@
 package com.community.api.endpoint.serviceProvider;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -13,11 +14,12 @@ import javax.persistence.*;
 @Setter
 @Getter
 public class ServiceProviderStatus {
-
+    @Column(name = "status_id")
     @Id
-    private Integer statusId;
-
+    private Integer status_id;
+    @Column(name = "status_name")
+    private String status_name;
+    @Column(name = "description")
     private String description;
-    @OneToOne(mappedBy = "status")
-    private ServiceProviderEntity serviceProviderEntity;
+    private String created_at,updated_at,created_by;
 }

@@ -9,23 +9,25 @@ import com.community.api.services.DistrictService;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
 import com.community.api.services.TwilioServiceForServiceProvider;
 import com.community.api.services.exception.ExceptionHandlingImplement;
-import com.twilio.Twilio;
-import com.twilio.exception.ApiException;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.HttpClientErrorException;
-
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
-import javax.servlet.http.HttpSession;
-import javax.swing.text.html.parser.Entity;
 import javax.transaction.Transactional;
-import javax.validation.Valid;
+import javax.xml.crypto.Data;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -51,18 +53,10 @@ public class ServiceProviderController {
     private CustomerService customerService;
     @Autowired
     private DistrictService districtService;
-    /*@PostMapping
-    public ResponseEntity<ServiceProviderEntity> createServiceProvider(@RequestBody ServiceProviderEntity serviceProviderEntity) throws Exception {
-        ServiceProviderEntity savedServiceProvider = serviceProviderService.saveServiceProvider(serviceProviderEntity);
 
-        if (savedServiceProvider == null) {
-            throw new Exception("Service provider could not be created");
-        }
-        return ResponseEntity.ok(savedServiceProvider);
-    }*/
     @Transactional
     @PostMapping("/assign-skill")
-    public ResponseEntity<?>addSkill(@RequestParam Long serviceProviderId,@RequestParam Long skillId)
+    public ResponseEntity<?>addSkill(@RequestParam Long serviceProviderId,@RequestParam int skillId)
     {
         try {
             Skill skill = entityManager.find(Skill.class, skillId);
@@ -77,15 +71,16 @@ public class ServiceProviderController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error assigning skill: " + e.getMessage());
         }
     }
-    @PatchMapping("update")
-    public ResponseEntity<?> updateServiceProvider(@RequestParam Long userId, @RequestBody ServiceProviderEntity serviceProviderDetails) throws Exception {
+    @PatchMapping("saveServiceProvider")
+    public ResponseEntity<?> updateServiceProvider(@RequestParam Long userId, @RequestBody Map<String,Object> serviceProviderDetails) throws Exception {
         try{
         return serviceProviderService.updateServiceProvider(userId,serviceProviderDetails);
     }catch (Exception e) {
             exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some updating: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some error updating: " + e.getMessage());
         }
     }
+    @Transactional
     @DeleteMapping("delete")
     public ResponseEntity<?>deleteServiceProvider(@RequestParam Long userId)
     {
@@ -108,8 +103,6 @@ public class ServiceProviderController {
         try {
             String password = (String) passwordDetails.get("password");
             String newPassword = (String) passwordDetails.get("newPassword");
-            System.out.println(password);
-            System.out.println(newPassword);
             ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, userId);
             if (serviceProvider == null)
                 return new ResponseEntity<>("No records found", HttpStatus.NOT_FOUND);
@@ -145,6 +138,7 @@ public class ServiceProviderController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some fetching account " + e.getMessage());
         }
     }
+
     @Transactional
     @PostMapping("/addAddress")
     public ResponseEntity<?> addAddress(@RequestParam long serviceProviderId,@RequestBody ServiceProviderAddress serviceProviderAddress) throws Exception {
@@ -164,13 +158,7 @@ public class ServiceProviderController {
             addresses.add(serviceProviderAddress);
             existingServiceProvider.setSpAddresses(addresses);
             serviceProviderAddress.setServiceProviderEntity(existingServiceProvider);
-            if(existingServiceProvider.getUser_name()==null) {
-                String username=serviceProviderService.generateUsernameForServiceProvider(existingServiceProvider);
-                System.out.println(existingServiceProvider.toString());
-                existingServiceProvider.setUser_name(username);
-            }
             entityManager.persist(serviceProviderAddress);
-
             entityManager.merge(existingServiceProvider);
             return new ResponseEntity<>(serviceProviderAddress,HttpStatus.OK);
         }catch (Exception e) {

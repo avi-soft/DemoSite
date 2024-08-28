@@ -1,8 +1,10 @@
 package com.community.api.services;
 
+import com.community.api.component.Constant;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.Privileges;
 import com.community.api.entity.Role;
+import com.community.api.entity.Skill;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import io.swagger.models.auth.In;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +14,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -76,7 +82,7 @@ public class PrivilegeService {
                 if (spPrivileges.contains(privilege))
                     spPrivileges.remove(privilege);
                 else
-                    return new ResponseEntity<>("Privilage not assigned", HttpStatus.UNAUTHORIZED);
+                    return new ResponseEntity<>("Privilege not assigned", HttpStatus.UNAUTHORIZED);
                 serviceProvider.setPrivileges(spPrivileges);
                 entityManager.merge(serviceProvider);
                 return new ResponseEntity<>(serviceProvider, HttpStatus.OK);
@@ -93,21 +99,52 @@ public class PrivilegeService {
         try {
             if (privilege.getPrivilege_name() == null || privilege.getDescription() == null)
                 return new ResponseEntity<>("Incomplete details", HttpStatus.BAD_REQUEST);
-            entityManager.persist(privilege);
+                int count=(int)findCount();
+                privilege.setPrivilege_id(++count);
+                entityManager.persist(privilege);
             return new ResponseEntity<>(privilege, HttpStatus.OK);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return new ResponseEntity<>("Error removing ", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-    public boolean getPrivilege(Long userId, Integer roleId) {
+    public long findCount() {
+        String queryString = Constant.GET_PRIVILEGES_COUNT;
+        TypedQuery<Long> query = entityManager.createQuery(queryString, Long.class);
+        return query.getSingleResult();
+    }
+    public List<Integer> getPrivilege(Long userId) {
         try {
 
+            Query query = entityManager.createNativeQuery(Constant.serviceProviderRoles);
+            query.setParameter("serviceProviderId", userId);
+
+            return query.getResultList();
 
         } catch (Exception e) {
-
+            exceptionHandling.handleException(e);
+            return Collections.emptyList();
         }
-        return true;
+    }
+    public List<Privileges> findAllPrivilegeList() {
+        TypedQuery<Privileges> query = entityManager.createQuery(Constant.GET_ALL_PRIVILEGES,Privileges.class);
+        return query.getResultList();
+    }
+    public List<Privileges> getServiceProviderPrivilege(Long userId) {
+        try {
+            List<Integer>listOfPrivilegeId=getPrivilege(userId);
+            List<Privileges>listOfPrivileges=new ArrayList<>();
+            for(int privilege_id:listOfPrivilegeId)
+            {
+                Privileges privilege=entityManager.find(Privileges.class,privilege_id);
+                if(privilege!=null)
+                    listOfPrivileges.add(privilege);
+            }
+            return listOfPrivileges;
+
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return Collections.emptyList();
+        }
     }
 }

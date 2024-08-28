@@ -3,13 +3,10 @@ package com.community.api.services.ServiceProvider;
 import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
-import com.community.api.entity.CustomCustomer;
+import com.community.api.entity.*;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.endpoint.serviceProvider.ServiceProviderStatus;
-import com.community.api.entity.StateCode;
-import com.community.api.services.CustomCustomerService;
-import com.community.api.services.RateLimiterService;
-import com.community.api.services.TwilioServiceForServiceProvider;
+import com.community.api.services.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.twilio.Twilio;
 import com.twilio.exception.ApiException;
@@ -36,10 +33,7 @@ import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.regex.Pattern;
 
 @Service
@@ -63,7 +57,14 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private JwtUtil jwtUtil;
-
+    @Autowired
+    private DistrictService districtService;
+    @Autowired
+    private SkillService skillService;
+    @Autowired
+    private ServiceProviderInfraService serviceProviderInfraService;
+    @Autowired
+    private ServiceProviderLanguageService serviceProviderLanguageService;
     @Autowired
     private  RateLimiterService rateLimiterService;
     @Value("${twilio.phoneNumber}")
@@ -81,43 +82,142 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         }
     }
 
-    @Override
+
+
+
     @Transactional
-    public ResponseEntity<?> updateServiceProvider(Long userId, @RequestBody ServiceProviderEntity serviceProviderEntity) throws Exception {
+    public ResponseEntity<?> updateServiceProvider(Long userId,Map<String, Object> updates) throws Exception {
+        // Find existing ServiceProviderEntity
         ServiceProviderEntity existingServiceProvider = entityManager.find(ServiceProviderEntity.class, userId);
         if (existingServiceProvider == null) {
             throw new Exception("ServiceProvider with ID " + userId + " not found");
         }
-        serviceProviderEntity.setMobileNumber(existingServiceProvider.getMobileNumber());
+
+        // Validate and check for unique constraints
         ServiceProviderEntity existingSPByUsername = null;
         ServiceProviderEntity existingSPByEmail = null;
-        if (serviceProviderEntity.getUser_name() != null) {
-            existingSPByUsername = findServiceProviderByUserName(serviceProviderEntity.getUser_name());
+
+        if (updates.containsKey("user_name")) {
+            String userName = (String) updates.get("user_name");
+            existingSPByUsername = findServiceProviderByUserName(userName);
         }
-        if (serviceProviderEntity.getPrimary_email() != null) {
-            existingSPByEmail = findSPbyEmail(serviceProviderEntity.getPrimary_email());
+        if (updates.containsKey("primary_mobile_number")) {
+            String userName = (String) updates.get("user_name");
+            existingSPByUsername = findServiceProviderByUserName(userName);
         }
+
+        if (updates.containsKey("primary_email")) {
+            String primaryEmail = (String) updates.get("primary_email");
+            existingSPByEmail = findSPbyEmail(primaryEmail);
+        }
+
         if ((existingSPByUsername != null) || existingSPByEmail != null) {
             if (existingSPByUsername != null && !existingSPByUsername.getService_provider_id().equals(userId)) {
                 return new ResponseEntity<>("Username is not available", HttpStatus.BAD_REQUEST);
             }
-                if (existingSPByEmail != null && !existingSPByEmail.getService_provider_id().equals(userId)) {
+            if (existingSPByEmail != null && !existingSPByEmail.getService_provider_id().equals(userId)) {
                 return new ResponseEntity<>("Email not available", HttpStatus.BAD_REQUEST);
             }
         }
-        for(Field field:ServiceProviderEntity.class.getDeclaredFields())
-        {
-            field.setAccessible(true);
-            Object newValue=field.get(serviceProviderEntity);
-            if(newValue!=null)
-            {
-                field.set(existingServiceProvider,newValue);
+        List<Skill>serviceProviderSkills=new ArrayList<>();
+        List<ServiceProviderInfra>serviceProviderInfras=new ArrayList<>();
+        List<ServiceProviderLanguage>serviceProviderLanguages=new ArrayList<>();
+        List<Integer>infraList=getIntegerList(updates,"infra_list");
+        List<Integer>skillList=getIntegerList(updates,"skill_list");
+        List<Integer>languageList=getIntegerList(updates,"language_list");
+        if(updates.containsKey("has_technical_knowledge")) {
+            if ((boolean) updates.get("has_technical_knowledge").equals(true)) {
+                if(!skillList.isEmpty()) {
+                    for (int skill_id : skillList) {
+                        Skill skill = entityManager.find(Skill.class, skill_id);
+                        if (skill != null) {
+                            if (!serviceProviderSkills.contains(skill))
+                                serviceProviderSkills.add(skill);
+                        }
+                    }
+                }
+            }
+        }else
+            existingServiceProvider.setSkills(null);
+        if(!infraList.isEmpty()) {
+            for (int infra_id : infraList) {
+                ServiceProviderInfra serviceProviderInfrastructure = entityManager.find(ServiceProviderInfra.class, infra_id);
+                if (serviceProviderInfrastructure != null) {
+                    if (!serviceProviderInfras.contains(serviceProviderInfrastructure))
+                        serviceProviderInfras.add(serviceProviderInfrastructure);
+                }
             }
         }
+        if(!languageList.isEmpty()) {
+            for (int language_id : languageList) {
+                ServiceProviderLanguage serviceProviderLanguage = entityManager.find(ServiceProviderLanguage.class, language_id);
+                if (serviceProviderLanguage != null) {
+                    if (!serviceProviderLanguages.contains(serviceProviderLanguage))
+                        serviceProviderLanguages.add(serviceProviderLanguage);
+                }
+            }
+        }
+        existingServiceProvider.setInfra(serviceProviderInfras);
+        existingServiceProvider.setSkills(serviceProviderSkills);
+        existingServiceProvider.setLanguages(serviceProviderLanguages);
+        updates.remove("skill_list");
+        updates.remove("infra_list");
+        updates.remove("language_list");
+        if(updates.containsKey("district")&&updates.containsKey("state"))
+        {
+            ServiceProviderAddress serviceProviderAddress=new ServiceProviderAddress();
+            serviceProviderAddress.setAddress_type_id(findAddressName("CURRENT_ADDRESS").getAddress_type_Id());
+            serviceProviderAddress.setPincode((String)updates.get("pincode"));
+            serviceProviderAddress.setDistrict((String)updates.get("district"));
+            serviceProviderAddress.setState((String)updates.get("state"));
+            serviceProviderAddress.setCity((String)updates.get("city"));
+            serviceProviderAddress.setAddress_line((String)updates.get("residential_address"));
+            if(serviceProviderAddress.getAddress_line()!=null||serviceProviderAddress.getCity()!=null||serviceProviderAddress.getDistrict()!=null||serviceProviderAddress.getState()!=null||serviceProviderAddress.getPincode()!=null) {
+                addAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress);
+            }
+        }
+        //removing key for address
+            updates.remove("address_line");
+            updates.remove("city");
+            updates.remove("state");
+            updates.remove("district");
+            updates.remove("pincode");
 
+            if(updates.containsKey("is_cgpa") && updates.get("is_cgpa").equals(true))
+            {
+                String cgpa=(String) updates.get("is_cgpa");
+                existingServiceProvider.setCgpa(cgpa);
+                updates.remove("is_cgpa");
+                updates.remove("cgpa");
+            }
+            else
+                existingServiceProvider.setCgpa(null);
+        // Update only the fields that are present in the map using reflections
+        for (Map.Entry<String, Object> entry : updates.entrySet()) {
+            String fieldName = entry.getKey();
+            Object newValue = entry.getValue();
 
+            try {
+                Field field = ServiceProviderEntity.class.getDeclaredField(fieldName);
+                field.setAccessible(true);
+                // Optionally, check for type compatibility before setting the value
+                if (newValue != null && field.getType().isAssignableFrom(newValue.getClass())) {
+
+                    field.set(existingServiceProvider, newValue);
+                }
+            } catch (NoSuchFieldException | IllegalAccessException e) {
+                // Handle the exception if the field is not found or not accessible
+                return new ResponseEntity<>("Invalid field: " + fieldName, HttpStatus.BAD_REQUEST);
+            }
+        }
+        // Merge the updated entity
         entityManager.merge(existingServiceProvider);
-        return new ResponseEntity<>(serviceProviderEntity,HttpStatus.OK);
+        if(existingServiceProvider.getUser_name()==null) {
+            String username=generateUsernameForServiceProvider(existingServiceProvider);
+            existingServiceProvider.setUser_name(username);
+        }
+        entityManager.merge(existingServiceProvider);
+        return new ResponseEntity<>(existingServiceProvider, HttpStatus.OK);
     }
 
     @Override
@@ -431,6 +531,14 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 .findFirst()
                 .orElse(null);
     }
+    public ServiceProviderAddressRef findAddressName(String address_name) {
+
+        return entityManager.createQuery(Constant.GET_SERVICE_PROVIDER_DEFAULT_ADDRESS, ServiceProviderAddressRef.class)
+                .setParameter("address_name",address_name)
+                .getResultStream()
+                .findFirst()
+                .orElse(null);
+    }
     public List<ServiceProviderEntity> findServiceProviderListByUsername(String username) {
         username=username+"%";
         return entityManager.createQuery(Constant.SP_USERNAME_QUERY, ServiceProviderEntity.class)
@@ -442,7 +550,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         private String token;
         private ServiceProviderEntity serviceProviderDetails;
 
-        public AuthResponseServiceProvider(String token, ServiceProviderEntity userDetails) {
+        public AuthResponseServiceProvider(String token, ServiceProviderEntity serviceProviderDetails) {
             this.token = token;
             this.serviceProviderDetails = serviceProviderDetails;
         }
@@ -453,6 +561,53 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
         public ServiceProviderEntity getUserDetails() {
             return serviceProviderDetails;
+        }
+    }
+    @SuppressWarnings("unchecked")
+    public static List<Integer> getIntegerList(Map<String, Object> map, String key) {
+        // Retrieve the object associated with the key
+        Object value = map.get(key);
+
+        // Check if the value is an instance of List
+        if (value instanceof List<?>) {
+            List<?> list = (List<?>) value;
+
+            // Check if the list is not empty and the first element is Integer
+            if (!list.isEmpty() && list.get(0) instanceof Integer) {
+                // Safe to cast the list to List<Integer>
+                return (List<Integer>) list;
+            }
+        }
+
+        // Return an empty list if the conditions are not met
+        return Collections.emptyList();
+    }
+    @Transactional
+    public ResponseEntity<?> addAddress(long serviceProviderId,ServiceProviderAddress serviceProviderAddress) throws Exception {
+        try{
+            if(serviceProviderAddress==null)
+            {
+                return new ResponseEntity<>("Incomplete Details",HttpStatus.BAD_REQUEST);
+            }
+            ServiceProviderEntity existingServiceProvider=entityManager.find(ServiceProviderEntity.class,serviceProviderId);
+            if(existingServiceProvider==null)
+            {
+                return new ResponseEntity<>("Service Provider Not found",HttpStatus.BAD_REQUEST);
+            }
+            List<ServiceProviderAddress>addresses=existingServiceProvider.getSpAddresses();
+            serviceProviderAddress.setState(districtService.findStateById(Integer.parseInt(serviceProviderAddress.getState())));
+            serviceProviderAddress.setDistrict(districtService.findDistrictById(Integer.parseInt(serviceProviderAddress.getDistrict())));
+            addresses.add(serviceProviderAddress);
+            existingServiceProvider.setSpAddresses(addresses);
+            serviceProviderAddress.setServiceProviderEntity(existingServiceProvider);
+
+            entityManager.persist(serviceProviderAddress);
+
+            entityManager.merge(existingServiceProvider);
+            return new ResponseEntity<>(serviceProviderAddress,HttpStatus.OK);
+        }catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error adding address " + e.getMessage());
         }
     }
 }

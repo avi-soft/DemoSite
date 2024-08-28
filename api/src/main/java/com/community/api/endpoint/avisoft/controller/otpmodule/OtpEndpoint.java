@@ -2,6 +2,7 @@ package com.community.api.endpoint.avisoft.controller.otpmodule;
 import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
+import com.community.api.endpoint.serviceProvider.ServiceProviderStatus;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.services.CustomCustomerService;
@@ -23,7 +24,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.client.HttpClientErrorException;
 
 import javax.persistence.EntityManager;
@@ -48,6 +54,7 @@ public class OtpEndpoint {
 
     @Autowired
     private CustomCustomerService customCustomerService;
+
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -227,8 +234,8 @@ public class OtpEndpoint {
         AuthResponse authResponse = new AuthResponse(token, customer);
         return ResponseEntity.ok(authResponse);
     }
+    @Transactional
     @PostMapping("/serviceProviderSignup")
-    @javax.transaction.Transactional
     public ResponseEntity<String> sendOtpToMobile(@RequestBody Map<String, Object> signupDetails) {
         try {
             String mobileNumber = (String) signupDetails.get("mobileNumber");
@@ -236,6 +243,8 @@ public class OtpEndpoint {
             mobileNumber = mobileNumber.startsWith("0")
                     ? mobileNumber.substring(1)
                     : mobileNumber;
+            if(customCustomerService.findCustomCustomerByPhone(mobileNumber,countryCode)!=null)
+                return new ResponseEntity<>("Number Already registered as Customer",HttpStatus.BAD_REQUEST);
             if(countryCode==null)
                 countryCode=Constant.COUNTRY_CODE;
             if(!serviceProviderService.isValidMobileNumber(mobileNumber))
@@ -260,9 +269,17 @@ public class OtpEndpoint {
                 serviceProviderEntity.setCountry_code(countryCode);
                 serviceProviderEntity.setMobileNumber(mobileNumber);
                 serviceProviderEntity.setOtp(otp);
+                ServiceProviderStatus serviceProviderStatus=entityManager.find(ServiceProviderStatus.class,Constant.INITIAL_STATUS);
+                serviceProviderEntity.setStatus(serviceProviderStatus);//initial status
                 serviceProviderEntity.setRole(4);//4 corresponds to service provider
                 entityManager.persist(serviceProviderEntity);
-            } else if(existingServiceProvider.getOtp()!=null){
+            }
+            else if(existingServiceProvider.getOtp()!=null)
+            {
+                existingServiceProvider.setOtp(otp);
+                entityManager.merge(existingServiceProvider);
+            }
+                if(existingServiceProvider!=null && existingServiceProvider.getOtp()==null) {
                 return new ResponseEntity<>("Mobile Number Already Registred",HttpStatus.BAD_REQUEST);
             }
 

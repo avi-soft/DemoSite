@@ -1,6 +1,9 @@
 package com.community.api.services;
 
+import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.CustomCustomer;
+import com.community.api.entity.ServiceProviderAddress;
+import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.broadleafcommerce.profile.core.service.CustomerService;
@@ -25,7 +28,6 @@ import java.util.Random;
 @Service
 public class TwilioService {
 
-    @Autowired
     private ExceptionHandlingImplement exceptionHandling;
 
     @Value("${twilio.accountSid}")
@@ -36,14 +38,24 @@ public class TwilioService {
 
     @Value("${twilio.phoneNumber}")
     private String twilioPhoneNumber;
-    @Autowired
+
     private CustomCustomerService customCustomerService;
-    @Autowired
     private EntityManager entityManager;
-    @Autowired
     private HttpSession httpSession;
     @Autowired
+    private  ServiceProviderServiceImpl serviceProviderService;
+    @Autowired
+
     private CustomerService customerService;
+
+    public TwilioService(ExceptionHandlingImplement exceptionHandlingImplement,CustomCustomerService customCustomerService,EntityManager entityManager,HttpSession httpSession,CustomerService customerService)
+    {
+         this.exceptionHandling = exceptionHandlingImplement;
+         this.customCustomerService = customCustomerService;
+         this.entityManager = entityManager;
+         this.httpSession= httpSession;
+         this.customerService=customerService;
+    }
 
     @Transactional
     public ResponseEntity<String> sendOtpToMobile(String mobileNumber, String countryCode) {
@@ -70,13 +82,18 @@ public class TwilioService {
 
 
             CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(mobileNumber,countryCode);
-            if(existingCustomer == null){
+            ServiceProviderEntity serviceProvider=serviceProviderService.findServiceProviderByPhone(mobileNumber,countryCode);
+            if(existingCustomer == null &&serviceProvider==null){
                 CustomCustomer customerDetails = new CustomCustomer();
                 customerDetails.setId(customerService.findNextCustomerId());
                 customerDetails.setCountryCode(countryCode);
                 customerDetails.setMobileNumber(mobileNumber);
                 customerDetails.setOtp(otp);
                 entityManager.persist(customerDetails);
+            }
+            else if(serviceProvider!=null)
+            {
+                return new ResponseEntity<>("Number already registered as Service Provider",HttpStatus.BAD_REQUEST);
             }else{
                 existingCustomer.setOtp(otp);
                 entityManager.merge(existingCustomer);
