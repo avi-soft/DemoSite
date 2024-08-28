@@ -103,6 +103,13 @@ public class ServiceProviderEntity  {
     private Integer work_experience_in_months;
 
     private String highest_qualification;
+    private String name_of_institute;
+    private String year_of_passing;
+    private String board_or_university;
+    private String total_marks;
+    private String marks_obtained;
+    private String cgpa;
+    private boolean isCgpa;
 
     @ManyToMany
     @JoinTable(

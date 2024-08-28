@@ -1,20 +1,22 @@
 package com.community.api.endpoint.avisoft.controller.Admin;
 
 import com.community.api.entity.Districts;
+import com.community.api.entity.ErrorResponse;
+import com.community.api.entity.SuccessResponse;
 import com.community.api.services.DistrictService;
 import com.community.api.services.PrivilegeService;
+import com.community.api.services.ResponseService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @RestController
 @RequestMapping(value = "/districts",
@@ -25,14 +27,22 @@ public class DistrictController {
     private ExceptionHandlingImplement exceptionHandling;
     @Autowired
     private DistrictService districtService;
+    @Autowired
+    private ResponseService responseService;
     @RequestMapping(value = "getDistricts", method = RequestMethod.GET)
-    public ResponseEntity<?> getDistricts(@RequestParam String state_code) {
+    public ResponseEntity<?> getDistricts(@RequestBody Map<String, Object>details) {
         try {
+            String state_code=(String)details.get("state_code");
+            if(state_code==null)
+                return responseService.generateErrorResponse("Empty value for State Code passed",HttpStatus.BAD_REQUEST);
             List<Districts> names= districtService.findDistrictsByStateCode(state_code);
-            return new ResponseEntity<>(names,HttpStatus.OK);
+            if(names.isEmpty()) {
+                return responseService.generateErrorResponse("No data found",HttpStatus.NOT_FOUND);
+            }
+            return responseService.generateSuccessResponse("List retrieved successfully",names,HttpStatus.OK);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return new ResponseEntity<>("Error retrieving list", HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("Error retrieving list", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

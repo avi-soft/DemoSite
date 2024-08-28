@@ -77,7 +77,7 @@ public class ServiceProviderController {
         return serviceProviderService.updateServiceProvider(userId,serviceProviderDetails);
     }catch (Exception e) {
             exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some updating: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some error updating: " + e.getMessage());
         }
     }
     @Transactional

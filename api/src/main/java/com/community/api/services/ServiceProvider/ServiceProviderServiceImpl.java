@@ -127,30 +127,34 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         List<Integer>languageList=getIntegerList(updates,"language_list");
         if(updates.containsKey("has_technical_knowledge")) {
             if ((boolean) updates.get("has_technical_knowledge").equals(true)) {
-                for (int skill_id : skillList) {
-                    Skill skill = entityManager.find(Skill.class, skill_id);
-                    if (skill != null) {
-                        if (!serviceProviderSkills.contains(skill))
-                            serviceProviderSkills.add(skill);
+                if(!skillList.isEmpty()) {
+                    for (int skill_id : skillList) {
+                        Skill skill = entityManager.find(Skill.class, skill_id);
+                        if (skill != null) {
+                            if (!serviceProviderSkills.contains(skill))
+                                serviceProviderSkills.add(skill);
+                        }
                     }
                 }
             }
         }else
             existingServiceProvider.setSkills(null);
-        for(int infra_id:infraList)
-        {
-            ServiceProviderInfra serviceProviderInfrastructure=entityManager.find(ServiceProviderInfra.class,infra_id);
-            if(serviceProviderInfrastructure!=null) {
-                if(!serviceProviderInfras.contains(serviceProviderInfrastructure))
-                    serviceProviderInfras.add(serviceProviderInfrastructure);
+        if(!infraList.isEmpty()) {
+            for (int infra_id : infraList) {
+                ServiceProviderInfra serviceProviderInfrastructure = entityManager.find(ServiceProviderInfra.class, infra_id);
+                if (serviceProviderInfrastructure != null) {
+                    if (!serviceProviderInfras.contains(serviceProviderInfrastructure))
+                        serviceProviderInfras.add(serviceProviderInfrastructure);
+                }
             }
         }
-        for(int language_id:languageList)
-        {
-            ServiceProviderLanguage serviceProviderLanguage =entityManager.find(ServiceProviderLanguage.class,language_id);
-            if(serviceProviderLanguage!=null) {
-                if(!serviceProviderLanguages.contains(serviceProviderLanguage))
-                    serviceProviderLanguages.add(serviceProviderLanguage);
+        if(!languageList.isEmpty()) {
+            for (int language_id : languageList) {
+                ServiceProviderLanguage serviceProviderLanguage = entityManager.find(ServiceProviderLanguage.class, language_id);
+                if (serviceProviderLanguage != null) {
+                    if (!serviceProviderLanguages.contains(serviceProviderLanguage))
+                        serviceProviderLanguages.add(serviceProviderLanguage);
+                }
             }
         }
         existingServiceProvider.setInfra(serviceProviderInfras);
