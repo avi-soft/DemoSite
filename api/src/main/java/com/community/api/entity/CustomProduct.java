@@ -52,4 +52,11 @@ public class CustomProduct extends ProductImpl {
     @JoinColumn(name = "notifying_authority_id")
     protected CustomNotifyingAuthority customNotifyingAuthority;
 
+//    @ManyToOne
+//    @JoinColumn(name = "user_id")
+//
+//    @ManyToOne
+//    @JoinColumn(name = "role_id")
+//    protected
+
 }

@@ -36,6 +36,9 @@ public class AddProductDto {
     @Temporal(TemporalType.TIMESTAMP)
     Long bornBefore;
 
+    Integer post;
+    Double fee;
+
     @JsonIgnore
     String url;
 

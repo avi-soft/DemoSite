@@ -43,6 +43,8 @@ public class Constant {
     public static String SOME_EXCEPTION_OCCURRED = "Some Exception Occurred";
     public static String NUMBER_FORMAT_EXCEPTION = "Number Format Exception";
     public static String CATALOG_SERVICE_NOT_INITIALIZED = "Catalog Service Not Initialized";
-    public static String GET_ALL_NOTIFYING_AUTHORITY = "SELECT * FROM custom_notifying_authority"
+    public static String GET_ALL_NOTIFYING_AUTHORITY = "SELECT * FROM custom_notifying_authority";
+    public static String GET_ALL_STATES = "SELECT * FROM state_codes";
+    public static String GET_ALL_RESERVED_CATEGORY = "SELECT * FROM custom_reserve_category";
 }
 

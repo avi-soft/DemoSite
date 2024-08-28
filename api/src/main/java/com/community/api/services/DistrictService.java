@@ -3,7 +3,6 @@ package com.community.api.services;
 import com.community.api.component.Constant;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.Districts;
-import com.community.api.entity.StateCode;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

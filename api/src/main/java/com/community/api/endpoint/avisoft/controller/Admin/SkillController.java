@@ -2,7 +2,6 @@ package com.community.api.endpoint.avisoft.controller.Admin;
 
 import com.community.api.component.Constant;
 import com.community.api.entity.Skill;
-import com.community.api.entity.StateCode;
 import com.community.api.services.SkillService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.springframework.beans.factory.annotation.Autowired;
