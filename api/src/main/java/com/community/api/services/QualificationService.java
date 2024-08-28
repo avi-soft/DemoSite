@@ -13,14 +13,12 @@ import javax.persistence.TypedQuery;
 import java.util.List;
 import java.util.Objects;
 
-import static com.community.api.component.Constant.FIND_ALL_QUALIFICATIONS_QUERY;
-
 @Service
 public class QualificationService
 {
     EntityManager entityManager;
     ExaminationController examinationController;
-
+    ExaminationService examinationService;
     public QualificationService(EntityManager entityManager, ExaminationController examinationController)
     {
         this.entityManager=entityManager;
@@ -44,7 +42,7 @@ public class QualificationService
         if (existingQualification != null ) {
             throw new EntityAlreadyExistsException("Qualification with name " + qualification.getExaminationName() + " already exists");
         }
-        List<Examination> examinations=examinationController.getAllExaminations();
+        List<Examination> examinations=examinationService.getAllExaminations();
         String examinationToAdd=null;
 
         for(Examination examination: examinations)
@@ -125,7 +123,7 @@ public class QualificationService
            throw new EntityDoesNotExistsException("Qualification with id " + qualificationId+ " does not exists");
        }
        if (Objects.nonNull(qualification.getExaminationName())) {
-           List<Examination> examinations = examinationController.getAllExaminations();
+           List<Examination> examinations = examinationService.getAllExaminations();
            String examinationToAdd = null;
 
            for (Examination examination : examinations) {
