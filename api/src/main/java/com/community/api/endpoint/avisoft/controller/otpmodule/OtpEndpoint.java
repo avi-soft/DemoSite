@@ -213,7 +213,7 @@ public class OtpEndpoint {
                     return ResponseEntity.ok(createAuthResponse(newToken, customer));
                 }
             } else {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("OTP may be deleted send otp again");
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(" send otp again");
             }
         }
         else if(roleService.findRoleName(role).equals(Constant.roleServiceProvider))

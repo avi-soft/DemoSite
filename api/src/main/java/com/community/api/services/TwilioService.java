@@ -69,8 +69,9 @@ public class TwilioService {
             String completeMobileNumber = countryCode + mobileNumber;
             String otp = generateOTP();
 
-//@TODO:-NEED TO REMOVE THE COMMENTED CODE
-/*            Message message = Message.creator(
+        //@TODO:-NEED TO REMOVE THE COMMENTED CODE
+        /*
+        Message message = Message.creator(
 
                             new PhoneNumber(completeMobileNumber),
                             new PhoneNumber(twilioPhoneNumber),
@@ -78,7 +79,7 @@ public class TwilioService {
 
 
                     .create();
-*/
+        */
 
 
             CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(mobileNumber,countryCode);
