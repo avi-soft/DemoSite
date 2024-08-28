@@ -55,6 +55,7 @@ public class OtpEndpoint {
     @Autowired
     private CustomCustomerService customCustomerService;
 
+
     @Autowired
     private JwtUtil jwtUtil;
 
@@ -242,6 +243,8 @@ public class OtpEndpoint {
             mobileNumber = mobileNumber.startsWith("0")
                     ? mobileNumber.substring(1)
                     : mobileNumber;
+            if(customCustomerService.findCustomCustomerByPhone(mobileNumber,countryCode)!=null)
+                return new ResponseEntity<>("Number Already registered as Customer",HttpStatus.BAD_REQUEST);
             if(countryCode==null)
                 countryCode=Constant.COUNTRY_CODE;
             if(!serviceProviderService.isValidMobileNumber(mobileNumber))

@@ -72,29 +72,29 @@ public class ProductController extends CatalogEndpoint {
 
         try {
 
-            String jwtToken = authHeader.substring(7);
-
-            Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
-            String role = roleService.findRoleName(roleId);
-            boolean accessGrant = false;
-
-            if(role.equals(Constant.SUPER_ADMIN) || role.equals(Constant.ADMIN)){
-                accessGrant = true;
-            }
-            else if(role.equals("SERVICE_PROVIDER")) {
-                Long userId = jwtTokenUtil.extractId(jwtToken);
-                List<Integer> privileges = privilegeService.getPrivilege(userId);
-                for(Integer apiId: privileges) {
-                    if(apiId == 1){
-                        accessGrant = true;
-                        break;
-                    }
-                }
-            }
-
-            if(!accessGrant){
-                return new ResponseEntity<>("Not Authorized to add product", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
+//            String jwtToken = authHeader.substring(7);
+//
+//            Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
+//            String role = roleService.findRoleName(roleId);
+//            boolean accessGrant = false;
+//
+//            if(role.equals(Constant.SUPER_ADMIN) || role.equals(Constant.ADMIN)){
+//                accessGrant = true;
+//            }
+//            else if(role.equals("SERVICE_PROVIDER")) {
+//                Long userId = jwtTokenUtil.extractId(jwtToken);
+//                List<Integer> privileges = privilegeService.getPrivilege(userId);
+//                for(Integer apiId: privileges) {
+//                    if(apiId == 1){
+//                        accessGrant = true;
+//                        break;
+//                    }
+//                }
+//            }
+//
+//            if(!accessGrant){
+//                return new ResponseEntity<>("Not Authorized to add product", HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
 
             if (catalogService == null) {
                 return new ResponseEntity<>(Constant.CATALOG_SERVICE_NOT_INITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
