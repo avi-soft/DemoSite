@@ -183,15 +183,6 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             updates.remove("district");
             updates.remove("pincode");
 
-            if(updates.containsKey("is_cgpa") && updates.get("is_cgpa").equals(true))
-            {
-                String cgpa=(String) updates.get("is_cgpa");
-                existingServiceProvider.setCgpa(cgpa);
-                updates.remove("is_cgpa");
-                updates.remove("cgpa");
-            }
-            else
-                existingServiceProvider.setCgpa(null);
         // Update only the fields that are present in the map using reflections
         for (Map.Entry<String, Object> entry : updates.entrySet()) {
             String fieldName = entry.getKey();
