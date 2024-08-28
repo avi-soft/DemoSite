@@ -1,15 +1,20 @@
 package com.community.api.endpoint.avisoft.controller.Qualification;
 
+import com.community.api.dto.UpdateQualificationDto;
 import com.community.api.entity.Qualification;
 import com.community.api.services.QualificationService;
 import com.community.api.services.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+
 @RestController
 @RequestMapping(value = "/qualification")
 public class QualificationController
@@ -24,7 +29,7 @@ public class QualificationController
     }
 
     @PostMapping("/addQualification/{customCustomerId}")
-    public ResponseEntity<?> addQualification( @PathVariable Long customCustomerId ,@RequestBody Qualification qualification)  {
+    public ResponseEntity<?> addQualification( @PathVariable Long customCustomerId ,@Valid @RequestBody Qualification qualification)  {
         try
         {
             Qualification newQualification= qualificationService.addQualification(customCustomerId,qualification);
@@ -40,10 +45,7 @@ public class QualificationController
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Examination does not found with examinationName"+" " + qualification.getExaminationName());
         }
-        catch (Exception e) {
-            exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Something went wrong");
-        }
+
     }
 
 
@@ -91,7 +93,7 @@ public class QualificationController
     }
 
     @PutMapping("/updateQualification/{customCustomerId}/{qualificationId}")
-    public ResponseEntity<?> updateQualificationById(@PathVariable Long customCustomerId,@PathVariable Long qualificationId, @RequestBody Qualification qualification) throws EntityDoesNotExistsException {
+    public ResponseEntity<?> updateQualificationById(@PathVariable Long customCustomerId,@PathVariable Long qualificationId, @Valid @RequestBody UpdateQualificationDto qualification) throws EntityDoesNotExistsException {
         try
         {
             Qualification qualificationToUpdate = qualificationService.updateQualification( customCustomerId,qualificationId,qualification);
@@ -117,4 +119,19 @@ public class QualificationController
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Something went wrong");
         }
     }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<?> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
+        // Collect all validation errors
+        Map<String, String> errors = e.getBindingResult().getFieldErrors()
+                .stream()
+                .collect(Collectors.toMap(
+                        error -> error.getField(),
+                        error -> error.getDefaultMessage(),
+                        (existingValue, newValue) -> existingValue + ", " + newValue // Merge messages if there are multiple errors for the same field
+                ));
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("validationErrors", errors));
+    }
+
 }

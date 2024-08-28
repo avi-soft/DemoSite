@@ -1,5 +1,6 @@
 package com.community.api.services;
 
+import com.community.api.dto.UpdateQualificationDto;
 import com.community.api.endpoint.avisoft.controller.Qualification.ExaminationController;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.Qualification;
@@ -54,10 +55,6 @@ public class QualificationService
                 break;
             }
         }
-
-        if (examinationToAdd == null) {
-            throw new ExaminationDoesNotExistsException("Examination with name " + qualification.getExaminationName() + " does not exist");
-        }
         qualification.setExaminationName(examinationToAdd);
         qualification.setCustomCustomer(customCustomer);
         customCustomer.getQualificationList().add(qualification);
@@ -105,7 +102,7 @@ public class QualificationService
     }
 
    @Transactional
-    public Qualification updateQualification(Long customCustomerId,Long qualificationId,Qualification qualification) throws EntityDoesNotExistsException, EntityAlreadyExistsException, CustomerDoesNotExistsException, ExaminationDoesNotExistsException {
+    public Qualification updateQualification(Long customCustomerId, Long qualificationId, UpdateQualificationDto qualification) throws EntityDoesNotExistsException, EntityAlreadyExistsException, CustomerDoesNotExistsException, ExaminationDoesNotExistsException {
        CustomCustomer customCustomer= entityManager.find(CustomCustomer.class,customCustomerId);
        if(customCustomer==null)
        {
