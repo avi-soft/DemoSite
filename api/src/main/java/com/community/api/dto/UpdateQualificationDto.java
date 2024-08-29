@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import javax.validation.constraints.*;
+import java.time.Year;
+
 @Data
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -48,5 +50,10 @@ public class UpdateQualificationDto
     @AssertTrue(message = "Total marks cannot be less than marks obtained")
     private boolean isMarksTotalValid() {
         return marksTotal >= marksObtained;
+    }
+
+    @AssertTrue(message = "Year of passing must be less than or equal to the current year")
+    private boolean isYearOfPassingValid() {
+        return yearOfPassing <= Year.now().getValue();
     }
 }
