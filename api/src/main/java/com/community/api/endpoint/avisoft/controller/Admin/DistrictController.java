@@ -29,7 +29,7 @@ public class DistrictController {
     private DistrictService districtService;
     @Autowired
     private ResponseService responseService;
-    @RequestMapping(value = "getDistricts", method = RequestMethod.GET)
+    @RequestMapping(value = "get-districts", method = RequestMethod.GET)
     public ResponseEntity<?> getDistricts(@RequestParam String state_code) {
         try {
             if(state_code==null)
