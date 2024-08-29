@@ -27,6 +27,7 @@ import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -111,7 +112,7 @@ public class OtpEndpoint {
             }
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Some error occurred"+ e.getMessage(), HttpStatus.BAD_REQUEST);
+            return responseService.generateErrorResponse("Some error occurred" + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -133,7 +134,7 @@ public class OtpEndpoint {
                 return responseService.generateErrorResponse(ApiConstants.ROLE_EMPTY, HttpStatus.BAD_REQUEST);
             }
 
-            if(roleService.findRoleName(role).equals(Constant.roleUser)){
+            if (roleService.findRoleName(role).equals(Constant.roleUser)) {
                 if (username != null) {
                     if (customerService == null) {
                         return responseService.generateErrorResponse(ApiConstants.CUSTOMER_SERVICE_NOT_INITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -148,7 +149,7 @@ public class OtpEndpoint {
                     if (customCustomer != null) {
                         mobileNumber = customCustomer.getMobileNumber();
                     } else {
-                        return responseService.generateErrorResponse(ApiConstants.NO_RECORDS_FOUND, HttpStatus.NO_CONTENT);
+                        return responseService.generateErrorResponse(ApiConstants.NO_RECORDS_FOUND, HttpStatus.NOT_FOUND);
                     }
                 } else if (mobileNumber == null) {
                     return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -198,7 +199,7 @@ public class OtpEndpoint {
     }
 
     @Transactional
-    @PostMapping("/serviceProviderSignup")
+    @PostMapping("/service-provider-signup")
     public ResponseEntity<?> sendOtpToMobile(@RequestBody Map<String, Object> signupDetails) {
         try {
             String mobileNumber = (String) signupDetails.get("mobileNumber");
@@ -238,8 +239,11 @@ public class OtpEndpoint {
             } else {
                 return responseService.generateErrorResponse(ApiConstants.MOBILE_NUMBER_REGISTERED, HttpStatus.BAD_REQUEST);
             }
-
-            return responseService.generateSuccessResponse(ApiConstants.OTP_SENT_SUCCESSFULLY, null, HttpStatus.OK);
+            Map<String,Object>details=new HashMap<>();
+            details.put("message",ApiConstants.OTP_SENT_SUCCESSFULLY);
+            details.put("status",ApiConstants.STATUS_SUCCESS);
+            details.put("otp",otp);
+            return responseService.generateSuccessResponse(ApiConstants.OTP_SENT_SUCCESSFULLY, details, HttpStatus.OK);
 
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
@@ -267,7 +271,7 @@ public class OtpEndpoint {
             return ResponseEntity.ok(serviceProviderEntity);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Some issue in fetching account "+ e.getMessage(), HttpStatus.BAD_REQUEST);
+            return responseService.generateErrorResponse("Some issue in fetching account " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
