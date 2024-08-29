@@ -23,20 +23,20 @@ public class CustomProductStateService implements CommandLineRunner {
     public void run(String... args) throws Exception {
         // Check if data already exists to avoid duplication
         if (entityManager.createQuery("SELECT COUNT(c) FROM CustomProductState c", Long.class).getSingleResult() == 0) {
-            entityManager.persist(new CustomProductState(1L, "New"));
-            entityManager.persist(new CustomProductState(2L, "Approved"));
-            entityManager.persist(new CustomProductState(3L, "Live"));
-            entityManager.persist(new CustomProductState(4L, "Expired"));
-            entityManager.persist(new CustomProductState(5L, "Rejected"));
+            entityManager.persist(new CustomProductState(1L, "NEW"));
+            entityManager.persist(new CustomProductState(2L, "APPROVED"));
+            entityManager.persist(new CustomProductState(3L, "LIVE"));
+            entityManager.persist(new CustomProductState(4L, "EXPIRED"));
+            entityManager.persist(new CustomProductState(5L, "REJECTED"));
         }
 
         if (entityManager.createQuery("SELECT COUNT(c) FROM CustomApplicationScope c", Long.class).getSingleResult() == 0) {
-            entityManager.persist(new CustomApplicationScope(1L, "State"));
-            entityManager.persist(new CustomApplicationScope(2L, "Government"));
+            entityManager.persist(new CustomApplicationScope(1L, "STATE"));
+            entityManager.persist(new CustomApplicationScope(2L, "GOVERNMENT"));
         }
 
         if (entityManager.createQuery("SELECT COUNT(c) FROM CustomReserveCategory c", Long.class).getSingleResult() == 0) {
-            entityManager.persist(new CustomReserveCategory(1L, "GEN", "GENERAL", true));
+            entityManager.persist(new CustomReserveCategory(1L, "GEN", "General", true));
             entityManager.persist(new CustomReserveCategory(2L, "SC", "Schedule Caste", false));
             entityManager.persist(new CustomReserveCategory(3L, "ST", "Schedule Tribe", false));
             entityManager.persist(new CustomReserveCategory(4L, "OBC", "Other Backward Caste", false));

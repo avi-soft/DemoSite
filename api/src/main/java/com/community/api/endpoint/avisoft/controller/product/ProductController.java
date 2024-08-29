@@ -4,12 +4,11 @@ import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
 import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
 import com.community.api.dto.AddProductDto;
+import com.community.api.entity.CustomJobGroup;
 import com.community.api.entity.CustomProduct;
 import com.community.api.dto.CustomProductWrapper;
 import com.community.api.entity.CustomProductState;
-import com.community.api.services.PrivilegeService;
-import com.community.api.services.ProductService;
-import com.community.api.services.RoleService;
+import com.community.api.services.*;
 import com.community.api.services.exception.ExceptionHandlingService;
 import org.broadleafcommerce.common.persistence.Status;
 import org.broadleafcommerce.core.catalog.domain.*;
@@ -54,6 +53,12 @@ public class ProductController extends CatalogEndpoint {
     @Autowired
     protected PrivilegeService privilegeService;
 
+    @Autowired
+    protected JobGroupService jobGroupService;
+
+    @Autowired
+    protected ProductStateService productStateService;
+
     /*
 
             WHAT THIS CLASS DOES FOR EACH FUNCTION WE HAVE TO THAT.
@@ -68,7 +73,7 @@ public class ProductController extends CatalogEndpoint {
                                         @RequestHeader(value = "Authorization") String authHeader) {
 
         try {
-
+            String productState = Constant.NEW; // for now we are setting it in newState.
             /*String jwtToken = authHeader.substring(7);
 
             Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
@@ -77,12 +82,14 @@ public class ProductController extends CatalogEndpoint {
 
             if(role.equals(Constant.SUPER_ADMIN) || role.equals(Constant.ADMIN)){
                 accessGrant = true;
+                productState = Constant.APPROVED;
             }
             else if(role.equals("SERVICE_PROVIDER")) {
                 Long userId = jwtTokenUtil.extractId(jwtToken);
                 List<Integer> privileges = privilegeService.getPrivilege(userId);
                 for(Integer apiId: privileges) {
                     if(apiId == 1){
+                        productState = Constant.NEW;
                         accessGrant = true;
                         break;
                     }
@@ -97,6 +104,7 @@ public class ProductController extends CatalogEndpoint {
                 return new ResponseEntity<>(Constant.CATALOG_SERVICE_NOT_INITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
+            // Validations and checks.
             if (categoryId <= 0) {
                 return new ResponseEntity<>("CategoryId cannot be <= 0", HttpStatus.INTERNAL_SERVER_ERROR);
             }
@@ -105,20 +113,16 @@ public class ProductController extends CatalogEndpoint {
                 return new ResponseEntity<>(CATEGORYNOTFOUND, HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            /*if (addProductDto.getCost().doubleValue() <= 0.0) {
-                return new ResponseEntity<>("Cost cannot be <= 0", HttpStatus.INTERNAL_SERVER_ERROR);
-            }*/
-
             if (addProductDto.getQuantity() != null) {
                 if (addProductDto.getQuantity() <= 0) {
                     return new ResponseEntity<>("Quantity cannot be empty <= 0", HttpStatus.INTERNAL_SERVER_ERROR);
                 }
             } else {
-                addProductDto.setQuantity(100000);
+                addProductDto.setQuantity(Constant.DEFAULT_QUANTITY);
             }
 
             if(addProductDto.getPriorityLevel() == null){
-                addProductDto.setPriorityLevel(5);
+                addProductDto.setPriorityLevel(Constant.DEFAULT_PRIORITY_LEVEL);
             }
 
             Product product = catalogService.createProduct(ProductType.PRODUCT);
@@ -129,15 +133,12 @@ public class ProductController extends CatalogEndpoint {
             if (addProductDto.getMetaTitle() == null || addProductDto.getMetaTitle().trim().isEmpty()) {
                 return new ResponseEntity<>(PRODUCTTITLENOTGIVEN, HttpStatus.INTERNAL_SERVER_ERROR);
             }
-            product.setMetaTitle(addProductDto.getMetaTitle().trim());
+            addProductDto.setMetaTitle(addProductDto.getMetaTitle().trim());
+            product.setMetaTitle(addProductDto.getMetaTitle()); // Also add the same metatTitle in the sku.name
 
             if (addProductDto.getMetaDescription() != null) {
                 addProductDto.setMetaDescription(addProductDto.getMetaDescription().trim());
                 product.setMetaDescription(addProductDto.getMetaDescription());
-            }
-            if(addProductDto.getUrl() != null){
-                addProductDto.setUrl(addProductDto.getUrl().trim());
-                product.setUrl(addProductDto.getUrl());
             }
 
             product = catalogService.saveProduct(product); // Save or update the product with values from requestBody.
@@ -147,7 +148,7 @@ public class ProductController extends CatalogEndpoint {
             String formattedDate = dateFormat.format(new Date());
             Date activeStartDate = dateFormat.parse(formattedDate); // Convert formatted date string back to Date
 
-//            COMPULSORY FIELD VALIDATION
+//            ExpirationDate and GoLiveDate VALIDATION
             if(addProductDto.getActiveEndDate() == null || addProductDto.getGoLiveDate() == null){
                 return new ResponseEntity<>("ActiveEndDate and GoLiveDate cannot be Empty", HttpStatus.INTERNAL_SERVER_ERROR);
             }
@@ -159,11 +160,9 @@ public class ProductController extends CatalogEndpoint {
 
 //            Create a new Sku Object
             Sku sku = catalogService.createSku();
-//            sku.setCost(addProductDto.getCost());
 
-            sku.setQuantityAvailable(addProductDto.getQuantity());
             sku.setActiveStartDate(activeStartDate);
-            sku.setName(addProductDto.getMetaTitle().trim());
+            sku.setName(addProductDto.getMetaTitle());
             sku.setQuantityAvailable(addProductDto.getQuantity());
             sku.setDescription(addProductDto.getMetaDescription());
             sku.setActiveEndDate(addProductDto.getActiveEndDate());
@@ -171,9 +170,9 @@ public class ProductController extends CatalogEndpoint {
             catalogService.saveSku(sku);
 
             // validation for new entries in the product.
-            if(addProductDto.getJobGroup() == null || !(addProductDto.getJobGroup().equals('A') || addProductDto.getJobGroup().equals('B') || addProductDto.getJobGroup().equals('C') || addProductDto.getJobGroup().equals('D'))) {
-                return new ResponseEntity<>("Product Job Group cannot be null or other than A/B/C/D", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
+            CustomJobGroup jobGroup = jobGroupService.getJobGroupById(addProductDto.getJobGroup());
+            CustomProductState customProductState = productStateService.getProductStateByName(productState);
+
             if(addProductDto.getExamDateFrom() == null || addProductDto.getExamDateTo() == null){
                 return new ResponseEntity<>("Tentative examination date from-to cannot be null", HttpStatus.INTERNAL_SERVER_ERROR);
             }else if(!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate()) || !addProductDto.getExamDateTo().after(addProductDto.getActiveEndDate())) {
@@ -184,7 +183,29 @@ public class ProductController extends CatalogEndpoint {
 
 
             product.setDefaultSku(sku); // Set default SKU in the product
-            CustomProductState customProductState = productService.getCustomProductStateById(1L);
+//            CustomProductState customProductState = productService.getCustomProductStateById(1L);
+
+            if(addProductDto.getPlatformFee() == null) {
+                return new ResponseEntity<>("Platform fee is mandatory", HttpStatus.INTERNAL_SERVER_ERROR);
+            }else if(addProductDto.getPlatformFee() <= 0) {
+                return new ResponseEntity<>("Platform fee cannot be less than or equal to zero", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            if(addProductDto.getFee() == null) {
+                return new ResponseEntity<>("Fee is mandatory", HttpStatus.INTERNAL_SERVER_ERROR);
+            }else if(addProductDto.getFee() <= 0) {
+                return new ResponseEntity<>("Fee cannot be less than or equal to zero", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            if(addProductDto.getPost() == null) {
+                addProductDto.setPost(Constant.DEFAULT_QUANTITY);
+            }else if(addProductDto.getPost() <= 0){
+                return new ResponseEntity<>("Number of Post cannot be less than or equal to zero", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            if(addProductDto.getBornBefore() == null || addProductDto.getBornAfter() == null) {
+                return new ResponseEntity<>("Born Before Date and Born After Date cannot be empty", HttpStatus.INTERNAL_SERVER_ERROR);
+            }else if(addProductDto.getBornBefore().after(new Date()) )
             productService.saveCustomProduct(addProductDto.getGoLiveDate(), addProductDto.getPriorityLevel(), product.getId(), customProductState); // Save external product with provided dates and get status code
 
 //            // Wrap and return the updated product details

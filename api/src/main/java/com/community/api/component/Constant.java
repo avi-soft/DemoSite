@@ -48,5 +48,18 @@ public class Constant {
     public static String GET_ALL_RESERVED_CATEGORY = "SELECT * FROM custom_reserve_category";
     public static String GET_COUNT_OF_JOB_ROLE = "SELECT COUNT(c) FROM CustomJobGroup c";
     public static String GET_ALL_JOB_GROUP = "SELECT s FROM CustomJobGroup s";
+    public static String GET_APPLICATION_SCOPE_BY_ID = "SELECT c FROM CustomApplicationScope c WHERE c.applicationScopeId = :applicationScopeId";
+    public static Integer DEFAULT_QUANTITY = 100000;
+    public static Integer DEFAULT_PRIORITY_LEVEL = 3;
+    public static String GET_JOB_GROUP_BY_ID = "SELECT c FROM CustomJobGroup c WHERE c.jobGroupId = :jobGroupId";
+    public static String GET_ALL_PRODUCT_STATE = "SELECT c FROM CustomProductState c";
+    public static String GET_PRODUCT_STATE_BY_ID = "SELECT c FROM CustomProductState c WHERE c.productStateId = :productStateId";
+    public static String GET_PRODUCT_STATE_BY_NAME = "SELECT c FROM CustomProductState c WHERE c.productState = :productStateName";
+    public static String NEW = "NEW";
+    public static String LIVE = "LIVE";
+    public static String APPROVED = "APPROVED";
+    public static String EXPIRED = "EXPIRED";
+    public static String END = "END";
 }
+
 

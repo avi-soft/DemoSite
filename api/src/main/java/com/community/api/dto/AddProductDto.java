@@ -24,6 +24,7 @@ public class AddProductDto {
     Double platformFee;
     @NotNull
     Long applicationScope;
+    Long jobGroup;
 
     @Temporal(TemporalType.TIMESTAMP)
     Date activeEndDate;
@@ -40,7 +41,6 @@ public class AddProductDto {
 
     Integer priorityLevel;
     String metaDescription;
-    Character jobGroup;
     Long reservedCategory;
     String notifyingAuthority;
     Integer post; // -> set default value

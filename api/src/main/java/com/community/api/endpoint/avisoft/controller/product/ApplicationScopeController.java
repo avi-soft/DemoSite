@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -26,6 +27,17 @@ public class ApplicationScopeController {
         try {
             List<CustomApplicationScope> applicationScopeList = applicationScopeService.getAllApplicationScope();
             return new ResponseEntity<>(applicationScopeList, HttpStatus.OK);
+        }catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return new ResponseEntity<>(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage() , HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/getApplicationScopeById/{applicationScopeId}")
+    public ResponseEntity<?> getApplicationScopeById(@PathVariable Long applicationScopeId) {
+        try {
+            CustomApplicationScope applicationScope = applicationScopeService.getApplicationScopeById(applicationScopeId);
+            return new ResponseEntity<>(applicationScope, HttpStatus.OK);
         }catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return new ResponseEntity<>(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage() , HttpStatus.INTERNAL_SERVER_ERROR);
