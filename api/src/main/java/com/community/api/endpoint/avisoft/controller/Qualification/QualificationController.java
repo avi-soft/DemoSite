@@ -29,19 +29,21 @@ public class QualificationController
     }
 
     @PostMapping("/addQualification/{customCustomerId}")
-    public ResponseEntity<?> addQualification( @PathVariable Long customCustomerId ,@Valid @RequestBody Qualification qualification)  {
+    public ResponseEntity<?> addQualification( @PathVariable Long customCustomerId ,@Valid @RequestBody Qualification qualification) {
         try
         {
             Qualification newQualification= qualificationService.addQualification(customCustomerId,qualification);
             return  ResponseEntity.status(HttpStatus.CREATED).body(Map.of("success",true, "message", "Qualification is added successfully.", "qualification", newQualification));
         }
+        catch (CustomerDoesNotExistsException e) {
+            exceptionHandling.handleException(e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer does not exist with customer Id"+" "+customCustomerId);
+        }
         catch (EntityAlreadyExistsException exception) {
             exceptionHandling.handleException(exception);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Qualification already exist with examination name"+" " +qualification.getExaminationName());
-        } catch (EntityDoesNotExistsException e) {
-            exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer does not exist with customer Id"+" "+customCustomerId);
-        } catch (ExaminationDoesNotExistsException e) {
+        }
+        catch (ExaminationDoesNotExistsException e) {
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Examination does not found with examinationName"+" " + qualification.getExaminationName());
         }
@@ -49,9 +51,7 @@ public class QualificationController
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Something went wrong");
         }
-
     }
-
 
     @GetMapping("/getQualificationsByCustomerId/{customCustomerId}")
     public ResponseEntity<?> getQualificationById(@PathVariable Long customCustomerId) {

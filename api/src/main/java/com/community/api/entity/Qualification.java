@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import javax.validation.constraints.*;
+import java.time.Year;
 
 @Entity
 @Data
@@ -33,8 +34,6 @@ public class Qualification {
     @Column(name = "subject_stream", nullable = false)
     private String subjectStream;
 
-    @Column(name = "is_percentage", nullable = false)
-    private boolean isPercentage;
 
     @NotBlank(message = "Grade or percentage value is required")
     @Pattern(regexp = "\\d+\\.?\\d*|[A-F]|[a-f]", message = "Grade or percentage value must be either a number or a valid grade")
@@ -59,8 +58,15 @@ public class Qualification {
     private boolean isMarksTotalValid() {
         return marksTotal >= marksObtained;
     }
+
+    @AssertTrue(message = "Year of passing must be less than or equal to the current year")
+    private boolean isYearOfPassingValid() {
+        return yearOfPassing <= Year.now().getValue();
+    }
     @ManyToOne
     @JsonIgnore
     @JoinColumn(name = "custom_customer_id")
     private CustomCustomer customCustomer;
+
+
 }
