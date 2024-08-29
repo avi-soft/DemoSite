@@ -5,6 +5,7 @@ import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.avisoft.controller.Customer.CustomerEndpoint;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.services.CustomCustomerService;
+import com.community.api.services.ResponseService;
 import com.community.api.services.RoleService;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
 import com.community.api.services.TwilioService;
@@ -78,6 +79,8 @@ public class AccountEndPoint {
     }
 
     @Autowired
+    private ResponseService responseService;
+    @Autowired
     public void setCustomCustomerService(CustomCustomerService customCustomerService) {
         this.customCustomerService = customCustomerService;
     }
@@ -97,14 +100,15 @@ public class AccountEndPoint {
                 if (customCustomerService.isValidMobileNumber(mobileNumber) && isNumeric(mobileNumber)) {
                     return loginWithPhoneOtp(loginDetails, session);
                 } else {
-                    return ResponseEntity.badRequest().body("Mobile number is not valid");
+                    return responseService.generateErrorResponse("Mobile number is not valid ",HttpStatus.BAD_REQUEST);
                 }
             } else {
                 return loginWithUsernameOtp(loginDetails, session);
             }
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some issue in login: " + e.getMessage());
+            return responseService.generateErrorResponse("Some issue in login: " + e.getMessage(),HttpStatus.BAD_REQUEST);
+
         }
     }
 
@@ -120,32 +124,38 @@ public class AccountEndPoint {
                 if (customCustomerService.isValidMobileNumber(mobileNumber) && isNumeric(mobileNumber)) {
                     return loginWithCustomerPassword(loginDetails, session, request);
                 } else {
-                    return ResponseEntity.badRequest().body("Mobile number is not valid");
+                    return responseService.generateErrorResponse("Mobile number is not valid ",HttpStatus.BAD_REQUEST);
                 }
             } else if(username!=null) {
                 return loginWithUsername(loginDetails, session,request);
             }
-                else
-                    return new ResponseEntity<>("Invalid request", HttpStatus.INTERNAL_SERVER_ERROR);
+                else{
+                    return responseService.generateErrorResponse("Invalid request ",HttpStatus.INTERNAL_SERVER_ERROR);
+
+                }
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some issue in login: " + e.getMessage());
+            return responseService.generateErrorResponse("Some issue in login: " + e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+
         }
     }
     @RequestMapping(value = "phone-otp", method = RequestMethod.POST)
-    private ResponseEntity<String> loginWithPhoneOtp(@RequestBody Map<String,Object> loginDetails, HttpSession session) throws UnsupportedEncodingException, UnsupportedEncodingException {
+    private ResponseEntity<?> loginWithPhoneOtp(@RequestBody Map<String,Object> loginDetails, HttpSession session) throws UnsupportedEncodingException, UnsupportedEncodingException {
         try {
             if (loginDetails == null) {
-                return new ResponseEntity<>("Login details cannot be null", HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Invalid data provided",HttpStatus.BAD_REQUEST);
+
             }
             String mobileNumber = (String) loginDetails.get("mobileNumber");
             String countryCode = (String) loginDetails.get("countryCode");
             Integer role = (Integer) loginDetails.get("role");
             if(mobileNumber==null)
             {
-                return new ResponseEntity<>("Mobile number cannot be empty",HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Mobile number cannot be empty ",HttpStatus.BAD_REQUEST);
+
             }else if(role==null) {
-                return new ResponseEntity<>("role cannot be empty", HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("role cannot be empty ",HttpStatus.BAD_REQUEST);
+
             }
             if (countryCode == null || countryCode.isEmpty()) {
                 countryCode = Constant.COUNTRY_CODE;
@@ -157,17 +167,27 @@ public class AccountEndPoint {
             if(roleService.findRoleName(role).equals(Constant.roleUser)) {
                 CustomCustomer customerRecords = customCustomerService.findCustomCustomerByPhone(mobileNumber, countryCode);
                 if (customerRecords == null) {
-                    return new ResponseEntity<>("No Records found", HttpStatus.NOT_FOUND);
+                    return responseService.generateErrorResponse("No Records found ",HttpStatus.NO_CONTENT);
+
                 }
                 if (customerService == null) {
-                    return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
+                    return responseService.generateErrorResponse("Customer service is not initialized.",HttpStatus.INTERNAL_SERVER_ERROR);
+
                 }
                 Customer customer = customerService.readCustomerById(customerRecords.getId());
                 if (customer != null) {
                     twilioService.sendOtpToMobile(updated_mobile, countryCode);
 
                     String storedOtp = customerRecords.getOtp();
-                    return new ResponseEntity<>("OTP Sent on " + mobileNumber + " storedOtp is " + storedOtp, HttpStatus.OK);
+
+                    ResponseEntity<Map<String, Object>> otpResponse = twilioService.sendOtpToMobile(updated_mobile, countryCode);
+                    Map<String, Object> responseBody = otpResponse.getBody();
+
+                    if ("success".equals(responseBody.get("status"))) {
+                        return responseService.generateSuccessResponse("OTP Sent on " + mobileNumber + " storedOtp is " + storedOtp, responseBody, HttpStatus.OK);
+                    } else {
+                        return responseService.generateErrorResponse((String) responseBody.get("message"), HttpStatus.BAD_REQUEST);
+                    }
                 } else {
                     return ResponseEntity.badRequest().body("Mobile number not found");
                 }
