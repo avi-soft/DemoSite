@@ -19,7 +19,7 @@ public class ServiceProviderInfraController {
     @Autowired
     private ServiceProviderInfraService serviceProviderInfraService;
 
-    @PostMapping("addInfra")
+    @PostMapping("add-infra")
     public ResponseEntity<?> addInfra(@RequestBody ServiceProviderInfra serviceProviderInfra) {
         try {
             return serviceProviderInfraService.addInfra(serviceProviderInfra);
@@ -29,7 +29,7 @@ public class ServiceProviderInfraController {
         }
     }
 
-    @GetMapping("fetchInfraList")
+    @GetMapping("fetch-infras")
     public ResponseEntity<?> fetchInfra() {
         try {
             return new ResponseEntity<>(serviceProviderInfraService.findAllInfraList(), HttpStatus.OK);
