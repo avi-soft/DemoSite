@@ -30,7 +30,7 @@ public class StateController {
     private DistrictService districtService;
     @Autowired
     private ResponseService responseService;
-    @RequestMapping(value = "getStates", method = RequestMethod.GET)
+    @RequestMapping(value = "get-states", method = RequestMethod.GET)
     public ResponseEntity<?> getStates() {
         try {
             List<StateCode> names= districtService.findStateList();
