@@ -10,17 +10,17 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name="custom_notifying_authority")
+@Table(name="custom_application_scope")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CustomNotifyingAuthority {
+public class CustomApplicationScope {
 
     @Id
-    @Column(name="notifying_authority_id")
-    protected Long notifying_authority_id;
+    @Column(name="application_scope_id")
+    protected Long applicationScopeId;
 
-    @Column(name="notifying_authority")
-    protected String notifying_authority;
+    @Column(name="application_scope")
+    protected String applicationScope;
 
 }

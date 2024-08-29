@@ -49,8 +49,8 @@ public class CustomProduct extends ProductImpl {
     protected CustomProductState productState;
 
     @ManyToOne
-    @JoinColumn(name = "notifying_authority_id")
-    protected CustomNotifyingAuthority customNotifyingAuthority;
+    @JoinColumn(name = "application_scope_id")
+    protected CustomApplicationScope customApplicationScope;
 
 //    @ManyToOne
 //    @JoinColumn(name = "user_id")

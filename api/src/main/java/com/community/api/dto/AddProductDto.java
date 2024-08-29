@@ -8,6 +8,7 @@ import org.broadleafcommerce.common.money.Money;
 
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
+import javax.validation.constraints.NotNull;
 import java.util.Date;
 
 @Data
@@ -15,33 +16,37 @@ import java.util.Date;
 @NoArgsConstructor
 public class AddProductDto {
 
-    Money cost;
+    @NotNull
     String metaTitle;
-    String metaDescription;
-    Date activeEndDate;
-    Date goLiveDate;
-    Integer priorityLevel;
+    @NotNull
+    Double fee;
+    @NotNull
+    Double platformFee;
+    @NotNull
+    Long applicationScope;
 
+    @Temporal(TemporalType.TIMESTAMP)
+    Date activeEndDate;
+    @Temporal(TemporalType.TIMESTAMP)
+    Date goLiveDate;
     @Temporal(TemporalType.TIMESTAMP)
     Date examDateFrom;
     @Temporal(TemporalType.TIMESTAMP)
     Date examDateTo;
-    Long notifyingAuthorityId;
-    Money platformFee;
-    Character jobGroup;
-    Long reservedCategory;
-
     @Temporal(TemporalType.TIMESTAMP)
     Long bornAfter;
     @Temporal(TemporalType.TIMESTAMP)
     Long bornBefore;
 
-    Integer post;
-    Double fee;
+    Integer priorityLevel;
+    String metaDescription;
+    Character jobGroup;
+    Long reservedCategory;
+    String notifyingAuthority;
+    Integer post; // -> set default value
+    Integer quantity; // -> set defalut value to 100000 if not given.
 
     @JsonIgnore
     String url;
-
-    Integer quantity;
 
 }

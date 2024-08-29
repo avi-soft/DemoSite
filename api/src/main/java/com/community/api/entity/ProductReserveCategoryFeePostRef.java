@@ -1,5 +1,7 @@
 package com.community.api.entity;
 
+import org.broadleafcommerce.common.money.Money;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
@@ -22,7 +24,7 @@ public class ProductReserveCategoryFeePostRef {
     protected CustomReserveCategory customReserveCategory;
 
     @Column(name = "fee")
-    Double fee;
+    Money fee;
 
     @Column(name = "post")
     Long post;
