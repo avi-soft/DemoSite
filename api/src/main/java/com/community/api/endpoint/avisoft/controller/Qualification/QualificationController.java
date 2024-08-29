@@ -50,7 +50,7 @@ public class QualificationController
 
         } catch (ExaminationDoesNotExistsException e) {
             exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Examination does not found with examinationName"+" " + qualification.getExaminationName(), HttpStatus.NO_CONTENT);
+            return responseService.generateErrorResponse("Examination does not found with examinationName"+" " + qualification.getExaminationName(), HttpStatus.NOT_FOUND);
 
         }
         catch (Exception e) {
