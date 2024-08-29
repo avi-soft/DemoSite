@@ -149,7 +149,7 @@ public class OtpEndpoint {
                     if (customCustomer != null) {
                         mobileNumber = customCustomer.getMobileNumber();
                     } else {
-                        return responseService.generateErrorResponse(ApiConstants.NO_RECORDS_FOUND, HttpStatus.NO_CONTENT);
+                        return responseService.generateErrorResponse(ApiConstants.NO_RECORDS_FOUND, HttpStatus.NOT_FOUND);
                     }
                 } else if (mobileNumber == null) {
                     return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.INTERNAL_SERVER_ERROR);

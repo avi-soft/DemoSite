@@ -164,7 +164,7 @@ public class AccountEndPoint {
             if (roleService.findRoleName(role).equals(Constant.roleUser)) {
                 CustomCustomer customerRecords = customCustomerService.findCustomCustomerByPhone(mobileNumber, countryCode);
                 if (customerRecords == null) {
-                    return responseService.generateErrorResponse(ApiConstants.NO_RECORDS_FOUND, HttpStatus.NO_CONTENT);
+                    return responseService.generateErrorResponse(ApiConstants.NO_RECORDS_FOUND, HttpStatus.NOT_FOUND);
 
                 }
                 if (customerService == null) {
@@ -290,7 +290,7 @@ public class AccountEndPoint {
             if (roleService.findRoleName(role).equals(Constant.roleUser)) {
                 Customer customer = customerService.readCustomerByUsername(username);
                 if (customer == null) {
-                    return responseService.generateErrorResponse(ApiConstants.NO_RECORDS_FOUND, HttpStatus.NO_CONTENT);
+                    return responseService.generateErrorResponse(ApiConstants.NO_RECORDS_FOUND, HttpStatus.NOT_FOUND);
                 }
                 CustomCustomer customCustomer = em.find(CustomCustomer.class, customer.getId());
                 if (customCustomer != null) {
@@ -304,7 +304,7 @@ public class AccountEndPoint {
                         return responseService.generateErrorResponse((String) responseBody.get("message"), HttpStatus.BAD_REQUEST);
                     }
                 } else {
-                    return responseService.generateErrorResponse(ApiConstants.NO_RECORDS_FOUND, HttpStatus.NO_CONTENT);
+                    return responseService.generateErrorResponse(ApiConstants.NO_RECORDS_FOUND, HttpStatus.NOT_FOUND);
 
                 }
             } else if (roleService.findRoleName(role).equals(Constant.roleServiceProvider)) {
