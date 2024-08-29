@@ -30,9 +30,8 @@ public class DistrictController {
     @Autowired
     private ResponseService responseService;
     @RequestMapping(value = "getDistricts", method = RequestMethod.GET)
-    public ResponseEntity<?> getDistricts(@RequestBody Map<String, Object>details) {
+    public ResponseEntity<?> getDistricts(@RequestParam String state_code) {
         try {
-            String state_code=(String)details.get("state_code");
             if(state_code==null)
                 return responseService.generateErrorResponse("Empty value for State Code passed",HttpStatus.BAD_REQUEST);
             List<Districts> names= districtService.findDistrictsByStateCode(state_code);

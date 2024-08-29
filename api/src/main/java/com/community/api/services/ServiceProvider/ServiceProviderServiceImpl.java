@@ -70,9 +70,6 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     @Autowired
     private  RateLimiterService rateLimiterService;
 
-    @Autowired
-    private ResponseService responseService;
-
     @Value("${twilio.phoneNumber}")
     private String twilioPhoneNumber;
     @Override
