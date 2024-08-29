@@ -47,7 +47,6 @@
         <class>com.community.api.entity.CustomReserveCategory</class>
         <class>com.community.api.entity.ProductReserveCategoryFeePostRef</class>
         <class>com.community.api.entity.ProductReserveCategoryBornBeforeAfterRef</class>
-
         <exclude-unlisted-classes/>
     </persistence-unit>
     
