@@ -6,6 +6,7 @@ import com.community.api.entity.ServiceProviderAddress;
 import com.community.api.entity.ServiceProviderAddressRef;
 import com.community.api.entity.Skill;
 import com.community.api.services.DistrictService;
+import com.community.api.services.ResponseService;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
 import com.community.api.services.TwilioServiceForServiceProvider;
 import com.community.api.services.exception.ExceptionHandlingImplement;
@@ -50,6 +51,8 @@ public class ServiceProviderController {
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
     @Autowired
+    private ResponseService responseService;
+    @Autowired
     private CustomerService customerService;
     @Autowired
     private DistrictService districtService;
@@ -77,7 +80,7 @@ public class ServiceProviderController {
         return serviceProviderService.updateServiceProvider(userId,serviceProviderDetails);
     }catch (Exception e) {
             exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some error updating: " + e.getMessage());
+            return responseService.generateErrorResponse("Some error updating: " + e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     @Transactional

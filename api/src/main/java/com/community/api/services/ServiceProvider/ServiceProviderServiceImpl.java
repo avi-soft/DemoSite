@@ -56,6 +56,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     @Autowired
     private PasswordEncoder passwordEncoder;
     @Autowired
+    private ResponseService responseService;
+    @Autowired
     private JwtUtil jwtUtil;
     @Autowired
     private DistrictService districtService;
@@ -117,10 +119,10 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
         if ((existingSPByUsername != null) || existingSPByEmail != null) {
             if (existingSPByUsername != null && !existingSPByUsername.getService_provider_id().equals(userId)) {
-                return new ResponseEntity<>("Username is not available", HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Username is not available", HttpStatus.BAD_REQUEST);
             }
             if (existingSPByEmail != null && !existingSPByEmail.getService_provider_id().equals(userId)) {
-                return new ResponseEntity<>("Email not available", HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Email not available", HttpStatus.BAD_REQUEST);
             }
         }
         List<Skill>serviceProviderSkills=new ArrayList<>();
@@ -202,7 +204,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 }
             } catch (NoSuchFieldException | IllegalAccessException e) {
                 // Handle the exception if the field is not found or not accessible
-                return new ResponseEntity<>("Invalid field: " + fieldName, HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Invalid field: " + fieldName, HttpStatus.BAD_REQUEST);
             }
         }
         // Merge the updated entity
@@ -212,7 +214,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             existingServiceProvider.setUser_name(username);
         }
         entityManager.merge(existingServiceProvider);
-        return new ResponseEntity<>(existingServiceProvider, HttpStatus.OK);
+        return responseService.generateSuccessResponse("Service Provider Updated Successfully",existingServiceProvider,HttpStatus.OK);
     }
 
     @Override
