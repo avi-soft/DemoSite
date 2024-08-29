@@ -12,6 +12,7 @@ import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.entity.CustomProduct;
 import com.community.api.services.CategoryService;
 import com.community.api.services.CustomCustomerService;
+import com.community.api.services.ResponseService;
 import com.community.api.services.TwilioService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.exception.ExceptionHandlingService;
@@ -64,6 +65,10 @@ public class CustomerEndpoint {
     private AddressService addressService;
     private CustomerAddressService customerAddressService;
     private JwtUtil jwtUtil;
+
+
+    @Autowired
+    private static ResponseService responseService;
 
     @Autowired
     private ExceptionHandlingService exceptionHandlingService;
@@ -404,10 +409,12 @@ public class CustomerEndpoint {
         addressDTO.setPhoneNumber(customCustomer.getMobileNumber());
         return addressDTO;
     }
-    public static ResponseEntity<OtpEndpoint.AuthResponse> createAuthResponse(String token, Customer customer ) {
+    public static ResponseEntity<?> createAuthResponse(String token, Customer customer ) {
         OtpEndpoint.AuthResponse authResponse = new OtpEndpoint.AuthResponse(token, customer);
-        return ResponseEntity.ok(authResponse);
+        return responseService.generateSuccessResponse("Token details : ", authResponse, HttpStatus.OK);
     }
+
+
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout(@RequestBody Map<String, String> request) {

@@ -64,7 +64,6 @@ public class JwtUtil {
                     .claim("id", id)
                     .claim("role", role)
                     .claim("ipAddress", ipAddress)
-                    .claim("userAgent", userAgent)
                     .setIssuedAt(new Date())
                     .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
                     .signWith(secretKey, SignatureAlgorithm.HS256)
@@ -130,10 +129,9 @@ public class JwtUtil {
             }
 
             String storedIpAddress = claims.get("ipAddress", String.class);
-            String storedUserAgent = claims.get("userAgent", String.class);
 
-            return ipAddress.trim().equals(storedIpAddress != null ? storedIpAddress.trim() : "") &&
-                    userAgent.trim().equalsIgnoreCase(storedUserAgent != null ? storedUserAgent.trim() : "");
+
+            return ipAddress.trim().equals(storedIpAddress != null ? storedIpAddress.trim() : "");
         } catch (ExpiredJwtException e) {
             exceptionHandling.handleException(e);
             return false;

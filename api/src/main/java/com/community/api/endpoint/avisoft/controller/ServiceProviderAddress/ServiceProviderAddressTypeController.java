@@ -2,6 +2,7 @@ package com.community.api.endpoint.avisoft.controller.ServiceProviderAddress;
 
 import com.community.api.component.Constant;
 import com.community.api.entity.ServiceProviderAddressRef;
+import com.community.api.services.ResponseService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,10 +21,13 @@ import java.util.Map;
 @RequestMapping("/service-provider-address-type")
 public class ServiceProviderAddressTypeController {
     @Autowired
+    private ResponseService responseService;
+    @Autowired
     private EntityManager entityManager;
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
     @GetMapping("/getAddressTypes")
+
     public ResponseEntity<?> getAddressTypes()
     {
         TypedQuery<ServiceProviderAddressRef> query = entityManager.createQuery(Constant.jpql, ServiceProviderAddressRef.class);
@@ -33,12 +37,18 @@ public class ServiceProviderAddressTypeController {
     @PostMapping("/addAddressType")
     public ResponseEntity<?> addAddressType(@RequestBody Map<String,Object> details)
     {
-       String address_name=(String) details.get("address_name");
-       if(address_name==null)
-           return new ResponseEntity<>("Address name cannot be null",HttpStatus.BAD_REQUEST);
-       ServiceProviderAddressRef addressRef=new ServiceProviderAddressRef();
-       addressRef.setAddress_name(address_name);
-       entityManager.persist(addressRef);
-       return new ResponseEntity<>(addressRef,HttpStatus.OK);
+        try{
+            String address_name=(String) details.get("address_name");
+            if(address_name==null)
+                return new ResponseEntity<>("Address name cannot be null",HttpStatus.BAD_REQUEST);
+            ServiceProviderAddressRef addressRef=new ServiceProviderAddressRef();
+            addressRef.setAddress_name(address_name);
+            entityManager.persist(addressRef);
+            return responseService.generateSuccessResponse("Address data list",addressRef ,HttpStatus.OK);
+
+        }catch(Exception e){
+            exceptionHandling.handleException(e);
+            return responseService.generateErrorResponse("Some error occurred"+ e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
     }
 }

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class ResponseService {
-    public <T> ResponseEntity<SuccessResponse<T>> generateSuccessResponse(String message, T data, HttpStatus status) {
+    public static <T> ResponseEntity<SuccessResponse<T>> generateSuccessResponse(String message, T data, HttpStatus status) {
         SuccessResponse<T> successResponse = new SuccessResponse<>();
         successResponse.setStatus(status);
         successResponse.setData(data);
@@ -17,7 +17,7 @@ public class ResponseService {
         return new ResponseEntity<>(successResponse, status);
     }
 
-    public ResponseEntity<ErrorResponse> generateErrorResponse(String message,HttpStatus status)
+    public static ResponseEntity<ErrorResponse> generateErrorResponse(String message,HttpStatus status)
     {
         ErrorResponse errorResponse=new ErrorResponse();
         errorResponse.setMessage(message);
