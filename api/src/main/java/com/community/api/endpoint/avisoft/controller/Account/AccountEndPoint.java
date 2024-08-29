@@ -90,7 +90,7 @@ public class AccountEndPoint {
     }
 
 
-    @PostMapping("/loginWithOtp")
+    @PostMapping("/login-with-otp")
     @ResponseBody
     public ResponseEntity<?> verifyAndLogin(@RequestBody Map<String, Object> loginDetails, HttpSession session) {
         try {
@@ -112,7 +112,7 @@ public class AccountEndPoint {
     }
 
 
-    @PostMapping("/loginWithPassword")
+    @PostMapping("/login-with-password")
     @ResponseBody
     public ResponseEntity<?> loginWithPassword(@RequestBody Map<String, Object> loginDetails, HttpSession session, HttpServletRequest request) {
         try {
@@ -319,7 +319,7 @@ public class AccountEndPoint {
         }
     }
 
-    @RequestMapping(value = "login-with-password", method = RequestMethod.POST)
+    @RequestMapping(value = "customer-login-with-password", method = RequestMethod.POST)
     public ResponseEntity<?> loginWithCustomerPassword(@RequestBody Map<String, Object> loginDetails, HttpSession session,
                                                        HttpServletRequest request) {
         try {
