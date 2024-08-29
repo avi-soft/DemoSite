@@ -61,7 +61,10 @@ public class TwilioService {
     public ResponseEntity<Map<String, Object>> sendOtpToMobile(String mobileNumber, String countryCode) {
 
         if (mobileNumber == null || mobileNumber.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "Mobile number cannot be null or empty"));
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", ApiConstants.STATUS_ERROR,
+                    "message", ApiConstants.MOBILE_NUMBER_NULL_OR_EMPTY
+            ));
         }
 
         try {
@@ -69,7 +72,7 @@ public class TwilioService {
             String completeMobileNumber = countryCode + mobileNumber;
             String otp = generateOTP();
 
-            //@TODO:-NEED TO REMOVE THE COMMENTED CODE
+            // Uncomment the code to send OTP via SMS
         /*
         Message message = Message.creator(
             new PhoneNumber(completeMobileNumber),
@@ -88,28 +91,51 @@ public class TwilioService {
                 customerDetails.setMobileNumber(mobileNumber);
                 customerDetails.setOtp(otp);
                 entityManager.persist(customerDetails);
-                return ResponseEntity.ok(Map.of("status", "success", "message", "OTP has been sent successfully", "otp", otp));
+                return ResponseEntity.ok(Map.of(
+                        "status", ApiConstants.STATUS_SUCCESS,
+                        "message", ApiConstants.OTP_SENT_SUCCESSFULLY,
+                        "otp", otp
+                ));
             } else if (serviceProvider != null) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("status", "error", "message", "Number already registered as Service Provider"));
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                        "status", ApiConstants.STATUS_ERROR,
+                        "message", ApiConstants.NUMBER_ALREADY_REGISTERED_SERVICE_PROVIDER
+                ));
             } else {
                 existingCustomer.setOtp(otp);
                 entityManager.merge(existingCustomer);
-                return ResponseEntity.ok(Map.of("status", "success", "message", "OTP has been sent successfully", "otp", otp));
+                return ResponseEntity.ok(Map.of(
+                        "status", ApiConstants.STATUS_SUCCESS,
+                        "message", ApiConstants.OTP_SENT_SUCCESSFULLY,
+                        "otp", otp
+                ));
             }
 
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("status", "error", "message", "Unauthorized access: Please check your API key"));
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                        "status", ApiConstants.STATUS_ERROR,
+                        "message", ApiConstants.UNAUTHORIZED_ACCESS
+                ));
             } else {
                 exceptionHandling.handleHttpClientErrorException(e);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("status", "error", "message", "Internal server error occurred"));
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                        "status", ApiConstants.STATUS_ERROR,
+                        "message", ApiConstants.INTERNAL_SERVER_ERROR
+                ));
             }
         } catch (ApiException e) {
             exceptionHandling.handleApiException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("status", "error", "message", "Error sending OTP: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "status", ApiConstants.STATUS_ERROR,
+                    "message", ApiConstants.ERROR_SENDING_OTP + e.getMessage()
+            ));
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("status", "error", "message", "Error sending OTP: " + e.getMessage()));
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "status", ApiConstants.STATUS_ERROR,
+                    "message", ApiConstants.ERROR_SENDING_OTP + e.getMessage()
+            ));
         }
     }
 

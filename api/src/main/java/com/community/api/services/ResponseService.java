@@ -11,8 +11,10 @@ import java.util.Map;
 
 @Service
 public class ResponseService {
-    public ResponseEntity<SuccessResponse> generateSuccessResponse(String message, Object data, HttpStatus status) {
+
+    public static ResponseEntity<SuccessResponse> generateSuccessResponse(String message, Object data, HttpStatus status) {
         SuccessResponse successResponse = new SuccessResponse();
+
         successResponse.setStatus(status);
         successResponse.setStatus_code(status.value());
         successResponse.setMessage(message);
@@ -29,7 +31,7 @@ public class ResponseService {
         return new ResponseEntity<>(successResponse, status);
     }
 
-    public ResponseEntity<ErrorResponse> generateErrorResponse(String message,HttpStatus status)
+    public static ResponseEntity<ErrorResponse> generateErrorResponse(String message,HttpStatus status)
     {
         ErrorResponse errorResponse=new ErrorResponse();
         errorResponse.setMessage(message);
