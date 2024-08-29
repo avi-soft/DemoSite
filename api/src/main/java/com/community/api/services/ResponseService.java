@@ -6,18 +6,32 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Service
 public class ResponseService {
-    public <T> ResponseEntity<SuccessResponse<T>> generateSuccessResponse(String message, T data, HttpStatus status) {
-        SuccessResponse<T> successResponse = new SuccessResponse<>();
+
+    public static ResponseEntity<SuccessResponse> generateSuccessResponse(String message, Object data, HttpStatus status) {
+        SuccessResponse successResponse = new SuccessResponse();
+
         successResponse.setStatus(status);
-        successResponse.setData(data);
         successResponse.setStatus_code(status.value());
         successResponse.setMessage(message);
+
+        // Convert data to Map if it's not already a Map
+        Map<String, Object> dataMap = new HashMap<>();
+        if (data instanceof Map) {
+            dataMap = (Map<String, Object>) data;
+        } else {
+            dataMap.put("value", data);
+        }
+        successResponse.setData(dataMap);
+
         return new ResponseEntity<>(successResponse, status);
     }
 
-    public ResponseEntity<ErrorResponse> generateErrorResponse(String message,HttpStatus status)
+    public static ResponseEntity<ErrorResponse> generateErrorResponse(String message,HttpStatus status)
     {
         ErrorResponse errorResponse=new ErrorResponse();
         errorResponse.setMessage(message);

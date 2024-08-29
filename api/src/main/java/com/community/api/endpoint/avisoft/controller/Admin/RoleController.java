@@ -19,7 +19,7 @@ public class RoleController {
     private RoleService roleService;
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
-    @PostMapping("addRole")
+    @PostMapping("add-role")
     public ResponseEntity<?> addRole(@RequestBody Role role)
     {
         try{
@@ -29,7 +29,7 @@ public class RoleController {
             return new ResponseEntity<>("Error aadding role", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    @GetMapping("/getRoleList")
+    @GetMapping("/get-roles")
     public ResponseEntity<?> getRoles() {
         try{
             return new ResponseEntity<>(roleService.findAllRoleList(),HttpStatus.OK);

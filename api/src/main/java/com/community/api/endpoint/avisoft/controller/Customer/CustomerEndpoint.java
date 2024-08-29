@@ -12,6 +12,7 @@ import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.entity.CustomProduct;
 import com.community.api.services.CategoryService;
 import com.community.api.services.CustomCustomerService;
+import com.community.api.services.ResponseService;
 import com.community.api.services.TwilioService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.exception.ExceptionHandlingService;
@@ -65,6 +66,10 @@ public class CustomerEndpoint {
     private CustomerAddressService customerAddressService;
     private JwtUtil jwtUtil;
 
+
+    @Autowired
+    private static ResponseService responseService;
+
     @Autowired
     private ExceptionHandlingService exceptionHandlingService;
 
@@ -96,7 +101,8 @@ public class CustomerEndpoint {
     public void setEm(EntityManager em) {
         this.em = em;
     }
-
+    @Autowired
+    public ResponseService responseService;
     @Autowired
     public void setTwilioService(TwilioService twilioService) {
         this.twilioService = twilioService;
@@ -241,38 +247,43 @@ public class CustomerEndpoint {
     }
 
     @Transactional
-    @RequestMapping(value = "update-password", method = RequestMethod.POST)
-    public ResponseEntity<?> updateCustomerPassword(@RequestBody CustomerDTO customerDTO, @RequestParam Long customerId) {
+    @RequestMapping(value = "create-or-update-password", method = RequestMethod.POST)
+    public ResponseEntity<?> updateCustomerPassword(@RequestBody Map<String,Object>details, @RequestParam Long customerId) {
         try {
             if (customerService == null) {
                 return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
+            String password=(String) details.get("password");
             Customer customer = customerService.readCustomerById(customerId);
             if (customer == null) {
                 return new ResponseEntity<>("No data found for this customerId", HttpStatus.NOT_FOUND);
             }
-            if (customer.getPassword() == null || customer.getPassword().isEmpty()) {
-                customer.setPassword(passwordEncoder.encode(customerDTO.getPassword()));
-                em.merge(customer);
-                return new ResponseEntity<>(customer, HttpStatus.OK);
-            }
-            String password = customerDTO.getPassword();
-            if (customerDTO.getPassword() != null && customerDTO.getOldPassword() != null) {
+            if(password!=null) {
+                if (customer.getPassword() == null || customer.getPassword().isEmpty()) {
+                    customer.setPassword(passwordEncoder.encode(password));
+                    em.merge(customer);
+                    return responseService.generateSuccessResponse("Password Created", customer, HttpStatus.OK);
+                }
+                if (!passwordEncoder.matches(password, customer.getPassword())) {
+            /*if (customerDTO.getPassword() != null && customerDTO.getOldPassword() != null) {
                 if (passwordEncoder.matches(customerDTO.getOldPassword(), customer.getPassword())) {
-                    if (!customerDTO.getPassword().equals(customerDTO.getOldPassword())) {
-                        customer.setPassword(passwordEncoder.encode(password));
-                        em.merge(customer);
-                        return new ResponseEntity<>(customer, HttpStatus.OK);
-                    } else
+                    if (!customerDTO.getPassword().equals(customerDTO.getOldPassword())) {*/
+                    customer.setPassword(passwordEncoder.encode(password));
+                    em.merge(customer);
+                    return responseService.generateSuccessResponse("Password Updated", customer, HttpStatus.OK);
+                    /*} else
                         return new ResponseEntity<>("Old password and new password can not be same!", HttpStatus.BAD_REQUEST);
                 } else
                     return new ResponseEntity<>("The old password you provided is incorrect. Please try again with the correct old password", HttpStatus.BAD_REQUEST);
-            } else {
-                return new ResponseEntity<>("Empty Password", HttpStatus.BAD_REQUEST);
+            }*/
+                }
+                return responseService.generateErrorResponse("Old Password and new Password cannot be same",HttpStatus.BAD_REQUEST);
+            }else {
+                return responseService.generateErrorResponse("Empty Password", HttpStatus.BAD_REQUEST);
             }
         } catch (Exception exception) {
             exceptionHandling.handleException(exception);
-            return new ResponseEntity<>("Error updating password", HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("Error updating password", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -404,10 +415,12 @@ public class CustomerEndpoint {
         addressDTO.setPhoneNumber(customCustomer.getMobileNumber());
         return addressDTO;
     }
-    public static ResponseEntity<OtpEndpoint.AuthResponse> createAuthResponse(String token, Customer customer ) {
+    public static ResponseEntity<?> createAuthResponse(String token, Customer customer ) {
         OtpEndpoint.AuthResponse authResponse = new OtpEndpoint.AuthResponse(token, customer);
-        return ResponseEntity.ok(authResponse);
+        return responseService.generateSuccessResponse("Token details : ", authResponse, HttpStatus.OK);
     }
+
+
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout(@RequestBody Map<String, String> request) {

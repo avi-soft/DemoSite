@@ -20,7 +20,7 @@ import javax.transaction.Transactional;
 import java.util.Map;
 
 @RestController
-@RequestMapping(value = "/serviceProviderLanguage",
+@RequestMapping(value = "/service-provider-language",
         produces = { MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE }
 )
 public class ServiceProviderLanguageController {
@@ -31,7 +31,7 @@ public class ServiceProviderLanguageController {
     @Autowired
     private ServiceProviderLanguageService languageService;
     @Transactional
-    @PostMapping("addLanguage")
+    @PostMapping("add-language")
     private ResponseEntity<?> addLanguage(@RequestBody Map<String,Object> serviceProviderLanguage)
     {
         try{
@@ -42,7 +42,7 @@ public class ServiceProviderLanguageController {
             return new ResponseEntity<>("Error adding language to list", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    @GetMapping("getLanguages")
+    @GetMapping("get-languages")
     private ResponseEntity<?> getLanguages()
     {
         try{
