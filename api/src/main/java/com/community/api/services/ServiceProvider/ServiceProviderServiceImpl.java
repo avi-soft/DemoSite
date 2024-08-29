@@ -69,6 +69,10 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     private ServiceProviderLanguageService serviceProviderLanguageService;
     @Autowired
     private  RateLimiterService rateLimiterService;
+
+    @Autowired
+    private ResponseService responseService;
+
     @Value("${twilio.phoneNumber}")
     private String twilioPhoneNumber;
     @Override
@@ -456,15 +460,18 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             if (username != null) {
                 ServiceProviderEntity serviceProvider = findServiceProviderByUserName(username);
                 if (serviceProvider == null) {
-                    return new ResponseEntity<>("No records found", HttpStatus.NOT_FOUND);
+                    return responseService.generateErrorResponse("No records found ",HttpStatus.NOT_FOUND);
+
                 }
                 mobileNumber = serviceProvider.getMobileNumber(); // Get the mobile number from the service provider
             } else if (mobileNumber == null || mobileNumber.isEmpty()) {
-                return new ResponseEntity<>("Empty Credentials", HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("mobile number can not be null ",HttpStatus.BAD_REQUEST);
+
             }
 
             if (!isValidMobileNumber(mobileNumber)) {
-                return new ResponseEntity<>("Invalid mobile number", HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Invalid mobile number ",HttpStatus.BAD_REQUEST);
+
             }
             if(mobileNumber.startsWith("0"))
                 mobileNumber= mobileNumber.substring(1);
@@ -479,8 +486,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 return ResponseEntity.badRequest().body("OTP cannot be empty");
             }
             if (otpEntered.equals(storedOtp)) {
-                existingServiceProvider.setOtp(null); // Clear the OTP after successful verification
-                entityManager.merge(existingServiceProvider); // Persist the changes
+                existingServiceProvider.setOtp(null);
+                entityManager.merge(existingServiceProvider);
 
                 String existingToken = (String) session.getAttribute(tokenKey);
 
@@ -502,9 +509,11 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         }
     }
 
-    private ResponseEntity<AuthResponseServiceProvider> createAuthResponse(String token, ServiceProviderEntity serviceProviderEntity) {
+    private ResponseEntity<?> createAuthResponse(String token, ServiceProviderEntity serviceProviderEntity) {
+
         AuthResponseServiceProvider authResponse = new AuthResponseServiceProvider(token, serviceProviderEntity);
-        return ResponseEntity.ok(authResponse);
+        return responseService.generateSuccessResponse("Token details ",authResponse,HttpStatus.OK);
+
     }
 
 
