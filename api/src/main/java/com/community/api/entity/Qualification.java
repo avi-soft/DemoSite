@@ -16,6 +16,7 @@ public class Qualification {
     private Long id;
     @NotBlank(message = "Institution name is required")
     @Size(max = 255, message = "Institution name should not exceed 255 characters")
+    @Pattern(regexp = "^[^\\d]*$", message = "Institution name cannot contain numeric values")
     @Column(name = "institution_name", nullable = false)
     private String institutionName;
 
@@ -26,11 +27,13 @@ public class Qualification {
 
     @NotBlank(message = "Board or University is required")
     @Size(max = 255, message = "Board or University name should not exceed 255 characters")
+    @Pattern(regexp = "^[^\\d]*$", message = "Board or University cannot contain numeric values")
     @Column(name = "board_or_university", nullable = false)
     private String boardOrUniversity;
 
     @NotBlank(message = "Subject stream is required")
     @Size(max = 255, message = "Subject stream should not exceed 255 characters")
+    @Pattern(regexp = "^[^\\d]*$", message = "Subject stream cannot contain numeric values")
     @Column(name = "subject_stream", nullable = false)
     private String subjectStream;
 
@@ -51,6 +54,7 @@ public class Qualification {
 
     @NotBlank(message = "Examination name is required")
     @Size(max = 255, message = "Examination name should not exceed 255 characters")
+    @Pattern(regexp = "^[^\\d]*$", message = "Examination name cannot contain numeric values")
     @Column(name = "examination_name", nullable = false)
     private String examinationName;
 
