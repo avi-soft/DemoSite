@@ -48,7 +48,7 @@ public class QualificationController
             exceptionHandling.handleException(exception);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Qualification already exist with examination name"+" " +qualification.getExaminationName());
         }
-        catch (ExaminationDoesNotExistsException e) {
+       catch (ExaminationDoesNotExistsException e) {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Examination does not found with examinationName"+" " + qualification.getExaminationName(), HttpStatus.NOT_FOUND);
 

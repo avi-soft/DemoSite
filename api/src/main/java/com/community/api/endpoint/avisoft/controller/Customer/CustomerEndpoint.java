@@ -10,10 +10,7 @@ import com.community.api.endpoint.customer.AddressDTO;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.entity.CustomProduct;
-import com.community.api.services.CategoryService;
-import com.community.api.services.CustomCustomerService;
-import com.community.api.services.ResponseService;
-import com.community.api.services.TwilioService;
+import com.community.api.services.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.exception.ExceptionHandlingService;
 import org.apache.commons.math3.analysis.function.Add;
@@ -68,9 +65,6 @@ public class CustomerEndpoint {
 
 
     @Autowired
-    private static ResponseService responseService;
-
-    @Autowired
     private ExceptionHandlingService exceptionHandlingService;
 
     @Autowired
@@ -102,7 +96,7 @@ public class CustomerEndpoint {
         this.em = em;
     }
     @Autowired
-    public ResponseService responseService;
+    public static ResponseService responseService;
     @Autowired
     public void setTwilioService(TwilioService twilioService) {
         this.twilioService = twilioService;
@@ -289,22 +283,26 @@ public class CustomerEndpoint {
 
     @Transactional
     @RequestMapping(value = "delete", method = RequestMethod.DELETE)
-    public ResponseEntity<String> updateCustomer(@RequestParam Long customerId) {
+    public ResponseEntity<?> updateCustomer(@RequestParam Long customerId) {
         try {
             if (customerService == null) {
-                return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
+                return responseService.generateErrorResponse(ApiConstants.CUSTOMER_SERVICE_NOT_INITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
+
             }
             Customer customer = customerService.readCustomerById(customerId);
             if (customer != null) {
                 customerService.deleteCustomer(customerService.readCustomerById(customerId));
-                return new ResponseEntity<>("Record Deleted Successfully", HttpStatus.OK);
+                return responseService.generateSuccessResponse("Record Deleted Successfully","", HttpStatus.OK);
+
             } else {
-                return new ResponseEntity<>("No Records found for this ID", HttpStatus.INTERNAL_SERVER_ERROR);
+                return responseService.generateErrorResponse("No Records found for this ID " + customerId, HttpStatus.NO_CONTENT);
 
             }
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return new ResponseEntity<>("Error deleting", HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("Some issue in deleting customer " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+
+
         }
     }
 

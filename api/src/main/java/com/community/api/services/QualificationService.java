@@ -19,10 +19,11 @@ public class QualificationService
     EntityManager entityManager;
     ExaminationController examinationController;
     ExaminationService examinationService;
-    public QualificationService(EntityManager entityManager, ExaminationController examinationController)
+    public QualificationService(EntityManager entityManager, ExaminationController examinationController,ExaminationService examinationService)
     {
         this.entityManager=entityManager;
         this.examinationController= examinationController;
+        this.examinationService=examinationService;
     }
     @Transactional
     public Qualification addQualification(Long customCustomerId, Qualification qualification)

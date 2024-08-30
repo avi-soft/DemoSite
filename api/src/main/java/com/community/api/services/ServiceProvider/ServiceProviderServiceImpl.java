@@ -388,7 +388,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error sending OTP: " + e.getMessage());
         }
     }
-    public ResponseEntity<String> sendOtp(String mobileNumber, String countryCode, HttpSession session) throws UnsupportedEncodingException {
+    public ResponseEntity<?> sendOtp(String mobileNumber, String countryCode, HttpSession session) throws UnsupportedEncodingException {
         try {
             mobileNumber = mobileNumber.startsWith("0")
                     ? mobileNumber.substring(1)
@@ -400,7 +400,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 if (!isValidMobileNumber(mobileNumber)) {
                     return ResponseEntity.badRequest().body("Invalid mobile number");
                 }
-                ResponseEntity<String> otpResponse = twilioService.sendOtpToMobile(mobileNumber,countryCode);
+                ResponseEntity<?> otpResponse = twilioService.sendOtpToMobile(mobileNumber,countryCode);
                 return otpResponse;
             } else {
                 return ResponseEntity.ok("You can send OTP only once in 1 minute");
