@@ -32,23 +32,23 @@ public class QualificationController
         this.exceptionHandling=exceptionHandling;
     }
 
-    @PostMapping("/addQualification/{customCustomerId}")
-    public ResponseEntity<?> addQualification( @PathVariable Long customCustomerId ,@Valid @RequestBody Qualification qualification)  {
+    @PostMapping("/add/{customCustomerId}")
+    public ResponseEntity<?> addQualification( @PathVariable Long customCustomerId ,@Valid @RequestBody Qualification qualification) {
         try
         {
-            Qualification newQualification= qualificationService.addQualification(customCustomerId,qualification);
+            Qualification newQualification= qualificationService.addQualification(customCustomerId ,qualification);
             return responseService.generateSuccessResponse("Qualification is added successfully",newQualification ,HttpStatus.OK);
 
         }
+        catch (CustomerDoesNotExistsException e) {
+            exceptionHandling.handleException(e);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer does not exist with customer Id"+" "+customCustomerId);
+        }
         catch (EntityAlreadyExistsException exception) {
             exceptionHandling.handleException(exception);
-            return responseService.generateErrorResponse("Qualification already exist with examination name"+" " +qualification.getExaminationName(), HttpStatus.BAD_REQUEST);
-
-        } catch (EntityDoesNotExistsException e) {
-            exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Customer does not exist with customer Id"+" "+customCustomerId, HttpStatus.NOT_FOUND);
-
-        } catch (ExaminationDoesNotExistsException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Qualification already exist with examination name"+" " +qualification.getExaminationName());
+        }
+       catch (ExaminationDoesNotExistsException e) {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Examination does not found with examinationName"+" " + qualification.getExaminationName(), HttpStatus.NOT_FOUND);
 
@@ -58,11 +58,9 @@ public class QualificationController
             return responseService.generateErrorResponse("Some error occurred"+ e.getMessage(), HttpStatus.BAD_REQUEST);
 
         }
-
     }
 
-
-    @GetMapping("/getQualificationsByCustomerId/{customCustomerId}")
+    @GetMapping("/get-qualifications-by-customer-id/{customCustomerId}")
     public ResponseEntity<?> getQualificationById(@PathVariable Long customCustomerId) {
         try
         {
@@ -86,7 +84,7 @@ public class QualificationController
         }
     }
 
-    @DeleteMapping("/deleteQualification/{customCustomerId}/{qualificationId}")
+    @DeleteMapping("/delete/{customCustomerId}/{qualificationId}")
     public ResponseEntity<?> deleteQualificationById(@PathVariable Long customCustomerId,@PathVariable Long qualificationId) throws EntityDoesNotExistsException {
         try
         {
@@ -109,7 +107,7 @@ public class QualificationController
         }
     }
 
-    @PutMapping("/updateQualification/{customCustomerId}/{qualificationId}")
+    @PutMapping("/update/{customCustomerId}/{qualificationId}")
     public ResponseEntity<?> updateQualificationById(@PathVariable Long customCustomerId,@PathVariable Long qualificationId, @Valid @RequestBody UpdateQualificationDto qualification) throws EntityDoesNotExistsException {
         try
         {

@@ -6,6 +6,8 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import javax.validation.constraints.*;
+import java.time.Year;
+
 @Data
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -30,8 +32,6 @@ public class UpdateQualificationDto
     @Size(max = 255, message = "Subject stream should not exceed 255 characters")
     private String subjectStream;
 
-    private boolean isPercentage;
-
     @Pattern(regexp = "^(?!\\s*$).+", message = "Grade or percentage value cannot be blank")
     @Pattern(regexp = "\\d+\\.?\\d*|[A-F]|[a-f]", message = "Grade or percentage value must be either a number or a valid grade")
     @Size(max = 10, message = "Grade or percentage value should not exceed 10 characters")
@@ -52,4 +52,8 @@ public class UpdateQualificationDto
         return marksTotal >= marksObtained;
     }
 
+    @AssertTrue(message = "Year of passing must be less than or equal to the current year")
+    private boolean isYearOfPassingValid() {
+        return yearOfPassing <= Year.now().getValue();
+    }
 }
