@@ -114,7 +114,7 @@ public class QualificationService
                "SELECT q FROM Qualification q WHERE q.customCustomer.id = :customerId AND q.examinationName = :examinationName",
                Qualification.class);
        query.setParameter("customerId", customCustomerId);
-       query.setParameter("examinationName", qualification.getExaminationName());
+       query.setParameter("examinationName", qualification.getExaminationName().trim());
        Qualification existingQualification = query.getResultStream().findFirst().orElse(null);
 
        if (existingQualification != null ) {
