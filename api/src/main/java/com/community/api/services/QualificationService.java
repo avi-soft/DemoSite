@@ -109,6 +109,17 @@ public class QualificationService
        {
            throw new CustomerDoesNotExistsException("Customer does not exist with id "+ customCustomerId);
        }
+
+       TypedQuery<Qualification> query = entityManager.createQuery(
+               "SELECT q FROM Qualification q WHERE q.customCustomer.id = :customerId AND q.examinationName = :examinationName",
+               Qualification.class);
+       query.setParameter("customerId", customCustomerId);
+       query.setParameter("examinationName", qualification.getExaminationName());
+       Qualification existingQualification = query.getResultStream().findFirst().orElse(null);
+
+       if (existingQualification != null ) {
+           throw new EntityAlreadyExistsException("Qualification with name " + qualification.getExaminationName() + " already exists");
+       }
        List<Qualification> qualifications= customCustomer.getQualificationList();
        Qualification qualificationToUpdate=null;
        for(Qualification qualification1 : qualifications)
@@ -136,7 +147,7 @@ public class QualificationService
            if (examinationToAdd == null) {
                throw new ExaminationDoesNotExistsException("Examination with name " + qualification.getExaminationName() + " does not exist");
            }
-           qualification.setExaminationName(examinationToAdd);
+           qualificationToUpdate.setExaminationName(examinationToAdd);
        }
         if (Objects.nonNull(qualification.getInstitutionName())) {
             qualificationToUpdate.setInstitutionName(qualification.getInstitutionName());

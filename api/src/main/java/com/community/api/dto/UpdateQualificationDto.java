@@ -16,6 +16,7 @@ public class UpdateQualificationDto
     private Long id;
 
     @Pattern(regexp = "^(?!\\s*$).+", message = "Institution name cannot be blank")
+    @Pattern(regexp = "^[^\\d]*$", message = "Institution name cannot contain numeric values")
     @Size(max = 255, message = "Institution name should not exceed 255 characters")
     private String institutionName;
 
@@ -25,10 +26,12 @@ public class UpdateQualificationDto
     private Integer yearOfPassing;
 
     @Pattern(regexp = "^(?!\\s*$).+", message = "Board or University cannot be blank")
+    @Pattern(regexp = "^[^\\d]*$", message = "Board or University cannot contain numeric values")
     @Size(max = 255, message = "Board or University name should not exceed 255 characters")
     private String boardOrUniversity;
 
     @Pattern(regexp = "^(?!\\s*$).+", message = "Subject stream cannot be blank")
+    @Pattern(regexp = "^[^\\d]*$", message = "Subject stream cannot contain numeric values")
     @Size(max = 255, message = "Subject stream should not exceed 255 characters")
     private String subjectStream;
 
@@ -44,6 +47,7 @@ public class UpdateQualificationDto
     private Integer marksObtained;
 
     @Pattern(regexp = "^(?!\\s*$).+", message = "Examination name cannot be blank")
+    @Pattern(regexp = "^[^\\d]*$", message = "Examination name cannot contain numeric values")
     @Size(max = 255, message = "Examination name should not exceed 255 characters")
     private String examinationName;
 
