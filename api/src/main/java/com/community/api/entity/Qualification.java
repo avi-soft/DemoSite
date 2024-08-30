@@ -5,6 +5,7 @@ import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
 import javax.validation.constraints.*;
+import java.time.Year;
 
 @Entity
 @Data
@@ -15,6 +16,7 @@ public class Qualification {
     private Long id;
     @NotBlank(message = "Institution name is required")
     @Size(max = 255, message = "Institution name should not exceed 255 characters")
+    @Pattern(regexp = "^[^\\d]*$", message = "Institution name cannot contain numeric values")
     @Column(name = "institution_name", nullable = false)
     private String institutionName;
 
@@ -25,16 +27,16 @@ public class Qualification {
 
     @NotBlank(message = "Board or University is required")
     @Size(max = 255, message = "Board or University name should not exceed 255 characters")
+    @Pattern(regexp = "^[^\\d]*$", message = "Board or University cannot contain numeric values")
     @Column(name = "board_or_university", nullable = false)
     private String boardOrUniversity;
 
     @NotBlank(message = "Subject stream is required")
     @Size(max = 255, message = "Subject stream should not exceed 255 characters")
+    @Pattern(regexp = "^[^\\d]*$", message = "Subject stream cannot contain numeric values")
     @Column(name = "subject_stream", nullable = false)
     private String subjectStream;
 
-    @Column(name = "is_percentage", nullable = false)
-    private boolean isPercentage;
 
     @NotBlank(message = "Grade or percentage value is required")
     @Pattern(regexp = "\\d+\\.?\\d*|[A-F]|[a-f]", message = "Grade or percentage value must be either a number or a valid grade")
@@ -52,6 +54,7 @@ public class Qualification {
 
     @NotBlank(message = "Examination name is required")
     @Size(max = 255, message = "Examination name should not exceed 255 characters")
+    @Pattern(regexp = "^[^\\d]*$", message = "Examination name cannot contain numeric values")
     @Column(name = "examination_name", nullable = false)
     private String examinationName;
 
@@ -59,8 +62,15 @@ public class Qualification {
     private boolean isMarksTotalValid() {
         return marksTotal >= marksObtained;
     }
+
+    @AssertTrue(message = "Year of passing must be less than or equal to the current year")
+    private boolean isYearOfPassingValid() {
+        return yearOfPassing <= Year.now().getValue();
+    }
     @ManyToOne
     @JsonIgnore
     @JoinColumn(name = "custom_customer_id")
     private CustomCustomer customCustomer;
+
+
 }
