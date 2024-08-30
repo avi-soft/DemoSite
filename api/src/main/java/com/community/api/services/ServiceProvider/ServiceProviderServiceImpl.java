@@ -223,6 +223,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
         if (mobileNumber == null || mobileNumber.isEmpty()) {
             throw new IllegalArgumentException("Mobile number cannot be null or empty");
+
         }
 
         try {
@@ -341,8 +342,9 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         }
         if (passwordEncoder.matches(password,serviceProvider.getPassword())) {
             return new ResponseEntity<>(serviceProvider, HttpStatus.OK);
+
         } else {
-            return new ResponseEntity<>("Invalid Password", HttpStatus.UNAUTHORIZED);
+            return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
         }
     }
     public ResponseEntity<?> loginWithPassword(@RequestBody Map<String, Object> serviceProviderDetails, HttpSession session) {
@@ -353,31 +355,38 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             String countryCode = (String) serviceProviderDetails.getOrDefault("countryCode", Constant.COUNTRY_CODE);
             // Check for empty password
             if (password == null || password.isEmpty()) {
-                return new ResponseEntity<>("Password cannot be empty", HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Password cannot be empty", HttpStatus.BAD_REQUEST);
+
             }
             if (mobileNumber != null && !mobileNumber.isEmpty()) {
                 return authenticateByPhone(mobileNumber, countryCode, password);
             } else if (username != null && !username.isEmpty()) {
                 return authenticateByUsername(username, password);
             } else {
-                return new ResponseEntity<>("Empty Phone Number or username", HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Empty Phone Number or username", HttpStatus.BAD_REQUEST);
+
             }
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred: " + e.getMessage());
+            return responseService.generateErrorResponse(ApiConstants.SOME_EXCEPTION_OCCURRED + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
     public ResponseEntity<?>loginWithUsernameAndOTP(String username,HttpSession session)
     {
         try {
             if (username == null ) {
-                return new ResponseEntity<>("Empty Credentials", HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
+
             }
             ServiceProviderEntity existingServiceProivder = findServiceProviderByUserName(username);
-            if (existingServiceProivder == null)
-                return new ResponseEntity<>("No records found", HttpStatus.NOT_FOUND);
+            if (existingServiceProivder == null){
+                return responseService.generateErrorResponse("No records found", HttpStatus.NOT_FOUND);
+
+
+            }
             if (existingServiceProivder.getMobileNumber() == null) {
-                return new ResponseEntity<>("No mobile Number registerd for this account", HttpStatus.NOT_FOUND);
+                return responseService.generateErrorResponse("No mobile Number registerd for this account", HttpStatus.NOT_FOUND);
+
             }
             String countryCode=existingServiceProivder.getCountry_code();
             if(countryCode==null)
@@ -385,7 +394,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             return new ResponseEntity<>(sendOtp(existingServiceProivder.getMobileNumber(),countryCode,session),HttpStatus.OK);
         }catch (Exception e) {
             exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error sending OTP: " + e.getMessage());
+            return responseService.generateErrorResponse(ApiConstants.SOME_EXCEPTION_OCCURRED + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
     public ResponseEntity<?> sendOtp(String mobileNumber, String countryCode, HttpSession session) throws UnsupportedEncodingException {
@@ -398,20 +407,21 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             Bucket bucket = rateLimiterService.resolveBucket(mobileNumber, "/service-provider/otp/send-otp");
             if (bucket.tryConsume(1)) {
                 if (!isValidMobileNumber(mobileNumber)) {
-                    return ResponseEntity.badRequest().body("Invalid mobile number");
+                    return responseService.generateErrorResponse("Invalid mobile number", HttpStatus.BAD_REQUEST);
+
                 }
                 ResponseEntity<?> otpResponse = twilioService.sendOtpToMobile(mobileNumber,countryCode);
                 return otpResponse;
             } else {
-                return ResponseEntity.ok("You can send OTP only once in 1 minute");
+                return responseService.generateErrorResponse("You can send OTP only once in 1 minute", HttpStatus.BANDWIDTH_LIMIT_EXCEEDED);
+
             }
 
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error sending OTP: " + e.getMessage());
+            return responseService.generateErrorResponse(ApiConstants.SOME_EXCEPTION_OCCURRED + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
-//    todo:- need to test with same user details with atleast 10 users
     public String generateUsernameForServiceProvider(ServiceProviderEntity serviceProviderDetails)
     {
         String firstName = serviceProviderDetails.getFirst_name();
@@ -529,10 +539,9 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         data.put("value", value);
 
         responseBody.put("data", data);
-        responseBody.put("status", "success"); // or use ApiConstants.STATUS_SUCCESS if it's a constant with value "success"
-        responseBody.put("status_code", 200); // HttpStatus.OK.value() can also be used
+        responseBody.put("status", HttpStatus.OK);
+        responseBody.put("status_code", HttpStatus.OK.value());
 
-        // Return the ResponseEntity with the constructed response body
         return ResponseEntity.ok(responseBody);
     }
 

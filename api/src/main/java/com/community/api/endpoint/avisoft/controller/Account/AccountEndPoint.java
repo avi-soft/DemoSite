@@ -195,6 +195,7 @@ public class AccountEndPoint {
 
                     }
                     return serviceProviderService.sendOtp(mobileNumber, countryCode, session);
+
                 } else {
                     return responseService.generateErrorResponse(ApiConstants.NO_RECORDS_FOUND, HttpStatus.NOT_FOUND);
                 }
@@ -219,9 +220,11 @@ public class AccountEndPoint {
             if (loginDetails == null) {
                 return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
             }
+
             String username = (String) loginDetails.get("username");
             String password = (String) loginDetails.get("password");
             Integer role = (Integer) loginDetails.get("role");
+
             if (username == null || password == null || role == null) {
                 return responseService.generateErrorResponse("username/password number cannot be empty", HttpStatus.BAD_REQUEST);
             }
@@ -245,15 +248,11 @@ public class AccountEndPoint {
                         OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(existingToken, customer, HttpStatus.OK.value(), HttpStatus.OK.name());
                         return ResponseEntity.ok(response);
 
-
-
                     } else {
-
                         String token = jwtUtil.generateToken(customer.getId(), role, ipAddress, userAgent);
                         session.setAttribute(tokenKey, token);
                         OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(token, customer, HttpStatus.OK.value(), HttpStatus.OK.name());
                         return ResponseEntity.ok(response);
-
                     }
                 } else {
                     return responseService.generateErrorResponse("Invalid password", HttpStatus.BAD_REQUEST);
