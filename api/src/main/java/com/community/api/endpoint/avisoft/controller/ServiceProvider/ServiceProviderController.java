@@ -6,6 +6,7 @@ import com.community.api.entity.ServiceProviderAddress;
 import com.community.api.entity.ServiceProviderAddressRef;
 import com.community.api.entity.Skill;
 import com.community.api.services.DistrictService;
+import com.community.api.services.ResponseService;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
 import com.community.api.services.TwilioServiceForServiceProvider;
 import com.community.api.services.exception.ExceptionHandlingImplement;
@@ -50,13 +51,15 @@ public class ServiceProviderController {
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
     @Autowired
+    private ResponseService responseService;
+    @Autowired
     private CustomerService customerService;
     @Autowired
     private DistrictService districtService;
 
     @Transactional
     @PostMapping("/assign-skill")
-    public ResponseEntity<?>addSkill(@RequestParam Long serviceProviderId,@RequestParam Long skillId)
+    public ResponseEntity<?>addSkill(@RequestParam Long serviceProviderId,@RequestParam int skillId)
     {
         try {
             Skill skill = entityManager.find(Skill.class, skillId);
@@ -77,9 +80,10 @@ public class ServiceProviderController {
         return serviceProviderService.updateServiceProvider(userId,serviceProviderDetails);
     }catch (Exception e) {
             exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some updating: " + e.getMessage());
+            return responseService.generateErrorResponse("Some error updating: " + e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    @Transactional
     @DeleteMapping("delete")
     public ResponseEntity<?>deleteServiceProvider(@RequestParam Long userId)
     {
@@ -96,32 +100,36 @@ public class ServiceProviderController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error deleting: " + e.getMessage());
         }}
     @Transactional
-    @PostMapping("createOrUpdatePassword")
+    @PostMapping("create-or-update-password")
     public ResponseEntity<?>deleteServiceProvider(@RequestBody Map<String,Object>passwordDetails,@RequestParam long userId)
     {
         try {
             String password = (String) passwordDetails.get("password");
-            String newPassword = (String) passwordDetails.get("newPassword");
+           // String newPassword = (String) passwordDetails.get("newPassword");
             ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, userId);
             if (serviceProvider == null)
-                return new ResponseEntity<>("No records found", HttpStatus.NOT_FOUND);
+                return responseService.generateErrorResponse("No records found", HttpStatus.NOT_FOUND);
             if (serviceProvider.getPassword() == null) {
                 serviceProvider.setPassword(passwordEncoder.encode(password));
                 entityManager.merge(serviceProvider);
-                return new ResponseEntity<>("Password created", HttpStatus.OK);
+                return responseService.generateSuccessResponse("Password created",serviceProvider.getPassword(),HttpStatus.OK);
             } else {
-                if (password == null || newPassword == null)
-                    new ResponseEntity<>("Empty password", HttpStatus.BAD_REQUEST);
-                if (passwordEncoder.matches(password, serviceProvider.getPassword())) {
-                    serviceProvider.setPassword(passwordEncoder.encode(newPassword));
-                    return new ResponseEntity<>("New Password Set", HttpStatus.OK);
-                } else
-                    return new ResponseEntity<>("Password do not match", HttpStatus.BAD_REQUEST);
+                if (password == null /*|| newPassword == null*/)
+                    new ResponseEntity<>("Empty password entered", HttpStatus.BAD_REQUEST);
+                /*if (passwordEncoder.matches(password, serviceProvider.getPassword())) {
+                    serviceProvider.setPassword(passwordEncoder.encode(newPassword));*/
+                if(!passwordEncoder.matches(password,serviceProvider.getPassword())) {
+                    serviceProvider.setPassword(passwordEncoder.encode(password));
+                    entityManager.merge(serviceProvider);
+                    return responseService.generateSuccessResponse("New Password Set",serviceProvider, HttpStatus.OK);
+                }
+                    return responseService.generateErrorResponse("Old Password and new Password cannot be same",HttpStatus.BAD_REQUEST);
+                 }/*else
+                    return new ResponseEntity<>("Password do not match", HttpStatus.BAD_REQUEST);*/
             }
-        }
         catch (Exception e) {
                 exceptionHandling.handleException(e);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error changing/updating password: " + e.getMessage());
+                return responseService.generateErrorResponse("Error changing/updating password: " + e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
             }
     }
     @GetMapping("getServiceProivider")

@@ -31,6 +31,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>9</source>
+                    <target>9</target>
+                </configuration>
             </plugin>
         </plugins>
     </build>
@@ -170,7 +174,7 @@
             <groupId>org.liquibase</groupId>
 
             <artifactId>liquibase-core</artifactId>
-            <version>4.24.0</version> <!-- Or the latest version -->
+            <version>4.24.0</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.yaml</groupId>
@@ -180,6 +184,7 @@
         </dependency>
 
         <dependency>
+
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>2.0</version>

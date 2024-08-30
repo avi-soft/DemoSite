@@ -37,4 +37,8 @@ public class DistrictService {
                 .findFirst()
                 .orElse(null);
     }
+    public List<StateCode> findStateList() {
+        TypedQuery<StateCode> query = entityManager.createQuery(Constant.GET_STATES_LIST, StateCode.class);
+        return query.getResultList();
+    }
 }

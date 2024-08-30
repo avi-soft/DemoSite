@@ -56,6 +56,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     @Autowired
     private PasswordEncoder passwordEncoder;
     @Autowired
+    private ResponseService responseService;
+    @Autowired
     private JwtUtil jwtUtil;
     @Autowired
     private DistrictService districtService;
@@ -67,6 +69,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     private ServiceProviderLanguageService serviceProviderLanguageService;
     @Autowired
     private  RateLimiterService rateLimiterService;
+
     @Value("${twilio.phoneNumber}")
     private String twilioPhoneNumber;
     @Override
@@ -101,6 +104,10 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             String userName = (String) updates.get("user_name");
             existingSPByUsername = findServiceProviderByUserName(userName);
         }
+        if (updates.containsKey("primary_mobile_number")) {
+            String userName = (String) updates.get("user_name");
+            existingSPByUsername = findServiceProviderByUserName(userName);
+        }
 
         if (updates.containsKey("primary_email")) {
             String primaryEmail = (String) updates.get("primary_email");
@@ -109,43 +116,48 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
         if ((existingSPByUsername != null) || existingSPByEmail != null) {
             if (existingSPByUsername != null && !existingSPByUsername.getService_provider_id().equals(userId)) {
-                return new ResponseEntity<>("Username is not available", HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Username is not available", HttpStatus.BAD_REQUEST);
             }
             if (existingSPByEmail != null && !existingSPByEmail.getService_provider_id().equals(userId)) {
-                return new ResponseEntity<>("Email not available", HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Email not available", HttpStatus.BAD_REQUEST);
             }
         }
-        List<Skill>serviceProviderSkills=existingServiceProvider.getSkills();
-        List<ServiceProviderInfra>serviceProviderInfras=existingServiceProvider.getInfra();
-        List<ServiceProviderLanguage>serviceProviderLanguages=existingServiceProvider.getLanguages();
+        List<Skill>serviceProviderSkills=new ArrayList<>();
+        List<ServiceProviderInfra>serviceProviderInfras=new ArrayList<>();
+        List<ServiceProviderLanguage>serviceProviderLanguages=new ArrayList<>();
         List<Integer>infraList=getIntegerList(updates,"infra_list");
         List<Integer>skillList=getIntegerList(updates,"skill_list");
         List<Integer>languageList=getIntegerList(updates,"language_list");
         if(updates.containsKey("has_technical_knowledge")) {
             if ((boolean) updates.get("has_technical_knowledge").equals(true)) {
-                for (int skill_id : skillList) {
-                    Skill skill = entityManager.find(Skill.class, skill_id);
-                    if (skill != null) {
-                        if (!serviceProviderSkills.contains(skill))
-                            serviceProviderSkills.add(skill);
+                if(!skillList.isEmpty()) {
+                    for (int skill_id : skillList) {
+                        Skill skill = entityManager.find(Skill.class, skill_id);
+                        if (skill != null) {
+                            if (!serviceProviderSkills.contains(skill))
+                                serviceProviderSkills.add(skill);
+                        }
                     }
                 }
             }
-        }
-        for(int infra_id:infraList)
-        {
-            ServiceProviderInfra serviceProviderInfrastructure=entityManager.find(ServiceProviderInfra.class,infra_id);
-            if(serviceProviderInfrastructure!=null) {
-                if(!serviceProviderInfras.contains(serviceProviderInfrastructure))
-                    serviceProviderInfras.add(serviceProviderInfrastructure);
+        }else
+            existingServiceProvider.setSkills(null);
+        if(!infraList.isEmpty()) {
+            for (int infra_id : infraList) {
+                ServiceProviderInfra serviceProviderInfrastructure = entityManager.find(ServiceProviderInfra.class, infra_id);
+                if (serviceProviderInfrastructure != null) {
+                    if (!serviceProviderInfras.contains(serviceProviderInfrastructure))
+                        serviceProviderInfras.add(serviceProviderInfrastructure);
+                }
             }
         }
-        for(int language_id:languageList)
-        {
-            ServiceProviderLanguage serviceProviderLanguage =entityManager.find(ServiceProviderLanguage.class,language_id);
-            if(serviceProviderLanguage!=null) {
-                if(!serviceProviderLanguages.contains(serviceProviderLanguage))
-                    serviceProviderLanguages.add(serviceProviderLanguage);
+        if(!languageList.isEmpty()) {
+            for (int language_id : languageList) {
+                ServiceProviderLanguage serviceProviderLanguage = entityManager.find(ServiceProviderLanguage.class, language_id);
+                if (serviceProviderLanguage != null) {
+                    if (!serviceProviderLanguages.contains(serviceProviderLanguage))
+                        serviceProviderLanguages.add(serviceProviderLanguage);
+                }
             }
         }
         existingServiceProvider.setInfra(serviceProviderInfras);
@@ -189,7 +201,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 }
             } catch (NoSuchFieldException | IllegalAccessException e) {
                 // Handle the exception if the field is not found or not accessible
-                return new ResponseEntity<>("Invalid field: " + fieldName, HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Invalid field: " + fieldName, HttpStatus.BAD_REQUEST);
             }
         }
         // Merge the updated entity
@@ -199,7 +211,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             existingServiceProvider.setUser_name(username);
         }
         entityManager.merge(existingServiceProvider);
-        return new ResponseEntity<>(existingServiceProvider, HttpStatus.OK);
+        return responseService.generateSuccessResponse("Service Provider Updated Successfully",existingServiceProvider,HttpStatus.OK);
     }
 
     @Override
@@ -376,7 +388,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error sending OTP: " + e.getMessage());
         }
     }
-    public ResponseEntity<String> sendOtp(String mobileNumber, String countryCode, HttpSession session) throws UnsupportedEncodingException {
+    public ResponseEntity<?> sendOtp(String mobileNumber, String countryCode, HttpSession session) throws UnsupportedEncodingException {
         try {
             mobileNumber = mobileNumber.startsWith("0")
                     ? mobileNumber.substring(1)
@@ -388,7 +400,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 if (!isValidMobileNumber(mobileNumber)) {
                     return ResponseEntity.badRequest().body("Invalid mobile number");
                 }
-                ResponseEntity<String> otpResponse = twilioService.sendOtpToMobile(mobileNumber,countryCode);
+                ResponseEntity<?> otpResponse = twilioService.sendOtpToMobile(mobileNumber,countryCode);
                 return otpResponse;
             } else {
                 return ResponseEntity.ok("You can send OTP only once in 1 minute");
@@ -445,15 +457,18 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             if (username != null) {
                 ServiceProviderEntity serviceProvider = findServiceProviderByUserName(username);
                 if (serviceProvider == null) {
-                    return new ResponseEntity<>("No records found", HttpStatus.NOT_FOUND);
+                    return responseService.generateErrorResponse("No records found ",HttpStatus.NOT_FOUND);
+
                 }
                 mobileNumber = serviceProvider.getMobileNumber(); // Get the mobile number from the service provider
             } else if (mobileNumber == null || mobileNumber.isEmpty()) {
-                return new ResponseEntity<>("Empty Credentials", HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("mobile number can not be null ",HttpStatus.BAD_REQUEST);
+
             }
 
             if (!isValidMobileNumber(mobileNumber)) {
-                return new ResponseEntity<>("Invalid mobile number", HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Invalid mobile number ",HttpStatus.BAD_REQUEST);
+
             }
             if(mobileNumber.startsWith("0"))
                 mobileNumber= mobileNumber.substring(1);
@@ -468,8 +483,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 return ResponseEntity.badRequest().body("OTP cannot be empty");
             }
             if (otpEntered.equals(storedOtp)) {
-                existingServiceProvider.setOtp(null); // Clear the OTP after successful verification
-                entityManager.merge(existingServiceProvider); // Persist the changes
+                existingServiceProvider.setOtp(null);
+                entityManager.merge(existingServiceProvider);
 
                 String existingToken = (String) session.getAttribute(tokenKey);
 
@@ -491,9 +506,11 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         }
     }
 
-    private ResponseEntity<AuthResponseServiceProvider> createAuthResponse(String token, ServiceProviderEntity serviceProviderEntity) {
+    private ResponseEntity<?> createAuthResponse(String token, ServiceProviderEntity serviceProviderEntity) {
+
         AuthResponseServiceProvider authResponse = new AuthResponseServiceProvider(token, serviceProviderEntity);
-        return ResponseEntity.ok(authResponse);
+        return responseService.generateSuccessResponse("Token details ",authResponse,HttpStatus.OK);
+
     }
 
 

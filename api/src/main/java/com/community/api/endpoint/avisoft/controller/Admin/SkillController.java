@@ -27,7 +27,7 @@ public class SkillController {
         @Autowired
         private SkillService skillService;
         @Transactional
-        @PostMapping("/addSkill")
+        @PostMapping("/add-skill")
         public ResponseEntity<?> addSkill(@RequestBody Map<String,Object> skill) {
             try{
                return skillService.addSkill(skill);
@@ -37,7 +37,7 @@ public class SkillController {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error saving skill : " + exception.getMessage());
             }
         }
-    @GetMapping("/getSkillLists")
+    @GetMapping("/get-skills")
     public ResponseEntity<?> getSkillList() {
         try{
             return new ResponseEntity<>(skillService.findAllSkillList(),HttpStatus.OK);
