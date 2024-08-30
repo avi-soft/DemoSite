@@ -29,7 +29,7 @@ public class ExaminationController {
         this.entityManager = entityManager;
     }
 
-    @GetMapping("/getAllExaminations")
+    @GetMapping("/get-all-exams")
     public ResponseEntity<?> getAllExaminations() {
         TypedQuery<Examination> query = entityManager.createQuery(FIND_ALL_EXAMINATIONS_QUERY, Examination.class);
         List<Examination> examinations = query.getResultList();

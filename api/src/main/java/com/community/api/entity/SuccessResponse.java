@@ -11,7 +11,7 @@ import org.springframework.http.HttpStatus;
 @Getter
 @Setter
 public class SuccessResponse<T> {
-    private String message;
+  /*  private String message;*/
     private T data;
     private HttpStatus status;
     private int status_code;

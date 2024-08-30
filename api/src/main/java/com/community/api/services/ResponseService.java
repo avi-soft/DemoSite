@@ -17,9 +17,8 @@ public class ResponseService {
 
         successResponse.setStatus(status);
         successResponse.setStatus_code(status.value());
-        successResponse.setMessage(message);
 
-        // Convert data to Map if it's not already a Map
+
         Map<String, Object> dataMap = new HashMap<>();
         if (data instanceof Map) {
             dataMap = (Map<String, Object>) data;

@@ -451,7 +451,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             String countryCode = (String) serviceProviderDetails.get("countryCode");
             Integer role=(Integer) serviceProviderDetails.get("role");
             if (countryCode == null || countryCode.isEmpty()) {
-                countryCode = Constant.COUNTRY_CODE; // Default value if not provided
+                countryCode = Constant.COUNTRY_CODE;
             }
 
             if (username != null) {
@@ -460,7 +460,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                     return responseService.generateErrorResponse("No records found ",HttpStatus.NOT_FOUND);
 
                 }
-                mobileNumber = serviceProvider.getMobileNumber(); // Get the mobile number from the service provider
+                mobileNumber = serviceProvider.getMobileNumber();
             } else if (mobileNumber == null || mobileNumber.isEmpty()) {
                 return responseService.generateErrorResponse("mobile number can not be null ",HttpStatus.BAD_REQUEST);
 
@@ -473,6 +473,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             if(mobileNumber.startsWith("0"))
                 mobileNumber= mobileNumber.substring(1);
             ServiceProviderEntity existingServiceProvider = findServiceProviderByPhone(mobileNumber, countryCode);
+
             String storedOtp =  existingServiceProvider.getOtp();
             String ipAddress = request.getRemoteAddr();
             String userAgent = request.getHeader("User-Agent");
@@ -489,29 +490,55 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 String existingToken = (String) session.getAttribute(tokenKey);
 
                 if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
-                    return ResponseEntity.ok(createAuthResponse(existingToken, existingServiceProvider));
+                    Map<String, Object> responseBody = createAuthResponse(existingToken, existingServiceProvider).getBody();
+                    responseBody.put("status", HttpStatus.OK);
+                    responseBody.put("status_code", HttpStatus.OK.value());
+
+                    return ResponseEntity.ok(responseBody);
                 } else {
                     String newToken = jwtUtil.generateToken(existingServiceProvider.getService_provider_id(), role, ipAddress, userAgent);
                     session.setAttribute(tokenKey, newToken);
-                    return ResponseEntity.ok(createAuthResponse(newToken, existingServiceProvider));
+
+                    Map<String, Object> responseBody = createAuthResponse(newToken, existingServiceProvider).getBody();
+                    responseBody.put("status", HttpStatus.OK);
+                    responseBody.put("status_code", HttpStatus.OK.value());
+
+                    return ResponseEntity.ok(responseBody);
                 }
             } else {
-                // Return a more informative error message if needed
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid OTP");
+                return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.UNAUTHORIZED);
+
             }
 
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return new ResponseEntity<>("Error verifying OTP", HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("Otp verification error" + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    private ResponseEntity<?> createAuthResponse(String token, ServiceProviderEntity serviceProviderEntity) {
+    private ResponseEntity<Map<String, Object>> createAuthResponse(String token, ServiceProviderEntity serviceProviderEntity) {
+        Map<String, Object> responseBody = new HashMap<>();
 
-        AuthResponseServiceProvider authResponse = new AuthResponseServiceProvider(token, serviceProviderEntity);
-        return responseService.generateSuccessResponse("Token details ",authResponse,HttpStatus.OK);
+        Map<String, Object> value = new HashMap<>();
 
+        value.put("token", token);
+
+        value.put("serviceproviderDetails", serviceProviderEntity);
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("value", value);
+
+        responseBody.put("data", data);
+        responseBody.put("status", "success"); // or use ApiConstants.STATUS_SUCCESS if it's a constant with value "success"
+        responseBody.put("status_code", 200); // HttpStatus.OK.value() can also be used
+
+        // Return the ResponseEntity with the constructed response body
+        return ResponseEntity.ok(responseBody);
     }
+
+
+
+
 
 
     public StateCode findStateCode(String state_name) {
@@ -545,24 +572,6 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 .getResultList();
     }
 
-    private class AuthResponseServiceProvider {
-        private String token;
-        private ServiceProviderEntity serviceProviderDetails;
-
-        public AuthResponseServiceProvider(String token, ServiceProviderEntity serviceProviderDetails) {
-            this.token = token;
-            this.serviceProviderDetails = serviceProviderDetails;
-        }
-
-        public String getToken() {
-            return token;
-        }
-
-        public ServiceProviderEntity getUserDetails() {
-            return serviceProviderDetails;
-        }
-    }
-    @SuppressWarnings("unchecked")
     public static List<Integer> getIntegerList(Map<String, Object> map, String key) {
         // Retrieve the object associated with the key
         Object value = map.get(key);
@@ -571,9 +580,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         if (value instanceof List<?>) {
             List<?> list = (List<?>) value;
 
-            // Check if the list is not empty and the first element is Integer
             if (!list.isEmpty() && list.get(0) instanceof Integer) {
-                // Safe to cast the list to List<Integer>
                 return (List<Integer>) list;
             }
         }

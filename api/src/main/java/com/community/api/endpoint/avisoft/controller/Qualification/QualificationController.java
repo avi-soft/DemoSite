@@ -42,11 +42,11 @@ public class QualificationController
         }
         catch (EntityAlreadyExistsException exception) {
             exceptionHandling.handleException(exception);
-            return responseService.generateErrorResponse("Qualification already exist with examination name"+" " +qualification.getExaminationName(), HttpStatus.BAD_REQUEST);
+            return responseService.generateErrorResponse("Qualification already exist with examination name "+" " +qualification.getExaminationName(), HttpStatus.BAD_REQUEST);
 
         } catch (EntityDoesNotExistsException e) {
             exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Customer does not exist with customer Id"+" "+customCustomerId, HttpStatus.NOT_FOUND);
+            return responseService.generateErrorResponse("Customer does not exist with customer Id "+" "+customCustomerId, HttpStatus.NOT_FOUND);
 
         } catch (ExaminationDoesNotExistsException e) {
             exceptionHandling.handleException(e);

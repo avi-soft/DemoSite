@@ -3,6 +3,7 @@ package com.community.api.endpoint.avisoft.controller.Account;
 import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.avisoft.controller.Customer.CustomerEndpoint;
+import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.services.*;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
@@ -40,6 +41,7 @@ public class AccountEndPoint {
     private CustomerService customerService;
     private JwtUtil jwtUtil;
     private ExceptionHandlingImplement exceptionHandling;
+
     private EntityManager em;
     private TwilioService twilioService;
     private CustomCustomerService customCustomerService;
@@ -173,20 +175,18 @@ public class AccountEndPoint {
                 }
                 Customer customer = customerService.readCustomerById(customerRecords.getId());
                 if (customer != null) {
-                    twilioService.sendOtpToMobile(updated_mobile, countryCode);
-
-                    String storedOtp = customerRecords.getOtp();
 
                     ResponseEntity<Map<String, Object>> otpResponse = twilioService.sendOtpToMobile(updated_mobile, countryCode);
+
                     Map<String, Object> responseBody = otpResponse.getBody();
 
-                    if ("success".equals(responseBody.get("status"))) {
-                        return responseService.generateSuccessResponse("OTP Sent on " + mobileNumber + " storedOtp is " + storedOtp, responseBody, HttpStatus.OK);
+                    if (responseBody.get("otp")!=null) {
+                        return responseService.generateSuccessResponse((String) responseBody.get("message"), responseBody, HttpStatus.OK);
                     } else {
                         return responseService.generateErrorResponse((String) responseBody.get("message"), HttpStatus.BAD_REQUEST);
                     }
                 } else {
-                    return responseService.generateErrorResponse("Mobile number not found", HttpStatus.INTERNAL_SERVER_ERROR);
+                    return responseService.generateErrorResponse(ApiConstants.NO_RECORDS_FOUND, HttpStatus.NOT_FOUND);
                 }
             } else if (roleService.findRoleName(role).equals(Constant.roleServiceProvider)) {
                 if (serviceProviderService.findServiceProviderByPhone(mobileNumber, countryCode) != null) {
@@ -242,13 +242,17 @@ public class AccountEndPoint {
                     String ipAddress = request.getRemoteAddr();
                     String userAgent = request.getHeader("User-Agent");
                     if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
+                        OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(existingToken, customer, HttpStatus.OK.value(), HttpStatus.OK.name());
+                        return ResponseEntity.ok(response);
 
-                        return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(existingToken, customer));
+
+
                     } else {
 
                         String token = jwtUtil.generateToken(customer.getId(), role, ipAddress, userAgent);
                         session.setAttribute(tokenKey, token);
-                        return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(token, customer));
+                        OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(token, customer, HttpStatus.OK.value(), HttpStatus.OK.name());
+                        return ResponseEntity.ok(response);
 
                     }
                 } else {

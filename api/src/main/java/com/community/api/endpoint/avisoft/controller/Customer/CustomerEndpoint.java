@@ -124,7 +124,7 @@ public class CustomerEndpoint {
         this.jwtUtil = jwtUtil;
     }
 
-    @RequestMapping(value = "getCustomer", method = RequestMethod.GET)
+    @RequestMapping(value = "get-customer", method = RequestMethod.GET)
     public ResponseEntity<Object> retrieveCustomerById(@RequestParam Long customerId) {
         try {
             if (customerService == null) {
@@ -414,7 +414,7 @@ public class CustomerEndpoint {
         return addressDTO;
     }
     public static ResponseEntity<?> createAuthResponse(String token, Customer customer ) {
-        OtpEndpoint.AuthResponse authResponse = new OtpEndpoint.AuthResponse(token, customer);
+        OtpEndpoint.ApiResponse authResponse = new OtpEndpoint.ApiResponse(token, customer, HttpStatus.OK.value(), HttpStatus.OK.name());
         return responseService.generateSuccessResponse("Token details : ", authResponse, HttpStatus.OK);
     }
 

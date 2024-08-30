@@ -102,7 +102,7 @@ public class OtpEndpoint {
                 ResponseEntity<Map<String, Object>> otpResponse = twilioService.sendOtpToMobile(mobileNumber, countryCode);
                 Map<String, Object> responseBody = otpResponse.getBody();
 
-                if ("success".equals(responseBody.get("status"))) {
+                if (responseBody.get("otp")!=null) {
                     return responseService.generateSuccessResponse((String) responseBody.get("message"), responseBody, HttpStatus.OK);
                 } else {
                     return responseService.generateErrorResponse((String) responseBody.get("message"), HttpStatus.BAD_REQUEST);
@@ -178,11 +178,15 @@ public class OtpEndpoint {
                     String existingToken = (String) session.getAttribute(tokenKey);
 
                     if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
-                        return ResponseEntity.ok(createAuthResponse(existingToken, customer));
+                        ApiResponse response = new ApiResponse(existingToken, customer, HttpStatus.OK.value(), HttpStatus.OK.name());
+                        return ResponseEntity.ok(response);
+
                     } else {
                         String newToken = jwtUtil.generateToken(existingCustomer.getId(), role, ipAddress, userAgent);
                         session.setAttribute(tokenKey, newToken);
-                        return ResponseEntity.ok(createAuthResponse(newToken, customer));
+                        ApiResponse response = new ApiResponse(newToken, customer, HttpStatus.OK.value(), HttpStatus.OK.name());
+                        return ResponseEntity.ok(response);
+
                     }
                 } else {
                     return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.UNAUTHORIZED);
@@ -219,7 +223,6 @@ public class OtpEndpoint {
             }
 
             Twilio.init(accountSid, authToken);
-            String completeMobileNumber = countryCode + mobileNumber;
             String otp = serviceProviderService.generateOTP();
 
             ServiceProviderEntity existingServiceProvider = serviceProviderService.findServiceProviderByPhone(mobileNumber, countryCode);
@@ -239,10 +242,10 @@ public class OtpEndpoint {
             } else {
                 return responseService.generateErrorResponse(ApiConstants.MOBILE_NUMBER_REGISTERED, HttpStatus.BAD_REQUEST);
             }
-            Map<String,Object>details=new HashMap<>();
-            details.put("message",ApiConstants.OTP_SENT_SUCCESSFULLY);
-            details.put("status",ApiConstants.STATUS_SUCCESS);
-            details.put("otp",otp);
+            Map<String, Object> details = new HashMap<>();
+            String maskedNumber = twilioService.genereateMaskednumber(mobileNumber);
+            details.put("message", ApiConstants.OTP_SENT_SUCCESSFULLY + " on " + maskedNumber);
+            details.put("otp", otp);
             return responseService.generateSuccessResponse(ApiConstants.OTP_SENT_SUCCESSFULLY, details, HttpStatus.OK);
 
         } catch (HttpClientErrorException e) {
@@ -261,40 +264,79 @@ public class OtpEndpoint {
         }
     }
 
-    @GetMapping("/getServiceProvider")
+    @GetMapping("/get-service-provider")
     public ResponseEntity<?> getServiceProviderById(@RequestParam Long userId) {
         try {
             ServiceProviderEntity serviceProviderEntity = serviceProviderService.getServiceProviderById(userId);
             if (serviceProviderEntity == null) {
                 return responseService.generateErrorResponse("Service provider not found " + userId, HttpStatus.BAD_REQUEST);
             }
-            return ResponseEntity.ok(serviceProviderEntity);
+            Map<String, Object> details = new HashMap<>();
+            details.put("message", "Service provider details are");
+            details.put("status", ApiConstants.STATUS_SUCCESS);
+            details.put("status_code", HttpStatus.OK);
+            details.put("data", serviceProviderEntity);
+            return responseService.generateSuccessResponse("Service provider details are", details, HttpStatus.OK);
+
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Some issue in fetching account " + e.getMessage(), HttpStatus.BAD_REQUEST);
+            return responseService.generateErrorResponse(ApiConstants.INTERNAL_SERVER_ERROR + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
-    private ResponseEntity<?> createAuthResponse(String token, Customer customer) {
-        AuthResponse authResponse = new AuthResponse(token, customer);
-        return responseService.generateSuccessResponse("Token details : ", authResponse, HttpStatus.OK);
+
+    public static class ApiResponse {
+        private Data data;
+        private int status_code;
+        private String status;
+
+        public ApiResponse(String token, Customer customer, int statusCodeValue, String statusCode) {
+            this.data = new Data(token, customer);
+            this.status_code = statusCodeValue;
+            this.status = statusCode;
+        }
+
+        public Data getData() {
+            return data;
+        }
+
+        public int getStatus_code() {
+            return status_code;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public static class Data {
+            private Value value;
+
+            public Data(String token, Customer customer) {
+                this.value = new Value(token, customer);
+            }
+
+            public Value getValue() {
+                return value;
+            }
+
+            public static class Value {
+                private String token;
+                private Customer userDetails;
+
+                public Value(String token, Customer userDetails) {
+                    this.token = token;
+                    this.userDetails = userDetails;
+                }
+
+                public String getToken() {
+                    return token;
+                }
+
+                public Customer getUserDetails() {
+                    return userDetails;
+                }
+            }
+        }
     }
 
-    public static class AuthResponse {
-        private String token;
-        private Customer userDetails;
-
-        public AuthResponse(String token, Customer userDetails) {
-            this.token = token;
-            this.userDetails = userDetails;
-        }
-
-        public String getToken() {
-            return token;
-        }
-
-        public Customer getUserDetails() {
-            return userDetails;
-        }
-    }
 }
