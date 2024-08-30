@@ -55,12 +55,13 @@ public class Constant {
     public static String GET_ALL_PRODUCT_STATE = "SELECT c FROM CustomProductState c";
     public static String GET_PRODUCT_STATE_BY_ID = "SELECT c FROM CustomProductState c WHERE c.productStateId = :productStateId";
     public static String GET_PRODUCT_STATE_BY_NAME = "SELECT c FROM CustomProductState c WHERE c.productState = :productStateName";
-    public static String NEW = "NEW";
-    public static String LIVE = "LIVE";
-    public static String APPROVED = "APPROVED";
-    public static String EXPIRED = "EXPIRED";
-    public static String END = "END";
+    public static String PRODUCT_STATE_NEW = "NEW";
+    public static String PRODUCT_STATE_LIVE = "LIVE";
+    public static String PRODUCT_STATE_APPROVED = "APPROVED";
+    public static String PRODUCT_STATE_EXPIRED = "EXPIRED";
+    public static String PRODUCT_STATE_END = "END";
     public static String GET_STATES_LIST="Select s from StateCode s";
-
+    public static String SERVICE_PROVIDER_PRIVILEGE = "Select privilege_id FROM service_provider_privileges WHERE service_provider_id = :serviceProviderId";
+    public static String GET_ROLE_BY_ROLE_ID = "SELECT r FROM Role r WHERE r.role_id = :roleId";
+    public static String PRIVILEGE_ADD_PRODUCT = "ADD_PRODUCT";
 }
-

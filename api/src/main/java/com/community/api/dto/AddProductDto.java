@@ -24,6 +24,7 @@ public class AddProductDto {
     Double platformFee;
     @NotNull
     Long applicationScope;
+
     Long jobGroup;
 
     @Temporal(TemporalType.TIMESTAMP)
@@ -35,16 +36,16 @@ public class AddProductDto {
     @Temporal(TemporalType.TIMESTAMP)
     Date examDateTo;
     @Temporal(TemporalType.TIMESTAMP)
-    Long bornAfter;
+    Date bornAfter;
     @Temporal(TemporalType.TIMESTAMP)
-    Long bornBefore;
+    Date bornBefore;
 
     Integer priorityLevel;
     String metaDescription;
     Long reservedCategory;
     String notifyingAuthority;
-    Integer post; // -> set default value
-    Integer quantity; // -> set defalut value to 100000 if not given.
+    Integer post;
+    Integer quantity;
 
     @JsonIgnore
     String url;

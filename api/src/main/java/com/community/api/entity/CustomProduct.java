@@ -31,8 +31,10 @@ public class CustomProduct extends ProductImpl {
     @Max(value = 5, message = "Value must be between 1 and 5")
     protected Integer priorityLevel;
 
-    @Column(name = "job_group")
-    protected Character jobGroup;
+    @ManyToOne
+    @NotNull
+    @JoinColumn(name = "job_group_id")
+    protected CustomJobGroup jobGroup;
 
     @Column(name = "platform_fee")
     protected Double platformFee;
@@ -52,11 +54,11 @@ public class CustomProduct extends ProductImpl {
     @JoinColumn(name = "application_scope_id")
     protected CustomApplicationScope customApplicationScope;
 
-//    @ManyToOne
-//    @JoinColumn(name = "user_id")
-//
-//    @ManyToOne
-//    @JoinColumn(name = "role_id")
-//    protected
+    @ManyToOne
+    @JoinColumn(name = "role_id")
+    protected Role role;
+
+    @Column(name = "user_id")
+    protected Long userId;
 
 }

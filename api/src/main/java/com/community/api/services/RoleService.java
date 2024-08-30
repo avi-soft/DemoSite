@@ -55,4 +55,12 @@ public class RoleService {
         return query.getResultList();
     }
 
+    public Role getRoleByRoleId(int roleId) {
+        return entityManager.createQuery(Constant.GET_ROLE_BY_ROLE_ID, Role.class)
+                .setParameter("roleId", roleId)
+                .getResultStream()
+                .findFirst()
+                .orElse(null);
+    }
+
 }
