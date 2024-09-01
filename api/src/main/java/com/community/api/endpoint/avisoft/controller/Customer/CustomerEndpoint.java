@@ -2,14 +2,21 @@ package com.community.api.endpoint.avisoft.controller.Customer;
 
 
 import com.community.api.component.JwtUtil;
+import com.community.api.dto.CategoryDto;
+import com.community.api.dto.CustomCategoryWrapper;
+import com.community.api.dto.CustomProductWrapper;
 import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.AddressDTO;
-import com.community.api.endpoint.customer.CustomCustomer;
+import com.community.api.entity.CustomCustomer;
 import com.community.api.endpoint.customer.CustomerDTO;
-import com.community.api.services.CustomCustomerService;
-import com.community.api.services.TwilioService;
+import com.community.api.entity.CustomProduct;
+import com.community.api.services.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
+import com.community.api.services.exception.ExceptionHandlingService;
 import org.apache.commons.math3.analysis.function.Add;
+import org.broadleafcommerce.common.persistence.Status;
+import org.broadleafcommerce.core.catalog.domain.Category;
+import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.broadleafcommerce.profile.core.domain.Address;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.domain.CustomerAddress;
@@ -21,14 +28,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.math.BigInteger;
+import java.util.*;
 
 @RestController
 @RequestMapping(value = "/customer",
@@ -39,34 +52,78 @@ import java.util.Map;
 )
 
 public class CustomerEndpoint {
-    private final PasswordEncoder passwordEncoder;
-    private final CustomerService customerService;
-    private final ExceptionHandlingImplement exceptionHandling;
-    private final EntityManager em;
-    private final TwilioService twilioService;
-    private final CustomCustomerService customCustomerService;
-    private final AddressService addressService;
-    private final CustomerAddressService customerAddressService;
 
-    public CustomerEndpoint(PasswordEncoder passwordEncoder,
-                     CustomerService customerService,
-                     ExceptionHandlingImplement exceptionHandling,
-                     EntityManager em,
-                     TwilioService twilioService,
-                     CustomCustomerService customCustomerService,
-                     AddressService addressService,
-                     CustomerAddressService customerAddressService) {
+    private PasswordEncoder passwordEncoder;
+    private CustomerService customerService;
+    private ExceptionHandlingImplement exceptionHandling;
+    private EntityManager em;
+    private TwilioService twilioService;
+    private CustomCustomerService customCustomerService;
+    private AddressService addressService;
+    private CustomerAddressService customerAddressService;
+    private JwtUtil jwtUtil;
+
+
+    @Autowired
+    private ExceptionHandlingService exceptionHandlingService;
+
+    @Autowired
+    private CategoryService categoryService;
+
+    @Autowired
+    private CatalogService catalogService;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Autowired
+    public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
+    }
+
+    @Autowired
+    public void setCustomerService(CustomerService customerService) {
         this.customerService = customerService;
+    }
+
+    @Autowired
+    public void setExceptionHandling(ExceptionHandlingImplement exceptionHandling) {
         this.exceptionHandling = exceptionHandling;
+    }
+
+    @Autowired
+    public void setEm(EntityManager em) {
         this.em = em;
-        this.twilioService = twilioService;
-        this.customCustomerService = customCustomerService;
-        this.addressService = addressService;
-        this.customerAddressService = customerAddressService;
     }
     @Autowired
-    private JwtUtil jwtUtil;
+    public static ResponseService responseService;
+    @Autowired
+    public void setTwilioService(TwilioService twilioService) {
+        this.twilioService = twilioService;
+    }
+
+    @Autowired
+    public void setCustomCustomerService(CustomCustomerService customCustomerService) {
+        this.customCustomerService = customCustomerService;
+    }
+
+    @Autowired
+    public void setAddressService(AddressService addressService) {
+        this.addressService = addressService;
+    }
+
+    @Autowired
+    public void setCustomerAddressService(CustomerAddressService customerAddressService) {
+        this.customerAddressService = customerAddressService;
+        this.jwtUtil= jwtUtil;
+    }
+
+
+    @Autowired
+    public void setJwtUtil(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
+    }
+
     @RequestMapping(value = "getCustomer", method = RequestMethod.GET)
     public ResponseEntity<Object> retrieveCustomerById(@RequestParam Long customerId) {
         try {
@@ -184,59 +241,68 @@ public class CustomerEndpoint {
     }
 
     @Transactional
-    @RequestMapping(value = "update-password", method = RequestMethod.POST)
-    public ResponseEntity<?> updateCustomerPassword(@RequestBody CustomerDTO customerDTO, @RequestParam Long customerId) {
+    @RequestMapping(value = "create-or-update-password", method = RequestMethod.POST)
+    public ResponseEntity<?> updateCustomerPassword(@RequestBody Map<String,Object>details, @RequestParam Long customerId) {
         try {
             if (customerService == null) {
                 return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
+            String password=(String) details.get("password");
             Customer customer = customerService.readCustomerById(customerId);
             if (customer == null) {
                 return new ResponseEntity<>("No data found for this customerId", HttpStatus.NOT_FOUND);
             }
-            if (customer.getPassword() == null || customer.getPassword().isEmpty()) {
-                customer.setPassword(passwordEncoder.encode(customerDTO.getPassword()));
-                em.merge(customer);
-                return new ResponseEntity<>(customer, HttpStatus.OK);
-            }
-            String password = customerDTO.getPassword();
-            if (customerDTO.getPassword() != null && customerDTO.getOldPassword() != null) {
+            if(password!=null) {
+                if (customer.getPassword() == null || customer.getPassword().isEmpty()) {
+                    customer.setPassword(passwordEncoder.encode(password));
+                    em.merge(customer);
+                    return responseService.generateSuccessResponse("Password Created", customer, HttpStatus.OK);
+                }
+                if (!passwordEncoder.matches(password, customer.getPassword())) {
+            /*if (customerDTO.getPassword() != null && customerDTO.getOldPassword() != null) {
                 if (passwordEncoder.matches(customerDTO.getOldPassword(), customer.getPassword())) {
-                    if (!customerDTO.getPassword().equals(customerDTO.getOldPassword())) {
-                        customer.setPassword(passwordEncoder.encode(password));
-                        em.merge(customer);
-                        return new ResponseEntity<>(customer, HttpStatus.OK);
-                    } else
+                    if (!customerDTO.getPassword().equals(customerDTO.getOldPassword())) {*/
+                    customer.setPassword(passwordEncoder.encode(password));
+                    em.merge(customer);
+                    return responseService.generateSuccessResponse("Password Updated", customer, HttpStatus.OK);
+                    /*} else
                         return new ResponseEntity<>("Old password and new password can not be same!", HttpStatus.BAD_REQUEST);
                 } else
                     return new ResponseEntity<>("The old password you provided is incorrect. Please try again with the correct old password", HttpStatus.BAD_REQUEST);
-            } else {
-                return new ResponseEntity<>("Empty Password", HttpStatus.BAD_REQUEST);
+            }*/
+                }
+                return responseService.generateErrorResponse("Old Password and new Password cannot be same",HttpStatus.BAD_REQUEST);
+            }else {
+                return responseService.generateErrorResponse("Empty Password", HttpStatus.BAD_REQUEST);
             }
         } catch (Exception exception) {
             exceptionHandling.handleException(exception);
-            return new ResponseEntity<>("Error updating password", HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("Error updating password", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @Transactional
     @RequestMapping(value = "delete", method = RequestMethod.DELETE)
-    public ResponseEntity<String> updateCustomer(@RequestParam Long customerId) {
+    public ResponseEntity<?> updateCustomer(@RequestParam Long customerId) {
         try {
             if (customerService == null) {
-                return new ResponseEntity<>("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
+                return responseService.generateErrorResponse(ApiConstants.CUSTOMER_SERVICE_NOT_INITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
+
             }
             Customer customer = customerService.readCustomerById(customerId);
             if (customer != null) {
                 customerService.deleteCustomer(customerService.readCustomerById(customerId));
-                return new ResponseEntity<>("Record Deleted Successfully", HttpStatus.OK);
+                return responseService.generateSuccessResponse("Record Deleted Successfully","", HttpStatus.OK);
+
             } else {
-                return new ResponseEntity<>("No Records found for this ID", HttpStatus.INTERNAL_SERVER_ERROR);
+                return responseService.generateErrorResponse("No Records found for this ID " + customerId, HttpStatus.NO_CONTENT);
 
             }
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return new ResponseEntity<>("Error deleting", HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("Some issue in deleting customer " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+
+
         }
     }
 
@@ -347,10 +413,12 @@ public class CustomerEndpoint {
         addressDTO.setPhoneNumber(customCustomer.getMobileNumber());
         return addressDTO;
     }
-    public static ResponseEntity<OtpEndpoint.AuthResponse> createAuthResponse(String token, Customer customer ) {
+    public static ResponseEntity<?> createAuthResponse(String token, Customer customer ) {
         OtpEndpoint.AuthResponse authResponse = new OtpEndpoint.AuthResponse(token, customer);
-        return ResponseEntity.ok(authResponse);
+        return responseService.generateSuccessResponse("Token details : ", authResponse, HttpStatus.OK);
     }
+
+
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout(@RequestBody Map<String, String> request) {
@@ -364,6 +432,146 @@ public class CustomerEndpoint {
             return ResponseEntity.ok("Logged out successfully");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during logout");
+        }
+    }
+
+    @GetMapping(value = "/savedForms/getProductsByUserId")
+    public ResponseEntity<?> getSavedFormsByUserId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
+        try {
+            if (catalogService == null) {
+                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            Long categoryId = Long.parseLong(id);
+            if(categoryId <= 0){
+                return new ResponseEntity<>("CATEGORYCANNOTBELESSTHANOREQAULZERO", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            Category category = this.catalogService.findCategoryById(categoryId);
+
+            if (category == null) {
+                return new ResponseEntity<>("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
+            } else if (((Status) category).getArchived() == 'Y') {
+                return new ResponseEntity<>("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
+            List<CustomProductWrapper> products = new ArrayList<>();
+
+            for (BigInteger productId : productIdList) {
+                CustomProduct customProduct = entityManager.find(CustomProduct.class, productId.longValue());
+
+                if(customProduct != null && (((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
+                    CustomProductWrapper wrapper = new CustomProductWrapper();
+                    wrapper.wrapDetails(customProduct);
+                    products.add(wrapper);
+                }
+            }
+
+            CategoryDto categoryDao = new CategoryDto();
+            categoryDao.setCategoryId(category.getId());
+            categoryDao.setCategoryName(category.getName());
+            categoryDao.setProducts(products);
+            categoryDao.setTotalProducts(Long.valueOf(products.size()));
+
+            return ResponseEntity.status(HttpStatus.OK).body(categoryDao);
+
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @GetMapping(value = "/recommendations/getProductsByUserId")
+    public ResponseEntity<?> getRecommendationsBYUserId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
+        try {
+            if (catalogService == null) {
+                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            Long categoryId = Long.parseLong(id);
+            if(categoryId <= 0){
+                return new ResponseEntity<>("CATEGORYCANNOTBELESSTHANOREQAULZERO", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            Category category = this.catalogService.findCategoryById(categoryId);
+
+            if (category == null) {
+                return new ResponseEntity<>("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
+            } else if (((Status) category).getArchived() == 'Y') {
+                return new ResponseEntity<>("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
+            List<CustomProductWrapper> products = new ArrayList<>();
+
+            for (BigInteger productId : productIdList) {
+                CustomProduct customProduct = entityManager.find(CustomProduct.class, productId.longValue());
+
+                if(customProduct != null && (((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
+                    CustomProductWrapper wrapper = new CustomProductWrapper();
+                    wrapper.wrapDetails(customProduct);
+                    products.add(wrapper);
+                }
+            }
+
+            CategoryDto categoryDao = new CategoryDto();
+            categoryDao.setCategoryId(category.getId());
+            categoryDao.setCategoryName(category.getName());
+            categoryDao.setProducts(products);
+            categoryDao.setTotalProducts(Long.valueOf(products.size()));
+
+            return ResponseEntity.status(HttpStatus.OK).body(categoryDao);
+
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping(value = "/filledForms/getProductsByUserId")
+    public ResponseEntity<?> getFilledFormsByUserId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
+        try {
+            if (catalogService == null) {
+                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            Long categoryId = Long.parseLong(id);
+            if(categoryId <= 0){
+                return new ResponseEntity<>("CATEGORYCANNOTBELESSTHANOREQAULZERO", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            Category category = this.catalogService.findCategoryById(categoryId);
+
+            if (category == null) {
+                return new ResponseEntity<>("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
+            } else if (((Status) category).getArchived() == 'Y') {
+                return new ResponseEntity<>("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
+            List<CustomProductWrapper> products = new ArrayList<>();
+
+            for (BigInteger productId : productIdList) {
+                CustomProduct customProduct = entityManager.find(CustomProduct.class, productId.longValue());
+
+                if(customProduct != null && (((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
+                    CustomProductWrapper wrapper = new CustomProductWrapper();
+                    wrapper.wrapDetails(customProduct);
+                    products.add(wrapper);
+                }
+            }
+
+            CategoryDto categoryDao = new CategoryDto();
+            categoryDao.setCategoryId(category.getId());
+            categoryDao.setCategoryName(category.getName());
+            categoryDao.setProducts(products);
+            categoryDao.setTotalProducts(Long.valueOf(products.size()));
+
+            return ResponseEntity.status(HttpStatus.OK).body(categoryDao);
+
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

@@ -26,10 +26,28 @@
         <non-jta-data-source>jdbc/web</non-jta-data-source>
 
         <!-- Added this line -->
+        <class>com.community.api.entity.CustomCustomer</class>
+        <class>com.community.api.entity.Skill</class>
+        <class>com.community.api.utils.Document</class>
+        <class>com.community.api.utils.DocumentType</class>
+        <class>com.community.api.entity.Qualification</class>
+        <class>com.community.api.endpoint.serviceProvider.ServiceProviderEntity</class>
+        <class>com.community.api.endpoint.serviceProvider.ServiceProviderStatus</class>
+        <class>com.community.api.entity.CustomOtp</class>
+        <class>com.community.api.entity.StateCode</class>
+        <class>com.community.api.entity.ServiceProviderAddress</class>
+        <class>com.community.api.entity.ServiceProviderAddressRef</class>
+        <class>com.community.api.entity.Privileges</class>
+        <class>com.community.api.entity.Role</class>
+        <class>com.community.api.entity.Districts</class>
+
         <class>com.community.api.entity.CustomProduct</class>
         <class>com.community.api.entity.CustomProductState</class>
-        <class>com.community.api.entity.CustomNotifyingAuthority</class>
+        <class>com.community.api.entity.CustomApplicationScope</class>
         <class>com.community.api.entity.CustomReserveCategory</class>
+        <class>com.community.api.entity.ProductReserveCategoryFeePostRef</class>
+        <class>com.community.api.entity.ProductReserveCategoryBornBeforeAfterRef</class>
+        <class>com.community.api.entity.CustomJobGroup</class>
 
         <exclude-unlisted-classes/>
     </persistence-unit>
@@ -47,13 +65,23 @@
         <non-jta-data-source>jdbc/web</non-jta-data-source>
 
         <!-- Added this line -->
-        <class>com.community.api.endpoint.customer.CustomCustomer</class>
+        <class>com.community.api.entity.CustomCustomer</class>
+        <class>com.community.api.entity.Skill</class>
         <class>com.community.api.utils.Document</class>
         <class>com.community.api.utils.DocumentType</class>
-        <class>com.community.api.endpoint.customer.Qualification</class>
+        <class>com.community.api.entity.Qualification</class>
         <class>com.community.api.endpoint.serviceProvider.ServiceProviderEntity</class>
         <class>com.community.api.endpoint.serviceProvider.ServiceProviderStatus</class>
         <class>com.community.api.entity.CustomOtp</class>
+        <class>com.community.api.entity.Examination</class>
+        <class>com.community.api.entity.StateCode</class>
+        <class>com.community.api.entity.ServiceProviderAddress</class>
+        <class>com.community.api.entity.ServiceProviderAddressRef</class>
+        <class>com.community.api.entity.Privileges</class>
+        <class>com.community.api.entity.Role</class>
+        <class>com.community.api.entity.Districts</class>
+        <class>com.community.api.entity.ServiceProviderInfra</class>
+        <class>com.community.api.entity.ServiceProviderLanguage</class>
         <exclude-unlisted-classes/>
     </persistence-unit>
 

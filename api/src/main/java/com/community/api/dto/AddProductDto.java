@@ -1,13 +1,14 @@
 package com.community.api.dto;
 
-import com.community.api.entity.CustomProduct;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.broadleafcommerce.common.money.Money;
-import org.broadleafcommerce.core.catalog.domain.ProductImpl;
-import org.broadleafcommerce.core.catalog.domain.SkuImpl;
 
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+import javax.validation.constraints.NotNull;
 import java.util.Date;
 
 @Data
@@ -15,16 +16,38 @@ import java.util.Date;
 @NoArgsConstructor
 public class AddProductDto {
 
-    Money cost;
-    Long id;
+    @NotNull
     String metaTitle;
-    String metaDescription;
-    Date activeStartDate;
+    @NotNull
+    Double fee;
+    @NotNull
+    Double platformFee;
+    @NotNull
+    Long applicationScope;
+
+    Long jobGroup;
+
+    @Temporal(TemporalType.TIMESTAMP)
     Date activeEndDate;
+    @Temporal(TemporalType.TIMESTAMP)
     Date goLiveDate;
+    @Temporal(TemporalType.TIMESTAMP)
+    Date examDateFrom;
+    @Temporal(TemporalType.TIMESTAMP)
+    Date examDateTo;
+    @Temporal(TemporalType.TIMESTAMP)
+    Date bornAfter;
+    @Temporal(TemporalType.TIMESTAMP)
+    Date bornBefore;
+
     Integer priorityLevel;
-    String url;
-    Integer quantity;
+    String metaDescription;
+    Long reservedCategory;
+    String notifyingAuthority;
     Integer post;
+    Integer quantity;
+
+    @JsonIgnore
+    String url;
 
 }

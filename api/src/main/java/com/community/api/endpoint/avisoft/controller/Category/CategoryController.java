@@ -8,18 +8,29 @@ import com.community.api.dto.CustomProductWrapper;
 import com.community.api.services.CategoryService;
 import com.community.api.services.exception.ExceptionHandlingService;
 import org.broadleafcommerce.common.persistence.Status;
-import org.broadleafcommerce.core.catalog.domain.*;
+import org.broadleafcommerce.core.catalog.domain.Category;
+import org.broadleafcommerce.core.catalog.domain.CategoryImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 
 @RestController
 @RequestMapping(value = "/categoryCustom")
@@ -29,11 +40,15 @@ public class CategoryController extends CatalogEndpoint {
     private static final String CATEGORYCANNOTBELESSTHANOREQAULZERO = "CategoryId cannot be <= 0";
     private static final String SOMEEXCEPTIONOCCURRED = "Some Exception Occurred";
 
-    @Autowired
     private ExceptionHandlingService exceptionHandlingService;
+    private CategoryService categoryService;
 
     @Autowired
-    private CategoryService categoryService;
+    public CategoryController(ExceptionHandlingService exceptionHandlingService,CategoryService categoryService)
+    {
+        this.exceptionHandlingService = exceptionHandlingService;
+        this.categoryService = categoryService;
+    }
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -109,8 +124,8 @@ public class CategoryController extends CatalogEndpoint {
         }
     }
 
-    @GetMapping(value = "/getProductsByCategoryId/{id}")
-    public ResponseEntity<?> getProductsByCategoryId(HttpServletRequest request, @PathVariable String id) {
+    @GetMapping(value = "/getProductsByCategoryId")
+    public ResponseEntity<?> getProductsByCategoryId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
         try {
             if (catalogService == null) {
                 return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);

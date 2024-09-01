@@ -8,15 +8,17 @@ import lombok.Setter;
 import javax.persistence.*;
 
 @Entity
+@Table(name = "custom_document")
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
 public class DocumentType {
     @Id
-    private Integer documentTypeId;
+    @Column(name = "document_type_id")
+    private Integer document_type_id;
+    @Column(name = "document_type_name")
+    private String document_type_name;
+    @Column(name = "description")
     private String description;
-    /*@OneToOne
-    @JoinColumn(name = "document_id")
-    private Document document;*/
 }
