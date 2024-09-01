@@ -1,15 +1,17 @@
 package com.community.api.entity;
 
+import org.broadleafcommerce.common.money.Money;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.util.Date;
 
 @Entity
-@Table(name = "custom_product_reserve_category_born_before_after_reference")
-public class ProductReserveCategoryBornBeforeAfterRef {
+@Table(name = "custom_product_reserve_category_fee_post_reference")
+public class CustomProductReserveCategoryFeePostRef {
 
     @Id
     @Column(name = "product_reserve_category_id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long productReservedCategoryId;
 
     @ManyToOne
@@ -22,9 +24,9 @@ public class ProductReserveCategoryBornBeforeAfterRef {
     @JoinColumn(name = "reserve_category_id")
     protected CustomReserveCategory customReserveCategory;
 
-    @Column(name = "born_before")
-    Date bornBefore;
+    @Column(name = "fee")
+    Double fee;
 
-    @Column(name = "born_after")
-    Date bornAfter;
+    @Column(name = "post")
+    Long post;
 }

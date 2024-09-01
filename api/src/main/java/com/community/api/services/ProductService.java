@@ -27,23 +27,10 @@ public class ProductService {
     @PersistenceContext
     private EntityManager entityManager;
 
-    private Validator validator; // Autowire Validator bean if needed
-
-    public ProductService(Validator validator) {
-        this.validator = validator;
-    }
-
     public void saveCustomProduct(Product product, Date examDateFrom, Date examDateTo, Date goLiveDate, Double platformFee, Integer priorityLevel, CustomApplicationScope applicationScope, CustomJobGroup jobGroup, CustomProductState productState, Role role, Long userId) {
 
-        // Validate the CustomProduct instance
-        Errors errors = validatePriorityLevel(priorityLevel);
-        if (errors.hasErrors()) {
-            throw new IllegalArgumentException("Validation error: " + errors.getFieldError());
-        }
+        String sql = "INSERT INTO custom_product (product_id, exam_date_from, exam_date_to, go_live_date, platform_fee, priority_level, application_scope_id, job_group_id, product_state_id, role_id) VALUES (:productId, :examDateFrom, :examDateTo, :goLiveDate, :platformFee, :priorityLevel, :applicationScopeId, :jobGroupId, :productStateId, :roleId)";
 
-        String sql = "INSERT INTO custom_product (exam_date_from, exam_date_to, go_live_date, platform_fee, priority_level, application_scope_id, job_group_id, product_state_id, role_id) VALUES (:productId, :examDateFrom, :examDateTo, :platformFee, :priorityLevel, :applicationScopeId, :jobGroupId, :productStateId, :roleId)";
-
-        System.out.println("ISSUE HERE");
         try {
             entityManager.createNativeQuery(sql)
                     .setParameter("productId", product)
@@ -60,23 +47,6 @@ public class ProductService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to save Custom Product: " + e.getMessage(), e);
         }
-    }
-
-    /*
-       Validate priority level.
-
-       @param priorityLevel The priority level to validate.
-       @return Errors object containing validation errors, if any.
-     */
-
-    public Errors validatePriorityLevel(Integer priorityLevel) {
-        CustomProduct product = new CustomProduct();
-        product.setPriorityLevel(priorityLevel);
-        product.setProductState(new CustomProductState());
-
-        Errors errors = new BeanPropertyBindingResult(product, "customProduct");
-        validator.validate(product, errors);
-        return errors;
     }
 
     public List<CustomProduct> getCustomProducts() {

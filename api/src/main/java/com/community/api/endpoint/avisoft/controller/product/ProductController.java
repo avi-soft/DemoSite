@@ -60,9 +60,18 @@ public class ProductController extends CatalogEndpoint {
     @Autowired
     protected ApplicationScopeService applicationScopeService;
 
+    @Autowired
+    protected ProductReserveCategoryBornBeforeAfterRefService productReserveCategoryBornBeforeAfterRefService;
+
+    @Autowired
+    protected ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService;
+
+    @Autowired
+    protected ReserveCategoryService reserveCategoryService;
+
     /*
 
-            WHAT THIS CLASS DOES FOR EACH FUNCTION WE HAVE TO THAT.
+            WHAT THIS CLASS DOES FOR EACH FUNCTION WE HAVE.
 
      */
 
@@ -82,16 +91,14 @@ public class ProductController extends CatalogEndpoint {
 
             boolean accessGrant = false;
             Long userId = null;
-            System.out.println("role: "+role);
+            /*System.out.println("role: "+role);
             if (role.equals(Constant.SUPER_ADMIN) || role.equals(Constant.ADMIN)) {
                 accessGrant = true;
 
                 productState = Constant.PRODUCT_STATE_APPROVED;
             } else if (role.equals(Constant.SERVICE_PROVIDER)) {
-                System.out.println("HELLO");
                 userId = jwtTokenUtil.extractId(jwtToken);
                 List<Privileges> privileges = privilegeService.getServiceProviderPrivilege(userId);
-                System.out.println("SIZE: " + privileges.size());
                 for (Privileges priv : privileges) {
                     if (priv.getPrivilege_name().equals(Constant.PRIVILEGE_ADD_PRODUCT)) {
                         productState = Constant.PRODUCT_STATE_NEW;
@@ -100,11 +107,10 @@ public class ProductController extends CatalogEndpoint {
                     }
                 }
             }
-            System.out.println(userId+" and "+roleId +" productState: " + productState);
 
             if (!accessGrant) {
                 return new ResponseEntity<>("Not Authorized to add product", HttpStatus.INTERNAL_SERVER_ERROR);
-            } // Authorization code.
+            } // Authorization code.*/
 
             if (catalogService == null) {
                 return new ResponseEntity<>(Constant.CATALOG_SERVICE_NOT_INITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -182,7 +188,7 @@ public class ProductController extends CatalogEndpoint {
 
             // validation for new entries in the product.
             CustomJobGroup jobGroup = jobGroupService.getJobGroupById(addProductDto.getJobGroup());
-            CustomProductState customProductState = productStateService.getProductStateByName(productState);
+            CustomProductState customProductState = productStateService.getProductStateByName(Constant.PRODUCT_STATE_NEW);
 
             if (addProductDto.getExamDateFrom() == null || addProductDto.getExamDateTo() == null) {
                 return new ResponseEntity<>("Tentative examination date from-to cannot be null", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -243,6 +249,8 @@ public class ProductController extends CatalogEndpoint {
             }
 
             productService.saveCustomProduct(product, addProductDto.getExamDateFrom(), addProductDto.getExamDateTo(), addProductDto.getGoLiveDate(), addProductDto.getPlatformFee(), addProductDto.getPriorityLevel(), applicationScope, jobGroup, customProductState, roleService.getRoleByRoleId(roleId), userId); // Save external product with provided dates and get status code
+            productReserveCategoryBornBeforeAfterRefService.saveBornBeforeAndBornAfter(addProductDto.getBornBefore(), addProductDto.getBornAfter(), product, reserveCategoryService.getReserveCategoryById(addProductDto.getReservedCategory()));
+            productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getFee(), addProductDto.getPost(), product, reserveCategoryService.getReserveCategoryById(addProductDto.getReservedCategory()));
 //            // Wrap and return the updated product details
 //            CustomProductWrapper wrapper = new CustomProductWrapper();
 //            wrapper.wrapDetails(product, addProductDto.getPriorityLevel(), addProductDto.getGoLiveDate());
