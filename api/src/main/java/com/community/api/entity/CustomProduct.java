@@ -61,4 +61,7 @@ public class CustomProduct extends ProductImpl {
     @Column(name = "user_id")
     protected Long userId;
 
+    @Column(name = "notifying_authority")
+    protected String notifyingAuthority;
+
 }

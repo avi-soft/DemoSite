@@ -64,10 +64,11 @@ public class Constant {
     public static String SERVICE_PROVIDER_PRIVILEGE = "SELECT privilege_id FROM service_provider_privileges WHERE service_provider_id = :serviceProviderId";
     public static String GET_ROLE_BY_ROLE_ID = "SELECT r FROM Role r WHERE r.role_id = :roleId";
     public static String PRIVILEGE_ADD_PRODUCT = "ADD_PRODUCT";
-    public static String GET_PRODUCT_RESERVECATEGORY_BORNBEFORE_BORNAFTER = "SELECT c FROM CustomProductReserveCategoryBornBeforeAfterRef c WHERE c.productId = :productId";
-    public static String GET_PRODUCT_RESERVECATEGORY_FEE_POST = "SELECT c FROM CustomProductReserveCategoryFeePostRef c WHERE c.productId = :productId";
+    public static String GET_PRODUCT_RESERVECATEGORY_BORNBEFORE_BORNAFTER = "SELECT c FROM CustomProductReserveCategoryBornBeforeAfterRef c WHERE c.customProduct = :customProduct";
+    public static String GET_PRODUCT_RESERVECATEGORY_FEE_POST = "SELECT c FROM CustomProductReserveCategoryFeePostRef c WHERE c.customProduct = :customProduct";
     public static String ADD_PRODUCT_RESERVECATEOGRY_BORNBEFORE_BORNAFTER = "INSERT INTO custom_product_reserve_category_born_before_after_reference (product_id, reserve_category_id, born_before, born_after) VALUES (:productId, :reserveCategoryId, :bornBefore, :bornAfter)";
     public static String ADD_PRODUCT_RESERVECATEOGRY_FEE_POST = "INSERT INTO custom_product_reserve_category_fee_post_reference (product_id, reserve_category_id, fee, post) VALUES (:productId, :reserveCategoryId, :fee, :post)";
     public static String GET_RESERVED_CATEGORY_BY_ID = "SELECT c FROM CustomReserveCategory c WHERE c.reserveCategoryId = :reserveCategoryId";
+    public static String APPLICATION_SCOPE_STATE = "STATE";
 
 }

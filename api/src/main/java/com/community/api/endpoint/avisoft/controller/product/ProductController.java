@@ -70,6 +70,9 @@ public class ProductController extends CatalogEndpoint {
     @Autowired
     protected ReserveCategoryService reserveCategoryService;
 
+    @Autowired
+    protected ReserveCategoryDtoService reserveCategoryDtoService;
+
     /*
 
             WHAT THIS CLASS DOES FOR EACH FUNCTION WE HAVE.
@@ -149,6 +152,7 @@ public class ProductController extends CatalogEndpoint {
             }
             addProductDto.setMetaTitle(addProductDto.getMetaTitle().trim());
             product.setMetaTitle(addProductDto.getMetaTitle()); // Also add the same metatTitle in the sku.name
+            product.setDisplayTemplate(addProductDto.getMetaTitle());
 
             if (addProductDto.getMetaDescription() != null) {
                 addProductDto.setMetaDescription(addProductDto.getMetaDescription().trim());
@@ -248,9 +252,12 @@ public class ProductController extends CatalogEndpoint {
             CustomApplicationScope applicationScope = applicationScopeService.getApplicationScopeById(addProductDto.getApplicationScope());
             if (applicationScope == null) {
                 return new ResponseEntity<>("No ApplicationScope exists with this Id", HttpStatus.INTERNAL_SERVER_ERROR);
+            }else if(applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE) && addProductDto.getNotifyingAuthority() == null){
+                return new ResponseEntity<>("Notifying Authority cannot be null if ApplicationScope is: " +Constant.APPLICATION_SCOPE_STATE , HttpStatus.INTERNAL_SERVER_ERROR);
             }
+            addProductDto.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
 
-            productService.saveCustomProduct(product, addProductDto.getExamDateFrom(), addProductDto.getExamDateTo(), addProductDto.getGoLiveDate(), addProductDto.getPlatformFee(), addProductDto.getPriorityLevel(), applicationScope, jobGroup, customProductState, roleService.getRoleByRoleId(roleId), userId); // Save external product with provided dates and get status code
+            productService.saveCustomProduct(product, addProductDto.getExamDateFrom(), addProductDto.getExamDateTo(), addProductDto.getGoLiveDate(), addProductDto.getPlatformFee(), addProductDto.getPriorityLevel(), applicationScope, jobGroup, customProductState, roleService.getRoleByRoleId(roleId), userId, addProductDto.getNotifyingAuthority()); // Save external product with provided dates and get status code
             productReserveCategoryBornBeforeAfterRefService.saveBornBeforeAndBornAfter(addProductDto.getBornBefore(), addProductDto.getBornAfter(), product, reserveCategoryService.getReserveCategoryById(addProductDto.getReservedCategory()));
             productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getFee(), addProductDto.getPost(), product, reserveCategoryService.getReserveCategoryById(addProductDto.getReservedCategory()));
 
@@ -553,7 +560,9 @@ public class ProductController extends CatalogEndpoint {
 
                 //             Wrap and return the updated product details
                 CustomProductWrapper wrapper = new CustomProductWrapper();
-                wrapper.wrapDetails(customProduct);
+
+                List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(productId);
+                wrapper.wrapDetails(customProduct, reserveCategoryDtoList);
                 return ResponseEntity.ok(wrapper);
 
             } else {

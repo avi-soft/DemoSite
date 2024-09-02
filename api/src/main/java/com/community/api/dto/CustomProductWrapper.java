@@ -9,16 +9,17 @@ import com.broadleafcommerce.rest.api.wrapper.MediaWrapper;
 import com.community.api.entity.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.apache.solr.common.util.Pair;
 import org.broadleafcommerce.common.rest.api.wrapper.APIWrapper;
 import org.broadleafcommerce.common.rest.api.wrapper.BaseWrapper;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.common.persistence.Status;
-import org.broadleafcommerce.core.catalog.domain.ProductImpl;
+import org.springframework.beans.factory.annotation.Autowired;
+
 
 @Data
 @NoArgsConstructor
 public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Product> {
+
 
     protected Long id;
     protected String metaTitle;
@@ -88,6 +89,37 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         }
     }
 
+    public void wrapDetails(CustomProduct customProduct, List<ReserveCategoryDto> reserveCategoryDtoList) {
+        this.id = customProduct.getId();
+        this.metaTitle = customProduct.getMetaTitle();
+        this.displayTemplate = customProduct.getDisplayTemplate();
+        this.longDescription = customProduct.getLongDescription();
+        this.active = customProduct.isActive();
+        this.quantity = customProduct.getDefaultSku().getQuantityAvailable();
+        this.activeGoLiveDate = customProduct.getGoLiveDate();
+        this.categoryName = customProduct.getDefaultCategory().getName();
+        this.priorityLevel = customProduct.getPriorityLevel();
+        this.archived = customProduct.getArchived();
+        this.promoMessage = customProduct.getPromoMessage();
+        this.activeGoLiveDate = customProduct.getGoLiveDate();
+        this.activeEndDate = customProduct.getDefaultSku().getActiveEndDate();
+        this.activeStartDate = customProduct.getDefaultSku().getActiveStartDate();
+        this.url = customProduct.getUrl();
+        this.metaDescription = customProduct.getMetaDescription();
+
+        this.displayTemplate = customProduct.getDisplayTemplate();
+        this.platformFee = customProduct.getPlatformFee();
+        this.notifyingAuthority = customProduct.getNotifyingAuthority();
+
+        this.customApplicationScope = customProduct.getCustomApplicationScope();
+        this.customJobGroup = customProduct.getJobGroup();
+        this.customProductState = customProduct.getProductState();
+        this.reserveCategoryDtoList = reserveCategoryDtoList;
+
+        if (customProduct.getDefaultCategory() != null) {
+            this.defaultCategoryId = customProduct.getDefaultCategory().getId();
+        }
+    }
     public void wrapDetails(CustomProduct model) {
         this.id = model.getId();
         this.metaTitle = model.getMetaTitle();

@@ -1,6 +1,7 @@
 package com.community.api.services;
 
 import com.community.api.component.Constant;
+import com.community.api.entity.CustomProduct;
 import com.community.api.entity.CustomProductReserveCategoryBornBeforeAfterRef;
 import com.community.api.entity.CustomProductReserveCategoryFeePostRef;
 import com.community.api.entity.CustomReserveCategory;
@@ -25,11 +26,15 @@ public class ProductReserveCategoryFeePostRefService {
     @Autowired
     protected ExceptionHandlingService exceptionHandlingService;
 
+    @Autowired
+    protected ProductService productService;
+
     public List<CustomProductReserveCategoryFeePostRef> getProductReserveCategoryFeeAndPostByProductId(Long productId){
         try{
 
-            Query query = entityManager.createQuery(Constant.GET_PRODUCT_RESERVECATEGORY_FEE_POST, CustomProductReserveCategoryBornBeforeAfterRef.class);
-            query.setParameter("productId", productId);
+            CustomProduct customProduct = productService.getCustomProductByCustomProductId(productId);
+            Query query = entityManager.createQuery(Constant.GET_PRODUCT_RESERVECATEGORY_FEE_POST, CustomProductReserveCategoryFeePostRef.class);
+            query.setParameter("customProduct", customProduct);
             List<CustomProductReserveCategoryFeePostRef> productReserveCategoryFeePostList = query.getResultList();
 
             return productReserveCategoryFeePostList;

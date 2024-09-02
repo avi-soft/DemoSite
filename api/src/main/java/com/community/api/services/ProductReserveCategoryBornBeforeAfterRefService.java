@@ -31,9 +31,10 @@ public class ProductReserveCategoryBornBeforeAfterRefService {
 
     public List<CustomProductReserveCategoryBornBeforeAfterRef> getProductReserveCategoryBornBeforeAfterByProductId(Long productId){
         try{
+            CustomProduct customProduct = productService.getCustomProductByCustomProductId(productId);
 
             Query query = entityManager.createQuery(Constant.GET_PRODUCT_RESERVECATEGORY_BORNBEFORE_BORNAFTER, CustomProductReserveCategoryBornBeforeAfterRef.class);
-            query.setParameter("productId", productId);
+            query.setParameter("customProduct", customProduct);
             List<CustomProductReserveCategoryBornBeforeAfterRef> productReserveCategoryBornBeforeAfterRefList = query.getResultList();
 
             return productReserveCategoryBornBeforeAfterRefList;
