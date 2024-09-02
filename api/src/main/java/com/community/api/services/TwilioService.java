@@ -94,7 +94,7 @@ public class TwilioService {
                 entityManager.persist(customerDetails);
                 return ResponseEntity.ok(Map.of(
                         "otp", otp,
-                        "message", "Otp has been sent successfully on " + maskedNumber
+                         "message", "Otp has been sent successfully on " + maskedNumber
                 ));
             } else if (serviceProvider != null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
@@ -108,7 +108,7 @@ public class TwilioService {
                 return ResponseEntity.ok(Map.of(
 
                         "otp", otp,
-                        "message", "Otp has been sent successfully on " + maskedNumber
+                         "message", "Otp has been sent successfully on " + maskedNumber
                 ));
             }
 
