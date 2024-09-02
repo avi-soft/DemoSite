@@ -594,7 +594,7 @@ public class ProductController extends CatalogEndpoint {
                 return new ResponseEntity<>("product not found", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            List<CustomProductWrapper> responses = new ArrayList<>();
+            List<Map<String, CustomProductWrapper>> responses = new ArrayList<>();
             for (Product product : products) {
 
                 // finding customProduct that resembles with productId.
@@ -606,7 +606,13 @@ public class ProductController extends CatalogEndpoint {
 
                         CustomProductWrapper wrapper = new CustomProductWrapper();
                         wrapper.wrapDetails(customProduct);
-                        responses.add(wrapper);
+
+                        Map<String, CustomProductWrapper> productDetails = new HashMap<>();
+
+                        productDetails.put("key_"+customProduct.getId(), wrapper);
+                        productDetails.get("key_"+customProduct.getId()).setReserveCategoryDtoList(null);
+
+                        responses.add(productDetails);
                     }
                 }
             }

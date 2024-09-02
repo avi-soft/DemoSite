@@ -120,25 +120,34 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
             this.defaultCategoryId = customProduct.getDefaultCategory().getId();
         }
     }
-    public void wrapDetails(CustomProduct model) {
-        this.id = model.getId();
-        this.metaTitle = model.getMetaTitle();
-        this.metaDescription = model.getMetaDescription();
-        this.longDescription = model.getLongDescription();
-        this.url = model.getUrl();
-        this.activeStartDate = model.getDefaultSku().getActiveStartDate();
-        this.activeEndDate = model.getDefaultSku().getActiveEndDate();
-        this.activeGoLiveDate = model.getGoLiveDate();
-        this.promoMessage = model.getPromoMessage();
-        this.archived = model.getArchived();
-        this.priorityLevel = model.getPriorityLevel();
-        this.categoryName = model.getDefaultCategory().getName();
-        this.active = model.isActive();
-        this.activeGoLiveDate = model.getGoLiveDate();
-        this.quantity = model.getDefaultSku().getQuantityAvailable();
+    public void wrapDetails(CustomProduct customProduct) {
+        this.id = customProduct.getId();
+        this.metaTitle = customProduct.getMetaTitle();
+        this.displayTemplate = customProduct.getDisplayTemplate();
+        this.longDescription = customProduct.getLongDescription();
+        this.active = customProduct.isActive();
+        this.quantity = customProduct.getDefaultSku().getQuantityAvailable();
+        this.activeGoLiveDate = customProduct.getGoLiveDate();
+        this.categoryName = customProduct.getDefaultCategory().getName();
+        this.priorityLevel = customProduct.getPriorityLevel();
+        this.archived = customProduct.getArchived();
+        this.promoMessage = customProduct.getPromoMessage();
+        this.activeGoLiveDate = customProduct.getGoLiveDate();
+        this.activeEndDate = customProduct.getDefaultSku().getActiveEndDate();
+        this.activeStartDate = customProduct.getDefaultSku().getActiveStartDate();
+        this.url = customProduct.getUrl();
+        this.metaDescription = customProduct.getMetaDescription();
 
-        if (model.getDefaultCategory() != null) {
-            this.defaultCategoryId = model.getDefaultCategory().getId();
+        this.displayTemplate = customProduct.getDisplayTemplate();
+        this.platformFee = customProduct.getPlatformFee();
+        this.notifyingAuthority = customProduct.getNotifyingAuthority();
+
+        this.customApplicationScope = customProduct.getCustomApplicationScope();
+        this.customJobGroup = customProduct.getJobGroup();
+        this.customProductState = customProduct.getProductState();
+
+        if (customProduct.getDefaultCategory() != null) {
+            this.defaultCategoryId = customProduct.getDefaultCategory().getId();
         }
     }
 
