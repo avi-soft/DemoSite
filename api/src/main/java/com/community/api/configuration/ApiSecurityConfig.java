@@ -10,18 +10,16 @@
  * the Broadleaf End User License Agreement (EULA), Version 1.1
  * (the "Commercial License" located at http://license.broadleafcommerce.org/commercial_license-1.1.txt)
  * shall apply.
- * 
+ *
  * Alternatively, the Commercial License may be replaced with a mutually agreed upon license (the "Custom License")
  * between you and Broadleaf Commerce. You may not use this file except in compliance with the applicable license.
  * #L%
  */
 package com.community.api.configuration;
-
 import com.community.api.component.JwtAuthenticationFilter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadleafcommerce.profile.web.core.security.RestApiCustomerStateFilter;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,14 +31,15 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.access.channel.ChannelDecisionManagerImpl;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.authentication.rememberme.RememberMeAuthenticationFilter;
-
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import javax.servlet.Filter;
+import java.util.Arrays;
 
 import static org.springframework.security.web.util.matcher.AntPathRequestMatcher.antMatcher;
+
 
 /**
  * @author Elbert Bautista (elbertbautista)
@@ -52,11 +51,6 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
 
     private static final Log LOG = LogFactory.getLog(ApiSecurityConfig.class);
 
-/*    @Autowired
-    private JwtAuthenticationFilter jwtAuthenticationFilter;
-
-    @Autowired
-    private RestApiCustomerStateFilter apiCustomerStateFilter;*/
 
     @Value("${asset.server.url.prefix.internal}")
     protected String assetServerUrlPrefixInternal;
@@ -77,68 +71,40 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
                 antMatcher("/api/**/v2/api-docs")
         );
     }
-
-/*    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http
-                .mvcMatcher("/api/**")
-                .httpBasic()
-                .and()
-                .csrf().disable()
-                .authorizeHttpRequests()
-                .requestMatchers("/api/**")
-                .requestMatchers("/otp/**", "/loginWithOtp/**").permitAll()
-                .authenticated()
-                .and()
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .sessionFixation()
-                .none()
-                .enableSessionUrlRewriting(false)
-                .and()
-                .requiresChannel()
-                .anyRequest()
-                .requires(ChannelDecisionManagerImpl.ANY_CHANNEL)
-                .and()
-                .addFilterAfter(apiCustomerStateFilter(), RememberMeAuthenticationFilter.class);
-        return http.build();
-    }*/
-/*    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .csrf().disable()
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                .and()
-                .authorizeRequests()
-                .antMatchers("/api/v1/account/**", "/api/v1/otp/**").permitAll()
-                .antMatchers("/api/v1/**").authenticated()
-                .and()
-                .httpBasic()
-                .and()
-                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(apiCustomerStateFilter(), RememberMeAuthenticationFilter.class)
-                .requiresChannel()
-                .anyRequest()
-                .requires(ChannelDecisionManagerImpl.ANY_CHANNEL);
-
-        return http.build();
-    }*/
-
+    
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
+                .cors().configurationSource(corsConfigurationSource()) 
+                .and()
                 .csrf().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/api/v1/account/**", "/api/v1/otp/**").permitAll()
-                .antMatchers("/api/v1/**").authenticated()  // Require authentication for all other /api/v1/** endpoints
+                .antMatchers("/swagger-ui.html/**", "/api-docs/**", "/webjars/**","/images/**","/swagger-resources/**").permitAll()
+                .antMatchers("/otp/**", "/account/**", "/test/**","/categoryCustom/getProductsByCategoryId","/categoryCustom/getAllCategories").permitAll()
+                .anyRequest().authenticated()
                 .and()
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(apiCustomerStateFilter(), RememberMeAuthenticationFilter.class)
-                .requiresChannel().anyRequest().requires(ChannelDecisionManagerImpl.ANY_CHANNEL);
+                .addFilterAfter(apiCustomerStateFilter(), JwtAuthenticationFilter.class);
     }
+
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+
+        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
+
 
     @Bean
     public Filter jwtAuthenticationFilter() {
@@ -149,6 +115,7 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
     public Filter apiCustomerStateFilter() {
         return new RestApiCustomerStateFilter();
     }
+
 
 
 }

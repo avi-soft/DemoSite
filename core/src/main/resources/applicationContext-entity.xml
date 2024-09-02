@@ -34,7 +34,7 @@
         http://www.springframework.org/schema/tx/spring-tx.xsd
         http://www.springframework.org/schema/aop
         http://www.springframework.org/schema/aop/spring-aop.xsd">
-
+    <bean id="myCustomer" class="com.community.api.entity.CustomCustomer" />
     <!-- This file will contain bean overrides for extensions of Broadleaf entities -->
     <!-- For example, if you have a custom class that extends CustomerImpl, you would note that here -->
 

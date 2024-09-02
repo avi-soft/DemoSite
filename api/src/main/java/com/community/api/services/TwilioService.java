@@ -1,6 +1,6 @@
 package com.community.api.services;
 
-import com.community.api.endpoint.customer.CustomCustomer;
+import com.community.api.entity.CustomCustomer;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.broadleafcommerce.profile.core.service.CustomerService;
@@ -42,8 +42,6 @@ public class TwilioService {
     private EntityManager entityManager;
     @Autowired
     private HttpSession httpSession;
-
-
     @Autowired
     private CustomerService customerService;
 
@@ -59,18 +57,19 @@ public class TwilioService {
             String completeMobileNumber = countryCode + mobileNumber;
             String otp = generateOTP();
 
-            System.out.println(completeMobileNumber + " completeMobileNumber");
+//@TODO:-NEED TO REMOVE THE COMMENTED CODE
+/*            Message message = Message.creator(
 
-         /*  Message message = Message.creator(
                             new PhoneNumber(completeMobileNumber),
                             new PhoneNumber(twilioPhoneNumber),
                             otp)
 
-                    .create();*/
+
+                    .create();
+*/
 
 
             CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(mobileNumber,countryCode);
-            System.out.println("existingCustomer : " + existingCustomer );
             if(existingCustomer == null){
                 CustomCustomer customerDetails = new CustomCustomer();
                 customerDetails.setId(customerService.findNextCustomerId());
@@ -78,15 +77,13 @@ public class TwilioService {
                 customerDetails.setMobileNumber(mobileNumber);
                 customerDetails.setOtp(otp);
                 entityManager.persist(customerDetails);
-
             }else{
                 existingCustomer.setOtp(otp);
                 entityManager.merge(existingCustomer);
             }
 
 
-           return ResponseEntity.ok("OTP has been sent successfully " + otp);
-
+            return ResponseEntity.ok("OTP has been sent successfully " + otp);
 
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
@@ -118,12 +115,11 @@ public class TwilioService {
 
         if(existingCustomer!=null){
             String storedOtp = existingCustomer.getOtp();
-            System.out.println("storedOtp: " + storedOtp);
-                    if(storedOtp!=null){
-                        existingCustomer.setOtp(null);
-                        entityManager.merge(existingCustomer);
-                        return true;
-                    }
+            if(storedOtp!=null){
+                existingCustomer.setOtp(null);
+                entityManager.merge(existingCustomer);
+                return true;
+            }
         }
         return false;
     }

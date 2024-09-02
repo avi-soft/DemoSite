@@ -1,6 +1,6 @@
 package com.community.api.services;
 import com.community.api.component.Constant;
-import com.community.api.endpoint.customer.CustomCustomer;
+import com.community.api.entity.CustomCustomer;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,19 +48,30 @@ public class CustomCustomerService {
                 .orElse(null);
     }
 
-        public String formatDate(String dateString) {
+    public CustomCustomer findCustomCustomerByPhoneWithOtp(String mobileNumber,String countryCode) {
 
-            DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
-
-            DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("dd MMMM yyyy");
-
-            LocalDateTime dateTime = LocalDateTime.parse(dateString, inputFormatter);
-
-            return dateTime.format(outputFormatter);
+        if (countryCode == null) {
+            countryCode = Constant.COUNTRY_CODE;
         }
 
-/*    public Customer readCustomerByEmail(String phonenumber) {
-        List<Customer> customers = this.findCustomCustomerByPhone(phonenumber,null);
-        return CollectionUtils.isEmpty(customers) ? null : (Customer)customers.get(0);
-    }*/
+        return em.createQuery(Constant.PHONE_QUERY_OTP, CustomCustomer.class)
+                .setParameter("mobileNumber", mobileNumber)
+                .setParameter("countryCode", countryCode)
+                .setParameter("otp", null)
+                .getResultStream()
+                .findFirst()
+                .orElse(null);
     }
+
+    public String formatDate(String dateString) {
+
+        DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
+
+        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("dd MMMM yyyy");
+
+        LocalDateTime dateTime = LocalDateTime.parse(dateString, inputFormatter);
+
+        return dateTime.format(outputFormatter);
+    }
+
+}
