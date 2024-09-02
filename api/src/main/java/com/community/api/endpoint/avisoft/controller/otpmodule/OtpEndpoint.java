@@ -288,12 +288,16 @@ public class OtpEndpoint {
         private Data data;
         private int status_code;
         private String status;
-        private String mesage;
-        public ApiResponse(String token, Customer customer, int statusCodeValue, String statusCode,String message) {
-            this.data = new Data(token, customer);
+        private String message;
+        private String token;
+
+
+        public ApiResponse(String token, Customer customer, int statusCodeValue, String statusCode, String message) {
+            this.data = new Data(customer);
             this.status_code = statusCodeValue;
             this.status = statusCode;
-            this.mesage = message;
+            this.message = message;
+            this.token = token;
         }
 
         public Data getData() {
@@ -308,39 +312,26 @@ public class OtpEndpoint {
             return status;
         }
 
-        public String getMesage(){
-            return mesage;
+        public String getToken() {
+            return token;
         }
 
-        public static class Data {
-            private Value value;
+        public String getMessage() {
+            return message;
+        }
 
-            public Data(String token, Customer customer) {
-                this.value = new Value(token, customer);
+        public  class Data {
+            private Customer userDetails;
+
+            public Data(Customer customer) {
+                this.userDetails = customer;
             }
 
-            public Value getValue() {
-                return value;
-            }
-
-            public static class Value {
-                private String token;
-                private Customer userDetails;
-
-                public Value(String token, Customer userDetails) {
-                    this.token = token;
-                    this.userDetails = userDetails;
-                }
-
-                public String getToken() {
-                    return token;
-                }
-
-                public Customer getUserDetails() {
-                    return userDetails;
-                }
+            public Customer getUserDetails() {
+                return userDetails;
             }
         }
     }
+
 
 }

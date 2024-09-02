@@ -501,8 +501,6 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
                 if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
                     Map<String, Object> responseBody = createAuthResponse(existingToken, existingServiceProvider).getBody();
-                    responseBody.put("status", HttpStatus.OK);
-                    responseBody.put("status_code", HttpStatus.OK.value());
 
                     return ResponseEntity.ok(responseBody);
                 } else {
@@ -510,8 +508,6 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                     session.setAttribute(tokenKey, newToken);
 
                     Map<String, Object> responseBody = createAuthResponse(newToken, existingServiceProvider).getBody();
-                    responseBody.put("status", HttpStatus.OK);
-                    responseBody.put("status_code", HttpStatus.OK.value());
 
                     return ResponseEntity.ok(responseBody);
                 }
@@ -529,26 +525,17 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     private ResponseEntity<Map<String, Object>> createAuthResponse(String token, ServiceProviderEntity serviceProviderEntity) {
         Map<String, Object> responseBody = new HashMap<>();
 
-        Map<String, Object> value = new HashMap<>();
-
-        value.put("token", token);
-
-        value.put("serviceproviderDetails", serviceProviderEntity);
-
         Map<String, Object> data = new HashMap<>();
-        data.put("value", value);
+        data.put("serviceproviderDetails", serviceProviderEntity);
 
-        responseBody.put("data", data);
-        responseBody.put("status", HttpStatus.OK);
         responseBody.put("status_code", HttpStatus.OK.value());
+        responseBody.put("data", data);
+        responseBody.put("token", token);
+        responseBody.put("message", "User has been logged in");
+        responseBody.put("status", "OK");
 
         return ResponseEntity.ok(responseBody);
     }
-
-
-
-
-
 
     public StateCode findStateCode(String state_name) {
 
@@ -582,10 +569,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     }
 
     public static List<Integer> getIntegerList(Map<String, Object> map, String key) {
-        // Retrieve the object associated with the key
         Object value = map.get(key);
 
-        // Check if the value is an instance of List
         if (value instanceof List<?>) {
             List<?> list = (List<?>) value;
 
@@ -594,7 +579,6 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             }
         }
 
-        // Return an empty list if the conditions are not met
         return Collections.emptyList();
     }
     @Transactional
