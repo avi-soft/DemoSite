@@ -17,7 +17,7 @@ public class ResponseService {
 
         successResponse.setStatus(status);
         successResponse.setStatus_code(status.value());
-
+        successResponse.setMessage(message);
 
         Map<String, Object> dataMap = new HashMap<>();
         if (data instanceof Map) {

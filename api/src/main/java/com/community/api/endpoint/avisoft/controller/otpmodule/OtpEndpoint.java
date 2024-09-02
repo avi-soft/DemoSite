@@ -103,7 +103,7 @@ public class OtpEndpoint {
                 Map<String, Object> responseBody = otpResponse.getBody();
 
                 if (responseBody.get("otp")!=null) {
-                    return responseService.generateSuccessResponse((String) responseBody.get("message"), responseBody, HttpStatus.OK);
+                    return responseService.generateSuccessResponse((String) responseBody.get("message"), responseBody.get("otp"), HttpStatus.OK);
                 } else {
                     return responseService.generateErrorResponse((String) responseBody.get("message"), HttpStatus.BAD_REQUEST);
                 }
@@ -178,13 +178,13 @@ public class OtpEndpoint {
                     String existingToken = (String) session.getAttribute(tokenKey);
 
                     if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
-                        ApiResponse response = new ApiResponse(existingToken, customer, HttpStatus.OK.value(), HttpStatus.OK.name());
+                        ApiResponse response = new ApiResponse(existingToken, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
                         return ResponseEntity.ok(response);
 
                     } else {
                         String newToken = jwtUtil.generateToken(existingCustomer.getId(), role, ipAddress, userAgent);
                         session.setAttribute(tokenKey, newToken);
-                        ApiResponse response = new ApiResponse(newToken, customer, HttpStatus.OK.value(), HttpStatus.OK.name());
+                        ApiResponse response = new ApiResponse(newToken, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
                         return ResponseEntity.ok(response);
 
                     }
@@ -244,13 +244,12 @@ public class OtpEndpoint {
             }
             Map<String, Object> details = new HashMap<>();
             String maskedNumber = twilioService.genereateMaskednumber(mobileNumber);
-            details.put("message", ApiConstants.OTP_SENT_SUCCESSFULLY + " on " + maskedNumber);
             details.put("otp", otp);
-            return responseService.generateSuccessResponse(ApiConstants.OTP_SENT_SUCCESSFULLY, details, HttpStatus.OK);
+            return responseService.generateSuccessResponse(ApiConstants.OTP_SENT_SUCCESSFULLY + " on " +maskedNumber, details, HttpStatus.OK);
 
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-                return responseService.generateErrorResponse(ApiConstants.UNAUTHORIZED_ACCESS, HttpStatus.UNAUTHORIZED);
+                return responseService.generateErrorResponse(ApiConstants.UNAUTHORIZED_ACCESS , HttpStatus.UNAUTHORIZED);
             } else {
                 exceptionHandling.handleHttpClientErrorException(e);
                 return responseService.generateErrorResponse(ApiConstants.INTERNAL_SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -272,7 +271,7 @@ public class OtpEndpoint {
                 return responseService.generateErrorResponse("Service provider not found " + userId, HttpStatus.BAD_REQUEST);
             }
             Map<String, Object> details = new HashMap<>();
-            details.put("message", "Service provider details are");
+            // details.put("message", "Service provider details are");
             details.put("status", ApiConstants.STATUS_SUCCESS);
             details.put("status_code", HttpStatus.OK);
             details.put("data", serviceProviderEntity);
@@ -289,11 +288,12 @@ public class OtpEndpoint {
         private Data data;
         private int status_code;
         private String status;
-
-        public ApiResponse(String token, Customer customer, int statusCodeValue, String statusCode) {
+        private String mesage;
+        public ApiResponse(String token, Customer customer, int statusCodeValue, String statusCode,String message) {
             this.data = new Data(token, customer);
             this.status_code = statusCodeValue;
             this.status = statusCode;
+            this.mesage = message;
         }
 
         public Data getData() {
@@ -306,6 +306,10 @@ public class OtpEndpoint {
 
         public String getStatus() {
             return status;
+        }
+
+        public String getMesage(){
+            return mesage;
         }
 
         public static class Data {

@@ -181,7 +181,7 @@ public class AccountEndPoint {
                     Map<String, Object> responseBody = otpResponse.getBody();
 
                     if (responseBody.get("otp")!=null) {
-                        return responseService.generateSuccessResponse((String) responseBody.get("message"), responseBody, HttpStatus.OK);
+                        return responseService.generateSuccessResponse((String) responseBody.get("message"), (String) responseBody.get("otp"), HttpStatus.OK);
                     } else {
                         return responseService.generateErrorResponse((String) responseBody.get("message"), HttpStatus.BAD_REQUEST);
                     }
@@ -245,13 +245,13 @@ public class AccountEndPoint {
                     String ipAddress = request.getRemoteAddr();
                     String userAgent = request.getHeader("User-Agent");
                     if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
-                        OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(existingToken, customer, HttpStatus.OK.value(), HttpStatus.OK.name());
+                        OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(existingToken, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
                         return ResponseEntity.ok(response);
 
                     } else {
                         String token = jwtUtil.generateToken(customer.getId(), role, ipAddress, userAgent);
                         session.setAttribute(tokenKey, token);
-                        OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(token, customer, HttpStatus.OK.value(), HttpStatus.OK.name());
+                        OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(token, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
                         return ResponseEntity.ok(response);
                     }
                 } else {
@@ -298,11 +298,14 @@ public class AccountEndPoint {
                 CustomCustomer customCustomer = em.find(CustomCustomer.class, customer.getId());
                 if (customCustomer != null) {
                     String storedOtp = customCustomer.getOtp();
+
                     ResponseEntity<Map<String, Object>> otpResponse = twilioService.sendOtpToMobile(customCustomer.getMobileNumber(), Constant.COUNTRY_CODE);
                     Map<String, Object> responseBody = otpResponse.getBody();
 
                     if ("success".equals(responseBody.get("status"))) {
-                        return responseService.generateSuccessResponse("OTP Sent on " + customCustomer.getMobileNumber() + " storedOtp is " + storedOtp, responseBody, HttpStatus.OK);
+                        return responseService.generateSuccessResponse((String) responseBody.get("message"), responseBody.get("otp"), HttpStatus.OK);
+
+                        // return responseService.generateSuccessResponse("OTP Sent on " + customCustomer.getMobileNumber() + " storedOtp is " + storedOtp, responseBody, HttpStatus.OK);
                     } else {
                         return responseService.generateErrorResponse((String) responseBody.get("message"), HttpStatus.BAD_REQUEST);
                     }
