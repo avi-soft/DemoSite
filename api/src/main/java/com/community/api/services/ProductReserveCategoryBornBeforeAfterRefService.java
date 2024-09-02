@@ -1,6 +1,7 @@
 package com.community.api.services;
 
 import com.community.api.component.Constant;
+import com.community.api.entity.CustomProduct;
 import com.community.api.entity.CustomProductReserveCategoryBornBeforeAfterRef;
 import com.community.api.entity.CustomReserveCategory;
 import com.community.api.services.exception.ExceptionHandlingService;
@@ -21,6 +22,12 @@ public class ProductReserveCategoryBornBeforeAfterRefService {
 
     @Autowired
     protected ExceptionHandlingService exceptionHandlingService;
+
+    @Autowired
+    protected ProductService productService;
+
+    @Autowired
+    protected  ReserveCategoryService reserveCategoryService;
 
     public List<CustomProductReserveCategoryBornBeforeAfterRef> getProductReserveCategoryBornBeforeAfterByProductId(Long productId){
         try{
@@ -54,5 +61,24 @@ public class ProductReserveCategoryBornBeforeAfterRefService {
         } catch(Exception exception) {
             exceptionHandlingService.handleException(exception);
         }
+    }
+
+    public CustomProductReserveCategoryBornBeforeAfterRef getCustomProductReserveCategoryBornBeforeAfterRefByProductIdAndReserveCategoryId(Long productId, Long reserveCategoryId) {
+
+        try {
+            CustomProduct customProduct = productService.getCustomProductByCustomProductId(productId);
+            CustomReserveCategory customReserveCategory = reserveCategoryService.getReserveCategoryById(reserveCategoryId);
+
+            List<CustomProductReserveCategoryBornBeforeAfterRef> customProductReserveCategoryBornBeforeAfterRefList = entityManager.createQuery("SELECT c FROM CustomProductReserveCategoryBornBeforeAfterRef c WHERE c.customProduct = :customProduct AND c.customReserveCategory = :customReserveCategory", CustomProductReserveCategoryBornBeforeAfterRef.class)
+                    .setParameter("customProduct", customProduct)
+                    .setParameter("customReserveCategory", customReserveCategory)
+                    .getResultList();
+
+            return customProductReserveCategoryBornBeforeAfterRefList.get(0);
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return null;
+        }
+
     }
 }

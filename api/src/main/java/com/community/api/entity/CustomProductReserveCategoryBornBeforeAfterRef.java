@@ -1,11 +1,18 @@
 package com.community.api.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
 
 @Entity
 @Table(name = "custom_product_reserve_category_born_before_after_reference")
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
 public class CustomProductReserveCategoryBornBeforeAfterRef {
 
     @Id

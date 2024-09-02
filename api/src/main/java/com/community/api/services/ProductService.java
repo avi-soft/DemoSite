@@ -29,7 +29,7 @@ public class ProductService {
 
     public void saveCustomProduct(Product product, Date examDateFrom, Date examDateTo, Date goLiveDate, Double platformFee, Integer priorityLevel, CustomApplicationScope applicationScope, CustomJobGroup jobGroup, CustomProductState productState, Role role, Long userId) {
 
-        String sql = "INSERT INTO custom_product (product_id, exam_date_from, exam_date_to, go_live_date, platform_fee, priority_level, application_scope_id, job_group_id, product_state_id, role_id) VALUES (:productId, :examDateFrom, :examDateTo, :goLiveDate, :platformFee, :priorityLevel, :applicationScopeId, :jobGroupId, :productStateId, :roleId)";
+        String sql = "INSERT INTO custom_product (product_id, exam_date_from, exam_date_to, go_live_date, platform_fee, priority_level, application_scope_id, job_group_id, product_state_id, role_id, user_id) VALUES (:productId, :examDateFrom, :examDateTo, :goLiveDate, :platformFee, :priorityLevel, :applicationScopeId, :jobGroupId, :productStateId, :roleId, :userId)";
 
         try {
             entityManager.createNativeQuery(sql)
@@ -43,6 +43,7 @@ public class ProductService {
                     .setParameter("jobGroupId", jobGroup.getJobGroupId())
                     .setParameter("productStateId", productState.getProductStateId())
                     .setParameter("roleId", role.getRole_id())
+                    .setParameter("userId", userId)
                     .executeUpdate();
         } catch (Exception e) {
             throw new RuntimeException("Failed to save Custom Product: " + e.getMessage(), e);
@@ -55,18 +56,9 @@ public class ProductService {
         return entityManager.createNativeQuery(sql, CustomProduct.class).getResultList();
     }
 
-    public CustomProductState getCustomProductStateById(Long productStateId) {
-        String sql = "SELECT * FROM custom_product_state WHERE product_state_id = :productStateId";
-        try {
-            Query query = entityManager.createNativeQuery(sql, CustomProductState.class);
-            query.setParameter("productStateId", productStateId);
-
-            // Assuming that the query should return a single result
-            return (CustomProductState) query.getSingleResult();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
+    public CustomProduct getCustomProductByCustomProductId(Long productId) {
+        String sql = "SELECT c FROM CustomProduct c WHERE c.id = :productId";
+        return entityManager.createQuery(sql, CustomProduct.class).setParameter("productId", productId).getResultList().get(0);
     }
 
 

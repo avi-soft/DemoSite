@@ -4,6 +4,7 @@ import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
 import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
 import com.community.api.dto.AddProductDto;
+import com.community.api.dto.ReserveCategoryDto;
 import com.community.api.entity.*;
 import com.community.api.dto.CustomProductWrapper;
 import com.community.api.services.*;
@@ -91,16 +92,17 @@ public class ProductController extends CatalogEndpoint {
 
             boolean accessGrant = false;
             Long userId = null;
-            /*System.out.println("role: "+role);
             if (role.equals(Constant.SUPER_ADMIN) || role.equals(Constant.ADMIN)) {
                 accessGrant = true;
-
                 productState = Constant.PRODUCT_STATE_APPROVED;
+
+                // -> NEED TO ADD THE USER_ID OF ADMIN OR SUPER ADMIN.
+
             } else if (role.equals(Constant.SERVICE_PROVIDER)) {
                 userId = jwtTokenUtil.extractId(jwtToken);
                 List<Privileges> privileges = privilegeService.getServiceProviderPrivilege(userId);
-                for (Privileges priv : privileges) {
-                    if (priv.getPrivilege_name().equals(Constant.PRIVILEGE_ADD_PRODUCT)) {
+                for (Privileges privilege : privileges) {
+                    if (privilege.getPrivilege_name().equals(Constant.PRIVILEGE_ADD_PRODUCT)) {
                         productState = Constant.PRODUCT_STATE_NEW;
                         accessGrant = true;
                         break;
@@ -110,7 +112,7 @@ public class ProductController extends CatalogEndpoint {
 
             if (!accessGrant) {
                 return new ResponseEntity<>("Not Authorized to add product", HttpStatus.INTERNAL_SERVER_ERROR);
-            } // Authorization code.*/
+            } // Authorization code.
 
             if (catalogService == null) {
                 return new ResponseEntity<>(Constant.CATALOG_SERVICE_NOT_INITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -188,7 +190,7 @@ public class ProductController extends CatalogEndpoint {
 
             // validation for new entries in the product.
             CustomJobGroup jobGroup = jobGroupService.getJobGroupById(addProductDto.getJobGroup());
-            CustomProductState customProductState = productStateService.getProductStateByName(Constant.PRODUCT_STATE_NEW);
+            CustomProductState customProductState = productStateService.getProductStateByName(productState);
 
             if (addProductDto.getExamDateFrom() == null || addProductDto.getExamDateTo() == null) {
                 return new ResponseEntity<>("Tentative examination date from-to cannot be null", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -251,11 +253,12 @@ public class ProductController extends CatalogEndpoint {
             productService.saveCustomProduct(product, addProductDto.getExamDateFrom(), addProductDto.getExamDateTo(), addProductDto.getGoLiveDate(), addProductDto.getPlatformFee(), addProductDto.getPriorityLevel(), applicationScope, jobGroup, customProductState, roleService.getRoleByRoleId(roleId), userId); // Save external product with provided dates and get status code
             productReserveCategoryBornBeforeAfterRefService.saveBornBeforeAndBornAfter(addProductDto.getBornBefore(), addProductDto.getBornAfter(), product, reserveCategoryService.getReserveCategoryById(addProductDto.getReservedCategory()));
             productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getFee(), addProductDto.getPost(), product, reserveCategoryService.getReserveCategoryById(addProductDto.getReservedCategory()));
-//            // Wrap and return the updated product details
-//            CustomProductWrapper wrapper = new CustomProductWrapper();
-//            wrapper.wrapDetails(product, addProductDto.getPriorityLevel(), addProductDto.getGoLiveDate());
 
-            return ResponseEntity.ok("");
+//            // Wrap and return the updated product details
+            CustomProductWrapper wrapper = new CustomProductWrapper();
+            wrapper.wrapDetailsAddProduct(product, addProductDto, jobGroup, customProductState, applicationScope);
+
+            return ResponseEntity.ok(wrapper);
 
         } catch (NumberFormatException numberFormatException) {
             exceptionHandlingService.handleException(numberFormatException);
@@ -265,6 +268,8 @@ public class ProductController extends CatalogEndpoint {
             return new ResponseEntity<>(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
 
     /*@Transactional
     @PostMapping("/add/{categoryId}")

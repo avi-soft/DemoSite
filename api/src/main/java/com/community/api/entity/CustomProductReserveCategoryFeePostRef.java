@@ -1,5 +1,8 @@
 package com.community.api.entity;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.broadleafcommerce.common.money.Money;
 
 import javax.persistence.*;
@@ -7,6 +10,9 @@ import javax.validation.constraints.NotNull;
 
 @Entity
 @Table(name = "custom_product_reserve_category_fee_post_reference")
+@AllArgsConstructor
+@NoArgsConstructor
+@Data
 public class CustomProductReserveCategoryFeePostRef {
 
     @Id
@@ -28,5 +34,5 @@ public class CustomProductReserveCategoryFeePostRef {
     Double fee;
 
     @Column(name = "post")
-    Long post;
+    Integer post;
 }
