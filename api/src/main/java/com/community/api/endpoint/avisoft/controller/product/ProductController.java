@@ -610,7 +610,8 @@ public class ProductController extends CatalogEndpoint {
                         Map<String, CustomProductWrapper> productDetails = new HashMap<>();
 
                         productDetails.put("key_"+customProduct.getId(), wrapper);
-                        productDetails.get("key_"+customProduct.getId()).setReserveCategoryDtoList(null);
+                        productDetails.remove("key_"+customProduct.getId(),"reserveCategoryDtoList"); // gives us empty list
+//                        productDetails.get("key_"+customProduct.getId()).setReserveCategoryDtoList(null); // set its value to null.
 
                         responses.add(productDetails);
                     }
