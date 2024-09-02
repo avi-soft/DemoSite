@@ -96,7 +96,8 @@ public class OtpEndpoint {
             Bucket bucket = rateLimiterService.resolveBucket(customerDetails.getMobileNumber(), "/otp/send-otp");
             if (bucket.tryConsume(1)) {
                 if (!customCustomerService.isValidMobileNumber(mobileNumber)) {
-                    return ResponseEntity.badRequest().body(ApiConstants.INVALID_MOBILE_NUMBER);
+                    return responseService.generateErrorResponse(ApiConstants.INVALID_MOBILE_NUMBER, HttpStatus.BAD_REQUEST);
+
                 }
 
                 ResponseEntity<Map<String, Object>> otpResponse = twilioService.sendOtpToMobile(mobileNumber, countryCode);

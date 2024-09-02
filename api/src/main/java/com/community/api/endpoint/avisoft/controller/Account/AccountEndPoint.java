@@ -280,7 +280,7 @@ public class AccountEndPoint {
             }
             String username = (String) loginDetails.get("username");
             Integer role = (Integer) loginDetails.get("role");
-            System.out.println(username);
+
             if (username == null || role == null) {
                 return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
 
@@ -300,11 +300,9 @@ public class AccountEndPoint {
 
                     ResponseEntity<Map<String, Object>> otpResponse = twilioService.sendOtpToMobile(customCustomer.getMobileNumber(), Constant.COUNTRY_CODE);
                     Map<String, Object> responseBody = otpResponse.getBody();
-
-                    if ("success".equals(responseBody.get("status"))) {
+                    if (responseBody.get("otp")!=null) {
                         return responseService.generateSuccessResponse((String) responseBody.get("message"), responseBody.get("otp"), HttpStatus.OK);
 
-                        // return responseService.generateSuccessResponse("OTP Sent on " + customCustomer.getMobileNumber() + " storedOtp is " + storedOtp, responseBody, HttpStatus.OK);
                     } else {
                         return responseService.generateErrorResponse((String) responseBody.get("message"), HttpStatus.BAD_REQUEST);
                     }

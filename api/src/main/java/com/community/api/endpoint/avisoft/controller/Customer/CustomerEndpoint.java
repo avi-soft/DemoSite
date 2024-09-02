@@ -310,7 +310,7 @@ public class CustomerEndpoint {
                 return responseService.generateSuccessResponse("Record Deleted Successfully","", HttpStatus.OK);
 
             } else {
-                return responseService.generateErrorResponse("No Records found for this ID " + customerId, HttpStatus.NO_CONTENT);
+                return responseService.generateErrorResponse("No Records found for this ID " + customerId, HttpStatus.NOT_FOUND);
 
             }
         } catch (Exception e) {
@@ -387,18 +387,24 @@ public class CustomerEndpoint {
 
             }
             Customer customer = customerService.readCustomerById(customerId);
-            List<CustomerAddress>addressList=customer.getCustomerAddresses();
-            List<AddressDTO>listOfAddresses=new ArrayList<>();
-            for(CustomerAddress customerAddress:addressList)
-            {
-                AddressDTO addressDTO=makeAddressDTO(customerAddress);
-                listOfAddresses.add(addressDTO);
+            if(customer!=null){
+                List<CustomerAddress>addressList=customer.getCustomerAddresses();
+                List<AddressDTO>listOfAddresses=new ArrayList<>();
+                for(CustomerAddress customerAddress:addressList)
+                {
+                    AddressDTO addressDTO=makeAddressDTO(customerAddress);
+                    listOfAddresses.add(addressDTO);
+                }
+                return responseService.generateSuccessResponse("Addresses details : ",listOfAddresses, HttpStatus.OK);
+            }else{
+                return responseService.generateErrorResponse("No data found for this customerId", HttpStatus.INTERNAL_SERVER_ERROR);
+
             }
-            return responseService.generateSuccessResponse("Addresses details : ",listOfAddresses, HttpStatus.OK);
+
 
         }catch (Exception e) {
             exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Error saving Address", HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("Error in retreiving Address", HttpStatus.INTERNAL_SERVER_ERROR);
 
         }
     }
