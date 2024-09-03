@@ -1,5 +1,6 @@
 package com.community.api.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -15,11 +16,13 @@ public class AddProductDto {
     Money cost;
     String metaTitle;
     String metaDescription;
-    Date activeStartDate;
     Date activeEndDate;
     Date goLiveDate;
     Integer priorityLevel;
+
+    @JsonIgnore
     String url;
+
     Integer quantity;
 
 }

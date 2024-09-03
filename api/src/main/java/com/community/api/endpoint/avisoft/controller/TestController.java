@@ -7,8 +7,10 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.GetMapping;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 
 import javax.servlet.http.HttpServletRequest;
@@ -21,17 +23,18 @@ public class TestController {
 
     private final RateLimiterService rateLimiterService;
 
-    public TestController(RateLimiterService rateLimiterService) {
-        this.rateLimiterService = rateLimiterService;
-    }
-
-    @Autowired
     private ExceptionHandlingImplement exceptionHandling;
 
-    @Autowired
     private JwtUtil jwtUtil;
-    @Autowired
+
     private CustomCustomerService customCustomerService;
+    public TestController(RateLimiterService rateLimiterService,ExceptionHandlingImplement exceptionHandling,JwtUtil jwtUtil,CustomCustomerService customCustomerService) {
+        this.rateLimiterService = rateLimiterService;
+        this.exceptionHandling = exceptionHandling;
+        this.jwtUtil=jwtUtil;
+        this.customCustomerService=customCustomerService;
+    }
+
 
 
     @GetMapping("/catch-error")

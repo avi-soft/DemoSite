@@ -1,5 +1,8 @@
 package com.community.api.component;
 
+import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
+import com.community.api.entity.CustomCustomer;
+import com.community.api.services.RoleService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -10,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import javax.persistence.EntityManager;
 import javax.xml.bind.DatatypeConverter;
 import java.security.Key;
 import java.util.Date;
@@ -20,12 +24,14 @@ public class JwtUtil {
 
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
-
+    @Autowired
+    private RoleService roleService;
     @Value("${jwt.secret.key}")
     private String secretKeyString;
 
     private Key secretKey;
-
+   @Autowired
+   private EntityManager entityManager;
     @Autowired
     private TokenBlacklist tokenBlacklist;
 
@@ -58,7 +64,6 @@ public class JwtUtil {
                     .claim("id", id)
                     .claim("role", role)
                     .claim("ipAddress", ipAddress)
-                    .claim("userAgent", userAgent)
                     .setIssuedAt(new Date())
                     .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
                     .signWith(secretKey, SignatureAlgorithm.HS256)
@@ -104,21 +109,29 @@ public class JwtUtil {
             if (tokenBlacklist.isTokenBlacklisted(tokenId)) {
                 return false;
             }
-
-            Customer existingCustomer = customerService.readCustomerById(id);
-            if (existingCustomer == null) {
-                return false;
+            int role=extractRoleId(token);
+            Customer existingCustomer=null;
+            ServiceProviderEntity existingServiceProvider=null;
+            if(roleService.findRoleName(role).equals(Constant.roleUser)){
+                existingCustomer = customerService.readCustomerById(id);
+                if (existingCustomer == null) {
+                    return false;
+                }
             }
 
+            else if(roleService.findRoleName(role).equals(Constant.roleServiceProvider)) {
+                existingServiceProvider = entityManager.find(ServiceProviderEntity.class, id);
+                if(existingServiceProvider==null)
+                    return false;
+            }
             if (isTokenExpired(token)) {
                 return false;
             }
 
             String storedIpAddress = claims.get("ipAddress", String.class);
-            String storedUserAgent = claims.get("userAgent", String.class);
 
-            return ipAddress.trim().equals(storedIpAddress != null ? storedIpAddress.trim() : "") &&
-                    userAgent.trim().equalsIgnoreCase(storedUserAgent != null ? storedUserAgent.trim() : "");
+
+            return ipAddress.trim().equals(storedIpAddress != null ? storedIpAddress.trim() : "");
         } catch (ExpiredJwtException e) {
             exceptionHandling.handleException(e);
             return false;

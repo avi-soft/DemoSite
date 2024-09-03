@@ -15,10 +15,9 @@ import javax.persistence.*;
 @Setter
 public class ServiceProviderInfra {
         @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
         @Column(name = "infra_id")
-        private int langauge_id;
+        private int infra_id;
         @Column(name = "infra_name")
-        private String language_name;
+        private String infra_name;
     }
 

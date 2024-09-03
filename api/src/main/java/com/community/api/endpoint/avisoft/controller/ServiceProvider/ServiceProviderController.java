@@ -6,26 +6,29 @@ import com.community.api.entity.ServiceProviderAddress;
 import com.community.api.entity.ServiceProviderAddressRef;
 import com.community.api.entity.Skill;
 import com.community.api.services.DistrictService;
+import com.community.api.services.ResponseService;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
 import com.community.api.services.TwilioServiceForServiceProvider;
 import com.community.api.services.exception.ExceptionHandlingImplement;
-import com.twilio.Twilio;
-import com.twilio.exception.ApiException;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.client.HttpClientErrorException;
-
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
-import javax.servlet.http.HttpSession;
-import javax.swing.text.html.parser.Entity;
 import javax.transaction.Transactional;
-import javax.validation.Valid;
+import javax.xml.crypto.Data;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -48,21 +51,15 @@ public class ServiceProviderController {
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
     @Autowired
+    private ResponseService responseService;
+    @Autowired
     private CustomerService customerService;
     @Autowired
     private DistrictService districtService;
-    /*@PostMapping
-    public ResponseEntity<ServiceProviderEntity> createServiceProvider(@RequestBody ServiceProviderEntity serviceProviderEntity) throws Exception {
-        ServiceProviderEntity savedServiceProvider = serviceProviderService.saveServiceProvider(serviceProviderEntity);
 
-        if (savedServiceProvider == null) {
-            throw new Exception("Service provider could not be created");
-        }
-        return ResponseEntity.ok(savedServiceProvider);
-    }*/
     @Transactional
     @PostMapping("/assign-skill")
-    public ResponseEntity<?>addSkill(@RequestParam Long serviceProviderId,@RequestParam Long skillId)
+    public ResponseEntity<?>addSkill(@RequestParam Long serviceProviderId,@RequestParam int skillId)
     {
         try {
             Skill skill = entityManager.find(Skill.class, skillId);
@@ -77,15 +74,16 @@ public class ServiceProviderController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error assigning skill: " + e.getMessage());
         }
     }
-    @PatchMapping("update")
-    public ResponseEntity<?> updateServiceProvider(@RequestParam Long userId, @RequestBody ServiceProviderEntity serviceProviderDetails) throws Exception {
+    @PatchMapping("saveServiceProvider")
+    public ResponseEntity<?> updateServiceProvider(@RequestParam Long userId, @RequestBody Map<String,Object> serviceProviderDetails) throws Exception {
         try{
         return serviceProviderService.updateServiceProvider(userId,serviceProviderDetails);
     }catch (Exception e) {
             exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some updating: " + e.getMessage());
+            return responseService.generateErrorResponse("Some error updating: " + e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    @Transactional
     @DeleteMapping("delete")
     public ResponseEntity<?>deleteServiceProvider(@RequestParam Long userId)
     {
@@ -102,34 +100,36 @@ public class ServiceProviderController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error deleting: " + e.getMessage());
         }}
     @Transactional
-    @PostMapping("createOrUpdatePassword")
+    @PostMapping("create-or-update-password")
     public ResponseEntity<?>deleteServiceProvider(@RequestBody Map<String,Object>passwordDetails,@RequestParam long userId)
     {
         try {
             String password = (String) passwordDetails.get("password");
-            String newPassword = (String) passwordDetails.get("newPassword");
-            System.out.println(password);
-            System.out.println(newPassword);
+           // String newPassword = (String) passwordDetails.get("newPassword");
             ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, userId);
             if (serviceProvider == null)
-                return new ResponseEntity<>("No records found", HttpStatus.NOT_FOUND);
+                return responseService.generateErrorResponse("No records found", HttpStatus.NOT_FOUND);
             if (serviceProvider.getPassword() == null) {
                 serviceProvider.setPassword(passwordEncoder.encode(password));
                 entityManager.merge(serviceProvider);
-                return new ResponseEntity<>("Password created", HttpStatus.OK);
+                return responseService.generateSuccessResponse("Password created",serviceProvider.getPassword(),HttpStatus.OK);
             } else {
-                if (password == null || newPassword == null)
-                    new ResponseEntity<>("Empty password", HttpStatus.BAD_REQUEST);
-                if (passwordEncoder.matches(password, serviceProvider.getPassword())) {
-                    serviceProvider.setPassword(passwordEncoder.encode(newPassword));
-                    return new ResponseEntity<>("New Password Set", HttpStatus.OK);
-                } else
-                    return new ResponseEntity<>("Password do not match", HttpStatus.BAD_REQUEST);
+                if (password == null /*|| newPassword == null*/)
+                    new ResponseEntity<>("Empty password entered", HttpStatus.BAD_REQUEST);
+                /*if (passwordEncoder.matches(password, serviceProvider.getPassword())) {
+                    serviceProvider.setPassword(passwordEncoder.encode(newPassword));*/
+                if(!passwordEncoder.matches(password,serviceProvider.getPassword())) {
+                    serviceProvider.setPassword(passwordEncoder.encode(password));
+                    entityManager.merge(serviceProvider);
+                    return responseService.generateSuccessResponse("New Password Set",serviceProvider, HttpStatus.OK);
+                }
+                    return responseService.generateErrorResponse("Old Password and new Password cannot be same",HttpStatus.BAD_REQUEST);
+                 }/*else
+                    return new ResponseEntity<>("Password do not match", HttpStatus.BAD_REQUEST);*/
             }
-        }
         catch (Exception e) {
                 exceptionHandling.handleException(e);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error changing/updating password: " + e.getMessage());
+                return responseService.generateErrorResponse("Error changing/updating password: " + e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
             }
     }
     @GetMapping("getServiceProivider")
@@ -145,6 +145,7 @@ public class ServiceProviderController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some fetching account " + e.getMessage());
         }
     }
+
     @Transactional
     @PostMapping("/addAddress")
     public ResponseEntity<?> addAddress(@RequestParam long serviceProviderId,@RequestBody ServiceProviderAddress serviceProviderAddress) throws Exception {
@@ -164,13 +165,7 @@ public class ServiceProviderController {
             addresses.add(serviceProviderAddress);
             existingServiceProvider.setSpAddresses(addresses);
             serviceProviderAddress.setServiceProviderEntity(existingServiceProvider);
-            if(existingServiceProvider.getUser_name()==null) {
-                String username=serviceProviderService.generateUsernameForServiceProvider(existingServiceProvider);
-                System.out.println(existingServiceProvider.toString());
-                existingServiceProvider.setUser_name(username);
-            }
             entityManager.persist(serviceProviderAddress);
-
             entityManager.merge(existingServiceProvider);
             return new ResponseEntity<>(serviceProviderAddress,HttpStatus.OK);
         }catch (Exception e) {

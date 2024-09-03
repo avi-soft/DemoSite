@@ -15,7 +15,6 @@ import javax.persistence.*;
 @Setter
 public class Privileges {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     int privilege_id;
     String privilege_name,description;
 }
