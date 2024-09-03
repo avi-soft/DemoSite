@@ -26,6 +26,9 @@ public class ReserveCategoryDtoService {
     @Autowired
     ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService;
 
+    @Autowired
+    ReserveCategoryService reserveCategoryService;
+
     public List<ReserveCategoryDto> getReserveCategoryDto(Long productId) {
         try{
             List<CustomProductReserveCategoryBornBeforeAfterRef> customProductReserveCategoryBornBeforeAfterRefList = productReserveCategoryBornBeforeAfterRefService.getProductReserveCategoryBornBeforeAfterByProductId(productId);
@@ -38,6 +41,7 @@ public class ReserveCategoryDtoService {
                         ReserveCategoryDto reserveCategoryDto = new ReserveCategoryDto();
                         reserveCategoryDto.setProductId(productId);
                         reserveCategoryDto.setReserveCategoryId(customProductReserveCategoryBornBeforeAfterRefList.get(customProductReserveCategoryBornBeforeAfterRefListIndex).getCustomReserveCategory().getReserveCategoryId());
+                        reserveCategoryDto.setReserveCategory(reserveCategoryService.getReserveCategoryById(reserveCategoryDto.getReserveCategoryId()).getReserveCategoryName());
                         reserveCategoryDto.setPost(customProductReserveCategoryFeePostRefList.get(customProductReserveCategoryFeePostRefListIndex).getPost());
                         reserveCategoryDto.setFee(customProductReserveCategoryFeePostRefList.get(customProductReserveCategoryFeePostRefListIndex).getFee());
                         reserveCategoryDto.setBornBefore(customProductReserveCategoryBornBeforeAfterRefList.get(customProductReserveCategoryBornBeforeAfterRefListIndex).getBornBefore());

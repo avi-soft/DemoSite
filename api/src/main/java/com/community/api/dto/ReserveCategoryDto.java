@@ -14,6 +14,7 @@ public class ReserveCategoryDto {
     Long reserveCategoryId;
     Double fee;
     Integer post;
+    String reserveCategory;
     Date bornBefore;
     Date bornAfter;
 }

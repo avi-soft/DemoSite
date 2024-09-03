@@ -7,6 +7,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.broadleafcommerce.rest.api.wrapper.MediaWrapper;
 import com.community.api.entity.*;
+import com.community.api.services.ReserveCategoryService;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.broadleafcommerce.common.rest.api.wrapper.APIWrapper;
@@ -19,7 +20,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Data
 @NoArgsConstructor
 public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Product> {
-
 
     protected Long id;
     protected String metaTitle;
@@ -47,7 +47,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
     protected CustomProductState customProductState;
     protected CustomJobGroup customJobGroup;
 
-    public void wrapDetailsAddProduct(Product product, AddProductDto addProductDto, CustomJobGroup customJobGroup, CustomProductState customProductState, CustomApplicationScope customApplicationScope) {
+    public void wrapDetailsAddProduct(Product product, AddProductDto addProductDto, CustomJobGroup customJobGroup, CustomProductState customProductState, CustomApplicationScope customApplicationScope, CustomReserveCategory customReserveCategory) {
 
         this.id = product.getId();
         this.metaTitle = product.getMetaTitle();
@@ -71,6 +71,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         ReserveCategoryDto reserveCategoryDto = new ReserveCategoryDto();
         reserveCategoryDto.setProductId(product.getId());
         reserveCategoryDto.setReserveCategoryId(addProductDto.getReservedCategory());
+        reserveCategoryDto.setReserveCategory(customReserveCategory.getReserveCategoryName());
         reserveCategoryDto.setFee(addProductDto.getFee());
         reserveCategoryDto.setPost(addProductDto.getPost());
         reserveCategoryDto.setBornBefore(addProductDto.getBornBefore());
