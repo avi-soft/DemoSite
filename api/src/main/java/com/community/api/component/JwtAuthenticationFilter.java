@@ -1,7 +1,10 @@
 package com.community.api.component;
+import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
+import com.community.api.entity.CustomCustomer;
+import com.community.api.entity.ServiceProviderInfra;
 import com.community.api.services.CustomCustomerService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
-import com.community.api.services.exception.ExceptionHandlingService;
+import com.community.api.services.RoleService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import org.apache.solr.client.solrj.io.stream.SolrStream;
@@ -10,18 +13,24 @@ import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import javax.persistence.EntityManager;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -31,17 +40,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
     private static final int BEARER_PREFIX_LENGTH = BEARER_PREFIX.length();
 
+    @Value("${api.key}")
+    private String apiKey;
+
     @Autowired
     private JwtUtil jwtUtil;
     @Autowired
     private CustomCustomerService customCustomerService;
-
+    @Autowired
+    private RoleService roleService;
     @Autowired
     private CustomerService CustomerService;
+
 
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
 
+    @Autowired
+    private EntityManager entityManager;
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws IOException, ServletException {
@@ -56,6 +72,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 chain.doFilter(request, response);
                 return;
             }
+            if (isApiKeyRequiredUri(request) && validateApiKey(request)) {
+                chain.doFilter(request, response);
+                return;
+            }
 
             boolean responseHandled = authenticateUser(request, response);
             if (!responseHandled) {
@@ -63,7 +83,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }else{
                 return;
             }
-
 
     } catch (ExpiredJwtException e) {
         handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "JWT token is expired");
@@ -79,18 +98,35 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         logger.error("Exception caught: {}", e.getMessage());
     }
+
     }
 
+    private boolean isApiKeyRequiredUri(HttpServletRequest request) {
+        String requestURI = request.getRequestURI();
+        String path = requestURI.split("\\?")[0].trim();
 
+        List<String> bypassUris = Arrays.asList(
+                "/api/v1/categoryCustom/getProductsByCategoryId",
+                "/api/v1/categoryCustom/getAllCategories"
+        );
+        boolean isBypassed = bypassUris.stream().anyMatch(path::equals);
+        return isBypassed;
+    }
+
+    private boolean validateApiKey(HttpServletRequest request) {
+        String requestApiKey = request.getHeader("x-api-key");
+        return apiKey.equals(requestApiKey);
+    }
 
     private boolean isUnsecuredUri(String requestURI) {
         return requestURI.startsWith("/api/v1/account")
                 || requestURI.startsWith("/api/v1/otp")
                 || requestURI.startsWith("/api/v1/test")
                 || requestURI.startsWith("/api/v1/swagger-ui.html")
-                || requestURI.startsWith("/v3/api-docs")
+                || requestURI.startsWith("/api/v1/swagger-resources")
+                || requestURI.startsWith("/api/v1/v2/api-docs")
                 || requestURI.startsWith("/api/v1/images")
-                 || requestURI.startsWith("/api/v1/webjars");
+                || requestURI.startsWith("/api/v1/webjars");
     }
 
 
@@ -113,25 +149,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             respondWithUnauthorized(response, "Invalid details in token");
             return true;
         }
-        String  ipAdress =request.getRemoteAddr();
-        String User_Agent =   request.getHeader("User-Agent");
+        String ipAdress = request.getRemoteAddr();
+        String User_Agent = request.getHeader("User-Agent");
 
         if (!jwtUtil.validateToken(jwt, ipAdress, User_Agent)) {
             respondWithUnauthorized(response, "Invalid JWT token");
             return true;
         }
-
+        Customer customCustomer = null;
+        ServiceProviderEntity serviceProvider = null;
         if (id != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            Customer customCustomer = CustomerService.readCustomerById(id);
-            if (customCustomer != null && jwtUtil.validateToken(jwt,  ipAdress, User_Agent)) {
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        customCustomer.getId(), null, new ArrayList<>());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-                return false;
-            } else {
-                respondWithUnauthorized(response, "Invalid data provided for this customer");
-                return true;
+            if (roleService.findRoleName(jwtUtil.extractRoleId(jwt)).equals(Constant.roleUser)) {
+                customCustomer = CustomerService.readCustomerById(id);
+                if (customCustomer != null && jwtUtil.validateToken(jwt, ipAdress, User_Agent)) {
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            customCustomer.getId(), null, new ArrayList<>());
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    return false;
+                } else {
+                    respondWithUnauthorized(response, "Invalid data provided for this customer");
+                    return true;
+                }
+            } else if (roleService.findRoleName(jwtUtil.extractRoleId(jwt)).equals(Constant.roleServiceProvider)) {
+              serviceProvider=entityManager.find(ServiceProviderEntity.class,id);
+                if (serviceProvider != null && jwtUtil.validateToken(jwt, ipAdress, User_Agent)) {
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            serviceProvider.getService_provider_id(), null, new ArrayList<>());
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    return false;
+                } else {
+                    respondWithUnauthorized(response, "Invalid data provided for this customer");
+                    return true;
+                }
             }
         }
         return false;
@@ -140,14 +191,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private void respondWithUnauthorized(HttpServletResponse response, String message) throws IOException {
         if (!response.isCommitted()) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write(message);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"status\":401,\"message\":\"" + message + "\"}");
+            response.getWriter().flush();
         }
     }
 
     private void handleException(HttpServletResponse response, int statusCode, String message) throws IOException {
         if (!response.isCommitted()) {
             response.setStatus(statusCode);
-            response.getWriter().write(message);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"status\":" + statusCode + ",\"message\":\"" + message + "\"}");
+            response.getWriter().flush();
         }
     }
 }

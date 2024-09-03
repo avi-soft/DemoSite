@@ -1,25 +1,28 @@
 package com.community.api.endpoint.avisoft.controller.product;
 
 import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
+import com.community.api.component.Constant;
+import com.community.api.component.JwtUtil;
+import com.community.api.dto.AddProductDto;
 import com.community.api.entity.CustomProduct;
 import com.community.api.dto.CustomProductWrapper;
+import com.community.api.entity.CustomProductState;
+import com.community.api.services.PrivilegeService;
 import com.community.api.services.ProductService;
+import com.community.api.services.RoleService;
 import com.community.api.services.exception.ExceptionHandlingService;
-import org.broadleafcommerce.common.money.Money;
 import org.broadleafcommerce.common.persistence.Status;
 import org.broadleafcommerce.core.catalog.domain.*;
+import org.broadleafcommerce.core.catalog.service.type.ProductType;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.Errors;
 import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
-import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -29,13 +32,9 @@ import java.util.*;
 )
 public class ProductController extends CatalogEndpoint {
 
-    private static final String CATALOGSERVICENOTINITIALIZED = "Catalog service is not initialized.";
     private static final String PRODUCTNOTFOUND = "Product not Found";
     private static final String CATEGORYNOTFOUND = "Category not Found";
     private static final String PRODUCTTITLENOTGIVEN = "Product MetaTitle not Given";
-    private static final String SOMEEXCEPTIONOCCURED = "Some Exception Occurred";
-    private static final String NUMBERFORMATEXCEPTION = "NumberFormatException";
-    private static final String UNSUPPORTEDENCODINGEXCEPTION = "UnsupportedEncodingException";
 
     @Autowired
     protected ExceptionHandlingService exceptionHandlingService;
@@ -44,7 +43,16 @@ public class ProductController extends CatalogEndpoint {
     protected EntityManager entityManager;
 
     @Autowired
+    protected JwtUtil jwtTokenUtil;
+
+    @Autowired
     protected ProductService productService;
+
+    @Autowired
+    protected RoleService roleService;
+
+    @Autowired
+    protected PrivilegeService privilegeService;
 
     /*
 
@@ -54,6 +62,254 @@ public class ProductController extends CatalogEndpoint {
 
 
     @Transactional
+    @PostMapping("/add/{categoryId}")
+    public ResponseEntity<?> addProduct(HttpServletRequest request,
+                                        @RequestBody AddProductDto addProductDto,
+                                        @PathVariable Long categoryId,
+                                        @RequestHeader(value = "Authorization") String authHeader) {
+
+
+
+        try {
+
+//            String jwtToken = authHeader.substring(7);
+//
+//            Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
+//            String role = roleService.findRoleName(roleId);
+//            boolean accessGrant = false;
+//
+//            if(role.equals(Constant.SUPER_ADMIN) || role.equals(Constant.ADMIN)){
+//                accessGrant = true;
+//            }
+//            else if(role.equals("SERVICE_PROVIDER")) {
+//                Long userId = jwtTokenUtil.extractId(jwtToken);
+//                List<Integer> privileges = privilegeService.getPrivilege(userId);
+//                for(Integer apiId: privileges) {
+//                    if(apiId == 1){
+//                        accessGrant = true;
+//                        break;
+//                    }
+//                }
+//            }
+//
+//            if(!accessGrant){
+//                return new ResponseEntity<>("Not Authorized to add product", HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+
+            if (catalogService == null) {
+                return new ResponseEntity<>(Constant.CATALOG_SERVICE_NOT_INITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            if (categoryId <= 0) {
+                return new ResponseEntity<>("CategoryId cannot be <= 0", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            Category category = catalogService.findCategoryById(categoryId);
+            if (category == null) {
+                return new ResponseEntity<>(CATEGORYNOTFOUND, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            if (addProductDto.getCost().doubleValue() <= 0.0) {
+                return new ResponseEntity<>("Cost cannot be <= 0", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            if (addProductDto.getQuantity() != null) {
+                if (addProductDto.getQuantity() <= 0) {
+                    return new ResponseEntity<>("Quantity cannot be empty <= 0", HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+            } else {
+                addProductDto.setQuantity(100000);
+            }
+
+            if(addProductDto.getPriorityLevel() == null){
+                addProductDto.setPriorityLevel(5);
+            }
+
+            Product product = catalogService.createProduct(ProductType.PRODUCT);
+
+            product.setDefaultCategory(category); // This is Deprecated.
+            product.setCategory(category); // This will add both categoryId and productId to category_product_xref table.
+
+            if (addProductDto.getMetaTitle() == null || addProductDto.getMetaTitle().trim().isEmpty()) {
+                return new ResponseEntity<>(PRODUCTTITLENOTGIVEN, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            product.setMetaTitle(addProductDto.getMetaTitle().trim());
+
+            if (addProductDto.getMetaDescription() != null) {
+                addProductDto.setMetaDescription(addProductDto.getMetaDescription().trim());
+                product.setMetaDescription(addProductDto.getMetaDescription());
+            }
+            if(addProductDto.getUrl() != null){
+                addProductDto.setUrl(addProductDto.getUrl().trim());
+                product.setUrl(addProductDto.getUrl());
+            }
+
+            product = catalogService.saveProduct(product); // Save or update the product with values from requestBody.
+
+//            // Set active start date to current date and time in "yyyy-MM-dd HH:mm:ss" format
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            String formattedDate = dateFormat.format(new Date());
+            Date activeStartDate = dateFormat.parse(formattedDate); // Convert formatted date string back to Date
+
+//            COMPULSORY FIELD VALIDATION
+            if(addProductDto.getActiveEndDate() == null || addProductDto.getGoLiveDate() == null){
+                return new ResponseEntity<>("ActiveEndDate and GoLiveDate cannot be Empty", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            if (!addProductDto.getActiveEndDate().after(activeStartDate)) {
+                return new ResponseEntity<>("Expiration date cannot be before or equal of current date", HttpStatus.INTERNAL_SERVER_ERROR);
+            } else if (!addProductDto.getActiveEndDate().after(addProductDto.getGoLiveDate()) || !addProductDto.getGoLiveDate().after(activeStartDate)) {
+                return new ResponseEntity<>("GoLive date cannot be before or equal of goLive date and before or equal of current date", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+//            Create a new Sku Object
+            Sku sku = catalogService.createSku();
+            sku.setCost(addProductDto.getCost());
+
+            sku.setQuantityAvailable(addProductDto.getQuantity());
+            sku.setActiveStartDate(activeStartDate);
+            sku.setName(addProductDto.getMetaTitle().trim());
+            sku.setQuantityAvailable(addProductDto.getQuantity());
+            sku.setDescription(addProductDto.getMetaDescription());
+            sku.setActiveEndDate(addProductDto.getActiveEndDate());
+            sku.setDefaultProduct(product);
+            catalogService.saveSku(sku);
+
+            product.setDefaultSku(sku); // Set default SKU in the product
+            CustomProductState customProductState = productService.getCustomProductStateById(1L);
+            productService.saveCustomProduct(addProductDto.getGoLiveDate(), addProductDto.getPriorityLevel(), product.getId(), customProductState); // Save external product with provided dates and get status code
+
+//            // Wrap and return the updated product details
+            CustomProductWrapper wrapper = new CustomProductWrapper();
+            wrapper.wrapDetails(product, addProductDto.getPriorityLevel(), addProductDto.getGoLiveDate());
+
+            return ResponseEntity.ok(wrapper);
+
+        } catch (NumberFormatException numberFormatException) {
+            exceptionHandlingService.handleException(numberFormatException);
+            return new ResponseEntity<>(Constant.NUMBER_FORMAT_EXCEPTION + ": " + numberFormatException.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return new ResponseEntity<>(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Transactional
+    @PutMapping("/update/{productId}")
+    public ResponseEntity<?> updateProduct(HttpServletRequest request,
+                                        @RequestBody AddProductDto addProductDto,
+                                        @PathVariable Long productId,
+                                        @RequestHeader(value = "Authorization") String authHeader) {
+
+        try {
+
+            String jwtToken = authHeader.substring(7);
+
+            Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
+            String role = roleService.findRoleName(roleId);
+            boolean accessGrant = false;
+
+            if(role.equals(Constant.SUPER_ADMIN) || role.equals(Constant.ADMIN)){
+                accessGrant = true;
+            }
+
+            if(!accessGrant){
+                return new ResponseEntity<>("Not Authorized to add product", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            if (catalogService == null) {
+                return new ResponseEntity<>(Constant.CATALOG_SERVICE_NOT_INITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            if (productId <= 0) {
+                return new ResponseEntity<>("ProductId cannot be <= 0", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            Product product = catalogService.findProductById(productId);
+            if (product == null) {
+                return new ResponseEntity<>(PRODUCTNOTFOUND, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+
+            if (addProductDto.getCost() != null) {
+
+                if(addProductDto.getCost().doubleValue() <= 0.0){
+                    return new ResponseEntity<>("Cost cannot be <= 0", HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+                product.getDefaultSku().setCost(addProductDto.getCost());
+            }
+
+            if (addProductDto.getQuantity() != null) {
+                if (addProductDto.getQuantity() <= 0) {
+                    return new ResponseEntity<>("Quantity cannot be <= 0", HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+                product.getDefaultSku().setQuantityAvailable(addProductDto.getQuantity());
+            }
+
+            if (addProductDto.getMetaTitle() != null) {
+                if(addProductDto.getMetaTitle().trim().isEmpty()) {
+                    return new ResponseEntity<>(PRODUCTTITLENOTGIVEN, HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+                product.setMetaTitle(addProductDto.getMetaTitle().trim());
+                product.setName(addProductDto.getMetaTitle().trim());
+            }
+
+            if (addProductDto.getMetaDescription() != null) {
+                addProductDto.setMetaDescription(addProductDto.getMetaDescription().trim());
+                product.setMetaDescription(addProductDto.getMetaDescription());
+            }
+
+//            product = catalogService.saveProduct(product); // Save or update the product with values from requestBody.
+            CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
+
+            if(addProductDto.getPriorityLevel() != null){
+                customProduct.setPriorityLevel(addProductDto.getPriorityLevel());
+            }
+
+            if(addProductDto.getActiveEndDate() != null && addProductDto.getGoLiveDate() != null) {
+                if (!addProductDto.getActiveEndDate().after(customProduct.getActiveStartDate())) {
+                    return new ResponseEntity<>("Expiration date cannot be before or equal of current date", HttpStatus.INTERNAL_SERVER_ERROR);
+                } else if (!addProductDto.getActiveEndDate().after(addProductDto.getGoLiveDate()) || !addProductDto.getGoLiveDate().after(customProduct.getActiveStartDate())) {
+                    return new ResponseEntity<>("Expiration date cannot be before or equal of goLive date and before or equal of current date", HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+                product.setActiveEndDate(addProductDto.getActiveEndDate());
+                customProduct.setGoLiveDate(addProductDto.getGoLiveDate());
+            }else if(addProductDto.getGoLiveDate() != null) {
+                if (!addProductDto.getGoLiveDate().after(customProduct.getActiveStartDate())) {
+                    return new ResponseEntity<>("GoLive date cannot be before or equal of activeStartDate", HttpStatus.INTERNAL_SERVER_ERROR);
+                } else if (!customProduct.getActiveEndDate().after(addProductDto.getGoLiveDate()) || !addProductDto.getGoLiveDate().after(product.getActiveStartDate())) {
+                    return new ResponseEntity<>("GoLive date cannot be before or equal of goLive date and before or equal of current date", HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+
+                customProduct.setGoLiveDate(addProductDto.getGoLiveDate());
+            }else if(addProductDto.getActiveEndDate() != null) {
+                if (!addProductDto.getActiveEndDate().after(customProduct.getActiveStartDate())) {
+                    return new ResponseEntity<>("Expiration date cannot be before or equal of activeStartDate", HttpStatus.INTERNAL_SERVER_ERROR);
+                } else if (!addProductDto.getActiveEndDate().after(customProduct.getGoLiveDate()) || !customProduct.getGoLiveDate().after(customProduct.getActiveStartDate())) {
+                    return new ResponseEntity<>("Expiration date cannot be before or equal of goLive date and before or equal of current date", HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+
+                product.setActiveEndDate(addProductDto.getActiveEndDate());
+            }
+
+            catalogService.saveProduct(product);
+            entityManager.merge(customProduct);
+
+            // Wrap and return the updated product details
+            CustomProductWrapper wrapper = new CustomProductWrapper();
+            wrapper.wrapDetails(entityManager.find(CustomProduct.class, productId));
+
+            return ResponseEntity.ok(wrapper);
+
+        } catch (NumberFormatException numberFormatException) {
+            exceptionHandlingService.handleException(numberFormatException);
+            return new ResponseEntity<>(Constant.NUMBER_FORMAT_EXCEPTION + ": " + numberFormatException.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return new ResponseEntity<>(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+    }
+
+
+    /*@Transactional
     @PostMapping("/add")
     public ResponseEntity<?> addProduct(HttpServletRequest request,
                                         @RequestBody ProductImpl productImpl,
@@ -162,8 +418,8 @@ public class ProductController extends CatalogEndpoint {
 
             product.setDefaultSku(sku); // Set default SKU in the product
 
-            productService.saveCustomProduct(goLiveDate, priorityLevel, product.getId()); // Save external product with provided dates and get status code
-            entityManager.find(CustomProduct.class, productId);
+            CustomProductState customProductState = productService.getCustomProductStateById(1L);
+            productService.saveCustomProduct(goLiveDate, priorityLevel, product.getId(), customProductState); // Save external product with provided dates and get status code
 
             // Wrap and return the updated product details
             CustomProductWrapper wrapper = new CustomProductWrapper();
@@ -182,7 +438,7 @@ public class ProductController extends CatalogEndpoint {
             return new ResponseEntity<>(SOMEEXCEPTIONOCCURED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-    }
+    }*/
 
     @GetMapping("/getProductById/{productId}")
     public ResponseEntity<?> retrieveProductById(HttpServletRequest request, @PathVariable("productId") String productIdPath) {
@@ -195,7 +451,7 @@ public class ProductController extends CatalogEndpoint {
             }
 
             if (catalogService == null) {
-                return new ResponseEntity<>(CATALOGSERVICENOTINITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
+                return new ResponseEntity<>(Constant.CATALOG_SERVICE_NOT_INITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
@@ -204,23 +460,23 @@ public class ProductController extends CatalogEndpoint {
                 return new ResponseEntity<>(PRODUCTNOTFOUND, HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            if ((((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))){
+            if ((((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
 
-    //             Wrap and return the updated product details
+                //             Wrap and return the updated product details
                 CustomProductWrapper wrapper = new CustomProductWrapper();
                 wrapper.wrapDetails(customProduct);
                 return ResponseEntity.ok(wrapper);
 
-            }else{
+            } else {
                 return ResponseEntity.ok("Product is either Archived or Expired");
             }
 
         } catch (NumberFormatException numberFormatException) {
             exceptionHandlingService.handleException(numberFormatException);
-            return new ResponseEntity<>(NUMBERFORMATEXCEPTION + ": "  + numberFormatException.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(Constant.NUMBER_FORMAT_EXCEPTION + ": " + numberFormatException.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return new ResponseEntity<>(SOMEEXCEPTIONOCCURED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }
@@ -231,7 +487,7 @@ public class ProductController extends CatalogEndpoint {
         try {
 
             if (catalogService == null) {
-                return new ResponseEntity<>(CATALOGSERVICENOTINITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
+                return new ResponseEntity<>(Constant.CATALOG_SERVICE_NOT_INITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             List<Product> products = catalogService.findAllProducts(); // find all the products.
@@ -248,7 +504,7 @@ public class ProductController extends CatalogEndpoint {
 
                 if (customProduct != null) {
 
-                    if ((((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))){
+                    if ((((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
 
                         CustomProductWrapper wrapper = new CustomProductWrapper();
                         wrapper.wrapDetails(customProduct);
@@ -261,21 +517,21 @@ public class ProductController extends CatalogEndpoint {
 
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return new ResponseEntity<>(SOMEEXCEPTIONOCCURED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @Transactional
+    /*@Transactional
     @PutMapping("/update/{productId}")
     public ResponseEntity<?> updateProduct(HttpServletRequest request,
-                                                @RequestBody ProductImpl productImpl,
-                                                @RequestParam(value = "expirationDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date activeEndDate,
-                                                @RequestParam(value = "goLiveDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date goLiveDate,
-                                                @RequestParam(value = "priorityLevel", required = false) String priorityLevelParam,
-                                                @RequestParam(value = "categoryId", required = false) String categoryIdParam,
-                                                @RequestParam(value = "quantity", required = false) String quantityParam,
-                                                @RequestParam(value = "cost", required = false) String costParam,
-                                                @PathVariable("productId") String productIdParam) {
+                                           @RequestBody ProductImpl productImpl,
+                                           @RequestParam(value = "expirationDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date activeEndDate,
+                                           @RequestParam(value = "goLiveDate", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date goLiveDate,
+                                           @RequestParam(value = "priorityLevel", required = false) String priorityLevelParam,
+                                           @RequestParam(value = "categoryId", required = false) String categoryIdParam,
+                                           @RequestParam(value = "quantity", required = false) String quantityParam,
+                                           @RequestParam(value = "cost", required = false) String costParam,
+                                           @PathVariable("productId") String productIdParam) {
 
         try {
 
@@ -416,7 +672,7 @@ public class ProductController extends CatalogEndpoint {
             return new ResponseEntity<>(SOMEEXCEPTIONOCCURED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
-    }
+    }*/
 
     @DeleteMapping("/delete/{productId}")
     public ResponseEntity<String> deleteProduct(@PathVariable("productId") String productIdPath) {
@@ -425,7 +681,7 @@ public class ProductController extends CatalogEndpoint {
             Long productId = Long.parseLong(productIdPath);
 
             if (catalogService == null) {
-                return new ResponseEntity<>(CATALOGSERVICENOTINITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
+                return new ResponseEntity<>(Constant.CATALOG_SERVICE_NOT_INITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             CustomProduct customProduct = entityManager.find(CustomProduct.class, productId); // Find the Custom Product
@@ -440,10 +696,10 @@ public class ProductController extends CatalogEndpoint {
 
         } catch (NumberFormatException numberFormatException) {
             exceptionHandlingService.handleException(numberFormatException);
-            return new ResponseEntity<>(NUMBERFORMATEXCEPTION + ": " + numberFormatException.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(Constant.NUMBER_FORMAT_EXCEPTION + ": " + numberFormatException.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return new ResponseEntity<>(SOMEEXCEPTIONOCCURED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

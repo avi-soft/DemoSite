@@ -1,8 +1,5 @@
 package com.community.api.endpoint.avisoft.controller;
-
 import com.community.api.component.JwtUtil;
-import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
-import com.community.api.endpoint.customer.CustomCustomer;
 import com.community.api.services.CustomCustomerService;
 import com.community.api.services.RateLimiterService;
 import io.github.bucket4j.Bucket;
@@ -10,12 +7,13 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.GetMapping;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import java.security.Key;
 import java.util.Base64;
 
@@ -25,17 +23,19 @@ public class TestController {
 
     private final RateLimiterService rateLimiterService;
 
-    public TestController(RateLimiterService rateLimiterService) {
-        this.rateLimiterService = rateLimiterService;
-    }
-
-    @Autowired
     private ExceptionHandlingImplement exceptionHandling;
 
-    @Autowired
     private JwtUtil jwtUtil;
-    @Autowired
+
     private CustomCustomerService customCustomerService;
+    public TestController(RateLimiterService rateLimiterService,ExceptionHandlingImplement exceptionHandling,JwtUtil jwtUtil,CustomCustomerService customCustomerService) {
+        this.rateLimiterService = rateLimiterService;
+        this.exceptionHandling = exceptionHandling;
+        this.jwtUtil=jwtUtil;
+        this.customCustomerService=customCustomerService;
+    }
+
+
 
     @GetMapping("/catch-error")
     public ResponseEntity<String> catcherror() {
@@ -70,5 +70,6 @@ public class TestController {
             return "Rate limit exceeded!";
         }
     }
+
 
 }

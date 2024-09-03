@@ -1,5 +1,8 @@
 package com.community.api.component;
 
+import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
+import com.community.api.entity.CustomCustomer;
+import com.community.api.services.RoleService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -10,8 +13,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
+import javax.persistence.EntityManager;
 import javax.xml.bind.DatatypeConverter;
-import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Date;
 import java.util.UUID;
@@ -21,12 +24,14 @@ public class JwtUtil {
 
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
-
+    @Autowired
+    private RoleService roleService;
     @Value("${jwt.secret.key}")
     private String secretKeyString;
 
     private Key secretKey;
-
+   @Autowired
+   private EntityManager entityManager;
     @Autowired
     private TokenBlacklist tokenBlacklist;
 
@@ -35,10 +40,23 @@ public class JwtUtil {
 
     @PostConstruct
     public void init() {
-        this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+
+        try {
+            byte[] secretKeyBytes = DatatypeConverter.parseBase64Binary(secretKeyString);
+            this.secretKey = Keys.hmacShaKeyFor(secretKeyBytes);
+        }  catch (Exception e) {
+            exceptionHandling.handleException(e);
+            throw new RuntimeException("Error generating JWT token", e);
+        }
+
     }
 
-    public String generateToken(Long id, String role, String ipAddress, String userAgent) {
+   /* @PostConstruct
+    public void init() {
+        this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    }*/
+
+    public String generateToken(Long id, Integer role, String ipAddress, String userAgent) {
         try {
             String uniqueTokenId = UUID.randomUUID().toString();
 
@@ -47,8 +65,7 @@ public class JwtUtil {
                     .setId(uniqueTokenId)
                     .claim("id", id)
                     .claim("role", role)
-                    /*.claim("ipAddress", ipAddress)
-                    .claim("userAgent", userAgent)*/
+                    .claim("ipAddress", ipAddress)
                     .setIssuedAt(new Date())
                     .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
                     .signWith(secretKey, SignatureAlgorithm.HS256)
@@ -93,21 +110,29 @@ public class JwtUtil {
             if (tokenBlacklist.isTokenBlacklisted(tokenId)) {
                 return false;
             }
-
-            Customer existingCustomer = customerService.readCustomerById(id);
-            if (existingCustomer == null) {
-                return false;
+            int role=extractRoleId(token);
+            Customer existingCustomer=null;
+            ServiceProviderEntity existingServiceProvider=null;
+            if(roleService.findRoleName(role).equals(Constant.roleUser)){
+                existingCustomer = customerService.readCustomerById(id);
+                if (existingCustomer == null) {
+                    return false;
+                }
             }
 
+            else if(roleService.findRoleName(role).equals(Constant.roleServiceProvider)) {
+                existingServiceProvider = entityManager.find(ServiceProviderEntity.class, id);
+                if(existingServiceProvider==null)
+                    return false;
+            }
             if (isTokenExpired(token)) {
                 return false;
             }
 
             String storedIpAddress = claims.get("ipAddress", String.class);
-            String storedUserAgent = claims.get("userAgent", String.class);
 
-            return ipAddress.trim().equals(storedIpAddress != null ? storedIpAddress.trim() : "") &&
-                    userAgent.trim().equalsIgnoreCase(storedUserAgent != null ? storedUserAgent.trim() : "");
+
+            return ipAddress.trim().equals(storedIpAddress != null ? storedIpAddress.trim() : "");
         } catch (ExpiredJwtException e) {
             exceptionHandling.handleException(e);
             return false;
@@ -151,6 +176,26 @@ public class JwtUtil {
             exceptionHandling.handleException(e);
             return false;
 
+        }
+    }
+
+    public Integer extractRoleId(String token) {
+        try {
+            if (token == null || token.isEmpty()) {
+                throw new IllegalArgumentException("Token is required");
+            }
+            return Jwts.parserBuilder()
+                    .setSigningKey(secretKey)
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody()
+                    .get("role", Integer.class);
+
+        } catch (SignatureException e) {
+            throw new RuntimeException("Invalid JWT signature.");
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            throw new RuntimeException("Error in JWT token", e);
         }
     }
 }

@@ -11,8 +11,13 @@ import java.util.List;
 
 @Service
 public class CartService {
-@Autowired
+
 private EntityManager entityManager;
+
+   public  CartService(EntityManager entityManager)
+   {
+       this.entityManager= entityManager;
+   }
     public boolean removeItemFromCart(Order cart, Long orderItemId) {
         List<OrderItem> items = cart.getOrderItems();
         Iterator<OrderItem> iterator = items.iterator();

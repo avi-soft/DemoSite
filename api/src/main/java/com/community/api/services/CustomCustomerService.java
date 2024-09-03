@@ -1,6 +1,6 @@
 package com.community.api.services;
 import com.community.api.component.Constant;
-import com.community.api.endpoint.customer.CustomCustomer;
+import com.community.api.entity.CustomCustomer;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,8 +13,11 @@ import java.util.regex.Pattern;
 
 @Service
 public class CustomCustomerService {
-    @Autowired
     private EntityManager em;
+    public CustomCustomerService(EntityManager em)
+    {
+        this.em= em;
+    }
 
     public Boolean validateInput(CustomCustomer customer) {
         if (customer.getUsername().isEmpty() || customer.getUsername() == null || customer.getMobileNumber().isEmpty() || customer.getMobileNumber() == null || customer.getPassword() == null || customer.getPassword().isEmpty())

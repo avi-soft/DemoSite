@@ -45,6 +45,8 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
 
     protected Character archived;
 
+    protected Integer quantity;
+
     protected List<MediaWrapper> media;
 
     public void wrapDetails(CustomProduct model) {
@@ -63,6 +65,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.categoryName = model.getDefaultCategory().getName();
         this.active = model.isActive();
         this.activeGoLiveDate = model.getGoLiveDate();
+        this.quantity = model.getDefaultSku().getQuantityAvailable();
 
         if (model.getDefaultCategory() != null) {
             this.defaultCategoryId = model.getDefaultCategory().getId();
@@ -83,6 +86,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.categoryName = product.getDefaultCategory().getName();
         this.active = product.isActive();
         this.cost = product.getDefaultSku().getCost().doubleValue();
+        this.quantity = product.getDefaultSku().getQuantityAvailable();
 
         if (product.getDefaultCategory() != null) {
             this.defaultCategoryId = product.getDefaultCategory().getId();
@@ -104,6 +108,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.activeGoLiveDate = activeGoLiveDate;
         this.priorityLevel = priorityLevel;
         this.cost = product.getDefaultSku().getCost().doubleValue();
+        this.quantity = product.getDefaultSku().getQuantityAvailable();
 
         if (product.getDefaultCategory() != null) {
             this.defaultCategoryId = product.getDefaultCategory().getId();

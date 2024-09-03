@@ -1,5 +1,5 @@
 package com.community.api.entity;
-import com.community.api.endpoint.customer.CustomCustomer;
+import com.community.api.entity.CustomCustomer;
 import io.micrometer.core.lang.Nullable;
 import lombok.*;
 import org.broadleafcommerce.profile.core.domain.CustomerImpl;
