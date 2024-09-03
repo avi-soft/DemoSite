@@ -54,7 +54,7 @@ import java.util.*;
 public class CustomerEndpoint {
 
     private PasswordEncoder passwordEncoder;
-    private CustomerService customerService;
+    private CustomerService customerService;  //@TODO- do this task asap
     private ExceptionHandlingImplement exceptionHandling;
     private EntityManager em;
     private TwilioService twilioService;
@@ -295,7 +295,7 @@ public class CustomerEndpoint {
                 return responseService.generateSuccessResponse("Record Deleted Successfully","", HttpStatus.OK);
 
             } else {
-                return responseService.generateErrorResponse("No Records found for this ID " + customerId, HttpStatus.NO_CONTENT);
+                return responseService.generateErrorResponse("No Records found for this ID " + customerId, HttpStatus.NOT_FOUND);
 
             }
         } catch (Exception e) {
