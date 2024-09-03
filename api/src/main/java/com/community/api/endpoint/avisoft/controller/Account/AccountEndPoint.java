@@ -357,13 +357,14 @@ public class AccountEndPoint {
                         String userAgent = request.getHeader("User-Agent");
                         if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
 
-                            return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(existingToken, customer));
+                            OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(existingToken, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
+                            return ResponseEntity.ok(response);
                         } else {
 
                             String token = jwtUtil.generateToken(existingCustomer.getId(), role, ipAddress, userAgent);
                             session.setAttribute(tokenKey, token);
-                            return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(token, customer));
-
+                          OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(token, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
+                            return ResponseEntity.ok(response);
                         }
 
                     } else {
