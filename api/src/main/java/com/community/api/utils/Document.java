@@ -22,12 +22,15 @@ public class Document {
 
     private String name;
 
+    private String filePath;
+
     @Lob
     private byte[] data;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "custom_customer_id")
     private CustomCustomer customCustomer;
+
     @OneToOne
     @JoinColumn(name = "document_type_Id")
     private DocumentType documentType;
