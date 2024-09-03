@@ -8,7 +8,6 @@ import com.community.api.entity.Examination;
 import com.community.api.services.exception.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import java.util.List;
@@ -20,18 +19,19 @@ public class QualificationService
     EntityManager entityManager;
     ExaminationController examinationController;
     ExaminationService examinationService;
-    public QualificationService(EntityManager entityManager, ExaminationController examinationController)
+    public QualificationService(EntityManager entityManager, ExaminationController examinationController,ExaminationService examinationService)
     {
         this.entityManager=entityManager;
         this.examinationController= examinationController;
+        this.examinationService=examinationService;
     }
     @Transactional
     public Qualification addQualification(Long customCustomerId, Qualification qualification)
-            throws EntityDoesNotExistsException, EntityAlreadyExistsException, ExaminationDoesNotExistsException {
+            throws EntityAlreadyExistsException, ExaminationDoesNotExistsException, CustomerDoesNotExistsException{
 
         CustomCustomer customCustomer = entityManager.find(CustomCustomer.class, customCustomerId);
         if (customCustomer == null) {
-            throw new EntityDoesNotExistsException("Customer does not exist with id " + customCustomerId);
+            throw new CustomerDoesNotExistsException("Customer does not exist with id " + customCustomerId);
         }
         TypedQuery<Qualification> query = entityManager.createQuery(
                 "SELECT q FROM Qualification q WHERE q.customCustomer.id = :customerId AND q.examinationName = :examinationName",
@@ -109,6 +109,17 @@ public class QualificationService
        {
            throw new CustomerDoesNotExistsException("Customer does not exist with id "+ customCustomerId);
        }
+
+       TypedQuery<Qualification> query = entityManager.createQuery(
+               "SELECT q FROM Qualification q WHERE q.customCustomer.id = :customerId AND q.examinationName = :examinationName",
+               Qualification.class);
+       query.setParameter("customerId", customCustomerId);
+       query.setParameter("examinationName", qualification.getExaminationName());
+       Qualification existingQualification = query.getResultStream().findFirst().orElse(null);
+
+       if (existingQualification != null ) {
+           throw new EntityAlreadyExistsException("Qualification with name " + qualification.getExaminationName() + " already exists");
+       }
        List<Qualification> qualifications= customCustomer.getQualificationList();
        Qualification qualificationToUpdate=null;
        for(Qualification qualification1 : qualifications)
@@ -136,7 +147,7 @@ public class QualificationService
            if (examinationToAdd == null) {
                throw new ExaminationDoesNotExistsException("Examination with name " + qualification.getExaminationName() + " does not exist");
            }
-           qualification.setExaminationName(examinationToAdd);
+           qualificationToUpdate.setExaminationName(examinationToAdd);
        }
         if (Objects.nonNull(qualification.getInstitutionName())) {
             qualificationToUpdate.setInstitutionName(qualification.getInstitutionName());

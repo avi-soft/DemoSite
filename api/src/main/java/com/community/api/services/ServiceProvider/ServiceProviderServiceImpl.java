@@ -223,6 +223,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
         if (mobileNumber == null || mobileNumber.isEmpty()) {
             throw new IllegalArgumentException("Mobile number cannot be null or empty");
+
         }
 
         try {
@@ -341,8 +342,9 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         }
         if (passwordEncoder.matches(password,serviceProvider.getPassword())) {
             return new ResponseEntity<>(serviceProvider, HttpStatus.OK);
+
         } else {
-            return new ResponseEntity<>("Invalid Password", HttpStatus.UNAUTHORIZED);
+            return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
         }
     }
     public ResponseEntity<?> loginWithPassword(@RequestBody Map<String, Object> serviceProviderDetails, HttpSession session) {
@@ -353,31 +355,38 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             String countryCode = (String) serviceProviderDetails.getOrDefault("countryCode", Constant.COUNTRY_CODE);
             // Check for empty password
             if (password == null || password.isEmpty()) {
-                return new ResponseEntity<>("Password cannot be empty", HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Password cannot be empty", HttpStatus.BAD_REQUEST);
+
             }
             if (mobileNumber != null && !mobileNumber.isEmpty()) {
                 return authenticateByPhone(mobileNumber, countryCode, password);
             } else if (username != null && !username.isEmpty()) {
                 return authenticateByUsername(username, password);
             } else {
-                return new ResponseEntity<>("Empty Phone Number or username", HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Empty Phone Number or username", HttpStatus.BAD_REQUEST);
+
             }
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred: " + e.getMessage());
+            return responseService.generateErrorResponse(ApiConstants.SOME_EXCEPTION_OCCURRED + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
     public ResponseEntity<?>loginWithUsernameAndOTP(String username,HttpSession session)
     {
         try {
             if (username == null ) {
-                return new ResponseEntity<>("Empty Credentials", HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
+
             }
             ServiceProviderEntity existingServiceProivder = findServiceProviderByUserName(username);
-            if (existingServiceProivder == null)
-                return new ResponseEntity<>("No records found", HttpStatus.NOT_FOUND);
+            if (existingServiceProivder == null){
+                return responseService.generateErrorResponse("No records found", HttpStatus.NOT_FOUND);
+
+
+            }
             if (existingServiceProivder.getMobileNumber() == null) {
-                return new ResponseEntity<>("No mobile Number registerd for this account", HttpStatus.NOT_FOUND);
+                return responseService.generateErrorResponse("No mobile Number registerd for this account", HttpStatus.NOT_FOUND);
+
             }
             String countryCode=existingServiceProivder.getCountry_code();
             if(countryCode==null)
@@ -385,7 +394,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             return new ResponseEntity<>(sendOtp(existingServiceProivder.getMobileNumber(),countryCode,session),HttpStatus.OK);
         }catch (Exception e) {
             exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error sending OTP: " + e.getMessage());
+            return responseService.generateErrorResponse(ApiConstants.SOME_EXCEPTION_OCCURRED + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
     public ResponseEntity<?> sendOtp(String mobileNumber, String countryCode, HttpSession session) throws UnsupportedEncodingException {
@@ -398,20 +407,21 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             Bucket bucket = rateLimiterService.resolveBucket(mobileNumber, "/service-provider/otp/send-otp");
             if (bucket.tryConsume(1)) {
                 if (!isValidMobileNumber(mobileNumber)) {
-                    return ResponseEntity.badRequest().body("Invalid mobile number");
+                    return responseService.generateErrorResponse("Invalid mobile number", HttpStatus.BAD_REQUEST);
+
                 }
                 ResponseEntity<?> otpResponse = twilioService.sendOtpToMobile(mobileNumber,countryCode);
                 return otpResponse;
             } else {
-                return ResponseEntity.ok("You can send OTP only once in 1 minute");
+                return responseService.generateErrorResponse("You can send OTP only once in 1 minute", HttpStatus.BANDWIDTH_LIMIT_EXCEEDED);
+
             }
 
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error sending OTP: " + e.getMessage());
+            return responseService.generateErrorResponse(ApiConstants.SOME_EXCEPTION_OCCURRED + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
-//    todo:- need to test with same user details with atleast 10 users
     public String generateUsernameForServiceProvider(ServiceProviderEntity serviceProviderDetails)
     {
         String firstName = serviceProviderDetails.getFirst_name();
@@ -451,7 +461,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             String countryCode = (String) serviceProviderDetails.get("countryCode");
             Integer role=(Integer) serviceProviderDetails.get("role");
             if (countryCode == null || countryCode.isEmpty()) {
-                countryCode = Constant.COUNTRY_CODE; // Default value if not provided
+                countryCode = Constant.COUNTRY_CODE;
             }
 
             if (username != null) {
@@ -460,7 +470,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                     return responseService.generateErrorResponse("No records found ",HttpStatus.NOT_FOUND);
 
                 }
-                mobileNumber = serviceProvider.getMobileNumber(); // Get the mobile number from the service provider
+                mobileNumber = serviceProvider.getMobileNumber();
             } else if (mobileNumber == null || mobileNumber.isEmpty()) {
                 return responseService.generateErrorResponse("mobile number can not be null ",HttpStatus.BAD_REQUEST);
 
@@ -473,6 +483,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             if(mobileNumber.startsWith("0"))
                 mobileNumber= mobileNumber.substring(1);
             ServiceProviderEntity existingServiceProvider = findServiceProviderByPhone(mobileNumber, countryCode);
+
             String storedOtp =  existingServiceProvider.getOtp();
             String ipAddress = request.getRemoteAddr();
             String userAgent = request.getHeader("User-Agent");
@@ -489,30 +500,42 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 String existingToken = (String) session.getAttribute(tokenKey);
 
                 if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
-                    return ResponseEntity.ok(createAuthResponse(existingToken, existingServiceProvider));
+                    Map<String, Object> responseBody = createAuthResponse(existingToken, existingServiceProvider).getBody();
+
+                    return ResponseEntity.ok(responseBody);
                 } else {
                     String newToken = jwtUtil.generateToken(existingServiceProvider.getService_provider_id(), role, ipAddress, userAgent);
                     session.setAttribute(tokenKey, newToken);
-                    return ResponseEntity.ok(createAuthResponse(newToken, existingServiceProvider));
+
+                    Map<String, Object> responseBody = createAuthResponse(newToken, existingServiceProvider).getBody();
+
+                    return ResponseEntity.ok(responseBody);
                 }
             } else {
-                // Return a more informative error message if needed
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid OTP");
+                return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.UNAUTHORIZED);
+
             }
 
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return new ResponseEntity<>("Error verifying OTP", HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("Otp verification error" + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    private ResponseEntity<?> createAuthResponse(String token, ServiceProviderEntity serviceProviderEntity) {
+    private ResponseEntity<Map<String, Object>> createAuthResponse(String token, ServiceProviderEntity serviceProviderEntity) {
+        Map<String, Object> responseBody = new HashMap<>();
 
-        AuthResponseServiceProvider authResponse = new AuthResponseServiceProvider(token, serviceProviderEntity);
-        return responseService.generateSuccessResponse("Token details ",authResponse,HttpStatus.OK);
+        Map<String, Object> data = new HashMap<>();
+        data.put("serviceproviderDetails", serviceProviderEntity);
 
+        responseBody.put("status_code", HttpStatus.OK.value());
+        responseBody.put("data", data);
+        responseBody.put("token", token);
+        responseBody.put("message", "User has been logged in");
+        responseBody.put("status", "OK");
+
+        return ResponseEntity.ok(responseBody);
     }
-
 
     public StateCode findStateCode(String state_name) {
 
@@ -545,40 +568,17 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 .getResultList();
     }
 
-    private class AuthResponseServiceProvider {
-        private String token;
-        private ServiceProviderEntity serviceProviderDetails;
-
-        public AuthResponseServiceProvider(String token, ServiceProviderEntity serviceProviderDetails) {
-            this.token = token;
-            this.serviceProviderDetails = serviceProviderDetails;
-        }
-
-        public String getToken() {
-            return token;
-        }
-
-        public ServiceProviderEntity getUserDetails() {
-            return serviceProviderDetails;
-        }
-    }
-    @SuppressWarnings("unchecked")
     public static List<Integer> getIntegerList(Map<String, Object> map, String key) {
-        // Retrieve the object associated with the key
         Object value = map.get(key);
 
-        // Check if the value is an instance of List
         if (value instanceof List<?>) {
             List<?> list = (List<?>) value;
 
-            // Check if the list is not empty and the first element is Integer
             if (!list.isEmpty() && list.get(0) instanceof Integer) {
-                // Safe to cast the list to List<Integer>
                 return (List<Integer>) list;
             }
         }
 
-        // Return an empty list if the conditions are not met
         return Collections.emptyList();
     }
     @Transactional

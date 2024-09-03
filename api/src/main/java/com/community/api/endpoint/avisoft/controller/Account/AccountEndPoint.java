@@ -3,11 +3,11 @@ package com.community.api.endpoint.avisoft.controller.Account;
 import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.avisoft.controller.Customer.CustomerEndpoint;
+import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.services.*;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
 import com.community.api.services.exception.ExceptionHandlingImplement;
-import io.swagger.models.auth.In;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,6 +40,7 @@ public class AccountEndPoint {
     private CustomerService customerService;
     private JwtUtil jwtUtil;
     private ExceptionHandlingImplement exceptionHandling;
+
     private EntityManager em;
     private TwilioService twilioService;
     private CustomCustomerService customCustomerService;
@@ -173,20 +174,18 @@ public class AccountEndPoint {
                 }
                 Customer customer = customerService.readCustomerById(customerRecords.getId());
                 if (customer != null) {
-                    twilioService.sendOtpToMobile(updated_mobile, countryCode);
-
-                    String storedOtp = customerRecords.getOtp();
 
                     ResponseEntity<Map<String, Object>> otpResponse = twilioService.sendOtpToMobile(updated_mobile, countryCode);
+
                     Map<String, Object> responseBody = otpResponse.getBody();
 
-                    if ("success".equals(responseBody.get("status"))) {
-                        return responseService.generateSuccessResponse("OTP Sent on " + mobileNumber + " storedOtp is " + storedOtp, responseBody, HttpStatus.OK);
+                    if (responseBody.get("otp")!=null) {
+                        return responseService.generateSuccessResponse((String) responseBody.get("message"), (String) responseBody.get("otp"), HttpStatus.OK);
                     } else {
                         return responseService.generateErrorResponse((String) responseBody.get("message"), HttpStatus.BAD_REQUEST);
                     }
                 } else {
-                    return responseService.generateErrorResponse("Mobile number not found", HttpStatus.INTERNAL_SERVER_ERROR);
+                    return responseService.generateErrorResponse(ApiConstants.NO_RECORDS_FOUND, HttpStatus.NOT_FOUND);
                 }
             } else if (roleService.findRoleName(role).equals(Constant.roleServiceProvider)) {
                 if (serviceProviderService.findServiceProviderByPhone(mobileNumber, countryCode) != null) {
@@ -195,6 +194,7 @@ public class AccountEndPoint {
 
                     }
                     return serviceProviderService.sendOtp(mobileNumber, countryCode, session);
+
                 } else {
                     return responseService.generateErrorResponse(ApiConstants.NO_RECORDS_FOUND, HttpStatus.NOT_FOUND);
                 }
@@ -219,9 +219,11 @@ public class AccountEndPoint {
             if (loginDetails == null) {
                 return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
             }
+
             String username = (String) loginDetails.get("username");
             String password = (String) loginDetails.get("password");
             Integer role = (Integer) loginDetails.get("role");
+
             if (username == null || password == null || role == null) {
                 return responseService.generateErrorResponse("username/password number cannot be empty", HttpStatus.BAD_REQUEST);
             }
@@ -242,14 +244,14 @@ public class AccountEndPoint {
                     String ipAddress = request.getRemoteAddr();
                     String userAgent = request.getHeader("User-Agent");
                     if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
+                        OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(existingToken, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
+                        return ResponseEntity.ok(response);
 
-                        return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(existingToken, customer));
                     } else {
-
                         String token = jwtUtil.generateToken(customer.getId(), role, ipAddress, userAgent);
                         session.setAttribute(tokenKey, token);
-                        return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(token, customer));
-
+                        OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(token, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
+                        return ResponseEntity.ok(response);
                     }
                 } else {
                     return responseService.generateErrorResponse("Invalid password", HttpStatus.BAD_REQUEST);
@@ -278,7 +280,7 @@ public class AccountEndPoint {
             }
             String username = (String) loginDetails.get("username");
             Integer role = (Integer) loginDetails.get("role");
-            System.out.println(username);
+
             if (username == null || role == null) {
                 return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
 
@@ -295,11 +297,12 @@ public class AccountEndPoint {
                 CustomCustomer customCustomer = em.find(CustomCustomer.class, customer.getId());
                 if (customCustomer != null) {
                     String storedOtp = customCustomer.getOtp();
+
                     ResponseEntity<Map<String, Object>> otpResponse = twilioService.sendOtpToMobile(customCustomer.getMobileNumber(), Constant.COUNTRY_CODE);
                     Map<String, Object> responseBody = otpResponse.getBody();
+                    if (responseBody.get("otp")!=null) {
+                        return responseService.generateSuccessResponse((String) responseBody.get("message"), responseBody.get("otp"), HttpStatus.OK);
 
-                    if ("success".equals(responseBody.get("status"))) {
-                        return responseService.generateSuccessResponse("OTP Sent on " + customCustomer.getMobileNumber() + " storedOtp is " + storedOtp, responseBody, HttpStatus.OK);
                     } else {
                         return responseService.generateErrorResponse((String) responseBody.get("message"), HttpStatus.BAD_REQUEST);
                     }
