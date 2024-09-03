@@ -49,5 +49,6 @@ public class AddProductDto {
 
     String advertiserUrl;
     Boolean domicileRequired;
+    Long productState;
 
 }
