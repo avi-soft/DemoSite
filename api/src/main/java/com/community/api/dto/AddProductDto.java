@@ -47,7 +47,7 @@ public class AddProductDto {
     Integer post;
     Integer quantity;
 
-    @JsonIgnore
-    String url;
+    String advertiserUrl;
+    Boolean domicileRequired;
 
 }

@@ -70,5 +70,7 @@ public class Constant {
     public static String ADD_PRODUCT_RESERVECATEOGRY_FEE_POST = "INSERT INTO custom_product_reserve_category_fee_post_reference (product_id, reserve_category_id, fee, post) VALUES (:productId, :reserveCategoryId, :fee, :post)";
     public static String GET_RESERVED_CATEGORY_BY_ID = "SELECT c FROM CustomReserveCategory c WHERE c.reserveCategoryId = :reserveCategoryId";
     public static String APPLICATION_SCOPE_STATE = "STATE";
+    public static String PRIVILEGE_UPDATE_PRODUCT = "UPDATE_PRODUCT";
+    public static String APPLICATION_SCOPE_CENTER = "CENTER";
 
 }

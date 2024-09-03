@@ -47,7 +47,16 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
     protected CustomProductState customProductState;
     protected CustomJobGroup customJobGroup;
 
-    public void wrapDetailsAddProduct(Product product, AddProductDto addProductDto, CustomJobGroup customJobGroup, CustomProductState customProductState, CustomApplicationScope customApplicationScope, CustomReserveCategory customReserveCategory) {
+    protected Long creatorUserId;
+    protected Role creatorRoleId;
+
+    protected Date modifiedDate;
+    protected String advertiserUrl;
+    protected Boolean domicileRequired;
+    protected Long modifierUserId;
+    protected Role modifierRoleId;
+
+    public void wrapDetailsAddProduct(Product product, AddProductDto addProductDto, CustomJobGroup customJobGroup, CustomProductState customProductState, CustomApplicationScope customApplicationScope, CustomReserveCategory customReserveCategory, Long creatorUserId, Role creatorRole) {
 
         this.id = product.getId();
         this.metaTitle = product.getMetaTitle();
@@ -85,6 +94,15 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.customProductState = customProductState;
         this.reserveCategoryDtoList.add(reserveCategoryDto);
 
+        this.modifiedDate = product.getActiveStartDate();
+        this.creatorUserId = creatorUserId;
+        this.creatorRoleId = creatorRole;
+        this.modifierUserId = null;
+        this.modifierRoleId = null;
+
+        this.domicileRequired = addProductDto.getDomicileRequired();
+        this.advertiserUrl = addProductDto.getAdvertiserUrl();
+
         if (product.getDefaultCategory() != null) {
             this.defaultCategoryId = product.getDefaultCategory().getId();
         }
@@ -117,6 +135,16 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.customProductState = customProduct.getProductState();
         this.reserveCategoryDtoList = reserveCategoryDtoList;
 
+        this.modifiedDate = customProduct.getModifiedDate();
+
+        this.creatorUserId = customProduct.getUserId();
+        this.creatorRoleId = customProduct.getCreatoRole();
+        this.modifierUserId = customProduct.getModifierUserId();
+        this.modifierRoleId = customProduct.getModifierRole();
+
+        this.domicileRequired = customProduct.getDomicileRequired();
+        this.advertiserUrl = customProduct.getAdvertiserUrl();
+
         if (customProduct.getDefaultCategory() != null) {
             this.defaultCategoryId = customProduct.getDefaultCategory().getId();
         }
@@ -146,6 +174,14 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.customApplicationScope = customProduct.getCustomApplicationScope();
         this.customJobGroup = customProduct.getJobGroup();
         this.customProductState = customProduct.getProductState();
+
+        this.creatorUserId = customProduct.getUserId();
+        this.creatorRoleId = customProduct.getCreatoRole();
+        this.modifierUserId = customProduct.getModifierUserId();
+        this.modifierRoleId = customProduct.getModifierRole();
+
+        this.domicileRequired = customProduct.getDomicileRequired();
+        this.advertiserUrl = customProduct.getAdvertiserUrl();
 
         if (customProduct.getDefaultCategory() != null) {
             this.defaultCategoryId = customProduct.getDefaultCategory().getId();

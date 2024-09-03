@@ -115,7 +115,7 @@ public class ProductController extends CatalogEndpoint {
 
             if (!accessGrant) {
                 return new ResponseEntity<>("Not Authorized to add product", HttpStatus.INTERNAL_SERVER_ERROR);
-            } // Authorization code.
+            }
 
             if (catalogService == null) {
                 return new ResponseEntity<>(Constant.CATALOG_SERVICE_NOT_INITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -252,21 +252,35 @@ public class ProductController extends CatalogEndpoint {
             CustomApplicationScope applicationScope = applicationScopeService.getApplicationScopeById(addProductDto.getApplicationScope());
             if (applicationScope == null) {
                 return new ResponseEntity<>("No ApplicationScope exists with this Id", HttpStatus.INTERNAL_SERVER_ERROR);
-            }else if(applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE) && addProductDto.getNotifyingAuthority() == null){
-                return new ResponseEntity<>("Notifying Authority cannot be null if ApplicationScope is: " +Constant.APPLICATION_SCOPE_STATE , HttpStatus.INTERNAL_SERVER_ERROR);
+            } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE) && addProductDto.getNotifyingAuthority() == null) {
+                return new ResponseEntity<>("Notifying Authority cannot be null if ApplicationScope is: " + Constant.APPLICATION_SCOPE_STATE, HttpStatus.INTERNAL_SERVER_ERROR);
             }
-            if(addProductDto.getNotifyingAuthority() != null) {
+            if (addProductDto.getNotifyingAuthority() != null) {
                 addProductDto.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
             }
 
-            productService.saveCustomProduct(product, addProductDto.getExamDateFrom(), addProductDto.getExamDateTo(), addProductDto.getGoLiveDate(), addProductDto.getPlatformFee(), addProductDto.getPriorityLevel(), applicationScope, jobGroup, customProductState, roleService.getRoleByRoleId(roleId), userId, addProductDto.getNotifyingAuthority()); // Save external product with provided dates and get status code
+            if(applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_CENTER)) {
+                addProductDto.setDomicileRequired(false);
+            } else {
+                if(addProductDto.getDomicileRequired() == null) {
+                    return new ResponseEntity<>("Application scope is: "+ applicationScope.getApplicationScope() + " domicile cannot be false.", HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+            }
+
+            if(addProductDto.getAdvertiserUrl() == null) {
+                return new ResponseEntity<>("Advertising Url cannot be null", HttpStatus.INTERNAL_SERVER_ERROR);
+            }else{
+                addProductDto.setAdvertiserUrl(addProductDto.getAdvertiserUrl().trim());
+            }
+
+            productService.saveCustomProduct(product, addProductDto, addProductDto.getExamDateFrom(), addProductDto.getExamDateTo(), addProductDto.getGoLiveDate(), addProductDto.getPlatformFee(), addProductDto.getPriorityLevel(), applicationScope, jobGroup, customProductState, roleService.getRoleByRoleId(roleId), userId, addProductDto.getNotifyingAuthority(), product.getActiveStartDate(), null, null); // Save external product with provided dates and get status code
             productReserveCategoryBornBeforeAfterRefService.saveBornBeforeAndBornAfter(addProductDto.getBornBefore(), addProductDto.getBornAfter(), product, reserveCategoryService.getReserveCategoryById(addProductDto.getReservedCategory()));
             productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getFee(), addProductDto.getPost(), product, reserveCategoryService.getReserveCategoryById(addProductDto.getReservedCategory()));
 
             CustomReserveCategory customReserveCategory = reserveCategoryService.getReserveCategoryById(addProductDto.getReservedCategory());
 //            // Wrap and return the updated product details
             CustomProductWrapper wrapper = new CustomProductWrapper();
-            wrapper.wrapDetailsAddProduct(product, addProductDto, jobGroup, customProductState, applicationScope, customReserveCategory);
+            wrapper.wrapDetailsAddProduct(product, addProductDto, jobGroup, customProductState, applicationScope, customReserveCategory, userId, roleService.getRoleByRoleId(roleId));
 
             return ResponseEntity.ok(wrapper);
 
@@ -423,121 +437,300 @@ public class ProductController extends CatalogEndpoint {
         }
     }*/
 
-    @Transactional
-    @PutMapping("/update/{productId}")
-    public ResponseEntity<?> updateProduct(HttpServletRequest request,
-                                           @RequestBody AddProductDto addProductDto,
-                                           @PathVariable Long productId,
-                                           @RequestHeader(value = "Authorization") String authHeader) {
-
-        try {
-
-            String jwtToken = authHeader.substring(7);
-
-            Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
-            String role = roleService.findRoleName(roleId);
-            boolean accessGrant = false;
-
-            if (role.equals(Constant.SUPER_ADMIN) || role.equals(Constant.ADMIN)) {
-                accessGrant = true;
-            }
-
-            if (!accessGrant) {
-                return new ResponseEntity<>("Not Authorized to add product", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
-            if (catalogService == null) {
-                return new ResponseEntity<>(Constant.CATALOG_SERVICE_NOT_INITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
-            if (productId <= 0) {
-                return new ResponseEntity<>("ProductId cannot be <= 0", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-            Product product = catalogService.findProductById(productId);
-            if (product == null) {
-                return new ResponseEntity<>(PRODUCTNOTFOUND, HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
-
-            /*if (addProductDto.getCost() != null) {
-
-                if(addProductDto.getCost().doubleValue() <= 0.0){
-                    return new ResponseEntity<>("Cost cannot be <= 0", HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-                product.getDefaultSku().setCost(addProductDto.getCost());
-            }*/
-
-            if (addProductDto.getQuantity() != null) {
-                if (addProductDto.getQuantity() <= 0) {
-                    return new ResponseEntity<>("Quantity cannot be <= 0", HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-                product.getDefaultSku().setQuantityAvailable(addProductDto.getQuantity());
-            }
-
-            if (addProductDto.getMetaTitle() != null) {
-                if (addProductDto.getMetaTitle().trim().isEmpty()) {
-                    return new ResponseEntity<>(PRODUCTTITLENOTGIVEN, HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-                product.setMetaTitle(addProductDto.getMetaTitle().trim());
-                product.setName(addProductDto.getMetaTitle().trim());
-            }
-
-            if (addProductDto.getMetaDescription() != null) {
-                addProductDto.setMetaDescription(addProductDto.getMetaDescription().trim());
-                product.setMetaDescription(addProductDto.getMetaDescription());
-            }
-
-//            product = catalogService.saveProduct(product); // Save or update the product with values from requestBody.
-            CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
-
-            if (addProductDto.getPriorityLevel() != null) {
-                customProduct.setPriorityLevel(addProductDto.getPriorityLevel());
-            }
-
-            if (addProductDto.getActiveEndDate() != null && addProductDto.getGoLiveDate() != null) {
-                if (!addProductDto.getActiveEndDate().after(customProduct.getActiveStartDate())) {
-                    return new ResponseEntity<>("Expiration date cannot be before or equal of current date", HttpStatus.INTERNAL_SERVER_ERROR);
-                } else if (!addProductDto.getActiveEndDate().after(addProductDto.getGoLiveDate()) || !addProductDto.getGoLiveDate().after(customProduct.getActiveStartDate())) {
-                    return new ResponseEntity<>("Expiration date cannot be before or equal of goLive date and before or equal of current date", HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-                product.setActiveEndDate(addProductDto.getActiveEndDate());
-                customProduct.setGoLiveDate(addProductDto.getGoLiveDate());
-            } else if (addProductDto.getGoLiveDate() != null) {
-                if (!addProductDto.getGoLiveDate().after(customProduct.getActiveStartDate())) {
-                    return new ResponseEntity<>("GoLive date cannot be before or equal of activeStartDate", HttpStatus.INTERNAL_SERVER_ERROR);
-                } else if (!customProduct.getActiveEndDate().after(addProductDto.getGoLiveDate()) || !addProductDto.getGoLiveDate().after(product.getActiveStartDate())) {
-                    return new ResponseEntity<>("GoLive date cannot be before or equal of goLive date and before or equal of current date", HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-
-                customProduct.setGoLiveDate(addProductDto.getGoLiveDate());
-            } else if (addProductDto.getActiveEndDate() != null) {
-                if (!addProductDto.getActiveEndDate().after(customProduct.getActiveStartDate())) {
-                    return new ResponseEntity<>("Expiration date cannot be before or equal of activeStartDate", HttpStatus.INTERNAL_SERVER_ERROR);
-                } else if (!addProductDto.getActiveEndDate().after(customProduct.getGoLiveDate()) || !customProduct.getGoLiveDate().after(customProduct.getActiveStartDate())) {
-                    return new ResponseEntity<>("Expiration date cannot be before or equal of goLive date and before or equal of current date", HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-
-                product.setActiveEndDate(addProductDto.getActiveEndDate());
-            }
-
-            catalogService.saveProduct(product);
-            entityManager.merge(customProduct);
-
-            // Wrap and return the updated product details
-            CustomProductWrapper wrapper = new CustomProductWrapper();
-            wrapper.wrapDetails(entityManager.find(CustomProduct.class, productId));
-
-            return ResponseEntity.ok(wrapper);
-
-        } catch (NumberFormatException numberFormatException) {
-            exceptionHandlingService.handleException(numberFormatException);
-            return new ResponseEntity<>(Constant.NUMBER_FORMAT_EXCEPTION + ": " + numberFormatException.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        } catch (Exception exception) {
-            exceptionHandlingService.handleException(exception);
-            return new ResponseEntity<>(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-    }
+//    @Transactional
+//    @PutMapping("/update/{productId}")
+//    public ResponseEntity<?> updateProduct(HttpServletRequest request,
+//                                           @RequestBody AddProductDto addProductDto,
+//                                           @PathVariable Long productId,
+//                                           @RequestHeader(value = "Authorization") String authHeader) {
+//
+//        try {
+//
+//            String jwtToken = authHeader.substring(7);
+//
+//            Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
+//            String role = roleService.getRoleByRoleId(roleId).getRole_name();
+//
+//            if (catalogService == null) {
+//                return new ResponseEntity<>(Constant.CATALOG_SERVICE_NOT_INITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//
+//            if (productId <= 0) {
+//                return new ResponseEntity<>("ProductId cannot be <= 0", HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//            CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
+//            if (customProduct == null) {
+//                return new ResponseEntity<>(PRODUCTNOTFOUND, HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//
+//            boolean accessGrant = false;
+//            Long userId = null;
+//            if (role.equals(Constant.SUPER_ADMIN) || role.equals(Constant.ADMIN)) {
+//                accessGrant = true;
+//
+//                // -> NEED TO ADD THE USER_ID OF ADMIN OR SUPER ADMIN.
+//
+//            } else if (role.equals(Constant.SERVICE_PROVIDER)) {
+//
+//                userId = jwtTokenUtil.extractId(jwtToken);
+//                if (customProduct.getUserId() != userId) {
+//                    List<Privileges> privileges = privilegeService.getServiceProviderPrivilege(userId);
+//                    for (Privileges privilege : privileges) {
+//                        if (privilege.getPrivilege_name().equals(Constant.PRIVILEGE_UPDATE_PRODUCT)) {
+//                            accessGrant = true;
+//                            break;
+//                        }
+//                    }
+//                }
+//            }
+//
+//            if (!accessGrant) {
+//                return new ResponseEntity<>("Not Authorized to update product", HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//
+//
+//            // Validations and checks.
+//
+//
+//            if (addProductDto.getQuantity() != null) {
+//                if (addProductDto.getQuantity() <= 0) {
+//                    return new ResponseEntity<>("Quantity cannot be empty <= 0", HttpStatus.INTERNAL_SERVER_ERROR);
+//                }
+//                customProduct.getDefaultSku().setQuantityAvailable(addProductDto.getQuantity());
+//            }
+//
+//            if (addProductDto.getPriorityLevel() != null) {
+//                customProduct.setPriorityLevel(addProductDto.getPriorityLevel());
+//            }
+//
+//
+//            if (addProductDto.getMetaTitle() != null && !addProductDto.getMetaTitle().trim().isEmpty()) {
+//                addProductDto.setMetaTitle(addProductDto.getMetaTitle().trim());
+//                customProduct.setMetaTitle(addProductDto.getMetaTitle());
+//                customProduct.getDefaultSku().setName(addProductDto.getMetaTitle());
+//                customProduct.setDisplayTemplate(addProductDto.getMetaTitle());
+//            }
+//            if (addProductDto.getMetaDescription() != null && !addProductDto.getMetaDescription().trim().isEmpty()) {
+//                addProductDto.setMetaDescription(addProductDto.getMetaDescription().trim());
+//                customProduct.setMetaDescription(addProductDto.getMetaDescription());
+//                customProduct.getDefaultSku().setDescription(addProductDto.getMetaDescription());
+//            }
+//
+//            // Set active start date to current date and time in "yyyy-MM-dd HH:mm:ss" format
+//            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//            String formattedDate = dateFormat.format(new Date());
+//            Date currentDate = dateFormat.parse(formattedDate); // Convert formatted date string back to Date
+//            customProduct.setModifiedDate(currentDate); // -> NEED TO COME TO THAT LATER.
+//
+////            ExpirationDate and GoLiveDate VALIDATION
+//            if (addProductDto.getActiveEndDate() != null && addProductDto.getGoLiveDate() != null) {
+//                // Validation on date for being wrong types. -> these needs to be changed or we have to add exception.
+//                dateFormat.parse(dateFormat.format(addProductDto.getActiveEndDate()));
+//                dateFormat.parse(dateFormat.format(addProductDto.getGoLiveDate()));
+//
+//                if (!addProductDto.getActiveEndDate().after(customProduct.getActiveStartDate())) {
+//                    return new ResponseEntity<>("Expiration date cannot be before or equal of ActiveStart date", HttpStatus.INTERNAL_SERVER_ERROR);
+//                } else if (!addProductDto.getActiveEndDate().after(addProductDto.getGoLiveDate()) || !addProductDto.getGoLiveDate().after(customProduct.getActiveStartDate())) {
+//                    return new ResponseEntity<>("GoLive date cannot be before or equal of goLive date and before or equal of ActiveStart date", HttpStatus.INTERNAL_SERVER_ERROR);
+//                }
+//                customProduct.getDefaultSku().setActiveEndDate(addProductDto.getActiveEndDate());
+//                customProduct.setGoLiveDate(addProductDto.getGoLiveDate());
+//
+//            } else if (addProductDto.getActiveEndDate() != null) {
+//                // Validation on date for being wrong types. -> these needs to be changed or we have to add exception.
+//                dateFormat.parse(dateFormat.format(addProductDto.getActiveEndDate()));
+//                if (!addProductDto.getActiveEndDate().after(customProduct.getActiveStartDate())) {
+//                    return new ResponseEntity<>("Expiration date cannot be before or equal of ActiveStart date", HttpStatus.INTERNAL_SERVER_ERROR);
+//                } else if (!addProductDto.getActiveEndDate().after(customProduct.getGoLiveDate())) {
+//                    return new ResponseEntity<>("Expiry date cannot be before or equal of goLive date", HttpStatus.INTERNAL_SERVER_ERROR);
+//                }
+//                customProduct.getDefaultSku().setActiveEndDate(addProductDto.getActiveEndDate());
+//            } else if(addProductDto.getGoLiveDate() != null) {
+//                // Validation on date for being wrong types. -> these needs to be changed or we have to add exception.
+//                dateFormat.parse(dateFormat.format(addProductDto.getGoLiveDate()));
+//
+//                if (!addProductDto.getGoLiveDate().after(customProduct.getActiveStartDate())) {
+//                    return new ResponseEntity<>("goLive date cannot be before or equal of ActiveStart date", HttpStatus.INTERNAL_SERVER_ERROR);
+//                } else if (!customProduct.getActiveEndDate().after(addProductDto.getGoLiveDate())) {
+//                    return new ResponseEntity<>("goLive date cannot be after and equal of Expiry Date", HttpStatus.INTERNAL_SERVER_ERROR);
+//                }
+//                customProduct.setGoLiveDate(addProductDto.getGoLiveDate());
+//            }
+//
+//            CustomJobGroup jobGroup = null;
+//            if(addProductDto.getJobGroup() != null) {
+//                // validation for new entries in the product.
+//                jobGroup = jobGroupService.getJobGroupById(addProductDto.getJobGroup());
+//                if(jobGroup == null) {
+//                    return new ResponseEntity<>("Error in fetching jobGroup", HttpStatus.INTERNAL_SERVER_ERROR);
+//                }
+//            }
+//
+//            if (addProductDto.getExamDateFrom() != null && addProductDto.getExamDateTo() != null) {
+//
+//                // Validation on date for being wrong types. -> these needs to be changed or we have to add exception.
+//                dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
+//                dateFormat.parse(dateFormat.format(addProductDto.getExamDateTo()));
+//
+//                if (!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate()) || !addProductDto.getExamDateTo().after(addProductDto.getActiveEndDate())) {
+//                    return new ResponseEntity<>("Both Tentative examination data must be after EndDate", HttpStatus.INTERNAL_SERVER_ERROR);
+//                } else if (addProductDto.getExamDateTo().before(addProductDto.getExamDateFrom())) {
+//                    return new ResponseEntity<>("Tentative Exam date To must be either equal or before of Tentative Exam date From", HttpStatus.INTERNAL_SERVER_ERROR);
+//                }
+//                customProduct.setExamDateFrom(addProductDto.getExamDateFrom());
+//                customProduct.setExamDateTo(addProductDto.getExamDateTo());
+//
+//            } else if(addProductDto.getExamDateFrom() != null) {
+//
+//                dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
+//                if (!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate()) || !addProductDto.getExamDateTo().after(addProductDto.getActiveEndDate())) {
+//                    return new ResponseEntity<>("Both Tentative examination data must be after EndDate", HttpStatus.INTERNAL_SERVER_ERROR);
+//                } else if (addProductDto.getExamDateTo().before(addProductDto.getExamDateFrom())) {
+//                    return new ResponseEntity<>("Tentative Exam date To must be either equal or before of Tentative Exam date From", HttpStatus.INTERNAL_SERVER_ERROR);
+//                }
+//                customProduct.setExamDateFrom(addProductDto.getExamDateFrom());
+//            } else if(addProductDto.getExamDateTo() != null) {
+//                dateFormat.parse(dateFormat.format(addProductDto.getExamDateTo()));
+//                if (!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate()) || !addProductDto.getExamDateTo().after(addProductDto.getActiveEndDate())) {
+//                    return new ResponseEntity<>("Both Tentative examination data must be after EndDate", HttpStatus.INTERNAL_SERVER_ERROR);
+//                } else if (addProductDto.getExamDateTo().before(addProductDto.getExamDateFrom())) {
+//                    return new ResponseEntity<>("Tentative Exam date To must be either equal or before of Tentative Exam date From", HttpStatus.INTERNAL_SERVER_ERROR);
+//                }
+//                customProduct.setExamDateTo(addProductDto.getExamDateTo());
+//            }
+//
+//
+//
+//
+//            /*product.setDefaultSku(sku); // Set default SKU in the product
+////            CustomProductState customProductState = productService.getCustomProductStateById(1L);
+//
+//            if (addProductDto.getPlatformFee() == null) {
+//                return new ResponseEntity<>("Platform fee is mandatory", HttpStatus.INTERNAL_SERVER_ERROR);
+//            } else if (addProductDto.getPlatformFee() <= 0) {
+//                return new ResponseEntity<>("Platform fee cannot be less than or equal to zero", HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//
+//            if (addProductDto.getFee() == null) {
+//                return new ResponseEntity<>("Fee is mandatory", HttpStatus.INTERNAL_SERVER_ERROR);
+//            } else if (addProductDto.getFee() <= 0) {
+//                return new ResponseEntity<>("Fee cannot be less than or equal to zero", HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//
+//            if (addProductDto.getPost() == null) {
+//                addProductDto.setPost(Constant.DEFAULT_QUANTITY);
+//            } else if (addProductDto.getPost() <= 0) {
+//                return new ResponseEntity<>("Number of Post cannot be less than or equal to zero", HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//
+//            if (addProductDto.getBornBefore() == null || addProductDto.getBornAfter() == null) {
+//                return new ResponseEntity<>("Born Before Date and Born After Date cannot be empty", HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//
+//            // Validation on date for being wrong types. -> these needs to be changed or we have to add exception.
+//            dateFormat.parse(dateFormat.format(addProductDto.getBornAfter()));
+//            dateFormat.parse(dateFormat.format(addProductDto.getBornBefore()));
+//
+//            if (!addProductDto.getBornBefore().before(new Date()) || !addProductDto.getBornAfter().before(new Date())) {
+//                return new ResponseEntity<>("Born Before Date and Born After Date must be of Past", HttpStatus.INTERNAL_SERVER_ERROR);
+//            } else if (!addProductDto.getBornAfter().before(addProductDto.getBornBefore())) {
+//                return new ResponseEntity<>("Born After Date must be past of Born Before Date", HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//
+//            if (addProductDto.getApplicationScope() == null) {
+//                return new ResponseEntity<>("Application Scope cannot be null", HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//            CustomApplicationScope applicationScope = applicationScopeService.getApplicationScopeById(addProductDto.getApplicationScope());
+//            if (applicationScope == null) {
+//                return new ResponseEntity<>("No ApplicationScope exists with this Id", HttpStatus.INTERNAL_SERVER_ERROR);
+//            } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE) && addProductDto.getNotifyingAuthority() == null) {
+//                return new ResponseEntity<>("Notifying Authority cannot be null if ApplicationScope is: " + Constant.APPLICATION_SCOPE_STATE, HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//            if (addProductDto.getNotifyingAuthority() != null) {
+//                addProductDto.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
+//            }
+//
+//            productService.saveCustomProduct(product, addProductDto.getExamDateFrom(), addProductDto.getExamDateTo(), addProductDto.getGoLiveDate(), addProductDto.getPlatformFee(), addProductDto.getPriorityLevel(), applicationScope, jobGroup, customProductState, roleService.getRoleByRoleId(roleId), userId, addProductDto.getNotifyingAuthority(), product.getActiveStartDate()); // Save external product with provided dates and get status code
+//            productReserveCategoryBornBeforeAfterRefService.saveBornBeforeAndBornAfter(addProductDto.getBornBefore(), addProductDto.getBornAfter(), product, reserveCategoryService.getReserveCategoryById(addProductDto.getReservedCategory()));
+//            productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getFee(), addProductDto.getPost(), product, reserveCategoryService.getReserveCategoryById(addProductDto.getReservedCategory()));
+//
+//            CustomReserveCategory customReserveCategory = reserveCategoryService.getReserveCategoryById(addProductDto.getReservedCategory());
+////            // Wrap and return the updated product details
+//            CustomProductWrapper wrapper = new CustomProductWrapper();
+//            wrapper.wrapDetailsAddProduct(product, addProductDto, jobGroup, customProductState, applicationScope, customReserveCategory);*/
+//
+//            return ResponseEntity.ok("wrapper");
+////            if (addProductDto.getQuantity() != null) {
+////                if (addProductDto.getQuantity() <= 0) {
+////                    return new ResponseEntity<>("Quantity cannot be <= 0", HttpStatus.INTERNAL_SERVER_ERROR);
+////                }
+////                product.getDefaultSku().setQuantityAvailable(addProductDto.getQuantity());
+////            }
+////
+////            if (addProductDto.getMetaTitle() != null) {
+////                if (addProductDto.getMetaTitle().trim().isEmpty()) {
+////                    return new ResponseEntity<>(PRODUCTTITLENOTGIVEN, HttpStatus.INTERNAL_SERVER_ERROR);
+////                }
+////                product.setMetaTitle(addProductDto.getMetaTitle().trim());
+////                product.setName(addProductDto.getMetaTitle().trim());
+////            }
+////
+////            if (addProductDto.getMetaDescription() != null) {
+////                addProductDto.setMetaDescription(addProductDto.getMetaDescription().trim());
+////                product.setMetaDescription(addProductDto.getMetaDescription());
+////            }
+////
+//////            product = catalogService.saveProduct(product); // Save or update the product with values from requestBody.
+////            CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
+////
+////            if (addProductDto.getPriorityLevel() != null) {
+////                customProduct.setPriorityLevel(addProductDto.getPriorityLevel());
+////            }
+////
+////            if (addProductDto.getActiveEndDate() != null && addProductDto.getGoLiveDate() != null) {
+////                if (!addProductDto.getActiveEndDate().after(customProduct.getActiveStartDate())) {
+////                    return new ResponseEntity<>("Expiration date cannot be before or equal of current date", HttpStatus.INTERNAL_SERVER_ERROR);
+////                } else if (!addProductDto.getActiveEndDate().after(addProductDto.getGoLiveDate()) || !addProductDto.getGoLiveDate().after(customProduct.getActiveStartDate())) {
+////                    return new ResponseEntity<>("Expiration date cannot be before or equal of goLive date and before or equal of current date", HttpStatus.INTERNAL_SERVER_ERROR);
+////                }
+////                product.setActiveEndDate(addProductDto.getActiveEndDate());
+////                customProduct.setGoLiveDate(addProductDto.getGoLiveDate());
+////            } else if (addProductDto.getGoLiveDate() != null) {
+////                if (!addProductDto.getGoLiveDate().after(customProduct.getActiveStartDate())) {
+////                    return new ResponseEntity<>("GoLive date cannot be before or equal of activeStartDate", HttpStatus.INTERNAL_SERVER_ERROR);
+////                } else if (!customProduct.getActiveEndDate().after(addProductDto.getGoLiveDate()) || !addProductDto.getGoLiveDate().after(product.getActiveStartDate())) {
+////                    return new ResponseEntity<>("GoLive date cannot be before or equal of goLive date and before or equal of current date", HttpStatus.INTERNAL_SERVER_ERROR);
+////                }
+////
+////                customProduct.setGoLiveDate(addProductDto.getGoLiveDate());
+////            } else if (addProductDto.getActiveEndDate() != null) {
+////                if (!addProductDto.getActiveEndDate().after(customProduct.getActiveStartDate())) {
+////                    return new ResponseEntity<>("Expiration date cannot be before or equal of activeStartDate", HttpStatus.INTERNAL_SERVER_ERROR);
+////                } else if (!addProductDto.getActiveEndDate().after(customProduct.getGoLiveDate()) || !customProduct.getGoLiveDate().after(customProduct.getActiveStartDate())) {
+////                    return new ResponseEntity<>("Expiration date cannot be before or equal of goLive date and before or equal of current date", HttpStatus.INTERNAL_SERVER_ERROR);
+////                }
+////
+////                product.setActiveEndDate(addProductDto.getActiveEndDate());
+////            }
+////
+////            catalogService.saveProduct(product);
+////            entityManager.merge(customProduct);
+////
+////            // Wrap and return the updated product details
+////            CustomProductWrapper wrapper = new CustomProductWrapper();
+////            wrapper.wrapDetails(entityManager.find(CustomProduct.class, productId));
+//
+//            return ResponseEntity.ok("wrapper");
+//
+//        } catch (NumberFormatException numberFormatException) {
+//            exceptionHandlingService.handleException(numberFormatException);
+//            return new ResponseEntity<>(Constant.NUMBER_FORMAT_EXCEPTION + ": " + numberFormatException.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+//        } catch (Exception exception) {
+//            exceptionHandlingService.handleException(exception);
+//            return new ResponseEntity<>(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+//
+//    }
 
     @GetMapping("/getProductById/{productId}")
     public ResponseEntity<?> retrieveProductById(HttpServletRequest request, @PathVariable("productId") String productIdPath) {
@@ -612,8 +805,8 @@ public class ProductController extends CatalogEndpoint {
 
                         Map<String, CustomProductWrapper> productDetails = new HashMap<>();
 
-                        productDetails.put("key_"+customProduct.getId(), wrapper);
-                        productDetails.remove("key_"+customProduct.getId(),"reserveCategoryDtoList"); // gives us empty list
+                        productDetails.put("key_" + customProduct.getId(), wrapper);
+                        productDetails.remove("key_" + customProduct.getId(), "reserveCategoryDtoList"); // gives us empty list
 //                        productDetails.get("key_"+customProduct.getId()).setReserveCategoryDtoList(null); // set its value to null.
 
                         responses.add(productDetails);

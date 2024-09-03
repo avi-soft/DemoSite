@@ -1,5 +1,6 @@
 package com.community.api.services;
 
+import com.community.api.dto.AddProductDto;
 import com.community.api.entity.*;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.catalog.domain.ProductImpl;
@@ -27,11 +28,12 @@ public class ProductService {
     @PersistenceContext
     private EntityManager entityManager;
 
-    public void saveCustomProduct(Product product, Date examDateFrom, Date examDateTo, Date goLiveDate, Double platformFee, Integer priorityLevel, CustomApplicationScope applicationScope, CustomJobGroup jobGroup, CustomProductState productState, Role role, Long userId, String notifyingAuthority) {
+    public void saveCustomProduct(Product product, AddProductDto addProductDto, Date examDateFrom, Date examDateTo, Date goLiveDate, Double platformFee, Integer priorityLevel, CustomApplicationScope applicationScope, CustomJobGroup jobGroup, CustomProductState productState, Role role, Long userId, String notifyingAuthority, Date modifiedDate, Long modifierUserId, Role modifierRole) {
 
-        String sql = "INSERT INTO custom_product (product_id, exam_date_from, exam_date_to, go_live_date, platform_fee, priority_level, application_scope_id, job_group_id, product_state_id, role_id, user_id, notifying_authority) VALUES (:productId, :examDateFrom, :examDateTo, :goLiveDate, :platformFee, :priorityLevel, :applicationScopeId, :jobGroupId, :productStateId, :roleId, :userId, :notifyingAuthority)";
+        String sql = "INSERT INTO custom_product (product_id, exam_date_from, exam_date_to, go_live_date, platform_fee, priority_level, application_scope_id, job_group_id, product_state_id, creator_role_id, creator_user_id, notifying_authority, last_modified, advertiser_url, domicile_required) VALUES (:productId, :examDateFrom, :examDateTo, :goLiveDate, :platformFee, :priorityLevel, :applicationScopeId, :jobGroupId, :productStateId, :roleId, :userId, :notifyingAuthority, :modifiedDate, :advertiserUrl, :domicileRequired)";
 
         try {
+            System.out.println("ISSUE IS HERE");
             entityManager.createNativeQuery(sql)
                     .setParameter("productId", product)
                     .setParameter("examDateFrom", examDateFrom != null ? new Timestamp(examDateFrom.getTime()) : null)
@@ -45,7 +47,12 @@ public class ProductService {
                     .setParameter("roleId", role.getRole_id())
                     .setParameter("userId", userId)
                     .setParameter("notifyingAuthority", notifyingAuthority)
+                    .setParameter("modifiedDate", modifiedDate)
+                    .setParameter("advertiserUrl", addProductDto.getAdvertiserUrl())
+                    .setParameter("domicileRequired", addProductDto.getDomicileRequired())
+
                     .executeUpdate();
+
         } catch (Exception e) {
             throw new RuntimeException("Failed to save Custom Product: " + e.getMessage(), e);
         }

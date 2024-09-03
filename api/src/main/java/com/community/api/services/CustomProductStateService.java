@@ -32,7 +32,7 @@ public class CustomProductStateService implements CommandLineRunner {
 
         if (entityManager.createQuery("SELECT COUNT(c) FROM CustomApplicationScope c", Long.class).getSingleResult() == 0) {
             entityManager.persist(new CustomApplicationScope(1L, "STATE"));
-            entityManager.persist(new CustomApplicationScope(2L, "GOVERNMENT"));
+            entityManager.persist(new CustomApplicationScope(2L, "CENTER"));
         }
 
         if (entityManager.createQuery("SELECT COUNT(c) FROM CustomReserveCategory c", Long.class).getSingleResult() == 0) {

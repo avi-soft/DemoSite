@@ -45,6 +45,9 @@ public class CustomProduct extends ProductImpl {
     @Column(name = "exam_date_to")
     protected Date examDateTo;
 
+    @Column(name = "last_modified")
+    protected Date modifiedDate;
+
     @ManyToOne
     @NotNull
     @JoinColumn(name = "product_state_id")
@@ -55,13 +58,26 @@ public class CustomProduct extends ProductImpl {
     protected CustomApplicationScope customApplicationScope;
 
     @ManyToOne
-    @JoinColumn(name = "role_id")
-    protected Role role;
+    @JoinColumn(name = "creator_role_id")
+    protected Role creatoRole;
 
-    @Column(name = "user_id")
+    @Column(name = "creator_user_id")
     protected Long userId;
 
     @Column(name = "notifying_authority")
     protected String notifyingAuthority;
+
+    @Column(name = "advertiser_url")
+    String advertiserUrl;
+
+    @Column(name = "domicile_required")
+    Boolean domicileRequired;
+
+    @Column(name = "modifier_user_id")
+    Long modifierUserId;
+
+    @ManyToOne
+    @JoinColumn(name = "modifier_role_id")
+    Role modifierRole;
 
 }
