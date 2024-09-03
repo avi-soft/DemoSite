@@ -181,14 +181,11 @@ public class CustomerEndpoint {
                 }
                 if (existingCustomerByEmail != null && !existingCustomerByEmail.getId().equals(customerId)) {
                     return responseService.generateErrorResponse("Email not available", HttpStatus.BAD_REQUEST);
-
                 }
             }
             customerDetails.setId(customerId);
             customerDetails.setMobileNumber(customCustomer.getMobileNumber());
             customerDetails.setQualificationList(customCustomer.getQualificationList());
-
-
             customerDetails.setCountryCode(customCustomer.getCountryCode());
             Customer customer = customerService.readCustomerById(customerId);
             //using reflections

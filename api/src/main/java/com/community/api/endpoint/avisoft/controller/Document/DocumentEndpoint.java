@@ -35,6 +35,7 @@ public class DocumentEndpoint {
             return new ResponseEntity<>(documentType, HttpStatus.OK);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
+          
             return new ResponseEntity<>("Error retrieving Customer", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

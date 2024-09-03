@@ -32,10 +32,8 @@ public class UploadDocument {
             if(uploadrequest==null){
                 return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
             }
-            String otpEntered = (String) uploadrequest.get("otpEntered");
-            Integer role = (Integer) uploadrequest.get("role");
-            String countryCode = (String) uploadrequest.get("countryCode");
 
+            Integer role = (Integer) uploadrequest.get("role");
 
             if (role == null) {
                 return responseService.generateErrorResponse(ApiConstants.ROLE_EMPTY, HttpStatus.BAD_REQUEST);
