@@ -1,6 +1,7 @@
 package com.community.api.services;
 
 import com.community.api.component.Constant;
+import com.community.api.entity.CustomProduct;
 import com.community.api.entity.Skill;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -37,9 +38,11 @@ public class SharedUtilityService {
     public Map<String,Object> createProductResponseMap(Product product)
     {
         Map<String, Object> productDetails = new HashMap<>();
+        CustomProduct customProduct=entityManager.find(CustomProduct.class,product.getId());
         productDetails.put("id", product.getId());
         productDetails.put("url", product.getUrl());
         productDetails.put("urlKey", product.getUrlKey());
+        productDetails.put("platform_fee",customProduct.getPlatformFee());
         productDetails.put("displayTemplate", product.getDisplayTemplate());
         productDetails.put("defaultSkuId", product.getDefaultSku().getId());
         productDetails.put("defaultSkuExternalId", product.getDefaultSku().getExternalId());

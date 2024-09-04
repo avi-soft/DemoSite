@@ -16,6 +16,7 @@ import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -219,7 +220,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         return entityManager.find(ServiceProviderEntity.class, userId);
     }
     @Transactional
-    public ResponseEntity<String> sendOtpToMobile(String mobileNumber,String countryCode) {
+    public ResponseEntity<?> sendOtpToMobile(String mobileNumber,String countryCode) {
 
         if (mobileNumber == null || mobileNumber.isEmpty()) {
             throw new IllegalArgumentException("Mobile number cannot be null or empty");
@@ -258,22 +259,22 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             }
 
 
-            return ResponseEntity.ok("OTP has been sent successfully " + otp);
+            return responseService.generateSuccessResponse("OTP has been sent successfully !!!" ,otp,HttpStatus.OK);
 
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized access: Please check your API key");
+                return responseService.generateErrorResponse("Unauthorized access: Please check your API key",HttpStatus.UNAUTHORIZED);
             } else {
                 exceptionHandling.handleHttpClientErrorException(e);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error occurred");
+                return responseService.generateErrorResponse("Internal server error occurred",HttpStatus.INTERNAL_SERVER_ERROR);
             }
         } catch (ApiException e) {
             exceptionHandling.handleApiException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error sending OTP: " + e.getMessage());
+            return responseService.generateErrorResponse("Error sending OTP: " + e.getMessage(),HttpStatus.BAD_REQUEST);
         }
         catch (Exception e) {
             exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error sending OTP: " + e.getMessage());
+            return responseService.generateErrorResponse("Error sending OTP: " + e.getMessage(),HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -326,30 +327,45 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 .orElse(null);
     }
     //find service provider by phone and validate the password.
-    public ResponseEntity<?> authenticateByPhone(String mobileNumber, String countryCode, String password) {
+    public ResponseEntity<?> authenticateByPhone(String mobileNumber, String countryCode, String password,HttpServletRequest request,HttpSession session) {
         ServiceProviderEntity existingServiceProvider = findServiceProviderByPhone(mobileNumber, countryCode);
-        return validateServiceProvider(existingServiceProvider, password);
+        return validateServiceProvider(existingServiceProvider, password,request,session);
     }
     //find service provider by username and validate the password.
-    public ResponseEntity<?> authenticateByUsername(String username, String password) {
+    public ResponseEntity<?> authenticateByUsername(String username, String password,HttpServletRequest request,HttpSession session) {
         ServiceProviderEntity existingServiceProvider =findServiceProviderByUserName(username);
-        return validateServiceProvider(existingServiceProvider, password);
+        return validateServiceProvider(existingServiceProvider, password,request,session);
     }
     //mechanism to check password
-    public ResponseEntity<?> validateServiceProvider(ServiceProviderEntity serviceProvider, String password) {
+    public ResponseEntity<?> validateServiceProvider(ServiceProviderEntity serviceProvider, String password, HttpServletRequest request,HttpSession session) {
         if (serviceProvider == null) {
-            return new ResponseEntity<>("No Records Found", HttpStatus.NOT_FOUND);
+            return responseService.generateErrorResponse("No Records Found", HttpStatus.NOT_FOUND);
         }
         if (passwordEncoder.matches(password,serviceProvider.getPassword())) {
-            return new ResponseEntity<>(serviceProvider, HttpStatus.OK);
+            String ipAddress = request.getRemoteAddr();
+            String userAgent = request.getHeader("User-Agent");
+            String tokenKey = "authTokenServiceProvider_" + serviceProvider.getMobileNumber();
+            String existingToken = (String) session.getAttribute(tokenKey);
+            if(existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
+                Map<String, Object> responseBody = createAuthResponse(existingToken, serviceProvider).getBody();
 
-        } else {
+                return ResponseEntity.ok(responseBody);
+            } else {
+                String newToken = jwtUtil.generateToken(serviceProvider.getService_provider_id(), serviceProvider.getRole(), ipAddress, userAgent);
+                session.setAttribute(tokenKey, newToken);
+
+                Map<String, Object> responseBody = createAuthResponse(newToken, serviceProvider).getBody();
+            return ResponseEntity.ok(responseBody);
+
+        } }else {
             return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
         }
     }
-    public ResponseEntity<?> loginWithPassword(@RequestBody Map<String, Object> serviceProviderDetails, HttpSession session) {
+    public ResponseEntity<?> loginWithPassword(@RequestBody Map<String, Object> serviceProviderDetails,HttpServletRequest request,HttpSession session) {
         try {
             String mobileNumber = (String) serviceProviderDetails.get("mobileNumber");
+            if(mobileNumber.startsWith("0"))
+                mobileNumber=mobileNumber.substring(1);
             String username = (String) serviceProviderDetails.get("username");
             String password = (String) serviceProviderDetails.get("password");
             String countryCode = (String) serviceProviderDetails.getOrDefault("countryCode", Constant.COUNTRY_CODE);
@@ -359,9 +375,9 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
             }
             if (mobileNumber != null && !mobileNumber.isEmpty()) {
-                return authenticateByPhone(mobileNumber, countryCode, password);
+                return authenticateByPhone(mobileNumber, countryCode, password,request,session);
             } else if (username != null && !username.isEmpty()) {
-                return authenticateByUsername(username, password);
+                return authenticateByUsername(username, password,request,session);
             } else {
                 return responseService.generateErrorResponse("Empty Phone Number or username", HttpStatus.BAD_REQUEST);
 
@@ -391,7 +407,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             String countryCode=existingServiceProivder.getCountry_code();
             if(countryCode==null)
                 countryCode=Constant.COUNTRY_CODE;
-            return new ResponseEntity<>(sendOtp(existingServiceProivder.getMobileNumber(),countryCode,session),HttpStatus.OK);
+            return (sendOtp(existingServiceProivder.getMobileNumber(),countryCode,session));
         }catch (Exception e) {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse(ApiConstants.SOME_EXCEPTION_OCCURRED + e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -531,7 +547,6 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
         Map<String, Object> data = new HashMap<>();
         data.put("serviceproviderDetails", serviceProviderEntity);
-
         responseBody.put("status_code", HttpStatus.OK.value());
         responseBody.put("data", data);
         responseBody.put("token", token);
@@ -590,12 +605,12 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         try{
             if(serviceProviderAddress==null)
             {
-                return new ResponseEntity<>("Incomplete Details",HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Incomplete Details",HttpStatus.BAD_REQUEST);
             }
             ServiceProviderEntity existingServiceProvider=entityManager.find(ServiceProviderEntity.class,serviceProviderId);
             if(existingServiceProvider==null)
             {
-                return new ResponseEntity<>("Service Provider Not found",HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Service Provider Not found",HttpStatus.BAD_REQUEST);
             }
             List<ServiceProviderAddress>addresses=existingServiceProvider.getSpAddresses();
             serviceProviderAddress.setState(districtService.findStateById(Integer.parseInt(serviceProviderAddress.getState())));
@@ -607,10 +622,10 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             entityManager.persist(serviceProviderAddress);
 
             entityManager.merge(existingServiceProvider);
-            return new ResponseEntity<>(serviceProviderAddress,HttpStatus.OK);
+            return responseService.generateSuccessResponse("Address added successfully",serviceProviderAddress,HttpStatus.OK);
         }catch (Exception e) {
             exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error adding address " + e.getMessage());
+            return responseService.generateErrorResponse("Error adding address",HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

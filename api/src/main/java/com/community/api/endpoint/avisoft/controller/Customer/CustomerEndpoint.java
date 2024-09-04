@@ -130,7 +130,7 @@ public class CustomerEndpoint {
     public ResponseEntity<?> retrieveCustomerById(@RequestParam Long customerId) {
         try {
             if (customerService == null) {
-                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+                return responseService.generateErrorResponse("Customer Service Not Initialized",HttpStatus.INTERNAL_SERVER_ERROR);
             }
             Customer customer = customerService.readCustomerById(customerId);
             if (customer == null) {
@@ -181,14 +181,11 @@ public class CustomerEndpoint {
                 }
                 if (existingCustomerByEmail != null && !existingCustomerByEmail.getId().equals(customerId)) {
                     return responseService.generateErrorResponse("Email not available", HttpStatus.BAD_REQUEST);
-
                 }
             }
             customerDetails.setId(customerId);
             customerDetails.setMobileNumber(customCustomer.getMobileNumber());
             customerDetails.setQualificationList(customCustomer.getQualificationList());
-
-
             customerDetails.setCountryCode(customCustomer.getCountryCode());
             Customer customer = customerService.readCustomerById(customerId);
             //using reflections
@@ -453,17 +450,17 @@ public class CustomerEndpoint {
 
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(@RequestBody Map<String, String> request) {
+    public ResponseEntity<?> logout(@RequestBody Map<String, String> request) {
         String token = request.get("token");
         if (token == null || token.isEmpty()) {
-            return ResponseEntity.badRequest().body("Token is required");
+            return responseService.generateErrorResponse("Token is required",HttpStatus.BAD_REQUEST);
         }
         try {
             jwtUtil.logoutUser(token);
 
-            return ResponseEntity.ok("Logged out successfully");
+            return responseService.generateSuccessResponse("Logged out successfully",null,HttpStatus.OK);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during logout");
+            return responseService.generateErrorResponse("Error during logout",HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -471,20 +468,20 @@ public class CustomerEndpoint {
     public ResponseEntity<?> getSavedFormsByUserId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
         try {
             if (catalogService == null) {
-                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
+                return responseService.generateErrorResponse("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             Long categoryId = Long.parseLong(id);
             if(categoryId <= 0){
-                return new ResponseEntity<>("CATEGORYCANNOTBELESSTHANOREQAULZERO", HttpStatus.INTERNAL_SERVER_ERROR);
+                return responseService.generateErrorResponse("CATEGORYCANNOTBELESSTHANOREQAULZERO", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             Category category = this.catalogService.findCategoryById(categoryId);
 
             if (category == null) {
-                return new ResponseEntity<>("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
+                return responseService.generateErrorResponse("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
             } else if (((Status) category).getArchived() == 'Y') {
-                return new ResponseEntity<>("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
+                return responseService.generateErrorResponse("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
@@ -506,31 +503,31 @@ public class CustomerEndpoint {
             categoryDao.setProducts(products);
             categoryDao.setTotalProducts(Long.valueOf(products.size()));
 
-            return ResponseEntity.status(HttpStatus.OK).body(categoryDao);
+            return responseService.generateSuccessResponse("List Fetched Successfully ",categoryDao,HttpStatus.OK);
 
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("SOME ERROR OCCURRED : " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     @GetMapping(value = "/recommendations/getProductsByUserId")
     public ResponseEntity<?> getRecommendationsBYUserId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
         try {
             if (catalogService == null) {
-                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
+                return responseService.generateErrorResponse("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             Long categoryId = Long.parseLong(id);
             if(categoryId <= 0){
-                return new ResponseEntity<>("CATEGORYCANNOTBELESSTHANOREQAULZERO", HttpStatus.INTERNAL_SERVER_ERROR);
+                return responseService.generateErrorResponse("CATEGORYCANNOTBELESSTHANOREQAULZERO", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             Category category = this.catalogService.findCategoryById(categoryId);
 
             if (category == null) {
-                return new ResponseEntity<>("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
+                return responseService.generateErrorResponse("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
             } else if (((Status) category).getArchived() == 'Y') {
-                return new ResponseEntity<>("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
+                return responseService.generateErrorResponse("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
@@ -552,11 +549,11 @@ public class CustomerEndpoint {
             categoryDao.setProducts(products);
             categoryDao.setTotalProducts(Long.valueOf(products.size()));
 
-            return ResponseEntity.status(HttpStatus.OK).body(categoryDao);
+            return responseService.generateSuccessResponse("List Fetched Successfully ",categoryDao,HttpStatus.OK);
 
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("SOME EXCEPTION OCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -564,20 +561,20 @@ public class CustomerEndpoint {
     public ResponseEntity<?> getFilledFormsByUserId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
         try {
             if (catalogService == null) {
-                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
+                return responseService.generateErrorResponse("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             Long categoryId = Long.parseLong(id);
             if(categoryId <= 0){
-                return new ResponseEntity<>("CATEGORYCANNOTBELESSTHANOREQAULZERO", HttpStatus.INTERNAL_SERVER_ERROR);
+                return responseService.generateErrorResponse("CATEGORY CANNOT BE LESS THAN OR EQUAL TO ZERO", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             Category category = this.catalogService.findCategoryById(categoryId);
 
             if (category == null) {
-                return new ResponseEntity<>("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
+                return responseService.generateErrorResponse("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
             } else if (((Status) category).getArchived() == 'Y') {
-                return new ResponseEntity<>("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
+                return responseService.generateErrorResponse("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
@@ -599,11 +596,11 @@ public class CustomerEndpoint {
             categoryDao.setProducts(products);
             categoryDao.setTotalProducts(Long.valueOf(products.size()));
 
-            return ResponseEntity.status(HttpStatus.OK).body(categoryDao);
+            return responseService.generateSuccessResponse("List Fetched Successfully ",categoryDao,HttpStatus.OK);
 
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("SOME EXCEPTION OCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

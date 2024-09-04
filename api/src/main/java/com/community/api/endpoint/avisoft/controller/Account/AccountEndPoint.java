@@ -96,6 +96,16 @@ public class AccountEndPoint {
     public ResponseEntity<?> verifyAndLogin(@RequestBody Map<String, Object> loginDetails, HttpSession session) {
         try {
             String mobileNumber = (String) loginDetails.get("mobileNumber");
+            int i=0;
+            for(;i<mobileNumber.length();i++)
+            {
+                if(mobileNumber.charAt(i)!='0')
+                    break;
+            }
+            //if(mobileNumber.startsWith("0")) {
+                mobileNumber = mobileNumber.substring(i);
+                loginDetails.put("mobileNumber", mobileNumber);
+            //}
             if (mobileNumber != null) {
                 if (customCustomerService.isValidMobileNumber(mobileNumber) && isNumeric(mobileNumber)) {
                     return loginWithPhoneOtp(loginDetails, session);
@@ -118,6 +128,8 @@ public class AccountEndPoint {
     public ResponseEntity<?> loginWithPassword(@RequestBody Map<String, Object> loginDetails, HttpSession session, HttpServletRequest request) {
         try {
             String mobileNumber = (String) loginDetails.get("mobileNumber");
+            if(mobileNumber.startsWith("0"))
+                mobileNumber=mobileNumber.substring(1);
             String username = (String) loginDetails.get("username");
             if (mobileNumber != null) {
                 if (customCustomerService.isValidMobileNumber(mobileNumber) && isNumeric(mobileNumber)) {
@@ -139,13 +151,15 @@ public class AccountEndPoint {
     }
 
     @RequestMapping(value = "phone-otp", method = RequestMethod.POST)
-    private ResponseEntity<?> loginWithPhoneOtp(@RequestBody Map<String, Object> loginDetails, HttpSession session) throws UnsupportedEncodingException, UnsupportedEncodingException {
+    private ResponseEntity<?> loginWithPhoneOtp(Map<String, Object> loginDetails, HttpSession session) throws UnsupportedEncodingException, UnsupportedEncodingException {
         try {
             if (loginDetails == null) {
                 return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
 
             }
             String mobileNumber = (String) loginDetails.get("mobileNumber");
+            /*if(mobileNumber.startsWith("0"))
+                mobileNumber=mobileNumber.substring(1);*/
             String countryCode = (String) loginDetails.get("countryCode");
             Integer role = (Integer) loginDetails.get("role");
             if (mobileNumber == null) {
@@ -244,13 +258,13 @@ public class AccountEndPoint {
                     String ipAddress = request.getRemoteAddr();
                     String userAgent = request.getHeader("User-Agent");
                     if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
-                        OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(existingToken, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
+                        OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(existingToken, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been signed in");
                         return ResponseEntity.ok(response);
 
                     } else {
                         String token = jwtUtil.generateToken(customer.getId(), role, ipAddress, userAgent);
                         session.setAttribute(tokenKey, token);
-                        OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(token, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
+                        OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(token, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been signed in");
                         return ResponseEntity.ok(response);
                     }
                 } else {
@@ -258,7 +272,7 @@ public class AccountEndPoint {
 
                 }
             } else if (roleService.findRoleName(role).equals(Constant.roleServiceProvider)) {
-                return serviceProviderService.loginWithPassword(loginDetails, session);
+                return serviceProviderService.loginWithPassword(loginDetails, request,session);
             } else {
                 return responseService.generateErrorResponse(ApiConstants.INVALID_ROLE, HttpStatus.BAD_REQUEST);
 
@@ -357,13 +371,14 @@ public class AccountEndPoint {
                         String userAgent = request.getHeader("User-Agent");
                         if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
 
-                            return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(existingToken, customer));
+                            OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(existingToken, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
+                            return responseService.generateSuccessResponse("Logged in Successfully",response,HttpStatus.OK);
                         } else {
 
                             String token = jwtUtil.generateToken(existingCustomer.getId(), role, ipAddress, userAgent);
                             session.setAttribute(tokenKey, token);
-                            return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(token, customer));
-
+                          OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(token, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
+                            return ResponseEntity.ok(response);
                         }
 
                     } else {
@@ -375,7 +390,7 @@ public class AccountEndPoint {
 
                 }
             } else if (roleService.findRoleName(role).equals(Constant.roleServiceProvider)) {
-                return serviceProviderService.loginWithPassword(loginDetails, session);
+                return serviceProviderService.loginWithPassword(loginDetails,request,session);
             } else  return responseService.generateErrorResponse(ApiConstants.INVALID_ROLE , HttpStatus.BAD_REQUEST);
 
 
