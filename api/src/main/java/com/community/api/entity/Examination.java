@@ -1,5 +1,6 @@
 package com.community.api.entity;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -11,11 +12,12 @@ import javax.validation.constraints.Size;
 @Table(name = "Examination")
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 
 public class Examination
 {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+  /*  @GeneratedValue(strategy = GenerationType.IDENTITY)*/
     private Long examination_id;
 
     @NotNull(message = "Name of examination cannot be null")

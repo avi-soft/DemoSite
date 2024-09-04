@@ -3,9 +3,11 @@ import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.ServiceProviderInfra;
 import com.community.api.services.CustomCustomerService;
+import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.RoleService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
+import org.apache.solr.client.solrj.io.stream.SolrStream;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.slf4j.Logger;
@@ -37,7 +39,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
     private static final int BEARER_PREFIX_LENGTH = BEARER_PREFIX.length();
+
     private String apiKey="Tj0qkOrw14j2JOmi1MTf8w==SOqciwqUdUvDCrqZ";
+
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -47,6 +51,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private RoleService roleService;
     @Autowired
     private CustomerService CustomerService;
+
+
+    @Autowired
+    private ExceptionHandlingImplement exceptionHandling;
+
     @Autowired
     private EntityManager entityManager;
     @Override
@@ -75,17 +84,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
+    } catch (ExpiredJwtException e) {
+        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "JWT token is expired");
+        exceptionHandling.handleException(e);
+        logger.error("ExpiredJwtException caught: {}", e.getMessage());
+    } catch (MalformedJwtException e) {
+        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JWT token");
+        exceptionHandling.handleException(e);
+        logger.error("MalformedJwtException caught: {}", e.getMessage());
+    } catch (Exception e) {
+        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+        exceptionHandling.handleException(e);
 
-        } catch (ExpiredJwtException e) {
-            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "JWT token is expired");
-            logger.error("ExpiredJwtException caught: {}", e.getMessage());
-        } catch (MalformedJwtException e) {
-            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JWT token");
-            logger.error("MalformedJwtException caught: {}", e.getMessage());
-        } catch (Exception e) {
-            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
-            logger.error("Exception caught: {}", e.getMessage());
-        }
+        logger.error("Exception caught: {}", e.getMessage());
+    }
 
     }
 
@@ -97,12 +109,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 "/api/v1/categoryCustom/getProductsByCategoryId",
                 "/api/v1/categoryCustom/getAllCategories"
         );
+
         boolean isBypassed = bypassUris.stream().anyMatch(path::equals);
+        logger.info(isBypassed + " isBypassed");
         return isBypassed;
     }
 
     private boolean validateApiKey(HttpServletRequest request) {
         String requestApiKey = request.getHeader("x-api-key");
+        logger.info(apiKey + " apiKey", requestApiKey + "requestApiKey");
         return apiKey.equals(requestApiKey);
     }
 

@@ -244,13 +244,13 @@ public class AccountEndPoint {
                     String ipAddress = request.getRemoteAddr();
                     String userAgent = request.getHeader("User-Agent");
                     if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
-                        OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(existingToken, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
+                        OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(existingToken, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been signed in");
                         return ResponseEntity.ok(response);
 
                     } else {
                         String token = jwtUtil.generateToken(customer.getId(), role, ipAddress, userAgent);
                         session.setAttribute(tokenKey, token);
-                        OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(token, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
+                        OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(token, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been signed in");
                         return ResponseEntity.ok(response);
                     }
                 } else {
@@ -258,7 +258,7 @@ public class AccountEndPoint {
 
                 }
             } else if (roleService.findRoleName(role).equals(Constant.roleServiceProvider)) {
-                return serviceProviderService.loginWithPassword(loginDetails, session);
+                return serviceProviderService.loginWithPassword(loginDetails, request,session);
             } else {
                 return responseService.generateErrorResponse(ApiConstants.INVALID_ROLE, HttpStatus.BAD_REQUEST);
 
@@ -358,7 +358,7 @@ public class AccountEndPoint {
                         if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
 
                             OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(existingToken, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
-                            return ResponseEntity.ok(response);
+                            return responseService.generateSuccessResponse("Logged in Successfully",response,HttpStatus.OK);
                         } else {
 
                             String token = jwtUtil.generateToken(existingCustomer.getId(), role, ipAddress, userAgent);
@@ -376,7 +376,7 @@ public class AccountEndPoint {
 
                 }
             } else if (roleService.findRoleName(role).equals(Constant.roleServiceProvider)) {
-                return serviceProviderService.loginWithPassword(loginDetails, session);
+                return serviceProviderService.loginWithPassword(loginDetails,request,session);
             } else  return responseService.generateErrorResponse(ApiConstants.INVALID_ROLE , HttpStatus.BAD_REQUEST);
 
 
