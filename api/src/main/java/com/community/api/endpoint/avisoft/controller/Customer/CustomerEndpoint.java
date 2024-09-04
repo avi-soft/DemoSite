@@ -2,18 +2,15 @@ package com.community.api.endpoint.avisoft.controller.Customer;
 
 
 import com.community.api.component.JwtUtil;
-import com.community.api.dto.CategoryDto;
-import com.community.api.dto.CustomCategoryWrapper;
+import com.community.api.dto.AddCategoryDto;
 import com.community.api.dto.CustomProductWrapper;
 import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.AddressDTO;
 import com.community.api.entity.CustomCustomer;
-import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.entity.CustomProduct;
 import com.community.api.services.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.exception.ExceptionHandlingService;
-import org.apache.commons.math3.analysis.function.Add;
 import org.broadleafcommerce.common.persistence.Status;
 import org.broadleafcommerce.core.catalog.domain.Category;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
@@ -464,144 +461,144 @@ public class CustomerEndpoint {
         }
     }
 
-    @GetMapping(value = "/savedForms/getProductsByUserId")
-    public ResponseEntity<?> getSavedFormsByUserId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
-        try {
-            if (catalogService == null) {
-                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
-            Long categoryId = Long.parseLong(id);
-            if(categoryId <= 0){
-                return new ResponseEntity<>("CATEGORYCANNOTBELESSTHANOREQAULZERO", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
-            Category category = this.catalogService.findCategoryById(categoryId);
-
-            if (category == null) {
-                return new ResponseEntity<>("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
-            } else if (((Status) category).getArchived() == 'Y') {
-                return new ResponseEntity<>("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
-            List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
-            List<CustomProductWrapper> products = new ArrayList<>();
-
-            for (BigInteger productId : productIdList) {
-                CustomProduct customProduct = entityManager.find(CustomProduct.class, productId.longValue());
-
-                if(customProduct != null && (((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
-                    CustomProductWrapper wrapper = new CustomProductWrapper();
-                    wrapper.wrapDetails(customProduct);
-                    products.add(wrapper);
-                }
-            }
-
-            CategoryDto categoryDao = new CategoryDto();
-            categoryDao.setCategoryId(category.getId());
-            categoryDao.setCategoryName(category.getName());
-            categoryDao.setProducts(products);
-            categoryDao.setTotalProducts(Long.valueOf(products.size()));
-
-            return ResponseEntity.status(HttpStatus.OK).body(categoryDao);
-
-        } catch (Exception exception) {
-            exceptionHandlingService.handleException(exception);
-            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-    @GetMapping(value = "/recommendations/getProductsByUserId")
-    public ResponseEntity<?> getRecommendationsBYUserId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
-        try {
-            if (catalogService == null) {
-                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
-            Long categoryId = Long.parseLong(id);
-            if(categoryId <= 0){
-                return new ResponseEntity<>("CATEGORYCANNOTBELESSTHANOREQAULZERO", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
-            Category category = this.catalogService.findCategoryById(categoryId);
-
-            if (category == null) {
-                return new ResponseEntity<>("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
-            } else if (((Status) category).getArchived() == 'Y') {
-                return new ResponseEntity<>("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
-            List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
-            List<CustomProductWrapper> products = new ArrayList<>();
-
-            for (BigInteger productId : productIdList) {
-                CustomProduct customProduct = entityManager.find(CustomProduct.class, productId.longValue());
-
-                if(customProduct != null && (((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
-                    CustomProductWrapper wrapper = new CustomProductWrapper();
-                    wrapper.wrapDetails(customProduct);
-                    products.add(wrapper);
-                }
-            }
-
-            CategoryDto categoryDao = new CategoryDto();
-            categoryDao.setCategoryId(category.getId());
-            categoryDao.setCategoryName(category.getName());
-            categoryDao.setProducts(products);
-            categoryDao.setTotalProducts(Long.valueOf(products.size()));
-
-            return ResponseEntity.status(HttpStatus.OK).body(categoryDao);
-
-        } catch (Exception exception) {
-            exceptionHandlingService.handleException(exception);
-            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping(value = "/filledForms/getProductsByUserId")
-    public ResponseEntity<?> getFilledFormsByUserId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
-        try {
-            if (catalogService == null) {
-                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
-            Long categoryId = Long.parseLong(id);
-            if(categoryId <= 0){
-                return new ResponseEntity<>("CATEGORYCANNOTBELESSTHANOREQAULZERO", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
-            Category category = this.catalogService.findCategoryById(categoryId);
-
-            if (category == null) {
-                return new ResponseEntity<>("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
-            } else if (((Status) category).getArchived() == 'Y') {
-                return new ResponseEntity<>("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
-            List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
-            List<CustomProductWrapper> products = new ArrayList<>();
-
-            for (BigInteger productId : productIdList) {
-                CustomProduct customProduct = entityManager.find(CustomProduct.class, productId.longValue());
-
-                if(customProduct != null && (((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
-                    CustomProductWrapper wrapper = new CustomProductWrapper();
-                    wrapper.wrapDetails(customProduct);
-                    products.add(wrapper);
-                }
-            }
-
-            CategoryDto categoryDao = new CategoryDto();
-            categoryDao.setCategoryId(category.getId());
-            categoryDao.setCategoryName(category.getName());
-            categoryDao.setProducts(products);
-            categoryDao.setTotalProducts(Long.valueOf(products.size()));
-
-            return ResponseEntity.status(HttpStatus.OK).body(categoryDao);
-
-        } catch (Exception exception) {
-            exceptionHandlingService.handleException(exception);
-            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+//    @GetMapping(value = "/savedForms/getProductsByUserId")
+//    public ResponseEntity<?> getSavedFormsByUserId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
+//        try {
+//            if (catalogService == null) {
+//                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//
+//            Long categoryId = Long.parseLong(id);
+//            if(categoryId <= 0){
+//                return new ResponseEntity<>("CATEGORYCANNOTBELESSTHANOREQAULZERO", HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//
+//            Category category = this.catalogService.findCategoryById(categoryId);
+//
+//            if (category == null) {
+//                return new ResponseEntity<>("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
+//            } else if (((Status) category).getArchived() == 'Y') {
+//                return new ResponseEntity<>("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//
+//            List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
+//            List<CustomProductWrapper> products = new ArrayList<>();
+//
+//            for (BigInteger productId : productIdList) {
+//                CustomProduct customProduct = entityManager.find(CustomProduct.class, productId.longValue());
+//
+//                if(customProduct != null && (((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
+//                    CustomProductWrapper wrapper = new CustomProductWrapper();
+//                    wrapper.wrapDetails(customProduct);
+//                    products.add(wrapper);
+//                }
+//            }
+//
+//            AddCategoryDto categoryDao = new AddCategoryDto();
+//            categoryDao.setCategoryId(category.getId());
+//            categoryDao.setCategoryName(category.getName());
+//            categoryDao.setProducts(products);
+//            categoryDao.setTotalProducts(Long.valueOf(products.size()));
+//
+//            return ResponseEntity.status(HttpStatus.OK).body(categoryDao);
+//
+//        } catch (Exception exception) {
+//            exceptionHandlingService.handleException(exception);
+//            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+//    }
+//    @GetMapping(value = "/recommendations/getProductsByUserId")
+//    public ResponseEntity<?> getRecommendationsBYUserId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
+//        try {
+//            if (catalogService == null) {
+//                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//
+//            Long categoryId = Long.parseLong(id);
+//            if(categoryId <= 0){
+//                return new ResponseEntity<>("CATEGORYCANNOTBELESSTHANOREQAULZERO", HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//
+//            Category category = this.catalogService.findCategoryById(categoryId);
+//
+//            if (category == null) {
+//                return new ResponseEntity<>("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
+//            } else if (((Status) category).getArchived() == 'Y') {
+//                return new ResponseEntity<>("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//
+//            List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
+//            List<CustomProductWrapper> products = new ArrayList<>();
+//
+//            for (BigInteger productId : productIdList) {
+//                CustomProduct customProduct = entityManager.find(CustomProduct.class, productId.longValue());
+//
+//                if(customProduct != null && (((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
+//                    CustomProductWrapper wrapper = new CustomProductWrapper();
+//                    wrapper.wrapDetails(customProduct);
+//                    products.add(wrapper);
+//                }
+//            }
+//
+//            AddCategoryDto categoryDao = new AddCategoryDto();
+//            categoryDao.setCategoryId(category.getId());
+//            categoryDao.setCategoryName(category.getName());
+//            categoryDao.setProducts(products);
+//            categoryDao.setTotalProducts(Long.valueOf(products.size()));
+//
+//            return ResponseEntity.status(HttpStatus.OK).body(categoryDao);
+//
+//        } catch (Exception exception) {
+//            exceptionHandlingService.handleException(exception);
+//            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+//    }
+//
+//    @GetMapping(value = "/filledForms/getProductsByUserId")
+//    public ResponseEntity<?> getFilledFormsByUserId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
+//        try {
+//            if (catalogService == null) {
+//                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//
+//            Long categoryId = Long.parseLong(id);
+//            if(categoryId <= 0){
+//                return new ResponseEntity<>("CATEGORYCANNOTBELESSTHANOREQAULZERO", HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//
+//            Category category = this.catalogService.findCategoryById(categoryId);
+//
+//            if (category == null) {
+//                return new ResponseEntity<>("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
+//            } else if (((Status) category).getArchived() == 'Y') {
+//                return new ResponseEntity<>("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
+//            }
+//
+//            List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
+//            List<CustomProductWrapper> products = new ArrayList<>();
+//
+//            for (BigInteger productId : productIdList) {
+//                CustomProduct customProduct = entityManager.find(CustomProduct.class, productId.longValue());
+//
+//                if(customProduct != null && (((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
+//                    CustomProductWrapper wrapper = new CustomProductWrapper();
+//                    wrapper.wrapDetails(customProduct);
+//                    products.add(wrapper);
+//                }
+//            }
+//
+//            AddCategoryDto categoryDao = new AddCategoryDto();
+//            categoryDao.setCategoryId(category.getId());
+//            categoryDao.setCategoryName(category.getName());
+//            categoryDao.setProducts(products);
+//            categoryDao.setTotalProducts(Long.valueOf(products.size()));
+//
+//            return ResponseEntity.status(HttpStatus.OK).body(categoryDao);
+//
+//        } catch (Exception exception) {
+//            exceptionHandlingService.handleException(exception);
+//            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+//    }
 
 }

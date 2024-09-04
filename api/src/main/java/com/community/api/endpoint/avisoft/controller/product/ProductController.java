@@ -662,7 +662,7 @@ public class ProductController extends CatalogEndpoint {
                 }
             }
 
-            return ResponseService.generateSuccessResponse("Product Updated Successfully", "NICE", HttpStatus.OK);
+            return ResponseService.generateSuccessResponse("Product Updated Successfully", "UPDATED", HttpStatus.OK);
 
         } catch (NumberFormatException numberFormatException) {
             exceptionHandlingService.handleException(numberFormatException);
@@ -780,7 +780,7 @@ public class ProductController extends CatalogEndpoint {
 
             catalogService.removeProduct(customProduct.getDefaultSku().getDefaultProduct()); // Make it archive from the DB.
 
-            return ResponseService.generateSuccessResponse("PRODUCT DELETED SUCCESSFULLY", "NICE", HttpStatus.OK);
+            return ResponseService.generateSuccessResponse("PRODUCT DELETED SUCCESSFULLY", "DELETED", HttpStatus.OK);
 
         } catch (NumberFormatException numberFormatException) {
             exceptionHandlingService.handleException(numberFormatException);
