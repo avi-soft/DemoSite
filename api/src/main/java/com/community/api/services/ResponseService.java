@@ -19,14 +19,11 @@ public class ResponseService {
         successResponse.setStatus_code(status.value());
         successResponse.setMessage(message);
 
-        // Convert data to Map if it's not already a Map
-        Map<String, Object> dataMap = new HashMap<>();
         if (data instanceof Map) {
-            dataMap = (Map<String, Object>) data;
+            successResponse.setData((Map<String, Object>) data);
         } else {
-            dataMap.put("value", data);
+            successResponse.setData(data);
         }
-        successResponse.setData(dataMap);
 
         return new ResponseEntity<>(successResponse, status);
     }

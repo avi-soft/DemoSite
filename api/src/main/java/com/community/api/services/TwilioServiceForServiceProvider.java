@@ -71,7 +71,7 @@ public class TwilioServiceForServiceProvider {
                 entityManager.merge(existingServiceProvider);
             }
             Map<String,Object> details=new HashMap<>();
-            details.put("message",ApiConstants.OTP_SENT_SUCCESSFULLY);
+            // details.put("message",ApiConstants.OTP_SENT_SUCCESSFULLY);
             details.put("status",ApiConstants.STATUS_SUCCESS);
             details.put("otp",otp);
             return responseService.generateSuccessResponse(ApiConstants.OTP_SENT_SUCCESSFULLY,details,HttpStatus.OK);
