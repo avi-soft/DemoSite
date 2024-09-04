@@ -37,9 +37,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
     private static final int BEARER_PREFIX_LENGTH = BEARER_PREFIX.length();
-
-    @Value("${api.key}")
-    private String apiKey;
+    private String apiKey="Tj0qkOrw14j2JOmi1MTf8w==SOqciwqUdUvDCrqZ";
 
     @Autowired
     private JwtUtil jwtUtil;

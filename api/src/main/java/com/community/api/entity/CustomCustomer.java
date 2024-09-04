@@ -58,18 +58,6 @@ public class CustomCustomer extends CustomerImpl {
     @OneToOne(cascade = CascadeType.ALL)
     private Document domicile;
 
-/*    @Nullable
-    @OneToOne(mappedBy = "customCustomer", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Document photo;
-    @Nullable
-    @OneToOne(mappedBy = "customCustomer", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Document signature;
-    @Nullable
-    @OneToOne(mappedBy = "customCustomer", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Document disability;
-    @Nullable
-    @OneToOne(mappedBy = "customCustomer", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Document ews;*/
 
     @Column(name = "secondary_mobile_number")
     private String secondaryMobileNumber;

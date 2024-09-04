@@ -3,17 +3,17 @@ package com.community.api.endpoint.avisoft.controller.Customer;
 
 import com.community.api.component.JwtUtil;
 import com.community.api.dto.CategoryDto;
-import com.community.api.dto.CustomCategoryWrapper;
 import com.community.api.dto.CustomProductWrapper;
+import com.community.api.dto.DocumentDTO;
 import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.AddressDTO;
 import com.community.api.entity.CustomCustomer;
-import com.community.api.endpoint.customer.CustomerDTO;
 import com.community.api.entity.CustomProduct;
 import com.community.api.services.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.exception.ExceptionHandlingService;
-import org.apache.commons.math3.analysis.function.Add;
+import com.community.api.utils.Document;
+
 import org.broadleafcommerce.common.persistence.Status;
 import org.broadleafcommerce.core.catalog.domain.Category;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
@@ -28,17 +28,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.util.*;
@@ -72,6 +69,9 @@ public class CustomerEndpoint {
 
     @Autowired
     private CategoryService categoryService;
+
+    @Autowired
+    private DocumentStorageService documentStorageService;
 
     @Autowired
     private CatalogService catalogService;
@@ -120,7 +120,6 @@ public class CustomerEndpoint {
         this.jwtUtil= jwtUtil;
     }
 
-
     @Autowired
     public void setJwtUtil(JwtUtil jwtUtil) {
         this.jwtUtil = jwtUtil;
@@ -155,6 +154,8 @@ public class CustomerEndpoint {
                 return responseService.generateErrorResponse("Customer service is not initialized.",HttpStatus.INTERNAL_SERVER_ERROR);
 
             }
+          /*  CustomCustomer  customerDetails= customerUpdateRequest.getCustomerDetails();
+         List<DocumentFile> documentFiles = customerUpdateRequest.getDocumentFiles();*/
             CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
             if (customCustomer == null) {
                 return responseService.generateErrorResponse("No data found for this customerId",HttpStatus.NOT_FOUND);
@@ -171,6 +172,7 @@ public class CustomerEndpoint {
             if (customerDetails.getUsername() != null) {
                 existingCustomerByUsername = customerService.readCustomerByUsername(customerDetails.getUsername());
             }
+
             if (customerDetails.getEmailAddress() != null) {
                 existingCustomerByEmail = customerService.readCustomerByEmail(customerDetails.getEmailAddress());
             }
@@ -202,6 +204,24 @@ public class CustomerEndpoint {
             }
             if(customerDetails.getEmailAddress()!=null){
                 customer.setEmailAddress(customerDetails.getEmailAddress());
+            }
+
+            if (customerDetails.getDocumentList() != null && customerDetails.getDocumentList().size() > 0) {
+                for (Document newdocument : customerDetails.getDocumentList()) {
+
+                    String documentType = newdocument.getDocumentType().getType();
+                    String fileName = file.getOriginalFilename();
+                    InputStream fileInputStream = file.getInputStream();
+                    documentStorageService.saveDocument(customerId.toString(), documentType, fileName, fileInputStream, "customer"); // Assuming the role is "customer"
+
+                    Document doc = new Document();
+                    doc.setName(fileName);
+                    doc.setFilePath(DocumentStorageService.BASE_DIRECTORY + customerId + "\\" + documentType + "\\" + fileName);
+                    doc.setData(file.getBytes());
+                    doc.setCustomCustomer(customCustomer);
+                    doc.setDocumentType(newdocument.getDocumentType());
+                    em.persist(doc);
+                }
             }
             em.merge(customCustomer);
             return responseService.generateSuccessResponse("User details updated successfully : ",customer, HttpStatus.OK);

@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.*;
 
@@ -22,6 +23,8 @@ public class Document {
 
     private String name;
 
+    private String type;
+
     private String filePath;
 
     @Lob
@@ -34,4 +37,6 @@ public class Document {
     @OneToOne
     @JoinColumn(name = "document_type_Id")
     private DocumentType documentType;
+
+
 }
