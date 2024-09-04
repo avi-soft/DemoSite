@@ -29,6 +29,9 @@ public class ProductReserveCategoryFeePostRefService {
     @Autowired
     protected ProductService productService;
 
+    @Autowired
+    protected  ReserveCategoryService reserveCategoryService;
+
     public List<CustomProductReserveCategoryFeePostRef> getProductReserveCategoryFeeAndPostByProductId(Long productId){
         try{
 
@@ -61,6 +64,24 @@ public class ProductReserveCategoryFeePostRefService {
 
         } catch(Exception exception) {
             exceptionHandlingService.handleException(exception);
+        }
+    }
+
+    public CustomProductReserveCategoryFeePostRef getCustomProductReserveCategoryFeePostRefByProductIdAndReserveCategoryId(Long productId, Long reserveCategoryId) {
+
+        try {
+            CustomProduct customProduct = productService.getCustomProductByCustomProductId(productId);
+            CustomReserveCategory customReserveCategory = reserveCategoryService.getReserveCategoryById(reserveCategoryId);
+
+            List<CustomProductReserveCategoryFeePostRef> customProductReserveCategoryFeePostRefList = entityManager.createQuery("SELECT c FROM CustomProductReserveCategoryFeePostRef c WHERE c.customProduct = :customProduct AND c.customReserveCategory = :customReserveCategory", CustomProductReserveCategoryFeePostRef.class)
+                    .setParameter("customProduct", customProduct)
+                    .setParameter("customReserveCategory", customReserveCategory)
+                    .getResultList();
+
+            return customProductReserveCategoryFeePostRefList.get(0);
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return null;
         }
     }
 }

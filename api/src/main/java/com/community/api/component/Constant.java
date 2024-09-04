@@ -73,5 +73,7 @@ public class Constant {
     public static String PRIVILEGE_UPDATE_PRODUCT = "UPDATE_PRODUCT";
     public static String APPLICATION_SCOPE_CENTER = "CENTER";
     public static String PRIVILEGE_APPROVE_PRODUCT = "APPROVE_PRODUCT";
-
+    public static final String PRODUCTNOTFOUND = "Product not Found";
+    public static final String CATEGORYNOTFOUND = "Category not Found";
+    public static final String PRODUCTTITLENOTGIVEN = "Product MetaTitle not Given";
 }
