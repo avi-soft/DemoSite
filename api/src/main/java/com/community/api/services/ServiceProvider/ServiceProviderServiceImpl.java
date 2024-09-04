@@ -541,7 +541,6 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
         Map<String, Object> data = new HashMap<>();
         data.put("serviceproviderDetails", serviceProviderEntity);
-
         responseBody.put("status_code", HttpStatus.OK.value());
         responseBody.put("data", data);
         responseBody.put("token", token);
