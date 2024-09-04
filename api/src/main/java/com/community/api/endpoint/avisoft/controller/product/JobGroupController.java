@@ -3,6 +3,7 @@ package com.community.api.endpoint.avisoft.controller.product;
 import com.community.api.component.Constant;
 import com.community.api.entity.CustomJobGroup;
 import com.community.api.services.JobGroupService;
+import com.community.api.services.ResponseService;
 import com.community.api.services.exception.ExceptionHandlingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,31 +17,34 @@ import java.util.List;
 @RestController
 public class JobGroupController {
 
-    @Autowired
-    protected ExceptionHandlingService exceptionHandlingService;
+    private final ExceptionHandlingService exceptionHandlingService;
+    private final JobGroupService jobGroupService;
 
     @Autowired
-    JobGroupService jobGroupService;
+    public JobGroupController(ExceptionHandlingService exceptionHandlingService, JobGroupService jobGroupService) {
+        this.exceptionHandlingService = exceptionHandlingService;
+        this.jobGroupService = jobGroupService;
+    }
 
-    @GetMapping("/getAllJobGroup")
+    @GetMapping("/get-all-job-group")
     public ResponseEntity<?> getAllJobGroup() {
         try {
             List<CustomJobGroup> applicationScopeList = jobGroupService.getAllJobGroup();
-            return new ResponseEntity<>(applicationScopeList, HttpStatus.OK);
+            return ResponseService.generateSuccessResponse("Job Groups Found",applicationScopeList, HttpStatus.OK);
         }catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return new ResponseEntity<>(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage() , HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage() , HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @GetMapping("/getJobGroupById/{jobGroupId}")
+    @GetMapping("/get-job-group-by-id/{jobGroupId}")
     public ResponseEntity<?> getJobGroupById(@PathVariable Long jobGroupId) {
         try {
             CustomJobGroup jobGroup = jobGroupService.getJobGroupById(jobGroupId);
-            return new ResponseEntity<>(jobGroup, HttpStatus.OK);
+            return ResponseService.generateSuccessResponse("Job Group Found",jobGroup, HttpStatus.OK);
         }catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return new ResponseEntity<>(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage() , HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage() , HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

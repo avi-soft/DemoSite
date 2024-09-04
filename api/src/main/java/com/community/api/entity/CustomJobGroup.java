@@ -1,5 +1,6 @@
 package com.community.api.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,8 +19,10 @@ public class CustomJobGroup {
 
     @Id
     @Column(name="job_group_id")
+    @JsonProperty("job_group_id")
     protected Long jobGroupId;
 
     @Column(name="job_group")
+    @JsonProperty("job_group")
     protected Character jobGroup;
 }

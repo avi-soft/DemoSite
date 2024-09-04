@@ -1,5 +1,6 @@
 package com.community.api.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,9 +19,11 @@ public class CustomApplicationScope {
 
     @Id
     @Column(name="application_scope_id")
+    @JsonProperty("application_scope_id")
     protected Long applicationScopeId;
 
     @Column(name="application_scope")
+    @JsonProperty("application_scope")
     protected String applicationScope;
 
 }
