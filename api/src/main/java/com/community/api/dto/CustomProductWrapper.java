@@ -55,6 +55,8 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
     protected Boolean domicileRequired;
     protected Long modifierUserId;
     protected Role modifierRoleId;
+    protected Date examDateFrom;
+    protected Date examDateTo;
 
     public void wrapDetailsAddProduct(Product product, AddProductDto addProductDto, CustomJobGroup customJobGroup, CustomProductState customProductState, CustomApplicationScope customApplicationScope, CustomReserveCategory customReserveCategory, Long creatorUserId, Role creatorRole) {
 
@@ -102,6 +104,8 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
 
         this.domicileRequired = addProductDto.getDomicileRequired();
         this.advertiserUrl = addProductDto.getAdvertiserUrl();
+        this.examDateFrom = addProductDto.getExamDateFrom();
+        this.examDateTo = addProductDto.getExamDateTo();
 
         if (product.getDefaultCategory() != null) {
             this.defaultCategoryId = product.getDefaultCategory().getId();
@@ -144,6 +148,8 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
 
         this.domicileRequired = customProduct.getDomicileRequired();
         this.advertiserUrl = customProduct.getAdvertiserUrl();
+        this.examDateFrom = customProduct.getExamDateFrom();
+        this.examDateTo = customProduct.getExamDateTo();
 
         if (customProduct.getDefaultCategory() != null) {
             this.defaultCategoryId = customProduct.getDefaultCategory().getId();
@@ -182,6 +188,9 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
 
         this.domicileRequired = customProduct.getDomicileRequired();
         this.advertiserUrl = customProduct.getAdvertiserUrl();
+
+        this.examDateFrom = customProduct.getExamDateFrom();
+        this.examDateTo = customProduct.getExamDateTo();
 
         if (customProduct.getDefaultCategory() != null) {
             this.defaultCategoryId = customProduct.getDefaultCategory().getId();

@@ -418,6 +418,7 @@ public class ProductController extends CatalogEndpoint {
                 if (jobGroup == null) {
                     return new ResponseEntity<>("Error in fetching jobGroup", HttpStatus.INTERNAL_SERVER_ERROR);
                 }
+                customProduct.setJobGroup(jobGroup);
             }
 
             if (addProductDto.getExamDateFrom() != null && addProductDto.getExamDateTo() != null) {
@@ -426,10 +427,19 @@ public class ProductController extends CatalogEndpoint {
                 dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
                 dateFormat.parse(dateFormat.format(addProductDto.getExamDateTo()));
 
-                if (!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate()) || !addProductDto.getExamDateTo().after(addProductDto.getActiveEndDate())) {
-                    return new ResponseEntity<>("Both Tentative examination data must be after EndDate", HttpStatus.INTERNAL_SERVER_ERROR);
-                } else if (addProductDto.getExamDateTo().before(addProductDto.getExamDateFrom())) {
+                if (addProductDto.getExamDateTo().before(addProductDto.getExamDateFrom())) {
                     return new ResponseEntity<>("Tentative Exam date To must be either equal or before of Tentative Exam date From", HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+
+                if(addProductDto.getActiveEndDate() != null){
+                    if (!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate()) || !addProductDto.getExamDateTo().after(addProductDto.getActiveEndDate())) {
+                        return new ResponseEntity<>("Both Tentative examination data must be after EndDate", HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
+
+                }else{
+                    if (!addProductDto.getExamDateFrom().after(customProduct.getActiveEndDate()) || !addProductDto.getExamDateTo().after(customProduct.getActiveEndDate())) {
+                        return new ResponseEntity<>("Both Tentative examination data must be after EndDate", HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
                 }
                 customProduct.setExamDateFrom(addProductDto.getExamDateFrom());
                 customProduct.setExamDateTo(addProductDto.getExamDateTo());
@@ -437,21 +447,38 @@ public class ProductController extends CatalogEndpoint {
             } else if (addProductDto.getExamDateFrom() != null) {
 
                 dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
-                if (!addProductDto.getExamDateFrom().after(customProduct.getActiveEndDate())) {
-                    return new ResponseEntity<>("Tentative examination date must be after EndDate", HttpStatus.INTERNAL_SERVER_ERROR);
-                } else if (customProduct.getExamDateTo().before(addProductDto.getExamDateFrom())) {
+                if (customProduct.getExamDateTo().before(addProductDto.getExamDateFrom())) {
                     return new ResponseEntity<>("Tentative Exam date To must be either equal or before of Tentative Exam date From", HttpStatus.INTERNAL_SERVER_ERROR);
                 }
+
+                if(addProductDto.getActiveEndDate() == null) {
+                    if (!addProductDto.getExamDateFrom().after(customProduct.getActiveEndDate())) {
+                        return new ResponseEntity<>("Tentative examination date must be after EndDate", HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
+                }else{
+                    if (!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate())) {
+                        return new ResponseEntity<>("Tentative examination date must be after EndDate", HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
+                }
                 customProduct.setExamDateFrom(addProductDto.getExamDateFrom());
+
             } else if (addProductDto.getExamDateTo() != null) {
 
                 dateFormat.parse(dateFormat.format(addProductDto.getExamDateTo()));
-                if (!addProductDto.getExamDateTo().after(customProduct.getActiveEndDate())) {
-                    return new ResponseEntity<>("Tentative examination data must be after EndDate", HttpStatus.INTERNAL_SERVER_ERROR);
-                } else if (addProductDto.getExamDateTo().before(customProduct.getExamDateFrom())) {
+                if (addProductDto.getExamDateTo().before(customProduct.getExamDateFrom())) {
                     return new ResponseEntity<>("Tentative Exam date To must be either equal or before of Tentative Exam date From", HttpStatus.INTERNAL_SERVER_ERROR);
                 }
+                if(addProductDto.getActiveEndDate() == null) {
+                    if (!addProductDto.getExamDateTo().after(customProduct.getActiveEndDate())) {
+                        return new ResponseEntity<>("Tentative examination data must be after EndDate", HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
+                }else{
+                    if (!addProductDto.getExamDateTo().after(addProductDto.getActiveEndDate())) {
+                        return new ResponseEntity<>("Tentative examination data must be after EndDate", HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
+                }
                 customProduct.setExamDateTo(addProductDto.getExamDateTo());
+
             }
 
             if (addProductDto.getPlatformFee() != null) {
@@ -471,6 +498,7 @@ public class ProductController extends CatalogEndpoint {
                     } else if (addProductDto.getNotifyingAuthority() != null && !addProductDto.getNotifyingAuthority().trim().isEmpty()) {
                         addProductDto.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
                         customProduct.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
+                        customProduct.setCustomApplicationScope(applicationScope);
                     }
                 }
             }
