@@ -40,8 +40,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
     private static final int BEARER_PREFIX_LENGTH = BEARER_PREFIX.length();
 
-    @Value("${api.key}")
-    private String apiKey;
+
+
+    private String apiKey="IaJGL98yHnKjnlhKshiWiy1IhZ+uFsKnktaqFX3Dvfg=";
+
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -109,12 +111,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 "/api/v1/categoryCustom/getProductsByCategoryId",
                 "/api/v1/categoryCustom/getAllCategories"
         );
+
         boolean isBypassed = bypassUris.stream().anyMatch(path::equals);
+        logger.info(isBypassed + " isBypassed");
         return isBypassed;
     }
 
     private boolean validateApiKey(HttpServletRequest request) {
         String requestApiKey = request.getHeader("x-api-key");
+        logger.info(apiKey + " apiKey", requestApiKey + "requestApiKey");
         return apiKey.equals(requestApiKey);
     }
 

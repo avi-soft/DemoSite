@@ -16,6 +16,7 @@ import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -326,28 +327,41 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 .orElse(null);
     }
     //find service provider by phone and validate the password.
-    public ResponseEntity<?> authenticateByPhone(String mobileNumber, String countryCode, String password) {
+    public ResponseEntity<?> authenticateByPhone(String mobileNumber, String countryCode, String password,HttpServletRequest request,HttpSession session) {
         ServiceProviderEntity existingServiceProvider = findServiceProviderByPhone(mobileNumber, countryCode);
-        return validateServiceProvider(existingServiceProvider, password);
+        return validateServiceProvider(existingServiceProvider, password,request,session);
     }
     //find service provider by username and validate the password.
-    public ResponseEntity<?> authenticateByUsername(String username, String password) {
+    public ResponseEntity<?> authenticateByUsername(String username, String password,HttpServletRequest request,HttpSession session) {
         ServiceProviderEntity existingServiceProvider =findServiceProviderByUserName(username);
-        return validateServiceProvider(existingServiceProvider, password);
+        return validateServiceProvider(existingServiceProvider, password,request,session);
     }
     //mechanism to check password
-    public ResponseEntity<?> validateServiceProvider(ServiceProviderEntity serviceProvider, String password) {
+    public ResponseEntity<?> validateServiceProvider(ServiceProviderEntity serviceProvider, String password, HttpServletRequest request,HttpSession session) {
         if (serviceProvider == null) {
             return new ResponseEntity<>("No Records Found", HttpStatus.NOT_FOUND);
         }
         if (passwordEncoder.matches(password,serviceProvider.getPassword())) {
-            return new ResponseEntity<>(serviceProvider, HttpStatus.OK);
+            String ipAddress = request.getRemoteAddr();
+            String userAgent = request.getHeader("User-Agent");
+            String tokenKey = "authTokenServiceProvider_" + serviceProvider.getMobileNumber();
+            String existingToken = (String) session.getAttribute(tokenKey);
+            if(existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
+                Map<String, Object> responseBody = createAuthResponse(existingToken, serviceProvider).getBody();
 
-        } else {
+                return ResponseEntity.ok(responseBody);
+            } else {
+                String newToken = jwtUtil.generateToken(serviceProvider.getService_provider_id(), serviceProvider.getRole(), ipAddress, userAgent);
+                session.setAttribute(tokenKey, newToken);
+
+                Map<String, Object> responseBody = createAuthResponse(newToken, serviceProvider).getBody();
+            return ResponseEntity.ok(responseBody);
+
+        } }else {
             return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
         }
     }
-    public ResponseEntity<?> loginWithPassword(@RequestBody Map<String, Object> serviceProviderDetails, HttpSession session) {
+    public ResponseEntity<?> loginWithPassword(@RequestBody Map<String, Object> serviceProviderDetails,HttpServletRequest request,HttpSession session) {
         try {
             String mobileNumber = (String) serviceProviderDetails.get("mobileNumber");
             String username = (String) serviceProviderDetails.get("username");
@@ -359,9 +373,9 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
             }
             if (mobileNumber != null && !mobileNumber.isEmpty()) {
-                return authenticateByPhone(mobileNumber, countryCode, password);
+                return authenticateByPhone(mobileNumber, countryCode, password,request,session);
             } else if (username != null && !username.isEmpty()) {
-                return authenticateByUsername(username, password);
+                return authenticateByUsername(username, password,request,session);
             } else {
                 return responseService.generateErrorResponse("Empty Phone Number or username", HttpStatus.BAD_REQUEST);
 
@@ -391,7 +405,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             String countryCode=existingServiceProivder.getCountry_code();
             if(countryCode==null)
                 countryCode=Constant.COUNTRY_CODE;
-            return new ResponseEntity<>(sendOtp(existingServiceProivder.getMobileNumber(),countryCode,session),HttpStatus.OK);
+            return (sendOtp(existingServiceProivder.getMobileNumber(),countryCode,session));
         }catch (Exception e) {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse(ApiConstants.SOME_EXCEPTION_OCCURRED + e.getMessage(), HttpStatus.BAD_REQUEST);
