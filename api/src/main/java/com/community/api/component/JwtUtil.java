@@ -38,8 +38,9 @@ public class JwtUtil {
     @Autowired
     private CustomerService customerService;
 
-    @PostConstruct
+    /*@PostConstruct
     public void init() {
+
         try {
             byte[] secretKeyBytes = DatatypeConverter.parseBase64Binary(secretKeyString);
             this.secretKey = Keys.hmacShaKeyFor(secretKeyBytes);
@@ -47,12 +48,13 @@ public class JwtUtil {
             exceptionHandling.handleException(e);
             throw new RuntimeException("Error generating JWT token", e);
         }
-    }
 
-   /* @PostConstruct
+    }*/
+
+    @PostConstruct
     public void init() {
         this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-    }*/
+    }
 
     public String generateToken(Long id, Integer role, String ipAddress, String userAgent) {
         try {
@@ -95,7 +97,6 @@ public class JwtUtil {
     }
 
     public Boolean validateToken(String token, String ipAddress, String userAgent) {
-
 
         try {
             Long id = extractId(token);

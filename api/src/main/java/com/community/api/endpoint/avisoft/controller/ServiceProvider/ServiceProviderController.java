@@ -112,7 +112,7 @@ public class ServiceProviderController {
             if (serviceProvider.getPassword() == null) {
                 serviceProvider.setPassword(passwordEncoder.encode(password));
                 entityManager.merge(serviceProvider);
-                return responseService.generateSuccessResponse("Password created",serviceProvider.getPassword(),HttpStatus.OK);
+                return responseService.generateSuccessResponse("Password created",serviceProvider,HttpStatus.OK);
             } else {
                 if (password == null /*|| newPassword == null*/)
                     new ResponseEntity<>("Empty password entered", HttpStatus.BAD_REQUEST);

@@ -258,7 +258,7 @@ public class AccountEndPoint {
 
                 }
             } else if (roleService.findRoleName(role).equals(Constant.roleServiceProvider)) {
-                return serviceProviderService.loginWithPassword(loginDetails, session);
+                return serviceProviderService.loginWithPassword(loginDetails, request,session);
             } else {
                 return responseService.generateErrorResponse(ApiConstants.INVALID_ROLE, HttpStatus.BAD_REQUEST);
 
@@ -357,13 +357,14 @@ public class AccountEndPoint {
                         String userAgent = request.getHeader("User-Agent");
                         if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
 
-                            return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(existingToken, customer));
+                            OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(existingToken, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
+                            return responseService.generateSuccessResponse("Logged in Successfully",response,HttpStatus.OK);
                         } else {
 
                             String token = jwtUtil.generateToken(existingCustomer.getId(), role, ipAddress, userAgent);
                             session.setAttribute(tokenKey, token);
-                            return ResponseEntity.ok(CustomerEndpoint.createAuthResponse(token, customer));
-
+                          OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(token, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
+                            return ResponseEntity.ok(response);
                         }
 
                     } else {
@@ -375,7 +376,7 @@ public class AccountEndPoint {
 
                 }
             } else if (roleService.findRoleName(role).equals(Constant.roleServiceProvider)) {
-                return serviceProviderService.loginWithPassword(loginDetails, session);
+                return serviceProviderService.loginWithPassword(loginDetails,request,session);
             } else  return responseService.generateErrorResponse(ApiConstants.INVALID_ROLE , HttpStatus.BAD_REQUEST);
 
 
