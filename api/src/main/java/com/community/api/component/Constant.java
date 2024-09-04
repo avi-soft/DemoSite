@@ -48,4 +48,5 @@ public class Constant {
     public static String CATALOG_SERVICE_NOT_INITIALIZED = "Catalog Service Not Initialized";
     public static String GET_STATES_LIST="Select s from StateCode s";
     public static String GET_ORDER_ITEM_PRODUCT="Select p.product_id from custom_order_item_product p where p.order_item_id =:orderItemId";
+    public static String CANNOT_ADD_MORE_THAN_ONE_FORM="You can only add one of this form. Please choose a different form if you need more";
 }

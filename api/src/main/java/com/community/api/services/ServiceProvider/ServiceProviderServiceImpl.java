@@ -491,7 +491,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
 
             if (otpEntered == null || otpEntered.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("OTP cannot be empty");
+                return responseService.generateErrorResponse("OTP cannot be empty",HttpStatus.BAD_REQUEST);
             }
             if (otpEntered.equals(storedOtp)) {
                 existingServiceProvider.setOtp(null);
@@ -508,7 +508,11 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                     session.setAttribute(tokenKey, newToken);
 
                     Map<String, Object> responseBody = createAuthResponse(newToken, existingServiceProvider).getBody();
-
+                    if(existingServiceProvider.getSignedUp()==0) {
+                        existingServiceProvider.setSignedUp(1);
+                        entityManager.merge(existingServiceProvider);
+                        responseBody.put("message", "User has been signed up");
+                    }
                     return ResponseEntity.ok(responseBody);
                 }
             } else {

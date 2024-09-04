@@ -1,7 +1,9 @@
 package com.community.api.endpoint.avisoft.controller.cart;
 import com.broadleafcommerce.rest.api.endpoint.BaseEndpoint;
+import com.community.api.component.Constant;
 import com.community.api.services.CartService;
 import com.community.api.services.ResponseService;
+import com.community.api.services.SharedUtilityService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import org.broadleafcommerce.core.catalog.domain.Product;
@@ -21,6 +23,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.lang.model.element.Name;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.util.*;
@@ -38,11 +42,17 @@ public class CartEndPoint extends BaseEndpoint {
     private OrderItemService orderItemService;
     private CartService cartService;
     private ResponseService responseService;
+    private SharedUtilityService sharedUtilityService;
 
     // Setter-based injection
     @Autowired
     public void setCustomerService(CustomerService customerService) {
         this.customerService = customerService;
+    }
+
+    @Autowired
+    public void setSharedUtilityService(SharedUtilityService sharedUtilityService) {
+        this.sharedUtilityService=sharedUtilityService;
     }
 
     @Autowired
@@ -82,30 +92,30 @@ public class CartEndPoint extends BaseEndpoint {
 
 
     @RequestMapping(value = "empty", method = RequestMethod.DELETE)
-    public ResponseEntity<String> emptyTheCart(@RequestParam Long customerId) {
+    public ResponseEntity<?> emptyTheCart(@RequestParam Long customer_id) {
         try {
             if (isAnyServiceNull()) {
                 return new ResponseEntity<>("One or more Serivces not initialized",HttpStatus.INTERNAL_SERVER_ERROR);
             }
-            Customer customer = customerService.readCustomerById(customerId);//finding the customer to get cart associated with it
+            Customer customer = customerService.readCustomerById(customer_id);//finding the customer to get cart associated with it
             Order cart = null;
             if (customer == null) {
-                return new ResponseEntity<>("Customer not found for this Id", HttpStatus.NOT_FOUND);
+                return responseService.generateErrorResponse("Customer not found for this Id",HttpStatus.NOT_FOUND);
             } else {
                 cart = this.orderService.findCartForCustomer(customer);
                 if (cart == null) {
-                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                    return responseService.generateErrorResponse("Cart Not Found",HttpStatus.NOT_FOUND);
                 }
                 if (cart.getStatus().equals(OrderStatus.IN_PROCESS)) {//ensuring its cart and not an order
                     orderService.deleteOrder(cart);
-                    return new ResponseEntity<>("Order Deleted", HttpStatus.OK);
+                    return responseService.generateSuccessResponse("Cart is empty now",null,HttpStatus.OK);
                 }
-                return new ResponseEntity<>(HttpStatus.OK);
-
+                else
+                    return responseService.generateErrorResponse("Error removing all items from cart",HttpStatus.INTERNAL_SERVER_ERROR);
             }
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return new ResponseEntity<>("Error deleting!", HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("Error removing all items from cart : "+e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -114,22 +124,20 @@ public class CartEndPoint extends BaseEndpoint {
     public ResponseEntity<?> addToCart(@RequestParam long customerId, @RequestParam long productId) {
         try {
             if (isAnyServiceNull()) {
-                return new ResponseEntity<>("One or more Services not initialized", HttpStatus.INTERNAL_SERVER_ERROR);
+                return responseService.generateErrorResponse("One or more Services not initialized", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             Customer customer = customerService.readCustomerById(customerId);
             if (customer == null) {
-                return new ResponseEntity<>("Customer not found for this Id", HttpStatus.NOT_FOUND);
+                return responseService.generateErrorResponse("Customer not found for this Id", HttpStatus.NOT_FOUND);
             }
-
             Order cart = orderService.findCartForCustomer(customer);
             if (cart == null) {
                 cart = orderService.createNewCartForCustomer(customer);
             }
-
             Product product = catalogService.findProductById(productId);
             if (product == null) {
-                return new ResponseEntity<>("Product not found", HttpStatus.NOT_FOUND);
+                return responseService.generateErrorResponse("Product not found", HttpStatus.NOT_FOUND);
             }
             OrderItemRequest orderItemRequest = new OrderItemRequest();
             orderItemRequest.setProduct(product);
@@ -147,11 +155,7 @@ public class CartEndPoint extends BaseEndpoint {
             {
                 if(Long.parseLong(existingOrderItem.getOrderItemAttributes().get("productId").getValue())==productId) {
                     flag=true;
-                    entityManager.remove(orderItem);
-                    int quantity = existingOrderItem.getQuantity();
-                    existingOrderItem.setQuantity(++quantity);
-                    entityManager.merge(existingOrderItem);
-                    break;
+                    return responseService.generateErrorResponse(Constant.CANNOT_ADD_MORE_THAN_ONE_FORM,HttpStatus.UNPROCESSABLE_ENTITY);
                 }
             }
             if(!flag)
@@ -159,7 +163,7 @@ public class CartEndPoint extends BaseEndpoint {
             cart.setOrderItems(items);
             return responseService.generateSuccessResponse("Cart updated",orderItem.getOrderItemAttributes().toString(), HttpStatus.OK);
         } catch (Exception e) {
-            return new ResponseEntity<>("Internal Server Error", HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("Error adding item to cart : "+e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -187,7 +191,6 @@ public class CartEndPoint extends BaseEndpoint {
     public ResponseEntity<?> retrieveCartItems(@RequestParam long customerId, @RequestParam Long orderId) {
         try {
             Double subTotal=0.0;
-            Map<String, Object>responseMap=new HashMap<>();
             if (isAnyServiceNull()) {
                 return new ResponseEntity<>("One or more Serivces not initialized", HttpStatus.INTERNAL_SERVER_ERROR);
             }
@@ -202,18 +205,20 @@ public class CartEndPoint extends BaseEndpoint {
             List<OrderItem>orderItemList=cart.getOrderItems();
             if(orderItemList!=null&&(!orderItemList.isEmpty()))
             {
+                Map<String,Object>response=new HashMap<>();
+                List<Map<String,Object>>products=new ArrayList<>();
                 for(OrderItem orderItem:orderItemList) {
                   Long productId=Long.parseLong(orderItem.getOrderItemAttributes().get("productId").getValue());
                     Product product = catalogService.findProductById(productId);
                     if (product != null) {
-                        listOfProducts.add(product);
-                        for(int quantity=orderItem.getQuantity();quantity>1;quantity--)
+                        Map<String,Object>productDetails=sharedUtilityService.createProductResponseMap(product);
+                        products.add(productDetails);
                             subTotal += product.getDefaultSku().getCost().doubleValue();
                     }
                 }
-                responseMap.put("products",listOfProducts);
-                responseMap.put("sub_total",subTotal);
-                return responseService.generateSuccessResponse("Cart items",responseMap,HttpStatus.OK);
+                response.put("products",products.toArray());
+                response.put("sub_total",subTotal);
+                return responseService.generateSuccessResponse("Cart items",response,HttpStatus.OK);
             }
             else
                 return responseService.generateErrorResponse("No items in cart",HttpStatus.NOT_FOUND);
