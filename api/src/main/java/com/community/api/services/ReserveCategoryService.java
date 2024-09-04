@@ -1,7 +1,6 @@
 package com.community.api.services;
 
 import com.community.api.component.Constant;
-import com.community.api.entity.CustomProductState;
 import com.community.api.entity.CustomReserveCategory;
 import com.community.api.services.exception.ExceptionHandlingService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,7 +35,6 @@ public class ReserveCategoryService {
             Query query = entityManager.createQuery(Constant.GET_RESERVED_CATEGORY_BY_ID, CustomReserveCategory.class);
             query.setParameter("reserveCategoryId", reserveCategoryId);
             List<CustomReserveCategory> reserveCategory = query.getResultList();
-
             if (!reserveCategory.isEmpty()) {
                 return reserveCategory.get(0);
             } else {

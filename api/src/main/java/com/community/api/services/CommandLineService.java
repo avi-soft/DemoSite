@@ -1,10 +1,16 @@
 package com.community.api.services;
 
-import com.community.api.component.Constant;
 import com.community.api.entity.CustomApplicationScope;
-import com.community.api.entity.CustomJobGroup;
 import com.community.api.entity.CustomProductState;
 import com.community.api.entity.CustomReserveCategory;
+import com.community.api.entity.Districts;
+import com.community.api.entity.Examination;
+import com.community.api.entity.Role;
+import com.community.api.entity.ServiceProviderAddressRef;
+import com.community.api.entity.ServiceProviderInfra;
+import com.community.api.entity.ServiceProviderLanguage;
+import com.community.api.entity.Skill;
+import com.community.api.entity.StateCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -12,13 +18,14 @@ import org.springframework.stereotype.Component;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 
+import static org.broadleafcommerce.common.util.sql.importsql.DemoSqlServerSingleLineSqlCommandExtractor.CURRENT_TIMESTAMP;
+
 @Component
-public class CustomProductStateService implements CommandLineRunner {
+public class CommandLineService implements CommandLineRunner {
 
     @Autowired
     private EntityManager entityManager;
-   @Autowired
-   private SharedUtilityService sharedUtilityService;
+
     @Override
     @Transactional
     public void run(String... args) throws Exception {

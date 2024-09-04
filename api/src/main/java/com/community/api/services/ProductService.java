@@ -33,7 +33,6 @@ public class ProductService {
         String sql = "INSERT INTO custom_product (product_id, exam_date_from, exam_date_to, go_live_date, platform_fee, priority_level, application_scope_id, job_group_id, product_state_id, creator_role_id, creator_user_id, notifying_authority, last_modified, advertiser_url, domicile_required) VALUES (:productId, :examDateFrom, :examDateTo, :goLiveDate, :platformFee, :priorityLevel, :applicationScopeId, :jobGroupId, :productStateId, :roleId, :userId, :notifyingAuthority, :modifiedDate, :advertiserUrl, :domicileRequired)";
 
         try {
-            System.out.println("ISSUE IS HERE");
             entityManager.createNativeQuery(sql)
                     .setParameter("productId", product)
                     .setParameter("examDateFrom", examDateFrom != null ? new Timestamp(examDateFrom.getTime()) : null)

@@ -6,56 +6,92 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 
 import com.broadleafcommerce.rest.api.wrapper.MediaWrapper;
-import com.community.api.entity.*;
-import com.community.api.services.ReserveCategoryService;
+import com.community.api.entity.CustomApplicationScope;
+import com.community.api.entity.CustomJobGroup;
+import com.community.api.entity.CustomProduct;
+import com.community.api.entity.CustomProductState;
+import com.community.api.entity.CustomReserveCategory;
+import com.community.api.entity.Role;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.broadleafcommerce.common.rest.api.wrapper.APIWrapper;
 import org.broadleafcommerce.common.rest.api.wrapper.BaseWrapper;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.common.persistence.Status;
-import org.springframework.beans.factory.annotation.Autowired;
 
 
 @Data
 @NoArgsConstructor
 public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Product> {
 
+    @JsonProperty("id")
     protected Long id;
+    @JsonProperty("meta_title")
     protected String metaTitle;
+    @JsonProperty("display_template")
     protected String displayTemplate;
+    @JsonProperty("meta_description")
     protected String metaDescription;
+    @JsonProperty("long_description")
     protected String longDescription;
+    @JsonProperty("category_name")
     protected String categoryName;
+    @JsonProperty("priority_level")
     protected Integer priorityLevel;
+    @JsonProperty("active_start_date")
     protected Date activeStartDate;
+    @JsonProperty("active_end_date")
     protected Date activeEndDate;
+    @JsonProperty("go_live_date")
     protected Date activeGoLiveDate;
+    @JsonProperty("default_category_id")
     protected Long defaultCategoryId;
+    @JsonProperty("archived")
     protected Character archived;
 
+    @JsonProperty("url")
     protected String url;
+    @JsonProperty("active")
     protected Boolean active;
+    @JsonProperty("promo_message")
     protected String promoMessage;
+    @JsonProperty("quantity")
     protected Integer quantity;
+    @JsonProperty("media")
     protected List<MediaWrapper> media;
 
+    @JsonProperty("reserve_category_dto_list")
     protected List<ReserveCategoryDto> reserveCategoryDtoList = new ArrayList<>();
+    @JsonProperty("platform_fee")
     protected Double platformFee;
+    @JsonProperty("notifying_authority")
     protected String notifyingAuthority;
+    @JsonProperty("custom_application_scope")
     protected CustomApplicationScope customApplicationScope;
+    @JsonProperty("custom_product_state")
     protected CustomProductState customProductState;
+    @JsonProperty("custom_job_group")
     protected CustomJobGroup customJobGroup;
 
+    @JsonProperty("creator_user_id")
     protected Long creatorUserId;
+    @JsonProperty("creator_role_id")
     protected Role creatorRoleId;
 
+    @JsonProperty("modified_date")
     protected Date modifiedDate;
+    @JsonProperty("advertiser_url")
     protected String advertiserUrl;
+    @JsonProperty("domicile_required")
     protected Boolean domicileRequired;
+    @JsonProperty("modifier_user_id")
     protected Long modifierUserId;
+    @JsonProperty("modifier_role_id")
     protected Role modifierRoleId;
+    @JsonProperty("exam_date_from")
     protected Date examDateFrom;
+    @JsonProperty("exam_date_to")
     protected Date examDateTo;
 
     public void wrapDetailsAddProduct(Product product, AddProductDto addProductDto, CustomJobGroup customJobGroup, CustomProductState customProductState, CustomApplicationScope customApplicationScope, CustomReserveCategory customReserveCategory, Long creatorUserId, Role creatorRole) {
