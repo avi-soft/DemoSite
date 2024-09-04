@@ -30,10 +30,13 @@ public class JobGroupController {
     public ResponseEntity<?> getAllJobGroup() {
         try {
             List<CustomJobGroup> applicationScopeList = jobGroupService.getAllJobGroup();
-            return ResponseService.generateSuccessResponse("Job Groups Found",applicationScopeList, HttpStatus.OK);
-        }catch (Exception exception) {
+            if (applicationScopeList.isEmpty()) {
+                return ResponseService.generateErrorResponse("No Job Group Found", HttpStatus.NOT_FOUND);
+            }
+            return ResponseService.generateSuccessResponse("Job Groups Found", applicationScopeList, HttpStatus.OK);
+        } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage() , HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -41,10 +44,13 @@ public class JobGroupController {
     public ResponseEntity<?> getJobGroupById(@PathVariable Long jobGroupId) {
         try {
             CustomJobGroup jobGroup = jobGroupService.getJobGroupById(jobGroupId);
-            return ResponseService.generateSuccessResponse("Job Group Found",jobGroup, HttpStatus.OK);
-        }catch (Exception exception) {
+            if (jobGroup == null) {
+                return ResponseService.generateErrorResponse("No Job Group Found", HttpStatus.NOT_FOUND);
+            }
+            return ResponseService.generateSuccessResponse("Job Group Found", jobGroup, HttpStatus.OK);
+        } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage() , HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

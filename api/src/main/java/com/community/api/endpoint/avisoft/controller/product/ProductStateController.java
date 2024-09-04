@@ -30,10 +30,13 @@ public class ProductStateController {
     public ResponseEntity<?> getAllProductState() {
         try {
             List<CustomProductState> productStateList = productStateService.getAllProductState();
-            return ResponseService.generateSuccessResponse("Product States Found",productStateList, HttpStatus.OK);
-        }catch (Exception exception) {
+            if (productStateList.isEmpty()) {
+                return ResponseService.generateErrorResponse("No Product State Found", HttpStatus.NOT_FOUND);
+            }
+            return ResponseService.generateSuccessResponse("Product States Found", productStateList, HttpStatus.OK);
+        } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage() , HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -41,10 +44,13 @@ public class ProductStateController {
     public ResponseEntity<?> getProductStateById(@PathVariable Long productStateId) {
         try {
             CustomProductState productState = productStateService.getProductStateById(productStateId);
-            return ResponseService.generateSuccessResponse("Product State Found",productState, HttpStatus.OK);
-        }catch (Exception exception) {
+            if (productState == null) {
+                return ResponseService.generateErrorResponse("No Product State Found", HttpStatus.NOT_FOUND);
+            }
+            return ResponseService.generateSuccessResponse("Product State Found", productState, HttpStatus.OK);
+        } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage() , HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -52,10 +58,13 @@ public class ProductStateController {
     public ResponseEntity<?> getProductStateByName(@PathVariable String productStateName) {
         try {
             CustomProductState productState = productStateService.getProductStateByName(productStateName);
-            return ResponseService.generateSuccessResponse("Product State Found",productState, HttpStatus.OK);
-        }catch (Exception exception) {
+            if (productState == null) {
+                return ResponseService.generateErrorResponse("No Product State Found", HttpStatus.NOT_FOUND);
+            }
+            return ResponseService.generateSuccessResponse("Product State Found", productState, HttpStatus.OK);
+        } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage() , HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
