@@ -4,6 +4,7 @@ import com.community.api.services.NotificationService;
 import com.community.api.services.exception.CustomerDoesNotExistsException;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,7 +33,7 @@ public class NotificationController
             catch (CustomerDoesNotExistsException customerDoesNotExistsException)
             {
                 exceptionHandlingImplement.handleException(customerDoesNotExistsException);
-                return ResponseEntity.status(404).body("Customer does not exist with id " + customerId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer does not exist with id " + customerId);
             }
             catch (Exception e) {
                 exceptionHandlingImplement.handleException(e);

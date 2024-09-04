@@ -20,12 +20,18 @@ public class ResponseService {
         successResponse.setMessage(message);
 
         Map<String, Object> dataMap = new HashMap<>();
-        if (data instanceof Map) {
+/*        if (data instanceof Map) {
             dataMap = (Map<String, Object>) data;
         } else {
             dataMap.put("value", data);
         }
-        successResponse.setData(dataMap);
+        successResponse.setData(dataMap);*/
+
+        if (data instanceof Map) {
+            successResponse.setData((Map<String, Object>) data);
+        } else {
+            successResponse.setData(data);
+        }
 
         return new ResponseEntity<>(successResponse, status);
     }

@@ -491,7 +491,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
 
             if (otpEntered == null || otpEntered.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("OTP cannot be empty");
+                return responseService.generateErrorResponse("OTP cannot be empty",HttpStatus.BAD_REQUEST);
             }
             if (otpEntered.equals(storedOtp)) {
                 existingServiceProvider.setOtp(null);

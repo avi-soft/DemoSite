@@ -170,7 +170,7 @@
         </dependency>
 
 
-        <dependency>
+       <dependency>
             <groupId>org.liquibase</groupId>
 
             <artifactId>liquibase-core</artifactId>
@@ -183,7 +183,7 @@
             </exclusions>
         </dependency>
 
-        <dependency>
+     <dependency>
 
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
