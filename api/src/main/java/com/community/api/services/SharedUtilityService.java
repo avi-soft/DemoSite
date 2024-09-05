@@ -24,7 +24,8 @@ import java.util.Map;
 public class SharedUtilityService {
     @Autowired
     private EntityManager entityManager;
-
+    @Autowired
+    private  ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService;
     public long findCount(String queryString) {
         TypedQuery<Long> query = entityManager.createQuery(queryString, Long.class);
         return query.getSingleResult();
@@ -47,16 +48,11 @@ public class SharedUtilityService {
         productDetails.put("platform_fee",customProduct.getPlatformFee());
         productDetails.put("display_template", product.getDisplayTemplate());
         productDetails.put("default_sku_id", product.getDefaultSku().getId());
-        productDetails.put("default_sku_external_id", product.getDefaultSku().getExternalId());
-        productDetails.put("default_sku_url_key", product.getDefaultSku().getUrlKey());
-        productDetails.put("default_sku_display_template", product.getDefaultSku().getDisplayTemplate());
-        productDetails.put("default_sku_cost_amount", product.getDefaultSku().getCost().getAmount());
-        productDetails.put("default_sku_cost_currency", product.getDefaultSku().getCost().getCurrency());
         productDetails.put("default_sku_name", product.getDefaultSku().getName());
         productDetails.put("sku_description", product.getDefaultSku().getDescription());
-        productDetails.put("description", product.getDefaultSku().getLongDescription());
-        productDetails.put("active_start_date", product.getDefaultSku().getActiveStartDate());
-        productDetails.put("cost",product.getDefaultSku().getCost());
+        productDetails.put("long_description", product.getDefaultSku().getLongDescription());
+        productDetails.put("active_start_date", product.getDefaultSku().getActiveStartDate());//@TODO-Fee is dependent on category
+        productDetails.put("fee",productReserveCategoryFeePostRefService.getCustomProductReserveCategoryFeePostRefByProductIdAndReserveCategoryId(product.getId(),1L).getFee());//this is dummy data
         productDetails.put("category_id",product.getCategory().getId());
         productDetails.put("active_end_date", product.getDefaultSku().getActiveEndDate());
         return productDetails;

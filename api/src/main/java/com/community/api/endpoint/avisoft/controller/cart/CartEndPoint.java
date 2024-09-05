@@ -2,6 +2,7 @@ package com.community.api.endpoint.avisoft.controller.cart;
 import com.broadleafcommerce.rest.api.endpoint.BaseEndpoint;
 import com.community.api.component.Constant;
 import com.community.api.services.CartService;
+import com.community.api.services.ProductReserveCategoryFeePostRefService;
 import com.community.api.services.ResponseService;
 import com.community.api.services.SharedUtilityService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
@@ -55,7 +56,8 @@ public class CartEndPoint extends BaseEndpoint {
     public void setSharedUtilityService(SharedUtilityService sharedUtilityService) {
         this.sharedUtilityService=sharedUtilityService;
     }
-
+    @Autowired
+    private ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService;
     @Autowired
     public void setResponseService(ResponseService responseService) {
         this.responseService=responseService;
@@ -164,7 +166,6 @@ public class CartEndPoint extends BaseEndpoint {
                 items.add(orderItem);
             cart.setOrderItems(items);
             responseBody.put("order_id",cart.getId());
-            responseBody.put("order_item_id",orderItem.getId());
             responseBody.put("added_product_id",orderItem.getOrderItemAttributes().get("productId").getValue());
             return responseService.generateSuccessResponse("Cart updated",responseBody, HttpStatus.OK);
         } catch (Exception e) {
@@ -220,7 +221,7 @@ public class CartEndPoint extends BaseEndpoint {
                     if (product != null) {
                         Map<String,Object>productDetails=sharedUtilityService.createProductResponseMap(product,orderItem);
                         products.add(productDetails);
-                            subTotal += product.getDefaultSku().getCost().doubleValue();
+                            subTotal =subTotal+ productReserveCategoryFeePostRefService.getCustomProductReserveCategoryFeePostRefByProductIdAndReserveCategoryId(product.getId(),1L).getFee();
                     }
                 }
                 response.put("cart_id",cart.getId());
