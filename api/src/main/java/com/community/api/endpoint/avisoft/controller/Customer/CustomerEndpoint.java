@@ -1,6 +1,7 @@
 package com.community.api.endpoint.avisoft.controller.Customer;
 
 
+import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
 import com.community.api.dto.AddCategoryDto;
 import com.community.api.dto.CustomProductWrapper;
@@ -13,6 +14,7 @@ import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.exception.ExceptionHandlingService;
 import org.broadleafcommerce.common.persistence.Status;
 import org.broadleafcommerce.core.catalog.domain.Category;
+import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.broadleafcommerce.profile.core.domain.Address;
 import org.broadleafcommerce.profile.core.domain.Customer;
@@ -25,13 +27,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.*;
+
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
@@ -108,6 +105,8 @@ public class CustomerEndpoint {
     public void setCustomCustomerService(CustomCustomerService customCustomerService) {
         this.customCustomerService = customCustomerService;
     }
+    @Autowired
+    private SharedUtilityService sharedUtilityService;
 
     @Autowired
     public void setAddressService(AddressService addressService) {
@@ -450,7 +449,7 @@ public class CustomerEndpoint {
 
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(@RequestBody Map<String, String> request) {
+    public ResponseEntity<?> logout(@RequestBody Map<String, String> request) {
         String token = request.get("token");
         if (token == null || token.isEmpty()) {
             return ResponseEntity.badRequest().body("Token is required");
@@ -460,7 +459,64 @@ public class CustomerEndpoint {
 
             return ResponseEntity.ok("Logged out successfully");
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during logout");
+            return responseService.generateErrorResponse("Error logging out",HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @Transactional
+    @PostMapping("/save-form")
+    public ResponseEntity<?>saveForm(@RequestParam long customer_id,@RequestParam long product_id)
+    {
+        try{
+            CustomCustomer customer=entityManager.find(CustomCustomer.class,customer_id);
+            if(customer==null)
+            {
+                return ResponseService.generateErrorResponse("Customer not found",HttpStatus.NOT_FOUND);
+            }
+            CustomProduct product=entityManager.find(CustomProduct.class,product_id);
+            if(product==null)
+            {
+                return ResponseService.generateErrorResponse(Constant.PRODUCTNOTFOUND,HttpStatus.NOT_FOUND);
+            }
+            List<CustomProduct>savedForms=customer.getSavedForms();
+            if(savedForms.contains(product))
+                return ResponseService.generateErrorResponse("You can save a form only once",HttpStatus.UNPROCESSABLE_ENTITY);
+            savedForms.add(product);
+            customer.setSavedForms(savedForms);
+            entityManager.merge(customer);
+            Map<String,Object>responseBody=new HashMap<>();
+            Map<String,Object>formBody=sharedUtilityService.createProductResponseMap(product,null);
+            return ResponseService.generateSuccessResponse("Form Saved",formBody,HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseService.generateErrorResponse("Error saving Form : "+e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @Transactional
+    @DeleteMapping("/unsave-form")
+    public ResponseEntity<?>unSaveForm(@RequestParam long customer_id,@RequestParam long product_id)
+    {
+        try{
+            CustomCustomer customer=entityManager.find(CustomCustomer.class,customer_id);
+            if(customer==null)
+            {
+                return ResponseService.generateErrorResponse("Customer not found",HttpStatus.NOT_FOUND);
+            }
+            CustomProduct product=entityManager.find(CustomProduct.class,product_id);
+            if(product==null)
+            {
+                return ResponseService.generateErrorResponse(Constant.PRODUCTNOTFOUND,HttpStatus.NOT_FOUND);
+            }
+            List<CustomProduct>savedForms=customer.getSavedForms();
+            if(savedForms.contains(product))
+                savedForms.remove(product);
+            else
+                return ResponseService.generateErrorResponse("Form not present in saved Form list",HttpStatus.UNPROCESSABLE_ENTITY);
+            customer.setSavedForms(savedForms);
+            entityManager.merge(customer);
+            Map<String,Object>responseBody=new HashMap<>();
+            Map<String,Object>formBody=sharedUtilityService.createProductResponseMap(product,null);
+            return ResponseService.generateSuccessResponse("Form Removed",formBody,HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseService.generateErrorResponse("Error removing Form : "+e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

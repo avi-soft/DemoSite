@@ -41,7 +41,8 @@ public class SharedUtilityService {
     {
         Map<String, Object> productDetails = new HashMap<>();
         CustomProduct customProduct=entityManager.find(CustomProduct.class,product.getId());
-        productDetails.put("order_item_id",orderItem.getId());
+        if(orderItem!=null)
+            productDetails.put("order_item_id",orderItem.getId());
         productDetails.put("product_id", product.getId());
         productDetails.put("url", product.getUrl());
         productDetails.put("url_key", product.getUrlKey());

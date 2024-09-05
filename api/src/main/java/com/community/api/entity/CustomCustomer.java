@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.profile.core.domain.CustomerImpl;
 
 import javax.persistence.*;
@@ -81,4 +82,12 @@ public class CustomCustomer extends CustomerImpl {
     @Nullable
     @OneToMany(mappedBy = "customCustomer", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Qualification>qualificationList;
+
+    @Nullable
+    @ManyToMany
+    @JoinTable(
+            name = "customer_saved_forms", // The name of the join table
+            joinColumns = @JoinColumn(name = "customer_id"), // Foreign key for ServiceProvider
+            inverseJoinColumns = @JoinColumn(name = "product_id")) // Foreign key for Skill
+    private List<CustomProduct>savedForms;
 }
