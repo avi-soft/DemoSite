@@ -14,6 +14,7 @@ import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.exception.ExceptionHandlingService;
 import com.community.api.utils.Document;
 
+import com.community.api.utils.DocumentType;
 import org.broadleafcommerce.common.persistence.Status;
 import org.broadleafcommerce.core.catalog.domain.Category;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
@@ -148,14 +149,15 @@ public class CustomerEndpoint {
 
     @Transactional
     @RequestMapping(value = "update", method = RequestMethod.POST)
-    public ResponseEntity<?> updateCustomer(@RequestBody CustomCustomer customerDetails, @RequestParam Long customerId) {
+    public ResponseEntity<?> updateCustomer(
+            @RequestParam Long customerId,
+            @RequestBody CustomCustomer customerDetails) {
         try {
             if (customerService == null) {
                 return responseService.generateErrorResponse("Customer service is not initialized.",HttpStatus.INTERNAL_SERVER_ERROR);
 
             }
-          /*  CustomCustomer  customerDetails= customerUpdateRequest.getCustomerDetails();
-         List<DocumentFile> documentFiles = customerUpdateRequest.getDocumentFiles();*/
+
             CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
             if (customCustomer == null) {
                 return responseService.generateErrorResponse("No data found for this customerId",HttpStatus.NOT_FOUND);
@@ -206,23 +208,9 @@ public class CustomerEndpoint {
                 customer.setEmailAddress(customerDetails.getEmailAddress());
             }
 
-            if (customerDetails.getDocumentList() != null && customerDetails.getDocumentList().size() > 0) {
-                for (Document newdocument : customerDetails.getDocumentList()) {
 
-                    String documentType = newdocument.getDocumentType().getType();
-                    String fileName = file.getOriginalFilename();
-                    InputStream fileInputStream = file.getInputStream();
-                    documentStorageService.saveDocument(customerId.toString(), documentType, fileName, fileInputStream, "customer"); // Assuming the role is "customer"
 
-                    Document doc = new Document();
-                    doc.setName(fileName);
-                    doc.setFilePath(DocumentStorageService.BASE_DIRECTORY + customerId + "\\" + documentType + "\\" + fileName);
-                    doc.setData(file.getBytes());
-                    doc.setCustomCustomer(customCustomer);
-                    doc.setDocumentType(newdocument.getDocumentType());
-                    em.persist(doc);
-                }
-            }
+
             em.merge(customCustomer);
             return responseService.generateSuccessResponse("User details updated successfully : ",customer, HttpStatus.OK);
 
@@ -230,6 +218,44 @@ public class CustomerEndpoint {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Error updating", HttpStatus.INTERNAL_SERVER_ERROR);
 
+        }
+    }
+
+    @PostMapping("/upload-documents")
+    public ResponseEntity<?> uploadDocuments(@RequestParam Long customerId, @RequestPart("files") MultipartFile[] files) {
+        try {
+            CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
+            if (customCustomer == null) {
+                return responseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
+            }
+            System.out.println(files + " files");
+            if (files != null && files.length > 0) {
+                for (MultipartFile file : files) {
+                    String documentType = DocumentStorageService.getDocumentTypeFromMultipartFile(file);
+                    String fileName = file.getOriginalFilename();
+                    try (InputStream fileInputStream = file.getInputStream()) {
+                        documentStorageService.saveDocument(customerId.toString(), documentType, fileName, fileInputStream, "customer");
+
+                        Document doc = new Document();
+                        DocumentType newDocumentType = new DocumentType();
+                        doc.setName(fileName);
+                        doc.setFilePath(DocumentStorageService.BASE_DIRECTORY + customerId + "\\" + documentType + "\\" + fileName);
+                        doc.setData(file.getBytes());
+                        doc.setCustomCustomer(customCustomer);
+                        doc.setDocumentType(newDocumentType);
+                        em.persist(doc);
+                    } catch (Exception e) {
+                        exceptionHandling.handleException(e);
+                        return responseService.generateErrorResponse("Error uploading documents", HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
+                }
+            }
+
+            return responseService.generateSuccessResponse("Documents uploaded successfully", null, HttpStatus.OK);
+
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return responseService.generateErrorResponse("Error uploading documents", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

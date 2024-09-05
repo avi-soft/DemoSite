@@ -1,5 +1,7 @@
 package com.community.api.services;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -45,4 +47,17 @@ public class DocumentStorageService {
             }
         }
     }
+
+
+        public static String getDocumentTypeFromMultipartFile(MultipartFile file) {
+
+            if (file.getOriginalFilename().endsWith(".pdf")) {
+                return "PDF";
+            } else if (file.getOriginalFilename().endsWith(".jpg")) {
+                return "JPG";
+            }
+
+            return "UNKNOWN";
+        }
+
 }
