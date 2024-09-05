@@ -65,7 +65,7 @@ public class CategoryController extends CatalogEndpoint {
             }
 
             if (addCategoryDto.getName() == null && addCategoryDto.getName().trim().isEmpty()) {
-                return new ResponseEntity<>("CATEGORY TITLE CANNOT BE EMPTY OR NULL", HttpStatus.BAD_REQUEST);
+                return ResponseService.generateErrorResponse("CATEGORY TITLE CANNOT BE EMPTY OR NULL", HttpStatus.BAD_REQUEST);
             }
             addCategoryDto.setName(addCategoryDto.getName().trim());
             categoryImpl.setName(addCategoryDto.getName());
@@ -144,7 +144,7 @@ public class CategoryController extends CatalogEndpoint {
 
             Long categoryId = Long.parseLong(id);
             if (categoryId <= 0) {
-                return new ResponseEntity<>(CATEGORYCANNOTBELESSTHANOREQAULZERO, HttpStatus.INTERNAL_SERVER_ERROR);
+                return ResponseService.generateErrorResponse(CATEGORYCANNOTBELESSTHANOREQAULZERO, HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             Category category = this.catalogService.findCategoryById(categoryId);
@@ -183,12 +183,12 @@ public class CategoryController extends CatalogEndpoint {
     public ResponseEntity<?> removeCategoryById(HttpServletRequest request, @PathVariable("categoryId") String id, @RequestParam(value = "productLimit", defaultValue = "20") int productLimit, @RequestParam(value = "productOffset", defaultValue = "1") int productOffset, @RequestParam(value = "subcategoryLimit", defaultValue = "20") int subcategoryLimit, @RequestParam(value = "subcategoryOffset", defaultValue = "1") int subcategoryOffset) {
         try {
             if (catalogService == null) {
-                return new ResponseEntity<>("CATALOG SERVICE IS NULL", HttpStatus.INTERNAL_SERVER_ERROR);
+                return ResponseService.generateErrorResponse("CATALOG SERVICE IS NULL", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             Long categoryId = Long.parseLong(id);
             if (categoryId <= 0) {
-                return new ResponseEntity<>(CATEGORYCANNOTBELESSTHANOREQAULZERO, HttpStatus.INTERNAL_SERVER_ERROR);
+                return ResponseService.generateErrorResponse(CATEGORYCANNOTBELESSTHANOREQAULZERO, HttpStatus.INTERNAL_SERVER_ERROR);
             }
             Category category = this.catalogService.findCategoryById(categoryId);
 
@@ -213,7 +213,7 @@ public class CategoryController extends CatalogEndpoint {
         try {
 
             if (catalogService == null) {
-                return new ResponseEntity<>(CATALOGSERVICENOTINITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
+                return ResponseService.generateErrorResponse(CATALOGSERVICENOTINITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
             }
             Long categoryId = Long.parseLong(id);
 
@@ -232,7 +232,7 @@ public class CategoryController extends CatalogEndpoint {
                     category.setDescription(addCategoryDto.getDescription().trim());
                 }
                 if (addCategoryDto.getActiveEndDate() != null && !addCategoryDto.getActiveEndDate().after(addCategoryDto.getActiveStartDate()) && !addCategoryDto.getActiveEndDate().after(new Date())) {
-                    return new ResponseEntity<>("ACTIVE END DATE CANNOT BE BEFORE OR EQUAL TO ACTIVE START DATE(CURRENT DATE)", HttpStatus.INTERNAL_SERVER_ERROR);
+                    return ResponseService.generateErrorResponse("ACTIVE END DATE CANNOT BE BEFORE OR EQUAL TO ACTIVE START DATE(CURRENT DATE)", HttpStatus.INTERNAL_SERVER_ERROR);
                 }
                 if (!addCategoryDto.getDisplayTemplate().isEmpty() && !addCategoryDto.getDisplayTemplate().trim().isEmpty()) {
                     category.setDisplayTemplate(addCategoryDto.getDescription().trim());

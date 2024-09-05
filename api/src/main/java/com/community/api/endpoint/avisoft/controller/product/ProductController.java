@@ -172,7 +172,7 @@ public class ProductController extends CatalogEndpoint {
             product.setCategory(category); // This will add both categoryId and productId to category_product_xref table.
 
             if (addProductDto.getMetaTitle() == null || addProductDto.getMetaTitle().trim().isEmpty()) {
-                return new ResponseEntity<>(PRODUCTTITLENOTGIVEN, HttpStatus.BAD_REQUEST);
+                return ResponseService.generateErrorResponse(PRODUCTTITLENOTGIVEN, HttpStatus.BAD_REQUEST);
             }
             addProductDto.setMetaTitle(addProductDto.getMetaTitle().trim());
             product.setMetaTitle(addProductDto.getMetaTitle()); // Also adding the same metaTitle in the sku.name as this will generate the auto-url.
@@ -708,10 +708,10 @@ public class ProductController extends CatalogEndpoint {
 
         } catch (NumberFormatException numberFormatException) {
             exceptionHandlingService.handleException(numberFormatException);
-            return new ResponseEntity<>(Constant.NUMBER_FORMAT_EXCEPTION + ": " + numberFormatException.getMessage(), HttpStatus.BAD_REQUEST);
+            return ResponseService.generateErrorResponse(Constant.NUMBER_FORMAT_EXCEPTION + ": " + numberFormatException.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return new ResponseEntity<>(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }
@@ -785,6 +785,99 @@ public class ProductController extends CatalogEndpoint {
         } catch (NumberFormatException numberFormatException) {
             exceptionHandlingService.handleException(numberFormatException);
             return ResponseService.generateErrorResponse(Constant.NUMBER_FORMAT_EXCEPTION + ": " + numberFormatException.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/get-all-new-state-products")
+    public ResponseEntity<?> getAllNewStateProducts() {
+
+        try {
+
+            if (catalogService == null) {
+                return ResponseService.generateErrorResponse(Constant.CATALOG_SERVICE_NOT_INITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            List<Product> products = catalogService.findAllProducts(); // find all the products.
+
+            if (products.isEmpty()) {
+                return ResponseService.generateErrorResponse("NO PRODUCT FOUND", HttpStatus.NOT_FOUND);
+            }
+
+            List<Map<String, CustomProductWrapper>> responses = new ArrayList<>();
+            for (Product product : products) {
+
+                // finding customProduct that resembles with productId.
+                CustomProduct customProduct = entityManager.find(CustomProduct.class, product.getId());
+
+                if (customProduct != null) {
+
+                    if ((((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date())) && customProduct.getProductState().getProductState().equals(PRODUCT_STATE_NEW)) {
+
+                        CustomProductWrapper wrapper = new CustomProductWrapper();
+                        wrapper.wrapDetails(customProduct);
+
+                        Map<String, CustomProductWrapper> productDetails = new HashMap<>();
+
+                        productDetails.put("key_" + customProduct.getId(), wrapper);
+                        productDetails.remove("key_" + customProduct.getId(), "reserveCategoryDtoList"); // gives us empty list
+
+                        responses.add(productDetails);
+                    }
+
+                }
+            }
+
+            return ResponseService.generateSuccessResponse("PRODUCTS FOUND SUCCESSFULLY", responses, HttpStatus.OK);
+
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/get-all-live-state-products")
+    public ResponseEntity<?> getAllLiveStateProducts() {
+
+        try {
+
+            if (catalogService == null) {
+                return ResponseService.generateErrorResponse(Constant.CATALOG_SERVICE_NOT_INITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            List<Product> products = catalogService.findAllProducts(); // find all the products.
+
+            if (products.isEmpty()) {
+                return ResponseService.generateErrorResponse("NO PRODUCT FOUND", HttpStatus.NOT_FOUND);
+            }
+
+            List<Map<String, CustomProductWrapper>> responses = new ArrayList<>();
+            for (Product product : products) {
+
+                // finding customProduct that resembles with productId.
+                CustomProduct customProduct = entityManager.find(CustomProduct.class, product.getId());
+
+                if (customProduct != null) {
+
+                    if ((((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date())) && !customProduct.getGoLiveDate().after(new Date())) {
+
+                        CustomProductWrapper wrapper = new CustomProductWrapper();
+                        wrapper.wrapDetails(customProduct);
+
+                        Map<String, CustomProductWrapper> productDetails = new HashMap<>();
+
+                        productDetails.put("key_" + customProduct.getId(), wrapper);
+                        productDetails.remove("key_" + customProduct.getId(), "reserveCategoryDtoList"); // gives us empty list
+
+                        responses.add(productDetails);
+                    }
+                }
+            }
+
+            return ResponseService.generateSuccessResponse("PRODUCTS FOUND SUCCESSFULLY", responses, HttpStatus.OK);
+
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
