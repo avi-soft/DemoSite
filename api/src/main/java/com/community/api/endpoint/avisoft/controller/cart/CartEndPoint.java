@@ -256,7 +256,7 @@ public class CartEndPoint extends BaseEndpoint {
             }
 
             boolean itemRemoved = cartService.removeItemFromCart(cart, orderItemId);
-            OrderItem orderItem=entityManager.find(OrderItem.class,orderItemId);
+            /*OrderItem orderItem=entityManager.find(OrderItem.class,orderItemId);*/
 
             if (itemRemoved) {
                 return responseService.generateSuccessResponse("Item Removed",null, HttpStatus.OK);
