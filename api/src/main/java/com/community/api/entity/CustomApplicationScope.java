@@ -11,21 +11,19 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
+@Table(name="custom_application_scope")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "custom_product_state")
-public class CustomProductState {
+public class CustomApplicationScope {
 
     @Id
-    @Column(name = "product_state_id")
-    @JsonProperty("product_state_id")
-    Long productStateId;
+    @Column(name="application_scope_id")
+    @JsonProperty("application_scope_id")
+    protected Long applicationScopeId;
 
-    @Column(name = "product_state")
-    @JsonProperty("product_state")
-    String productState;
+    @Column(name="application_scope")
+    @JsonProperty("application_scope")
+    protected String applicationScope;
 
 }
-
-

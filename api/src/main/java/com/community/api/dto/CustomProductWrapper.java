@@ -1,11 +1,18 @@
 package com.community.api.dto;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 
 import com.broadleafcommerce.rest.api.wrapper.MediaWrapper;
+import com.community.api.entity.CustomApplicationScope;
+import com.community.api.entity.CustomJobGroup;
 import com.community.api.entity.CustomProduct;
+import com.community.api.entity.CustomProductState;
+import com.community.api.entity.CustomReserveCategory;
+import com.community.api.entity.Role;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.broadleafcommerce.common.rest.api.wrapper.APIWrapper;
@@ -13,62 +20,216 @@ import org.broadleafcommerce.common.rest.api.wrapper.BaseWrapper;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.common.persistence.Status;
 
+
 @Data
 @NoArgsConstructor
 public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Product> {
 
+    @JsonProperty("id")
     protected Long id;
-
+    @JsonProperty("meta_title")
     protected String metaTitle;
-
+    @JsonProperty("display_template")
+    protected String displayTemplate;
+    @JsonProperty("meta_description")
     protected String metaDescription;
-
+    @JsonProperty("long_description")
     protected String longDescription;
-
-    protected Double cost;
-
+    @JsonProperty("category_name")
     protected String categoryName;
-
+    @JsonProperty("priority_level")
     protected Integer priorityLevel;
-
-    protected String url;
-
-    protected Boolean active;
-
+    @JsonProperty("active_start_date")
     protected Date activeStartDate;
+    @JsonProperty("active_end_date")
     protected Date activeEndDate;
+    @JsonProperty("go_live_date")
     protected Date activeGoLiveDate;
-
-    protected String promoMessage;
-
+    @JsonProperty("default_category_id")
     protected Long defaultCategoryId;
-
+    @JsonProperty("archived")
     protected Character archived;
 
+    @JsonProperty("url")
+    protected String url;
+    @JsonProperty("active")
+    protected Boolean active;
+    @JsonProperty("promo_message")
+    protected String promoMessage;
+    @JsonProperty("quantity")
     protected Integer quantity;
-
+    @JsonProperty("media")
     protected List<MediaWrapper> media;
 
-    public void wrapDetails(CustomProduct model) {
-        this.id = model.getId();
-        this.metaTitle = model.getMetaTitle();
-        this.metaDescription = model.getMetaDescription();
-        this.longDescription = model.getLongDescription();
-        this.url = model.getUrl();
-        this.cost = model.getDefaultSku().getCost().doubleValue();
-        this.activeStartDate = model.getDefaultSku().getActiveStartDate();
-        this.activeEndDate = model.getDefaultSku().getActiveEndDate();
-        this.activeGoLiveDate = model.getGoLiveDate();
-        this.promoMessage = model.getPromoMessage();
-        this.archived = model.getArchived();
-        this.priorityLevel = model.getPriorityLevel();
-        this.categoryName = model.getDefaultCategory().getName();
-        this.active = model.isActive();
-        this.activeGoLiveDate = model.getGoLiveDate();
-        this.quantity = model.getDefaultSku().getQuantityAvailable();
+    @JsonProperty("reserve_category_dto_list")
+    protected List<ReserveCategoryDto> reserveCategoryDtoList = new ArrayList<>();
+    @JsonProperty("platform_fee")
+    protected Double platformFee;
+    @JsonProperty("notifying_authority")
+    protected String notifyingAuthority;
+    @JsonProperty("custom_application_scope")
+    protected CustomApplicationScope customApplicationScope;
+    @JsonProperty("custom_product_state")
+    protected CustomProductState customProductState;
+    @JsonProperty("custom_job_group")
+    protected CustomJobGroup customJobGroup;
 
-        if (model.getDefaultCategory() != null) {
-            this.defaultCategoryId = model.getDefaultCategory().getId();
+    @JsonProperty("creator_user_id")
+    protected Long creatorUserId;
+    @JsonProperty("creator_role_id")
+    protected Role creatorRoleId;
+
+    @JsonProperty("modified_date")
+    protected Date modifiedDate;
+    @JsonProperty("advertiser_url")
+    protected String advertiserUrl;
+    @JsonProperty("domicile_required")
+    protected Boolean domicileRequired;
+    @JsonProperty("modifier_user_id")
+    protected Long modifierUserId;
+    @JsonProperty("modifier_role_id")
+    protected Role modifierRoleId;
+    @JsonProperty("exam_date_from")
+    protected Date examDateFrom;
+    @JsonProperty("exam_date_to")
+    protected Date examDateTo;
+
+    public void wrapDetailsAddProduct(Product product, AddProductDto addProductDto, CustomJobGroup customJobGroup, CustomProductState customProductState, CustomApplicationScope customApplicationScope, CustomReserveCategory customReserveCategory, Long creatorUserId, Role creatorRole) {
+
+        this.id = product.getId();
+        this.metaTitle = product.getMetaTitle();
+        this.displayTemplate = product.getDisplayTemplate();
+        this.longDescription = product.getLongDescription();
+        this.active = product.isActive();
+        this.quantity = product.getDefaultSku().getQuantityAvailable();
+        this.activeGoLiveDate = addProductDto.getGoLiveDate();
+        this.categoryName = product.getDefaultCategory().getName();
+        this.priorityLevel = addProductDto.getPriorityLevel();
+        this.archived = 'N';
+        this.promoMessage = product.getPromoMessage();
+        this.activeGoLiveDate = addProductDto.getGoLiveDate();
+        this.activeEndDate = product.getDefaultSku().getActiveEndDate();
+        this.activeStartDate = product.getDefaultSku().getActiveStartDate();
+        this.url = product.getUrl();
+        this.metaDescription = product.getMetaDescription();
+
+        this.displayTemplate = product.getDisplayTemplate();
+
+        ReserveCategoryDto reserveCategoryDto = new ReserveCategoryDto();
+        reserveCategoryDto.setProductId(product.getId());
+        reserveCategoryDto.setReserveCategoryId(addProductDto.getReservedCategory());
+        reserveCategoryDto.setReserveCategory(customReserveCategory.getReserveCategoryName());
+        reserveCategoryDto.setFee(addProductDto.getFee());
+        reserveCategoryDto.setPost(addProductDto.getPost());
+        reserveCategoryDto.setBornBefore(addProductDto.getBornBefore());
+        reserveCategoryDto.setBornAfter(addProductDto.getBornAfter());
+
+        this.platformFee = addProductDto.getPlatformFee();
+        this.notifyingAuthority = addProductDto.notifyingAuthority;
+
+        this.customApplicationScope = customApplicationScope;
+        this.customJobGroup = customJobGroup;
+        this.customProductState = customProductState;
+        this.reserveCategoryDtoList.add(reserveCategoryDto);
+
+        this.modifiedDate = product.getActiveStartDate();
+        this.creatorUserId = creatorUserId;
+        this.creatorRoleId = creatorRole;
+        this.modifierUserId = null;
+        this.modifierRoleId = null;
+
+        this.domicileRequired = addProductDto.getDomicileRequired();
+        this.advertiserUrl = addProductDto.getAdvertiserUrl();
+        this.examDateFrom = addProductDto.getExamDateFrom();
+        this.examDateTo = addProductDto.getExamDateTo();
+
+        if (product.getDefaultCategory() != null) {
+            this.defaultCategoryId = product.getDefaultCategory().getId();
+        }
+    }
+
+    public void wrapDetails(CustomProduct customProduct, List<ReserveCategoryDto> reserveCategoryDtoList) {
+        this.id = customProduct.getId();
+        this.metaTitle = customProduct.getMetaTitle();
+        this.displayTemplate = customProduct.getDisplayTemplate();
+        this.longDescription = customProduct.getLongDescription();
+        this.active = customProduct.isActive();
+        this.quantity = customProduct.getDefaultSku().getQuantityAvailable();
+        this.activeGoLiveDate = customProduct.getGoLiveDate();
+        this.categoryName = customProduct.getDefaultCategory().getName();
+        this.priorityLevel = customProduct.getPriorityLevel();
+        this.archived = customProduct.getArchived();
+        this.promoMessage = customProduct.getPromoMessage();
+        this.activeGoLiveDate = customProduct.getGoLiveDate();
+        this.activeEndDate = customProduct.getDefaultSku().getActiveEndDate();
+        this.activeStartDate = customProduct.getDefaultSku().getActiveStartDate();
+        this.url = customProduct.getUrl();
+        this.metaDescription = customProduct.getMetaDescription();
+
+        this.displayTemplate = customProduct.getDisplayTemplate();
+        this.platformFee = customProduct.getPlatformFee();
+        this.notifyingAuthority = customProduct.getNotifyingAuthority();
+
+        this.customApplicationScope = customProduct.getCustomApplicationScope();
+        this.customJobGroup = customProduct.getJobGroup();
+        this.customProductState = customProduct.getProductState();
+        this.reserveCategoryDtoList = reserveCategoryDtoList;
+
+        this.modifiedDate = customProduct.getModifiedDate();
+
+        this.creatorUserId = customProduct.getUserId();
+        this.creatorRoleId = customProduct.getCreatoRole();
+        this.modifierUserId = customProduct.getModifierUserId();
+        this.modifierRoleId = customProduct.getModifierRole();
+
+        this.domicileRequired = customProduct.getDomicileRequired();
+        this.advertiserUrl = customProduct.getAdvertiserUrl();
+        this.examDateFrom = customProduct.getExamDateFrom();
+        this.examDateTo = customProduct.getExamDateTo();
+
+        if (customProduct.getDefaultCategory() != null) {
+            this.defaultCategoryId = customProduct.getDefaultCategory().getId();
+        }
+    }
+    public void wrapDetails(CustomProduct customProduct) {
+        this.id = customProduct.getId();
+        this.metaTitle = customProduct.getMetaTitle();
+        this.displayTemplate = customProduct.getDisplayTemplate();
+        this.longDescription = customProduct.getLongDescription();
+        this.active = customProduct.isActive();
+        this.quantity = customProduct.getDefaultSku().getQuantityAvailable();
+        this.activeGoLiveDate = customProduct.getGoLiveDate();
+        this.categoryName = customProduct.getDefaultCategory().getName();
+        this.priorityLevel = customProduct.getPriorityLevel();
+        this.archived = customProduct.getArchived();
+        this.promoMessage = customProduct.getPromoMessage();
+        this.activeGoLiveDate = customProduct.getGoLiveDate();
+        this.activeEndDate = customProduct.getDefaultSku().getActiveEndDate();
+        this.activeStartDate = customProduct.getDefaultSku().getActiveStartDate();
+        this.url = customProduct.getUrl();
+        this.metaDescription = customProduct.getMetaDescription();
+
+        this.displayTemplate = customProduct.getDisplayTemplate();
+        this.platformFee = customProduct.getPlatformFee();
+        this.notifyingAuthority = customProduct.getNotifyingAuthority();
+
+        this.customApplicationScope = customProduct.getCustomApplicationScope();
+        this.customJobGroup = customProduct.getJobGroup();
+        this.customProductState = customProduct.getProductState();
+
+        this.creatorUserId = customProduct.getUserId();
+        this.creatorRoleId = customProduct.getCreatoRole();
+        this.modifierUserId = customProduct.getModifierUserId();
+        this.modifierRoleId = customProduct.getModifierRole();
+
+        this.domicileRequired = customProduct.getDomicileRequired();
+        this.advertiserUrl = customProduct.getAdvertiserUrl();
+
+        this.examDateFrom = customProduct.getExamDateFrom();
+        this.examDateTo = customProduct.getExamDateTo();
+
+        if (customProduct.getDefaultCategory() != null) {
+            this.defaultCategoryId = customProduct.getDefaultCategory().getId();
         }
     }
 
@@ -85,7 +246,6 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.archived = ((Status) product).getArchived();
         this.categoryName = product.getDefaultCategory().getName();
         this.active = product.isActive();
-        this.cost = product.getDefaultSku().getCost().doubleValue();
         this.quantity = product.getDefaultSku().getQuantityAvailable();
 
         if (product.getDefaultCategory() != null) {
@@ -93,28 +253,6 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         }
     }
 
-    public void wrapDetails(Product product, Integer priorityLevel, Date activeGoLiveDate) {
-        this.id = product.getId();
-        this.metaTitle = product.getMetaTitle();
-        this.metaDescription = product.getMetaDescription();
-        this.longDescription = product.getLongDescription();
-        this.url = product.getUrl();
-        this.activeStartDate = product.getDefaultSku().getActiveStartDate();
-        this.activeEndDate = product.getDefaultSku().getActiveEndDate();
-        this.promoMessage = product.getPromoMessage();
-        this.archived = ((Status) product).getArchived();
-        this.categoryName = product.getDefaultCategory().getName();
-        this.active = product.isActive();
-        this.activeGoLiveDate = activeGoLiveDate;
-        this.priorityLevel = priorityLevel;
-        this.cost = product.getDefaultSku().getCost().doubleValue();
-        this.quantity = product.getDefaultSku().getQuantityAvailable();
-
-        if (product.getDefaultCategory() != null) {
-            this.defaultCategoryId = product.getDefaultCategory().getId();
-        }
-
-    }
 
     public void wrapSummary(Product model, HttpServletRequest request) {
         this.id = model.getId();
