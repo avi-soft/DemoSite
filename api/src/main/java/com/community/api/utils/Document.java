@@ -20,7 +20,6 @@ public class Document {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long documentId;
 
-    private String name;
 
     @Lob
     private byte[] data;

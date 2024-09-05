@@ -23,6 +23,8 @@ public class RoleService {
     @Autowired
     private SharedUtilityService sharedUtilityService;
     @Autowired
+    private ResponseService responseService;
+    @Autowired
     private ExceptionHandlingImplement exceptionHandling;
     public String findRoleName(int role_id) {
         return entityManager.createQuery(Constant.FETCH_ROLE, String.class)
@@ -36,18 +38,18 @@ public class RoleService {
     {
         try{
             if(role.getRole_name()==null)
-                return new ResponseEntity<>("Role name cannot be Empty", HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Role name cannot be Empty", HttpStatus.BAD_REQUEST);
             int count=(int) sharedUtilityService.findCount(Constant.GET_COUNT_OF_ROLES);
             role.setRole_id(++count);
             role.setCreated_at(sharedUtilityService.getCurrentTimestamp());
             role.setUpdated_at(sharedUtilityService.getCurrentTimestamp());
             role.setCreated_by("SUPER_ADMIN");//@TODO- get role id from token and check role name fromm it
             entityManager.persist(role);
-            return new ResponseEntity<>(role,HttpStatus.OK);
+            return responseService.generateSuccessResponse("role added successfully",role,HttpStatus.OK);
         }catch (Exception e)
         {
             exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error saving role : " + e.getMessage());
+            return responseService.generateErrorResponse("Error saving role : " + e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     public List<Role> findAllRoleList() {

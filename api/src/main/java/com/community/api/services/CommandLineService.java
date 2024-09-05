@@ -228,7 +228,7 @@ public class CommandLineService implements CommandLineRunner {
         }
         count = entityManager.createQuery("SELECT COUNT(s) FROM ServiceProviderStatus s", Long.class).getSingleResult();
 
-        /*if (count == 0) {
+        if (count == 0) {
             // Get current date and time as a formatted string
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             String now = LocalDateTime.now().format(formatter);
@@ -244,7 +244,7 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(status2);
             entityManager.persist(status3);
             entityManager.persist(status4);
-        }*/
+        }
         count = entityManager.createQuery("SELECT COUNT(e) FROM Examination e", Long.class).getSingleResult();
 
         if (count == 0) {

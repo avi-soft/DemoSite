@@ -22,19 +22,21 @@ public class ServiceProviderInfraService {
     private EntityManager entityManager;
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
+    @Autowired
+    private ResponseService responseService;
     @Transactional
     public ResponseEntity<?> addInfra(@RequestBody ServiceProviderInfra serviceProviderInfra) {
         try{
             if(serviceProviderInfra.getInfra_name()==null)
-                return new ResponseEntity<>("Infra name cannot be empty",HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Infra name cannot be empty",HttpStatus.BAD_REQUEST);
             int count=(int)findCount();
             serviceProviderInfra.setInfra_id(++count);
             entityManager.persist(serviceProviderInfra);
-            return new ResponseEntity<>(serviceProviderInfra,HttpStatus.OK);
+            return responseService.generateSuccessResponse("Infra added successfully",serviceProviderInfra,HttpStatus.OK);
         }catch (Exception exception)
         {
             exceptionHandling.handleException(exception);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error saving skill : " + exception.getMessage());
+            return responseService.generateErrorResponse("Error saving skill : " + exception.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     public long findCount() {

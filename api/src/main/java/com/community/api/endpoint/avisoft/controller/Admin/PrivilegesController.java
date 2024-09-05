@@ -2,6 +2,7 @@ package com.community.api.endpoint.avisoft.controller.Admin;
 
 import com.community.api.entity.Privileges;
 import com.community.api.services.PrivilegeService;
+import com.community.api.services.ResponseService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,7 +25,8 @@ public class PrivilegesController {
     private ExceptionHandlingImplement exceptionHandling;
     @Autowired
     private PrivilegeService privilegeService;
-
+    @Autowired
+    private ResponseService responseService;
     @Transactional
     @RequestMapping(value = "assign-privilege", method = RequestMethod.POST)
     public ResponseEntity<?> assignPrivilege(@RequestParam int privilege_id, @RequestParam Long id, @RequestParam int role_id) {
@@ -32,7 +34,7 @@ public class PrivilegesController {
            return privilegeService.assignPrivilege(privilege_id,id,role_id);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return new ResponseEntity<>("Error assigning privilege", HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("Error assigning privilege", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -43,7 +45,7 @@ public class PrivilegesController {
             return privilegeService.removePrivilege(privilege_id, id, role_id);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return new ResponseEntity<>("Error removing ", HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("Error removing ", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -55,16 +57,16 @@ public class PrivilegesController {
            return privilegeService.createPrivilege(privilege);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return new ResponseEntity<>("Error removing ", HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("Error removing ", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     @RequestMapping(value = "get-privileges-for-service-provider", method = RequestMethod.GET)
     public ResponseEntity<?> getAllPrivileges(@RequestParam Long serviceProviderId) {
         try {
-            return new ResponseEntity<>(privilegeService.getServiceProviderPrivilege(serviceProviderId),HttpStatus.OK);
+            return responseService.generateSuccessResponse("Data",privilegeService.getServiceProviderPrivilege(serviceProviderId),HttpStatus.OK);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return new ResponseEntity<>("Error removing ", HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("Error removing ", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
