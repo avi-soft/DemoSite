@@ -38,9 +38,9 @@ public class ServiceProviderTestController {
 
     }
     @PostMapping("/{testId}/submit-text")
-    public ResponseEntity<ServiceProviderTest> submitTypedText(@PathVariable Long testId, @RequestBody SubmitTextDto submitTextDto) throws EntityNotFoundException{
+    public ResponseEntity<?> submitTypedText(@PathVariable Long testId, @RequestBody SubmitTextDto submitTextDto) throws EntityNotFoundException{
         ServiceProviderTest test = testService.submitTypedText(testId, submitTextDto.getTypedText());
-        return ResponseEntity.ok(test);
+        return responseService.generateResponse(HttpStatus.OK,"Text is submitted",test);
     }
 
     @PostMapping("/{testId}/upload-resized-signature")
