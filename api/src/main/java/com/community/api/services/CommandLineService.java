@@ -134,7 +134,8 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(new Districts(58, "Jhajjar", "HR"));
             entityManager.persist(new Districts(59, "Jind", "HR"));
             entityManager.persist(new Districts(60, "Kaithal", "HR"));
-            entityManager.persist(new Districts(61, "Karnal", "HR"));
+            entityManager.persist(
+                    new Districts(61, "Karnal", "HR"));
             entityManager.persist(new Districts(62, "Mahendragarh", "HR"));
             entityManager.persist(new Districts(63, "Mewat", "HR"));
             entityManager.persist(new Districts(64, "Palwal", "HR"));
