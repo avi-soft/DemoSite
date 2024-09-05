@@ -62,13 +62,16 @@ public class CustomerEndpoint {
     private AddressService addressService;
     private CustomerAddressService customerAddressService;
     private JwtUtil jwtUtil;
+    private  ResponseService responseService;
 
 
     @Autowired
     private ExceptionHandlingService exceptionHandlingService;
 
     @Autowired
-    private static ResponseService responseService;
+    public void setResponseService(ResponseService responseService) {
+        this.responseService = responseService;
+    }
 
     @Autowired
     private CategoryService categoryService;
@@ -442,7 +445,7 @@ public class CustomerEndpoint {
         addressDTO.setPhoneNumber(customCustomer.getMobileNumber());
         return addressDTO;
     }
-    public static ResponseEntity<?> createAuthResponse(String token, Customer customer ) {
+    public  ResponseEntity<?> createAuthResponse(String token, Customer customer ) {
         OtpEndpoint.ApiResponse authResponse = new OtpEndpoint.ApiResponse(token, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
         return responseService.generateSuccessResponse("Token details : ", authResponse, HttpStatus.OK);
     }
