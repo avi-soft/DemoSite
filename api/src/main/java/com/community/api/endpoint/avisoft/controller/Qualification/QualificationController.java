@@ -9,6 +9,7 @@ import com.community.api.services.exception.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,133 +25,83 @@ public class QualificationController
 {
     protected QualificationService qualificationService;
     protected ExceptionHandlingImplement exceptionHandling;
-    @Autowired
     private ResponseService responseService;
-    public QualificationController(QualificationService qualificationService,ExceptionHandlingImplement exceptionHandling)
+    public QualificationController(QualificationService qualificationService, ExceptionHandlingImplement exceptionHandling, ResponseService responseService)
     {
         this.qualificationService=qualificationService;
         this.exceptionHandling=exceptionHandling;
+        this.responseService = responseService;
     }
 
     @PostMapping("/add/{customCustomerId}")
-    public ResponseEntity<?> addQualification( @PathVariable Long customCustomerId ,@Valid @RequestBody Qualification qualification) {
-        try
-        {
+    public ResponseEntity<?> addQualification( @PathVariable Long customCustomerId ,@Valid @RequestBody Qualification qualification) throws EntityAlreadyExistsException, ExaminationDoesNotExistsException, CustomerDoesNotExistsException {
+
             Qualification newQualification= qualificationService.addQualification(customCustomerId ,qualification);
-            return responseService.generateSuccessResponse("Qualification is added successfully",newQualification ,HttpStatus.OK);
-
-        }
-        catch (CustomerDoesNotExistsException e) {
-            exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer does not exist with customer Id"+" "+customCustomerId);
-        }
-        catch (EntityAlreadyExistsException exception) {
-            exceptionHandling.handleException(exception);
-            return responseService.generateErrorResponse("Qualification already exist with examination name "+" " +qualification.getExaminationName(), HttpStatus.BAD_REQUEST);
-
-        }  catch (ExaminationDoesNotExistsException e) {
-
-            exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Examination does not found with examinationName"+" " + qualification.getExaminationName(), HttpStatus.NOT_FOUND);
-
-        }
-        catch (Exception e) {
-            exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Some error occurred"+ e.getMessage(), HttpStatus.BAD_REQUEST);
-
-        }
+            return responseService.generateResponse(HttpStatus.CREATED,"Qualification is added successfully",newQualification);
     }
 
     @GetMapping("/get-qualifications-by-customer-id/{customCustomerId}")
-    public ResponseEntity<?> getQualificationById(@PathVariable Long customCustomerId) {
-        try
-        {
+    public ResponseEntity<?> getQualificationById(@PathVariable Long customCustomerId) throws CustomerDoesNotExistsException {
             List<Qualification> qualifications = qualificationService.getQualificationsByCustomerId(customCustomerId);
-            return responseService.generateSuccessResponse("Qualifications are found .",qualifications ,HttpStatus.OK);
-
-        }
-        catch (RuntimeException e) {
-            exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Customer with id "+customCustomerId+" does not have any qualification", HttpStatus.NOT_FOUND);
-
-        }
-        catch (CustomerDoesNotExistsException e) {
-            exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Customer does not exists with id "+ customCustomerId, HttpStatus.NOT_FOUND);
-
-        }
-        catch (Exception e) {
-            exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Some error occurred"+ e.getMessage(), HttpStatus.BAD_REQUEST);
-        }
+            return responseService.generateResponse(HttpStatus.OK,"Qualifications are found ",qualifications);
     }
 
     @DeleteMapping("/delete/{customCustomerId}/{qualificationId}")
-    public ResponseEntity<?> deleteQualificationById(@PathVariable Long customCustomerId,@PathVariable Long qualificationId) throws EntityDoesNotExistsException {
-        try
-        {
+    public ResponseEntity<?> deleteQualificationById(@PathVariable Long customCustomerId,@PathVariable Long qualificationId) throws EntityDoesNotExistsException, CustomerDoesNotExistsException {
             Qualification qualificationToDelete = qualificationService.deleteQualification(customCustomerId,qualificationId);
-            return responseService.generateSuccessResponse("Qualification is deleted successfully.",qualificationToDelete ,HttpStatus.OK);
-
-        }
-        catch(EntityDoesNotExistsException exception )
-        {
-            exceptionHandling.handleException(exception);
-            return responseService.generateErrorResponse("Qualification does not exists with id "+ qualificationId, HttpStatus.NOT_FOUND);
-        }
-        catch (CustomerDoesNotExistsException e) {
-            exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Customer does not exists with id "+ customCustomerId, HttpStatus.NOT_FOUND);
-        }
-        catch (Exception e) {
-            exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Some error occurred"+ e.getMessage(), HttpStatus.BAD_REQUEST);
-        }
+        return responseService.generateResponse(HttpStatus.OK,"Qualification is deleted successfully",qualificationToDelete);
     }
 
     @PutMapping("/update/{customCustomerId}/{qualificationId}")
-    public ResponseEntity<?> updateQualificationById(@PathVariable Long customCustomerId,@PathVariable Long qualificationId, @Valid @RequestBody UpdateQualificationDto qualification) throws EntityDoesNotExistsException {
-        try
-        {
+    public ResponseEntity<?> updateQualificationById(@PathVariable Long customCustomerId,@PathVariable Long qualificationId, @Valid @RequestBody UpdateQualificationDto qualification) throws EntityDoesNotExistsException, EntityAlreadyExistsException, ExaminationDoesNotExistsException, CustomerDoesNotExistsException {
             Qualification qualificationToUpdate = qualificationService.updateQualification( customCustomerId,qualificationId,qualification);
-            return responseService.generateSuccessResponse("Qualification is updated successfully.",qualificationToUpdate ,HttpStatus.OK);
-        }
-        catch(EntityDoesNotExistsException exception )
-        {
-            exceptionHandling.handleException(exception);
-            return responseService.generateErrorResponse("Qualification does not exists with id "+ qualificationId, HttpStatus.NOT_FOUND);
-
-        }
-        catch (EntityAlreadyExistsException exception) {
-            exceptionHandling.handleException(exception);
-            return responseService.generateErrorResponse("Qualification already exists", HttpStatus.NOT_FOUND);
-
-        } catch (ExaminationDoesNotExistsException e) {
-            exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Examination does not exists with Examination name "+ qualification.getExaminationName(), HttpStatus.NOT_FOUND);
-
-        } catch (CustomerDoesNotExistsException e) {
-            exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Customer does not exists with customer id "+ customCustomerId, HttpStatus.NOT_FOUND);
-
-        }
-        catch (Exception e) {
-            exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Some error occurred"+ e.getMessage(), HttpStatus.BAD_REQUEST);
-        }
+        return responseService.generateResponse(HttpStatus.OK,"Qualification is updated successfully",qualificationToUpdate);
     }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<?> handleMethodArgumentNotValidException(MethodArgumentNotValidException e) {
-        Map<String, String> errors = e.getBindingResult().getFieldErrors()
-                .stream()
-                .collect(Collectors.toMap(
-                        error -> error.getField(),
-                        error -> error.getDefaultMessage(),
-                        (existingValue, newValue) -> existingValue + ", " + newValue // Merge messages if there are multiple errors for the same field
-                ));
+    @ExceptionHandler({CustomerDoesNotExistsException.class, EntityAlreadyExistsException.class, ExaminationDoesNotExistsException.class, EntityDoesNotExistsException.class, RuntimeException.class})
+    public ResponseEntity<?> handleException(Exception e) {
+        HttpStatus status;
+        String message;
 
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("validationErrors", errors));
+        if (e instanceof CustomerDoesNotExistsException) {
+            status = HttpStatus.NOT_FOUND;
+            message = "Customer does not exist";
+        }
+        else if (e instanceof EntityDoesNotExistsException) {
+            status = HttpStatus.NOT_FOUND;
+            message = "Qualification does not exist";
+        }
+        else if (e instanceof ExaminationDoesNotExistsException) {
+            status = HttpStatus.NOT_FOUND;
+            message = "Examination does not exist";
+        }
+        else if (e instanceof EntityAlreadyExistsException) {
+            status = HttpStatus.BAD_REQUEST;
+            message = "Examination already exists";
+        }
+        else if (e instanceof RuntimeException) {
+            status = HttpStatus.OK;
+            message = "Qualification list is empty";
+        } else {
+            status = HttpStatus.BAD_REQUEST;
+            message = "Some error occurred";
+        }
+
+        exceptionHandling.handleException(e);
+        return responseService.generateErrorResponse(message + ": " + e.getMessage(), status);
     }
+
+@ExceptionHandler(MethodArgumentNotValidException.class)
+public ResponseEntity<Map<String,Object>>handlesValidationErrors(MethodArgumentNotValidException exception) {
+    HttpStatus status;
+    List<String> errors = exception.getBindingResult().getFieldErrors()
+            .stream().map(FieldError::getDefaultMessage).collect(Collectors.toList());
+    Map<String,Object>responseData=new HashMap<>();
+    responseData.put("message",errors);
+    status= HttpStatus.BAD_REQUEST;
+    responseData.put("status_code",400);
+    responseData.put("status",status);
+    return ResponseEntity.status(status).body(responseData);
+}
 
 }

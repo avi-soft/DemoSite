@@ -23,7 +23,21 @@ public class NotificationService {
             if (customCustomer == null) {
                 throw new CustomerDoesNotExistsException("Customer does not exist " + "with id " + customCustomerId);
             }
-            emailService.sendExpirationEmail(customCustomer.getEmailAddress(), customCustomer.getFirstName(), customCustomer.getLastName());
+            if(customCustomer.getEmailAddress() ==null)
+            {
+                throw new RuntimeException("Email address does not exist " + "with id " + customCustomer);
+            }
+            String firstName ="";
+            String lastName="";
+            if(customCustomer.getFirstName()!=null)
+            {
+                firstName=customCustomer.getFirstName();
+            }
+            if(customCustomer.getLastName()!=null)
+            {
+                lastName=customCustomer.getLastName();
+            }
+            emailService.sendExpirationEmail(customCustomer.getEmailAddress(), firstName, lastName);
         return customCustomer;
     }
 }

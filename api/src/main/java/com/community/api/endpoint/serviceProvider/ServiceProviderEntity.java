@@ -4,6 +4,7 @@ package com.community.api.endpoint.serviceProvider;
 import com.community.api.entity.*;
 import com.community.api.utils.Document;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.micrometer.core.lang.Nullable;
@@ -27,6 +28,7 @@ import java.util.Set;
 @NoArgsConstructor
 @Getter
 @Setter
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class ServiceProviderEntity  {
 
     @Id
