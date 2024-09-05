@@ -1,6 +1,7 @@
 package com.community.api.endpoint.avisoft.controller.Admin;
 
 import com.community.api.entity.Role;
+import com.community.api.services.ResponseService;
 import com.community.api.services.RoleService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +20,8 @@ public class RoleController {
     private RoleService roleService;
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
+    @Autowired
+    private ResponseService responseService;
     @PostMapping("add-role")
     public ResponseEntity<?> addRole(@RequestBody Role role)
     {
@@ -26,16 +29,16 @@ public class RoleController {
             return roleService.addRole(role);
         }catch (Exception e) {
             exceptionHandling.handleException(e);
-            return new ResponseEntity<>("Error aadding role", HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("Error aadding role", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     @GetMapping("/get-roles")
     public ResponseEntity<?> getRoles() {
         try{
-            return new ResponseEntity<>(roleService.findAllRoleList(),HttpStatus.OK);
+            return responseService.generateSuccessResponse("Roles",roleService.findAllRoleList(),HttpStatus.OK);
         }catch (Exception e) {
             exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some updating: " + e.getMessage());
+            return responseService.generateErrorResponse("Some error fetching: "+e.getMessage(),HttpStatus.BAD_REQUEST);
         }
     }
 }

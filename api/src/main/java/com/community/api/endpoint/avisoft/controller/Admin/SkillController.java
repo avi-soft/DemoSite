@@ -3,6 +3,7 @@ package com.community.api.endpoint.avisoft.controller.Admin;
 import com.community.api.component.Constant;
 import com.community.api.entity.Skill;
 import com.community.api.entity.StateCode;
+import com.community.api.services.ResponseService;
 import com.community.api.services.SkillService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,8 @@ public class SkillController {
         private ExceptionHandlingImplement exceptionHandling;
         @Autowired
         private SkillService skillService;
+        @Autowired
+        private ResponseService responseService;
         @Transactional
         @PostMapping("/add-skill")
         public ResponseEntity<?> addSkill(@RequestBody Map<String,Object> skill) {
@@ -35,17 +38,17 @@ public class SkillController {
         }catch (Exception exception)
             {
                 exceptionHandling.handleException(exception);
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error saving skill : " + exception.getMessage());
+                return responseService.generateErrorResponse("Error saving skill : " + exception.getMessage(),HttpStatus.BAD_REQUEST);
             }
         }
     @GetMapping("/get-skills")
     public ResponseEntity<?> getSkillList() {
         try{
-            return new ResponseEntity<>(skillService.findAllSkillList(),HttpStatus.OK);
+            return responseService.generateSuccessResponse("List Fetched Successfully",skillService.findAllSkillList(),HttpStatus.OK);
         }catch (Exception exception)
         {
             exceptionHandling.handleException(exception);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error saving skill : " + exception.getMessage());
+            return responseService.generateErrorResponse("Error saving skill : " + exception.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

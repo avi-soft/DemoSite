@@ -19,7 +19,7 @@ public class ApiConstants {
     public static final String SOME_EXCEPTION_OCCURRED = "Some Exception Occurred";
     public static final String NUMBER_FORMAT_EXCEPTION = "Number Format Exception";
     public static final String CATALOG_SERVICE_NOT_INITIALIZED = "Catalog Service Not Initialized";
-    public static final String MOBILE_NUMBER_REGISTERED = " Number is already exists as Service Provider";
+    public static final String MOBILE_NUMBER_REGISTERED = " Number already exists as Service Provider";
     public static final String INVALID_MOBILE_NUMBER = "Invalid Mobile Number";
     public static final String CUSTOMER_ALREADY_EXISTS =" Customer Already Exists";
     public static final String RATE_LIMIT_EXCEEDED = "Rate Limit Exceeded. Please try after some time";
