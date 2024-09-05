@@ -39,29 +39,24 @@ public class SharedUtilityService {
     {
         Map<String, Object> productDetails = new HashMap<>();
         CustomProduct customProduct=entityManager.find(CustomProduct.class,product.getId());
-        productDetails.put("id", product.getId());
+        productDetails.put("product_id", product.getId());
         productDetails.put("url", product.getUrl());
-        productDetails.put("urlKey", product.getUrlKey());
+        productDetails.put("url_key", product.getUrlKey());
         productDetails.put("platform_fee",customProduct.getPlatformFee());
-        productDetails.put("displayTemplate", product.getDisplayTemplate());
-        productDetails.put("defaultSkuId", product.getDefaultSku().getId());
-        productDetails.put("defaultSkuExternalId", product.getDefaultSku().getExternalId());
-        productDetails.put("defaultSkuUrlKey", product.getDefaultSku().getUrlKey());
-        productDetails.put("defaultSkuDisplayTemplate", product.getDefaultSku().getDisplayTemplate());
-        productDetails.put("defaultSkuSalePrice", product.getDefaultSku().getSalePrice());
-        productDetails.put("defaultSkuRetailPrice", product.getDefaultSku().getRetailPrice());
-        productDetails.put("defaultSkuCostAmount", product.getDefaultSku().getCost().getAmount());
-        productDetails.put("defaultSkuCostCurrency", product.getDefaultSku().getCost().getCurrency());
-        productDetails.put("defaultSkuName", product.getDefaultSku().getName());
-        productDetails.put("defaultSkuDescription", product.getDefaultSku().getDescription());
-        productDetails.put("defaultSkuLongDescription", product.getDefaultSku().getLongDescription());
-        productDetails.put("defaultSkuTaxCode", product.getDefaultSku().getTaxCode());
-        productDetails.put("defaultSkuTaxable", product.getDefaultSku().isTaxable());
-        productDetails.put("defaultSkuDiscountable", product.getDefaultSku().isDiscountable());
-        productDetails.put("defaultSkuActiveStartDate", product.getDefaultSku().getActiveStartDate());
+        productDetails.put("display_template", product.getDisplayTemplate());
+        productDetails.put("default_sku_id", product.getDefaultSku().getId());
+        productDetails.put("default_sku_external_id", product.getDefaultSku().getExternalId());
+        productDetails.put("default_sku_url_key", product.getDefaultSku().getUrlKey());
+        productDetails.put("default_sku_display_template", product.getDefaultSku().getDisplayTemplate());
+        productDetails.put("default_sku_cost_amount", product.getDefaultSku().getCost().getAmount());
+        productDetails.put("default_sku_cost_currency", product.getDefaultSku().getCost().getCurrency());
+        productDetails.put("default_sku_name", product.getDefaultSku().getName());
+        productDetails.put("sku_description", product.getDefaultSku().getDescription());
+        productDetails.put("description", product.getDefaultSku().getLongDescription());
+        productDetails.put("active_start_date", product.getDefaultSku().getActiveStartDate());
         productDetails.put("cost",product.getDefaultSku().getCost());
-        productDetails.put("categoryId",product.getCategory().getId());
-        productDetails.put("defaultSkuActiveEndDate", product.getDefaultSku().getActiveEndDate());
+        productDetails.put("category_id",product.getCategory().getId());
+        productDetails.put("active_end_date", product.getDefaultSku().getActiveEndDate());
         return productDetails;
     }
 }

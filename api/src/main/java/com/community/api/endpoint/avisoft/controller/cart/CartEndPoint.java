@@ -151,6 +151,7 @@ public class CartEndPoint extends BaseEndpoint {
             orderItemRequest.setItemAttributes(atrtributes);
             OrderItem orderItem = orderItemService.createOrderItem(orderItemRequest);
             List<OrderItem> items = cart.getOrderItems();
+            Map<String,Object>responseBody=new HashMap<>();
             boolean flag=false;
             for(OrderItem existingOrderItem:items)
             {
@@ -162,7 +163,10 @@ public class CartEndPoint extends BaseEndpoint {
             if(!flag)
                 items.add(orderItem);
             cart.setOrderItems(items);
-            return responseService.generateSuccessResponse("Cart updated",orderItem.getOrderItemAttributes().toString(), HttpStatus.OK);
+            responseBody.put("order_id",cart.getId());
+            responseBody.put("order_item_id",orderItem.getId());
+            responseBody.put("added_product_id",orderItem.getOrderItemAttributes().get("productId").getValue());
+            return responseService.generateSuccessResponse("Cart updated",responseBody, HttpStatus.OK);
         } catch (Exception e) {
             return responseService.generateErrorResponse("Error adding item to cart : "+e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -175,9 +179,11 @@ public class CartEndPoint extends BaseEndpoint {
                 return responseService.generateErrorResponse("One or more Serivces not initialized",HttpStatus.INTERNAL_SERVER_ERROR);
             }
             Customer customer = customerService.readCustomerById(customerId);
+            Map<String,Object>responseBody=new HashMap<>();
             if (customer != null) {
                 if (orderService.findOrderById(orderId) != null) {
-                    return responseService.generateSuccessResponse("Items in cart :",orderService.findOrderById(orderId).getOrderItems().size(), HttpStatus.OK);
+                    responseBody.put("number_of_items",orderService.findOrderById(orderId).getOrderItems().size());
+                    return responseService.generateSuccessResponse("Items in cart :",responseBody, HttpStatus.OK);
                 } else
                     return responseService.generateErrorResponse("No items found", HttpStatus.NOT_FOUND);
             } else
@@ -253,7 +259,7 @@ public class CartEndPoint extends BaseEndpoint {
             OrderItem orderItem=entityManager.find(OrderItem.class,orderItemId);
 
             if (itemRemoved) {
-                return responseService.generateSuccessResponse("Item Removed",orderItem.getOrderItemAttributes().toString(), HttpStatus.OK);
+                return responseService.generateSuccessResponse("Item Removed",null, HttpStatus.OK);
             } else {
                 return responseService.generateErrorResponse("Error removing item from cart: item not present in cart", HttpStatus.NOT_FOUND);
             }
