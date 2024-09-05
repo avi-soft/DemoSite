@@ -34,36 +34,38 @@ public class QualificationService
             throw new CustomerDoesNotExistsException("Customer does not exist with id " + customCustomerId);
         }
         TypedQuery<Qualification> query = entityManager.createQuery(
-                "SELECT q FROM Qualification q WHERE q.customCustomer.id = :customerId AND q.examinationName = :examinationName",
-                Qualification.class);
+                "SELECT q FROM Qualification q WHERE q.custom_customer.id = :customerId AND q.examination_id = :examination_id",
+                Qualification.class
+        );
         query.setParameter("customerId", customCustomerId);
-        query.setParameter("examinationName", qualification.getExaminationName());
+        query.setParameter("examination_id", qualification.getExamination_id());
+
         Qualification existingQualification = query.getResultStream().findFirst().orElse(null);
 
         if (existingQualification != null ) {
-            throw new EntityAlreadyExistsException("Qualification with name " + qualification.getExaminationName() + " already exists");
+            throw new EntityAlreadyExistsException("Qualification with id " + qualification.getExamination_id() + " already exists");
         }
         List<Examination> examinations=examinationService.getAllExaminations();
-        String examinationToAdd=null;
+        Long examinationToAdd=null;
 
         for(Examination examination: examinations)
         {
-            if(examination.getExamination_name().equalsIgnoreCase(qualification.getExaminationName()) ) {
-                examinationToAdd=examination.getExamination_name();
+            if(examination.getExamination_id()==qualification.getExamination_id()) {
+                examinationToAdd=examination.getExamination_id();
                 break;
             }
         }
         if (examinationToAdd == null) {
-            throw new ExaminationDoesNotExistsException("Examination with name " + qualification.getExaminationName() + " does not exist");
+            throw new ExaminationDoesNotExistsException("Examination with id " + qualification.getExamination_id() + " does not exist");
         }
-        qualification.setExaminationName(examinationToAdd);
-        qualification.setCustomCustomer(customCustomer);
+        qualification.setExamination_id(examinationToAdd);
+        qualification.setCustom_customer(customCustomer);
         customCustomer.getQualificationList().add(qualification);
         entityManager.persist(qualification);
         return qualification;
     }
 
-    public List<Qualification> getQualificationsByCustomerId(Long customCustomerId) throws EntityDoesNotExistsException, CustomerDoesNotExistsException {
+    public List<Qualification> getQualificationsByCustomerId(Long customCustomerId) throws  CustomerDoesNotExistsException,RuntimeException {
         CustomCustomer customCustomer= entityManager.find(CustomCustomer.class,customCustomerId);
         if(customCustomer==null)
         {
@@ -109,17 +111,6 @@ public class QualificationService
        {
            throw new CustomerDoesNotExistsException("Customer does not exist with id "+ customCustomerId);
        }
-
-       TypedQuery<Qualification> query = entityManager.createQuery(
-               "SELECT q FROM Qualification q WHERE q.customCustomer.id = :customerId AND q.examinationName = :examinationName",
-               Qualification.class);
-       query.setParameter("customerId", customCustomerId);
-       query.setParameter("examinationName", qualification.getExaminationName());
-       Qualification existingQualification = query.getResultStream().findFirst().orElse(null);
-
-       if (existingQualification != null ) {
-           throw new EntityAlreadyExistsException("Qualification with name " + qualification.getExaminationName() + " already exists");
-       }
        List<Qualification> qualifications= customCustomer.getQualificationList();
        Qualification qualificationToUpdate=null;
        for(Qualification qualification1 : qualifications)
@@ -133,44 +124,56 @@ public class QualificationService
        if (qualificationToUpdate == null) {
            throw new EntityDoesNotExistsException("Qualification with id " + qualificationId+ " does not exists");
        }
-       if (Objects.nonNull(qualification.getExaminationName())) {
+
+       TypedQuery<Qualification> query = entityManager.createQuery(
+               "SELECT q FROM Qualification q WHERE q.custom_customer.id = :customerId AND q.examination_id = :examination_id",
+               Qualification.class
+       );
+       query.setParameter("customerId", customCustomerId);
+       query.setParameter("examination_id", qualification.getExamination_id());
+       Qualification existingQualification = query.getResultStream().findFirst().orElse(null);
+
+       if (existingQualification != null && qualificationId!=existingQualification.getId()) {
+           throw new EntityAlreadyExistsException("Qualification with id " + qualification.getExamination_id() + " already exists");
+       }
+
+       if (Objects.nonNull(qualification.getExamination_id())) {
            List<Examination> examinations = examinationService.getAllExaminations();
-           String examinationToAdd = null;
+           Long examinationToAdd = null;
 
            for (Examination examination : examinations) {
-               if (examination.getExamination_name().equalsIgnoreCase(qualification.getExaminationName())) {
-                   examinationToAdd = examination.getExamination_name();
+               if (examination.getExamination_id()==(qualification.getExamination_id())) {
+                   examinationToAdd = examination.getExamination_id();
                    break;
                }
            }
 
            if (examinationToAdd == null) {
-               throw new ExaminationDoesNotExistsException("Examination with name " + qualification.getExaminationName() + " does not exist");
+               throw new ExaminationDoesNotExistsException("Examination with id " + qualification.getExamination_id() + " does not exist");
            }
-           qualificationToUpdate.setExaminationName(examinationToAdd);
+           qualificationToUpdate.setExamination_id(examinationToAdd);
        }
-        if (Objects.nonNull(qualification.getInstitutionName())) {
-            qualificationToUpdate.setInstitutionName(qualification.getInstitutionName());
+        if (Objects.nonNull(qualification.getInstitution_name())) {
+            qualificationToUpdate.setInstitution_name(qualification.getInstitution_name());
         }
-        if (Objects.nonNull(qualification.getBoardOrUniversity())) {
-            qualificationToUpdate.setBoardOrUniversity(qualification.getBoardOrUniversity());
+        if (Objects.nonNull(qualification.getBoard_or_university())) {
+            qualificationToUpdate.setBoard_or_university(qualification.getBoard_or_university());
         }
-       if (Objects.nonNull(qualification.getMarksObtained())) {
-           qualificationToUpdate.setMarksObtained(qualification.getMarksObtained());
+       if (Objects.nonNull(qualification.getMarks_obtained())) {
+           qualificationToUpdate.setMarks_obtained(qualification.getMarks_obtained());
        }
-       if (Objects.nonNull(qualification.getMarksTotal())) {
-           qualificationToUpdate.setMarksTotal(qualification.getMarksTotal());
+       if (Objects.nonNull(qualification.getTotal_marks())) {
+           qualificationToUpdate.setTotal_marks(qualification.getTotal_marks());
        }
-       if (Objects.nonNull(qualification.getSubjectStream())) {
-           qualificationToUpdate.setSubjectStream(qualification.getSubjectStream());
+       if (Objects.nonNull(qualification.getSubject_stream())) {
+           qualificationToUpdate.setSubject_stream(qualification.getSubject_stream());
        }
-       if (Objects.nonNull(qualification.getGradeOrPercentageValue())) {
-           qualificationToUpdate.setGradeOrPercentageValue(qualification.getGradeOrPercentageValue());
+       if (Objects.nonNull(qualification.getGrade_or_percentage_value())) {
+           qualificationToUpdate.setGrade_or_percentage_value(qualification.getGrade_or_percentage_value());
        }
-       if (Objects.nonNull(qualification.getYearOfPassing())) {
-           qualificationToUpdate.setYearOfPassing(qualification.getYearOfPassing());
+       if (Objects.nonNull(qualification.getYear_of_passing())) {
+           qualificationToUpdate.setYear_of_passing(qualification.getYear_of_passing());
        }
        return entityManager.merge(qualificationToUpdate);
     }
-
 }

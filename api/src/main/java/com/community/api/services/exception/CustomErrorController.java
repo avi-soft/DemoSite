@@ -1,6 +1,10 @@
 package com.community.api.services.exception;
 
+<<<<<<< HEAD
 import org.springframework.beans.factory.annotation.Autowired;
+=======
+import com.community.api.services.ResponseService;
+>>>>>>> d2129a477168c478b6ad75b7cb0dda7537115b24
 import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,9 +27,10 @@ public class CustomErrorController implements ErrorController {
         Integer statusCode = (Integer) request.getAttribute(RequestDispatcher.ERROR_STATUS_CODE);
 
         if (statusCode == HttpStatus.NOT_FOUND.value()) {
-             return responseService.generateErrorResponse("Custom 404 message - Resource not found", HttpStatus.NOT_FOUND);
+
+            return ResponseService.generateErrorResponse("Custom 404 message - Resource not found", HttpStatus.NOT_FOUND);
         }else {
-            return responseService.generateErrorResponse("Custom error - Something went wrong(From CustomErrorController.", HttpStatus.NOT_FOUND);
+            return ResponseService.generateErrorResponse("Custom error - Something went wrong", HttpStatus.INTERNAL_SERVER_ERROR);
 
         }
     }
