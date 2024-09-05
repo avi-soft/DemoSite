@@ -1,6 +1,7 @@
 package com.community.api.endpoint.avisoft.controller.Customer;
 
 
+import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
 import com.community.api.dto.CategoryDto;
 import com.community.api.dto.CustomProductWrapper;
@@ -12,6 +13,8 @@ import com.community.api.entity.CustomProduct;
 import com.community.api.services.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.exception.ExceptionHandlingService;
+import com.community.api.services.exception.FileSizeExceededException;
+import com.community.api.services.exception.InvalidFileTypeException;
 import com.community.api.utils.Document;
 
 import com.community.api.utils.DocumentType;
@@ -148,14 +151,14 @@ public class CustomerEndpoint {
     }
 
     @Transactional
-    @RequestMapping(value = "update", method = RequestMethod.POST)
+    @RequestMapping(value = "update", method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<?> updateCustomer(
             @RequestParam Long customerId,
-            @RequestBody CustomCustomer customerDetails) {
+            @RequestPart("customerDetails") CustomCustomer customerDetails,
+            @RequestPart("files") MultipartFile[] files) {
         try {
             if (customerService == null) {
                 return responseService.generateErrorResponse("Customer service is not initialized.",HttpStatus.INTERNAL_SERVER_ERROR);
-
             }
 
             CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
@@ -208,8 +211,37 @@ public class CustomerEndpoint {
                 customer.setEmailAddress(customerDetails.getEmailAddress());
             }
 
+            if (files != null && files.length > 0) {
+                for (MultipartFile file : files) {
+                    try {
 
+                        if (!DocumentStorageService.isValidFileType(file)) {
+                            throw new InvalidFileTypeException("Invalid file type: " + file.getOriginalFilename());
+                        }
+                        if (file.getSize() > Constant.MAX_FILE_SIZE) {
+                            throw new FileSizeExceededException("File size exceeds the maximum allowed size: " + file.getOriginalFilename());
+                        }
 
+                        String documentType = DocumentStorageService.getDocumentTypeFromMultipartFile(file);
+
+                        String fileName = file.getOriginalFilename();
+                        try (InputStream fileInputStream = file.getInputStream()) {
+                            documentStorageService.saveDocument(customerId.toString(), documentType, fileName, fileInputStream, "customer");
+                        }
+
+                        Document doc = new Document();
+                        Document newDocumentType = new Document();
+                        doc.setName(fileName);
+                        doc.setFilePath(DocumentStorageService.BASE_DIRECTORY + customerId + "\\" + documentType + "\\" + fileName);
+                        doc.setData(file.getBytes());
+                        doc.setCustomCustomer(customCustomer);
+                        doc.setDocumentType(newDocumentType);
+                        em.persist(doc);
+                    }  catch (Exception e) {
+                        return responseService.generateErrorResponse("Error uploading documents", HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
+                }
+            }
 
             em.merge(customCustomer);
             return responseService.generateSuccessResponse("User details updated successfully : ",customer, HttpStatus.OK);

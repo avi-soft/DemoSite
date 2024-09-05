@@ -21,7 +21,7 @@ public class Document {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long documentId;
 
-
+    private String name;
     private String filePath;
 
     @Lob

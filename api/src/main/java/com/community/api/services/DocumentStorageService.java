@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 
 @Service
 public class DocumentStorageService {
@@ -59,5 +60,12 @@ public class DocumentStorageService {
 
             return "UNKNOWN";
         }
+
+    public static boolean isValidFileType(MultipartFile file) {
+
+        String[] allowedFileTypes = {"application/pdf", "image/jpeg", "image/png"};
+        return Arrays.asList(allowedFileTypes).contains(file.getContentType());
+    }
+
 
 }
