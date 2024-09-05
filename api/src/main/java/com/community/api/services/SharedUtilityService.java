@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.order.domain.OrderItem;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
@@ -58,5 +60,31 @@ public class SharedUtilityService {
         productDetails.put("active_end_date", product.getDefaultSku().getActiveEndDate());
         return productDetails;
     }
+    public int validateInputMap(Map<String,Object>inputMap)
+    {
+
+            if(inputMap.keySet().size()>Constant.MAX_REQUEST_SIZE)
+                return 1;
+
+            // Iterate through the map entries to check for nested maps
+            for (Map.Entry<String, Object> entry : inputMap.entrySet()) {
+                Object value = entry.getValue();
+
+                // Check if the value is a nested map
+                if (value instanceof Map) {
+                    Map<?, ?> nestedMap = (Map<?, ?>) value;
+
+                    // Check the size of the nested map's key set
+                    if (nestedMap.keySet().size() > Constant.MAX_NESTED_KEY_SIZE) {
+                        return 1;
+                    }
+                }
+            }
+            return 0;
+            // Your existing logic to handle the login
+            // ...
+
+        }
+
 }
 

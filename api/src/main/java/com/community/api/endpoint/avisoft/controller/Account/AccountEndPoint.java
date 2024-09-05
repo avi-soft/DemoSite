@@ -47,6 +47,8 @@ public class AccountEndPoint {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
+    private  SharedUtilityService sharedUtilityService;
+    @Autowired
     private RoleService roleService;
     @Autowired
     private ServiceProviderServiceImpl serviceProviderService;
@@ -95,6 +97,10 @@ public class AccountEndPoint {
     @ResponseBody
     public ResponseEntity<?> verifyAndLogin(@RequestBody Map<String, Object> loginDetails, HttpSession session) {
         try {
+            if(sharedUtilityService.validateInputMap(loginDetails)==1)
+            {
+                return ResponseService.generateErrorResponse("Invalid Request Body",HttpStatus.UNPROCESSABLE_ENTITY);
+            }
             String mobileNumber = (String) loginDetails.get("mobileNumber");
             int i=0;
             for(;i<mobileNumber.length();i++)

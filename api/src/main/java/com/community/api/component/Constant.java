@@ -81,4 +81,6 @@ public class Constant {
     public static final String PRODUCTNOTFOUND = "Product not Found";
     public static final String CATEGORYNOTFOUND = "Category not Found";
     public static final String PRODUCTTITLENOTGIVEN = "Product MetaTitle not Given";
+    public static final int MAX_REQUEST_SIZE=100;
+    public static  final int MAX_NESTED_KEY_SIZE=100;
 }
