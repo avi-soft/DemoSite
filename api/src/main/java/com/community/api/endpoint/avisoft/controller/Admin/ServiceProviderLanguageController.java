@@ -1,6 +1,7 @@
 package com.community.api.endpoint.avisoft.controller.Admin;
 
 import com.community.api.entity.ServiceProviderLanguage;
+import com.community.api.services.ResponseService;
 import com.community.api.services.ServiceProviderLanguageService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.twilio.http.Response;
@@ -30,6 +31,8 @@ public class ServiceProviderLanguageController {
     private ExceptionHandlingImplement exceptionHandling;
     @Autowired
     private ServiceProviderLanguageService languageService;
+    @Autowired
+    private ResponseService responseService;
     @Transactional
     @PostMapping("add-language")
     private ResponseEntity<?> addLanguage(@RequestBody Map<String,Object> serviceProviderLanguage)
@@ -39,18 +42,18 @@ public class ServiceProviderLanguageController {
         }catch (Exception exception)
         {
             exceptionHandling.handleException(exception);
-            return new ResponseEntity<>("Error adding language to list", HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("Error adding language to list", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     @GetMapping("get-languages")
     private ResponseEntity<?> getLanguages()
     {
         try{
-            return new ResponseEntity<>(languageService.findAllLanguageList(),HttpStatus.OK);
+            return responseService.generateSuccessResponse("List Fetched Successfully",languageService.findAllLanguageList(),HttpStatus.OK);
         }catch (Exception exception)
         {
             exceptionHandling.handleException(exception);
-            return new ResponseEntity<>("Error adding language to list", HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("Error adding language to list", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

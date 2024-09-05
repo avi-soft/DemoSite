@@ -31,7 +31,7 @@ public class ServiceProviderAddressTypeController {
     public ResponseEntity<?> getAddressTypes()
     {
         TypedQuery<ServiceProviderAddressRef> query = entityManager.createQuery(Constant.jpql, ServiceProviderAddressRef.class);
-        return new ResponseEntity<>(query.getResultList(), HttpStatus.OK);
+        return responseService.generateSuccessResponse("List fetched successfully",query.getResultList(), HttpStatus.OK);
     }
     @Transactional
     @PostMapping("/addAddressType")
@@ -40,7 +40,7 @@ public class ServiceProviderAddressTypeController {
         try{
             String address_name=(String) details.get("address_name");
             if(address_name==null)
-                return new ResponseEntity<>("Address name cannot be null",HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Address name cannot be null",HttpStatus.BAD_REQUEST);
             ServiceProviderAddressRef addressRef=new ServiceProviderAddressRef();
             addressRef.setAddress_name(address_name);
             entityManager.persist(addressRef);

@@ -24,22 +24,24 @@ public class SkillService {
     private EntityManager entityManager;
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
+    @Autowired
+    private ResponseService responseService;
     @Transactional
     public ResponseEntity<?> addSkill(@RequestBody Map<String,Object> skill) {
         try{
             String skillName=(String)skill.get("skill_name");
             if(skillName==null||skillName.isEmpty())
-                return new ResponseEntity<>("Error saving skill : Skill Name required", HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Error saving skill : Skill Name required", HttpStatus.BAD_REQUEST);
             Skill skillToBeSaved=new Skill();
             int id=(int)findCount();
             skillToBeSaved.setSkill_id(++id);
             skillToBeSaved.setSkill_name(skillName);
             entityManager.persist(skillToBeSaved);
-            return new ResponseEntity<>(skillToBeSaved,HttpStatus.OK);
+            return responseService.generateSuccessResponse("Skill saved",skillToBeSaved,HttpStatus.OK);
         }catch (Exception exception)
         {
             exceptionHandling.handleException(exception);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error saving skill : " + exception.getMessage());
+            return responseService.generateErrorResponse("Error saving skill : " + exception.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     public long findCount() {

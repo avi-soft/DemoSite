@@ -96,6 +96,16 @@ public class AccountEndPoint {
     public ResponseEntity<?> verifyAndLogin(@RequestBody Map<String, Object> loginDetails, HttpSession session) {
         try {
             String mobileNumber = (String) loginDetails.get("mobileNumber");
+            int i=0;
+            for(;i<mobileNumber.length();i++)
+            {
+                if(mobileNumber.charAt(i)!='0')
+                    break;
+            }
+            //if(mobileNumber.startsWith("0")) {
+                mobileNumber = mobileNumber.substring(i);
+                loginDetails.put("mobileNumber", mobileNumber);
+            //}
             if (mobileNumber != null) {
                 if (customCustomerService.isValidMobileNumber(mobileNumber) && isNumeric(mobileNumber)) {
                     return loginWithPhoneOtp(loginDetails, session);
@@ -118,6 +128,8 @@ public class AccountEndPoint {
     public ResponseEntity<?> loginWithPassword(@RequestBody Map<String, Object> loginDetails, HttpSession session, HttpServletRequest request) {
         try {
             String mobileNumber = (String) loginDetails.get("mobileNumber");
+            if(mobileNumber.startsWith("0"))
+                mobileNumber=mobileNumber.substring(1);
             String username = (String) loginDetails.get("username");
             if (mobileNumber != null) {
                 if (customCustomerService.isValidMobileNumber(mobileNumber) && isNumeric(mobileNumber)) {
@@ -139,13 +151,15 @@ public class AccountEndPoint {
     }
 
     @RequestMapping(value = "phone-otp", method = RequestMethod.POST)
-    private ResponseEntity<?> loginWithPhoneOtp(@RequestBody Map<String, Object> loginDetails, HttpSession session) throws UnsupportedEncodingException, UnsupportedEncodingException {
+    private ResponseEntity<?> loginWithPhoneOtp(Map<String, Object> loginDetails, HttpSession session) throws UnsupportedEncodingException, UnsupportedEncodingException {
         try {
             if (loginDetails == null) {
                 return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
 
             }
             String mobileNumber = (String) loginDetails.get("mobileNumber");
+            /*if(mobileNumber.startsWith("0"))
+                mobileNumber=mobileNumber.substring(1);*/
             String countryCode = (String) loginDetails.get("countryCode");
             Integer role = (Integer) loginDetails.get("role");
             if (mobileNumber == null) {

@@ -68,7 +68,7 @@ public class ServiceProviderController {
             listOfSkills.add(skill);
             serviceProviderEntity.setSkills(listOfSkills);
             entityManager.merge(serviceProviderEntity);
-            return new ResponseEntity<>(serviceProviderEntity, HttpStatus.OK);
+            return responseService.generateSuccessResponse("Skill assigned to service provider id : "+serviceProviderEntity.getService_provider_id(),serviceProviderEntity, HttpStatus.OK);
         }catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error assigning skill: " + e.getMessage());
@@ -90,10 +90,10 @@ public class ServiceProviderController {
         try{
         ServiceProviderEntity serviceProviderToBeDeleted=entityManager.find(ServiceProviderEntity.class,userId);
         if(serviceProviderToBeDeleted==null)
-            return new ResponseEntity<>("No record found",HttpStatus.NOT_FOUND);
+            return responseService.generateErrorResponse("No record found",HttpStatus.NOT_FOUND);
         else
             entityManager.remove(serviceProviderToBeDeleted);
-        return new ResponseEntity<>("Service Provider Deleted",HttpStatus.OK);
+        return responseService.generateSuccessResponse("Service Provider Deleted",null,HttpStatus.OK);
     }
         catch (Exception e) {
             exceptionHandling.handleException(e);
@@ -115,7 +115,7 @@ public class ServiceProviderController {
                 return responseService.generateSuccessResponse("Password created",serviceProvider,HttpStatus.OK);
             } else {
                 if (password == null /*|| newPassword == null*/)
-                    new ResponseEntity<>("Empty password entered", HttpStatus.BAD_REQUEST);
+                    return responseService.generateErrorResponse("Empty password entered", HttpStatus.BAD_REQUEST);
                 /*if (passwordEncoder.matches(password, serviceProvider.getPassword())) {
                     serviceProvider.setPassword(passwordEncoder.encode(newPassword));*/
                 if(!passwordEncoder.matches(password,serviceProvider.getPassword())) {
@@ -152,12 +152,12 @@ public class ServiceProviderController {
         try{
             if(serviceProviderAddress==null)
             {
-                return new ResponseEntity<>("Incomplete Details",HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Incomplete Details",HttpStatus.BAD_REQUEST);
             }
             ServiceProviderEntity existingServiceProvider=entityManager.find(ServiceProviderEntity.class,serviceProviderId);
             if(existingServiceProvider==null)
             {
-                return new ResponseEntity<>("Service Provider Not found",HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Service Provider Not found",HttpStatus.BAD_REQUEST);
             }
             List<ServiceProviderAddress>addresses=existingServiceProvider.getSpAddresses();
             serviceProviderAddress.setState(districtService.findStateById(Integer.parseInt(serviceProviderAddress.getState())));
@@ -167,7 +167,7 @@ public class ServiceProviderController {
             serviceProviderAddress.setServiceProviderEntity(existingServiceProvider);
             entityManager.persist(serviceProviderAddress);
             entityManager.merge(existingServiceProvider);
-            return new ResponseEntity<>(serviceProviderAddress,HttpStatus.OK);
+            return responseService.generateSuccessResponse("Address added successfully",serviceProviderAddress,HttpStatus.OK);
         }catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error adding address " + e.getMessage());
@@ -178,10 +178,10 @@ public class ServiceProviderController {
     {
         try{
         TypedQuery<ServiceProviderAddressRef> query = entityManager.createQuery(Constant.jpql, ServiceProviderAddressRef.class);
-        return new ResponseEntity<>(query.getResultList(),HttpStatus.OK);
+        return responseService.generateSuccessResponse("List of addresses : ",query.getResultList(),HttpStatus.OK);
     }catch (Exception e) {
             exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some issue in fetching addressNames " + e.getMessage());
+            return responseService.generateErrorResponse("Some issue in fetching addressNames " + e.getMessage(),HttpStatus.BAD_REQUEST);
         }
     }
 }
