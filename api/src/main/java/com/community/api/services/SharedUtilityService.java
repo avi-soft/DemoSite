@@ -60,11 +60,17 @@ public class SharedUtilityService {
         productDetails.put("active_end_date", product.getDefaultSku().getActiveEndDate());
         return productDetails;
     }
-    public int validateInputMap(Map<String,Object>inputMap)
+    public enum ValidationResult {
+        SUCCESS,
+        EXCEEDS_MAX_SIZE,
+        EXCEEDS_NESTED_SIZE,
+        INVALID_TYPE
+    }
+    public ValidationResult validateInputMap(Map<String,Object>inputMap)
     {
 
             if(inputMap.keySet().size()>Constant.MAX_REQUEST_SIZE)
-                return 1;
+                return ValidationResult.EXCEEDS_MAX_SIZE;
 
             // Iterate through the map entries to check for nested maps
             for (Map.Entry<String, Object> entry : inputMap.entrySet()) {
@@ -76,13 +82,11 @@ public class SharedUtilityService {
 
                     // Check the size of the nested map's key set
                     if (nestedMap.keySet().size() > Constant.MAX_NESTED_KEY_SIZE) {
-                        return 1;
+                        return ValidationResult.EXCEEDS_NESTED_SIZE;
                     }
                 }
             }
-            return 0;
-            // Your existing logic to handle the login
-            // ...
+            return ValidationResult.SUCCESS;
 
         }
 

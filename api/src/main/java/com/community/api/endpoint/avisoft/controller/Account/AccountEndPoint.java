@@ -97,7 +97,8 @@ public class AccountEndPoint {
     @ResponseBody
     public ResponseEntity<?> verifyAndLogin(@RequestBody Map<String, Object> loginDetails, HttpSession session) {
         try {
-            if(sharedUtilityService.validateInputMap(loginDetails)==1)
+            //validating input map
+            if(!sharedUtilityService.validateInputMap(loginDetails).equals(SharedUtilityService.ValidationResult.SUCCESS))
             {
                 return ResponseService.generateErrorResponse("Invalid Request Body",HttpStatus.UNPROCESSABLE_ENTITY);
             }
