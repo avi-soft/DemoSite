@@ -1,9 +1,17 @@
 package com.community.api.services;
 
 import com.community.api.endpoint.serviceProvider.ServiceProviderStatus;
-import com.community.api.entity.*;
-import jdk.jfr.Timestamp;
-import org.hibernate.query.criteria.internal.expression.function.CurrentDateFunction;
+import com.community.api.entity.CustomApplicationScope;
+import com.community.api.entity.CustomProductState;
+import com.community.api.entity.CustomReserveCategory;
+import com.community.api.entity.Districts;
+import com.community.api.entity.Examination;
+import com.community.api.entity.Role;
+import com.community.api.entity.ServiceProviderAddressRef;
+import com.community.api.entity.ServiceProviderInfra;
+import com.community.api.entity.ServiceProviderLanguage;
+import com.community.api.entity.Skill;
+import com.community.api.entity.StateCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -11,38 +19,36 @@ import org.springframework.stereotype.Component;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import static org.broadleafcommerce.common.util.sql.importsql.DemoSqlServerSingleLineSqlCommandExtractor.CURRENT_TIMESTAMP;
 
 @Component
-public class CustomProductStateService implements CommandLineRunner {
+public class CommandLineService implements CommandLineRunner {
 
     @Autowired
     private EntityManager entityManager;
-   @Autowired
-   private SharedUtilityService sharedUtilityService;
+
     @Override
     @Transactional
     public void run(String... args) throws Exception {
         // Check if data already exists to avoid duplication
         if (entityManager.createQuery("SELECT COUNT(c) FROM CustomProductState c", Long.class).getSingleResult() == 0) {
-            entityManager.persist(new CustomProductState(1L, "New"));
-            entityManager.persist(new CustomProductState(2L, "Approved"));
-            entityManager.persist(new CustomProductState(3L, "Live"));
-            entityManager.persist(new CustomProductState(4L, "Expired"));
-            entityManager.persist(new CustomProductState(5L, "Rejected"));
+            entityManager.persist(new CustomProductState(1L, "NEW"));
+            entityManager.persist(new CustomProductState(2L, "APPROVED"));
+            entityManager.persist(new CustomProductState(3L, "LIVE"));
+            entityManager.persist(new CustomProductState(4L, "EXPIRED"));
+            entityManager.persist(new CustomProductState(5L, "REJECTED"));
         }
 
-        if (entityManager.createQuery("SELECT COUNT(c) FROM CustomNotifyingAuthority c", Long.class).getSingleResult() == 0) {
-            entityManager.persist(new CustomNotifyingAuthority(1L, "State"));
-            entityManager.persist(new CustomNotifyingAuthority(2L, "Government"));
+        if (entityManager.createQuery("SELECT COUNT(c) FROM CustomApplicationScope c", Long.class).getSingleResult() == 0) {
+            entityManager.persist(new CustomApplicationScope(1L, "STATE"));
+            entityManager.persist(new CustomApplicationScope(2L, "CENTER"));
         }
 
         if (entityManager.createQuery("SELECT COUNT(c) FROM CustomReserveCategory c", Long.class).getSingleResult() == 0) {
-            entityManager.persist(new CustomReserveCategory(1L, "GEN", "GENERAL", true));
+            entityManager.persist(new CustomReserveCategory(1L, "GEN", "General", true));
             entityManager.persist(new CustomReserveCategory(2L, "SC", "Schedule Caste", false));
             entityManager.persist(new CustomReserveCategory(3L, "ST", "Schedule Tribe", false));
             entityManager.persist(new CustomReserveCategory(4L, "OBC", "Other Backward Caste", false));

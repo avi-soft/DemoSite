@@ -1,11 +1,12 @@
 package com.community.api.endpoint.avisoft.controller.Category;
 
 import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
-import com.community.api.dto.CategoryDto;
+import com.community.api.dto.AddCategoryDto;
 import com.community.api.dto.CustomCategoryWrapper;
 import com.community.api.entity.CustomProduct;
 import com.community.api.dto.CustomProductWrapper;
 import com.community.api.services.CategoryService;
+import com.community.api.services.ResponseService;
 import com.community.api.services.exception.ExceptionHandlingService;
 import org.broadleafcommerce.common.persistence.Status;
 import org.broadleafcommerce.core.catalog.domain.Category;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
+
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
@@ -33,74 +35,83 @@ import java.util.Iterator;
 import java.util.List;
 
 @RestController
-@RequestMapping(value = "/categoryCustom")
+@RequestMapping(value = "/category-custom")
 public class CategoryController extends CatalogEndpoint {
 
-    private static final String CATALOGSERVICENOTINITIALIZED = "Catalog service is not initialized.";
-    private static final String CATEGORYCANNOTBELESSTHANOREQAULZERO = "CategoryId cannot be <= 0";
-    private static final String SOMEEXCEPTIONOCCURRED = "Some Exception Occurred";
+    private static final String CATALOGSERVICENOTINITIALIZED = "CATALOG SERVICE IS NOT INITIATED.";
+    private static final String SOMEEXCEPTIONOCCURRED = "SOME EXCEPTION OCCURRED";
+    private static final String CATEGORYCANNOTBELESSTHANOREQAULZERO = "CATEGORY ID CANNOT BE LESS OR EQUAL TO ZERO";
 
-    private ExceptionHandlingService exceptionHandlingService;
-    private CategoryService categoryService;
-
-    @Autowired
-    public CategoryController(ExceptionHandlingService exceptionHandlingService,CategoryService categoryService)
-    {
-        this.exceptionHandlingService = exceptionHandlingService;
-        this.categoryService = categoryService;
-    }
+    private final ExceptionHandlingService exceptionHandlingService;
+    private final CategoryService categoryService;
 
     @PersistenceContext
     private EntityManager entityManager;
 
-    public CategoryController(CategoryService categoryService, EntityManager entityManager){
-        this.entityManager = entityManager;
+    @Autowired
+    public CategoryController(ExceptionHandlingService exceptionHandlingService, CategoryService categoryService) {
+        this.exceptionHandlingService = exceptionHandlingService;
         this.categoryService = categoryService;
-
     }
+
     @PostMapping("/add")
-    public ResponseEntity<?> addCategory(HttpServletRequest request, @RequestBody CategoryImpl categoryImpl) {
+    public ResponseEntity<?> addCategory(HttpServletRequest request, @RequestBody AddCategoryDto addCategoryDto) {
         try {
+
+            CategoryImpl categoryImpl = new CategoryImpl();
+
             if (catalogService == null) {
-                return new ResponseEntity<>(CATALOGSERVICENOTINITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
+                return ResponseService.generateErrorResponse(CATALOGSERVICENOTINITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            if (categoryImpl.getName().trim().isEmpty()) {
-                return new ResponseEntity<>("CategoryTitle cannot be empty or null", HttpStatus.INTERNAL_SERVER_ERROR);
+            if (addCategoryDto.getName() == null && addCategoryDto.getName().trim().isEmpty()) {
+                return new ResponseEntity<>("CATEGORY TITLE CANNOT BE EMPTY OR NULL", HttpStatus.BAD_REQUEST);
             }
-            categoryImpl.setName(categoryImpl.getName().trim());
-            if (categoryImpl.getDisplayTemplate().trim().isEmpty()) {
-                return new ResponseEntity<>("CategoryDisplayTemplate cannot be empty", HttpStatus.INTERNAL_SERVER_ERROR);
+            addCategoryDto.setName(addCategoryDto.getName().trim());
+            categoryImpl.setName(addCategoryDto.getName());
+
+            if (addCategoryDto.getDisplayTemplate() == null) {
+                addCategoryDto.setDisplayTemplate(addCategoryDto.getName());
+            } else {
+                if (addCategoryDto.getDisplayTemplate().trim().isEmpty()) {
+                    return ResponseService.generateErrorResponse("DISPLAY TEMPLATE CANNOT BE EMPTY", HttpStatus.BAD_REQUEST);
+                }
+                addCategoryDto.setDisplayTemplate(addCategoryDto.getDisplayTemplate().trim());
             }
-            categoryImpl.setDisplayTemplate(categoryImpl.getDisplayTemplate().trim());
-            categoryImpl.setDescription(categoryImpl.getDescription().trim());
+            categoryImpl.setDisplayTemplate(addCategoryDto.getDisplayTemplate());
+
+            if (addCategoryDto.getDescription() != null && !addCategoryDto.getDescription().trim().isEmpty()) {
+                addCategoryDto.setDescription(addCategoryDto.getDescription().trim());
+                categoryImpl.setDescription(addCategoryDto.getDescription());
+            }
 
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String formattedDate = dateFormat.format(new Date());
             Date activeStartDate = dateFormat.parse(formattedDate);
 
-            categoryImpl.setActiveStartDate(activeStartDate);
-            if (categoryImpl.getActiveEndDate() != null && !categoryImpl.getActiveEndDate().after(categoryImpl.getActiveStartDate())) {
-                return new ResponseEntity<>("ActiveEndDate cannot be before or equal to ActiveStartDate(CurrentDate)", HttpStatus.INTERNAL_SERVER_ERROR);
+            addCategoryDto.setActiveStartDate(activeStartDate);
+            categoryImpl.setActiveStartDate(addCategoryDto.getActiveStartDate());
+            if (addCategoryDto.getActiveEndDate() != null && !addCategoryDto.getActiveEndDate().after(addCategoryDto.getActiveStartDate())) {
+                return ResponseService.generateErrorResponse("ACTIVE END DATE CANNOT BE BEFORE OR EQUAL TO ACTIVE START DATE(CURRENT DATE)", HttpStatus.BAD_REQUEST);
             }
 
             Category category = catalogService.saveCategory(categoryImpl);
 
             CustomCategoryWrapper wrapper = new CustomCategoryWrapper();
-            wrapper.wrapDetails(category, request);
-            return ResponseEntity.ok(wrapper);
+            wrapper.wrapDetailsCategory(category, null, request);
+            return ResponseService.generateSuccessResponse("CATEGORY ADDED SUCCESSFULLY", wrapper, HttpStatus.OK);
 
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return new ResponseEntity<>(SOMEEXCEPTIONOCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseService.generateErrorResponse(SOMEEXCEPTIONOCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @GetMapping(value = "/getAllCategories")
+    @GetMapping(value = "/get-all-categories")
     public ResponseEntity<?> getCategories(HttpServletRequest request, @RequestParam(value = "limit", defaultValue = "20") int limit) {
         try {
             if (catalogService == null) {
-                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
+                return ResponseService.generateErrorResponse("CATALOG SERVICE IS NULL", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             List<Category> categories = this.catalogService.findAllCategories();
@@ -112,36 +123,36 @@ public class CategoryController extends CatalogEndpoint {
                 if ((((Status) category).getArchived() != 'Y' && category.getActiveEndDate() == null) || (((Status) category).getArchived() != 'Y' && category.getActiveEndDate().after(new Date()))) {
 
                     CustomCategoryWrapper wrapper = new CustomCategoryWrapper();
-                    wrapper.wrapDetails(category, request);
+                    wrapper.wrapDetailsCategory(category, null, request);
                     activeCategories.add(wrapper);
                 }
             }
 
-            return new ResponseEntity<>(activeCategories, HttpStatus.OK);
+            return ResponseService.generateSuccessResponse("CATEGORIES FOUND SUCCESSFULLY", activeCategories, HttpStatus.OK);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return new ResponseEntity<>(SOMEEXCEPTIONOCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseService.generateErrorResponse(SOMEEXCEPTIONOCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    @GetMapping(value = "/getProductsByCategoryId")
-    public ResponseEntity<?> getProductsByCategoryId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
+    @GetMapping(value = "/get-products-by-category-id")
+    public ResponseEntity<?> getProductsByCategoryId(HttpServletRequest request, @RequestParam(value = "id") String id) throws Exception {
         try {
             if (catalogService == null) {
-                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
+                return ResponseService.generateErrorResponse("CATALOG SERVICE IS NULL", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             Long categoryId = Long.parseLong(id);
-            if(categoryId <= 0){
+            if (categoryId <= 0) {
                 return new ResponseEntity<>(CATEGORYCANNOTBELESSTHANOREQAULZERO, HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             Category category = this.catalogService.findCategoryById(categoryId);
 
             if (category == null) {
-                return new ResponseEntity<>("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
+                return ResponseService.generateErrorResponse("CATEGORY NOT FOUND", HttpStatus.NOT_FOUND);
             } else if (((Status) category).getArchived() == 'Y') {
-                return new ResponseEntity<>("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
+                return ResponseService.generateErrorResponse("CATEGORY IS ARCHIVED", HttpStatus.NOT_FOUND);
             }
 
             List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
@@ -150,24 +161,21 @@ public class CategoryController extends CatalogEndpoint {
             for (BigInteger productId : productIdList) {
                 CustomProduct customProduct = entityManager.find(CustomProduct.class, productId.longValue());
 
-                if(customProduct != null && (((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
+                if (customProduct != null && (((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
                     CustomProductWrapper wrapper = new CustomProductWrapper();
                     wrapper.wrapDetails(customProduct);
                     products.add(wrapper);
                 }
             }
 
-            CategoryDto categoryDao = new CategoryDto();
-            categoryDao.setCategoryId(category.getId());
-            categoryDao.setCategoryName(category.getName());
-            categoryDao.setProducts(products);
-            categoryDao.setTotalProducts(Long.valueOf(products.size()));
+            CustomCategoryWrapper categoryWrapper = new CustomCategoryWrapper();
+            categoryWrapper.wrapDetailsCategory(category, products, request);
 
-            return ResponseEntity.status(HttpStatus.OK).body(categoryDao);
+            return ResponseService.generateSuccessResponse("CATEGORY DATA FOUND", categoryWrapper, HttpStatus.OK);
 
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return new ResponseEntity<>(SOMEEXCEPTIONOCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseService.generateErrorResponse(SOMEEXCEPTIONOCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -175,11 +183,11 @@ public class CategoryController extends CatalogEndpoint {
     public ResponseEntity<?> removeCategoryById(HttpServletRequest request, @PathVariable("categoryId") String id, @RequestParam(value = "productLimit", defaultValue = "20") int productLimit, @RequestParam(value = "productOffset", defaultValue = "1") int productOffset, @RequestParam(value = "subcategoryLimit", defaultValue = "20") int subcategoryLimit, @RequestParam(value = "subcategoryOffset", defaultValue = "1") int subcategoryOffset) {
         try {
             if (catalogService == null) {
-                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
+                return new ResponseEntity<>("CATALOG SERVICE IS NULL", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             Long categoryId = Long.parseLong(id);
-            if(categoryId <= 0){
+            if (categoryId <= 0) {
                 return new ResponseEntity<>(CATEGORYCANNOTBELESSTHANOREQAULZERO, HttpStatus.INTERNAL_SERVER_ERROR);
             }
             Category category = this.catalogService.findCategoryById(categoryId);
@@ -187,68 +195,75 @@ public class CategoryController extends CatalogEndpoint {
             if (category != null) {
 
                 catalogService.removeCategory(category);
-
-                return new ResponseEntity<>("Category Deleted Successfully", HttpStatus.OK);
+                return ResponseService.generateSuccessResponse("CATEGORY DELETED SUCCESSFULLY", "DELETED", HttpStatus.OK);
 
             } else {
-                return new ResponseEntity<>("category not found", HttpStatus.INTERNAL_SERVER_ERROR);
+                return ResponseService.generateErrorResponse("CATEGORY NOT FOUND", HttpStatus.NOT_FOUND);
             }
 
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return new ResponseEntity<>(SOMEEXCEPTIONOCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseService.generateErrorResponse(SOMEEXCEPTIONOCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
 
     }
 
     @PatchMapping(value = "/update/{categoryId}")
-    public ResponseEntity<?> updateCategoryById(HttpServletRequest request, @RequestBody CategoryImpl categoryImpl, @PathVariable("categoryId") String id)
-    {
+    public ResponseEntity<?> updateCategoryById(HttpServletRequest request, @RequestBody AddCategoryDto addCategoryDto, @PathVariable("categoryId") String id) {
         try {
-
-            Long categoryId = Long.parseLong(id);
-            if(categoryId <= 0){
-                return new ResponseEntity<>(CATEGORYCANNOTBELESSTHANOREQAULZERO, HttpStatus.INTERNAL_SERVER_ERROR);
-            }
 
             if (catalogService == null) {
                 return new ResponseEntity<>(CATALOGSERVICENOTINITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+            Long categoryId = Long.parseLong(id);
+
+            if (categoryId <= 0) {
+                return ResponseService.generateErrorResponse(CATEGORYCANNOTBELESSTHANOREQAULZERO, HttpStatus.BAD_REQUEST);
             }
 
             Category category = this.catalogService.findCategoryById(categoryId);
 
             if (category != null) {
 
-                // setting the attributes manually
-                if (!categoryImpl.getName().isEmpty() && !categoryImpl.getName().trim().isEmpty()) { // trim works on nonNull values only.
-                    category.setName(categoryImpl.getName().trim());
+                if (!addCategoryDto.getName().isEmpty() && !addCategoryDto.getName().trim().isEmpty()) { // trim works on nonNull values only.
+                    category.setName(addCategoryDto.getName().trim());
                 }
-                if (categoryImpl.getDescription() != null && !categoryImpl.getDescription().trim().isEmpty()) {
-                    category.setDescription(categoryImpl.getDescription().trim());
+                if (!addCategoryDto.getDescription().isEmpty() && !addCategoryDto.getDescription().trim().isEmpty()) {
+                    category.setDescription(addCategoryDto.getDescription().trim());
                 }
-                if (categoryImpl.getActiveEndDate() != null && !categoryImpl.getActiveEndDate().after(categoryImpl.getActiveStartDate()) && !categoryImpl.getActiveEndDate().after(new Date())) {
-                    return new ResponseEntity<>("ActiveEndDate cannot be before or equal to ActiveStartDate(CurrentDate)", HttpStatus.INTERNAL_SERVER_ERROR);
+                if (addCategoryDto.getActiveEndDate() != null && !addCategoryDto.getActiveEndDate().after(addCategoryDto.getActiveStartDate()) && !addCategoryDto.getActiveEndDate().after(new Date())) {
+                    return new ResponseEntity<>("ACTIVE END DATE CANNOT BE BEFORE OR EQUAL TO ACTIVE START DATE(CURRENT DATE)", HttpStatus.INTERNAL_SERVER_ERROR);
                 }
-                if (categoryImpl.getDisplayTemplate() != null && !categoryImpl.getDisplayTemplate().trim().isEmpty()) {
-                    category.setDisplayTemplate(categoryImpl.getDescription().trim());
+                if (!addCategoryDto.getDisplayTemplate().isEmpty() && !addCategoryDto.getDisplayTemplate().trim().isEmpty()) {
+                    category.setDisplayTemplate(addCategoryDto.getDescription().trim());
                 }
 
-                // Save the updated category
-                category = catalogService.saveCategory(category);
+                category = catalogService.saveCategory(category); // Save the updated category
 
-                // Wrap and return the updated category details
-                CustomCategoryWrapper wrapper = new CustomCategoryWrapper();
-                wrapper.wrapDetails(category, request);
-                return ResponseEntity.ok(wrapper);
+                List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
+                List<CustomProductWrapper> products = new ArrayList<>();
+
+                for (BigInteger productId : productIdList) {
+                    CustomProduct customProduct = entityManager.find(CustomProduct.class, productId.longValue());
+
+                    if (customProduct != null && (((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
+                        CustomProductWrapper wrapper = new CustomProductWrapper();
+                        wrapper.wrapDetails(customProduct);
+                        products.add(wrapper);
+                    }
+                }
+
+                CustomCategoryWrapper wrapper = new CustomCategoryWrapper(); // Wrap and return the updated category details
+                wrapper.wrapDetailsCategory(category, products, request);
+                return ResponseService.generateSuccessResponse("CATEGORY UPDATED SUCCESSFULLY",wrapper, HttpStatus.OK);
 
             } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Category not found.");
+                return ResponseService.generateErrorResponse("CATEGORY NOT FOUND.", HttpStatus.NOT_FOUND);
             }
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return new ResponseEntity<>(SOMEEXCEPTIONOCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseService.generateErrorResponse(SOMEEXCEPTIONOCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
     }
 
 }
