@@ -4,7 +4,6 @@ import com.community.api.component.Constant;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.Privileges;
 import com.community.api.entity.Role;
-import com.community.api.entity.Skill;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import io.swagger.models.auth.In;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -117,7 +116,7 @@ public class PrivilegeService {
     public List<Integer> getPrivilege(Long userId) {
         try {
 
-            Query query = entityManager.createNativeQuery(Constant.serviceProviderRoles);
+            Query query = entityManager.createNativeQuery(Constant.SERVICE_PROVIDER_PRIVILEGE);
             query.setParameter("serviceProviderId", userId);
 
             return query.getResultList();

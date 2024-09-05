@@ -31,8 +31,10 @@ public class CustomProduct extends ProductImpl {
     @Max(value = 5, message = "Value must be between 1 and 5")
     protected Integer priorityLevel;
 
-    @Column(name = "job_group")
-    protected Character jobGroup;
+    @ManyToOne
+    @NotNull
+    @JoinColumn(name = "job_group_id")
+    protected CustomJobGroup jobGroup;
 
     @Column(name = "platform_fee")
     protected Double platformFee;
@@ -43,13 +45,39 @@ public class CustomProduct extends ProductImpl {
     @Column(name = "exam_date_to")
     protected Date examDateTo;
 
+    @Column(name = "last_modified")
+    protected Date modifiedDate;
+
     @ManyToOne
     @NotNull
     @JoinColumn(name = "product_state_id")
     protected CustomProductState productState;
 
     @ManyToOne
-    @JoinColumn(name = "notifying_authority_id")
-    protected CustomNotifyingAuthority customNotifyingAuthority;
+    @JoinColumn(name = "application_scope_id")
+    protected CustomApplicationScope customApplicationScope;
+
+    @ManyToOne
+    @JoinColumn(name = "creator_role_id")
+    protected Role creatoRole;
+
+    @Column(name = "creator_user_id")
+    protected Long userId;
+
+    @Column(name = "notifying_authority")
+    protected String notifyingAuthority;
+
+    @Column(name = "advertiser_url")
+    String advertiserUrl;
+
+    @Column(name = "domicile_required")
+    Boolean domicileRequired;
+
+    @Column(name = "modifier_user_id")
+    Long modifierUserId;
+
+    @ManyToOne
+    @JoinColumn(name = "modifier_role_id")
+    Role modifierRole;
 
 }

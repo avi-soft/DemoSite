@@ -1,6 +1,5 @@
 package com.community.api.services;
 
-import org.broadleafcommerce.core.catalog.domain.CategoryProductXref;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
@@ -20,7 +19,7 @@ public class CategoryService {
         try {
             return entityManager.createNativeQuery(sql).setParameter("categoryId", categoryId).getResultList();
         } catch (Exception e) {
-            throw new RuntimeException("Failed to get Category_Product: " + e.getMessage(), e);
+            throw new RuntimeException("FAILED TO GET CATEGORY_PRODUCT: " + e.getMessage(), e);
         }
     }
 }
