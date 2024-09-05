@@ -172,7 +172,7 @@ public class ProductController extends CatalogEndpoint {
             product.setCategory(category); // This will add both categoryId and productId to category_product_xref table.
 
             if (addProductDto.getMetaTitle() == null || addProductDto.getMetaTitle().trim().isEmpty()) {
-                return new ResponseEntity<>(PRODUCTTITLENOTGIVEN, HttpStatus.BAD_REQUEST);
+                return ResponseService.generateErrorResponse(PRODUCTTITLENOTGIVEN, HttpStatus.BAD_REQUEST);
             }
             addProductDto.setMetaTitle(addProductDto.getMetaTitle().trim());
             product.setMetaTitle(addProductDto.getMetaTitle()); // Also adding the same metaTitle in the sku.name as this will generate the auto-url.
