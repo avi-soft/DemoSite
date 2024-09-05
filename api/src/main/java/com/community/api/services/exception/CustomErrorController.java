@@ -1,10 +1,10 @@
 package com.community.api.services.exception;
 
-<<<<<<< HEAD
+
 import org.springframework.beans.factory.annotation.Autowired;
-=======
+
 import com.community.api.services.ResponseService;
->>>>>>> d2129a477168c478b6ad75b7cb0dda7537115b24
+
 import org.springframework.boot.web.servlet.error.ErrorController;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
