@@ -11,8 +11,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class AddCategoryDto {
-    @JsonProperty("id")
-    protected Long id;
+
     @JsonProperty("name")
     protected String name;
     @JsonProperty("description")

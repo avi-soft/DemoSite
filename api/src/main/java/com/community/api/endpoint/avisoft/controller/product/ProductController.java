@@ -791,4 +791,5 @@ public class ProductController extends CatalogEndpoint {
         }
     }
 
+
 }
