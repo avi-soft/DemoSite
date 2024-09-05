@@ -15,7 +15,6 @@ import javax.persistence.*;
 @Setter
 public class StateCode {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     private int state_id;
     private String state_name;
     private String state_code;

@@ -35,7 +35,7 @@ public class NotificationController
             catch (CustomerDoesNotExistsException customerDoesNotExistsException)
             {
                 exceptionHandlingImplement.handleException(customerDoesNotExistsException);
-                return ResponseEntity.status(404).body("Customer does not exist with id " + customerId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer does not exist with id " + customerId);
             }
             catch (RuntimeException e)
             {

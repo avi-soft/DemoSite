@@ -63,6 +63,7 @@ public class TwilioService {
         if (mobileNumber == null || mobileNumber.isEmpty()) {
             return ResponseEntity.badRequest().body(Map.of(
                     "status", ApiConstants.STATUS_ERROR,
+                    "status_code", HttpStatus.BAD_REQUEST,
                     "message", ApiConstants.MOBILE_NUMBER_NULL_OR_EMPTY
             ));
         }
@@ -73,17 +74,17 @@ public class TwilioService {
             String otp = generateOTP();
 
             // Uncomment the code to send OTP via SMS
-        /*
-        Message message = Message.creator(
-            new PhoneNumber(completeMobileNumber),
-            new PhoneNumber(twilioPhoneNumber),
-            otp
-        ).create();
-        */
+            /*
+            Message message = Message.creator(
+                new PhoneNumber(completeMobileNumber),
+                new PhoneNumber(twilioPhoneNumber),
+                otp
+            ).create();
+            */
 
             CustomCustomer existingCustomer = customCustomerService.findCustomCustomerByPhone(mobileNumber, countryCode);
             ServiceProviderEntity serviceProvider = serviceProviderService.findServiceProviderByPhone(mobileNumber, countryCode);
-
+            String maskedNumber = this.genereateMaskednumber(mobileNumber);
             if (existingCustomer == null && serviceProvider == null) {
                 CustomCustomer customerDetails = new CustomCustomer();
                 customerDetails.setId(customerService.findNextCustomerId());
@@ -92,22 +93,22 @@ public class TwilioService {
                 customerDetails.setOtp(otp);
                 entityManager.persist(customerDetails);
                 return ResponseEntity.ok(Map.of(
-                        "status", ApiConstants.STATUS_SUCCESS,
-                        "message", ApiConstants.OTP_SENT_SUCCESSFULLY,
-                        "otp", otp
+                        "otp", otp,
+                         "message", "Otp has been sent successfully on " + maskedNumber
                 ));
             } else if (serviceProvider != null) {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
                         "status", ApiConstants.STATUS_ERROR,
+                        "status_code", HttpStatus.BAD_REQUEST,
                         "message", ApiConstants.NUMBER_ALREADY_REGISTERED_SERVICE_PROVIDER
                 ));
             } else {
                 existingCustomer.setOtp(otp);
                 entityManager.merge(existingCustomer);
                 return ResponseEntity.ok(Map.of(
-                        "status", ApiConstants.STATUS_SUCCESS,
-                        "message", ApiConstants.OTP_SENT_SUCCESSFULLY,
-                        "otp", otp
+
+                        "otp", otp,
+                         "message", "Otp has been sent successfully on " + maskedNumber
                 ));
             }
 
@@ -115,29 +116,49 @@ public class TwilioService {
             if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                         "status", ApiConstants.STATUS_ERROR,
-                        "message", ApiConstants.UNAUTHORIZED_ACCESS
+                        "message", ApiConstants.UNAUTHORIZED_ACCESS,
+                        "status_code", HttpStatus.UNAUTHORIZED
                 ));
             } else {
                 exceptionHandling.handleHttpClientErrorException(e);
                 return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                         "status", ApiConstants.STATUS_ERROR,
-                        "message", ApiConstants.INTERNAL_SERVER_ERROR
+                        "message", ApiConstants.INTERNAL_SERVER_ERROR,
+                        "status_code", HttpStatus.INTERNAL_SERVER_ERROR
                 ));
             }
         } catch (ApiException e) {
             exceptionHandling.handleApiException(e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
                     "status", ApiConstants.STATUS_ERROR,
-                    "message", ApiConstants.ERROR_SENDING_OTP + e.getMessage()
+                    "message", ApiConstants.ERROR_SENDING_OTP + e.getMessage(),
+                    "status_code", HttpStatus.INTERNAL_SERVER_ERROR
             ));
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
                     "status", ApiConstants.STATUS_ERROR,
-                    "message", ApiConstants.ERROR_SENDING_OTP + e.getMessage()
+                    "message", ApiConstants.ERROR_SENDING_OTP + e.getMessage(),
+                    "status_code", HttpStatus.INTERNAL_SERVER_ERROR
             ));
         }
     }
+
+    public synchronized String genereateMaskednumber(String mobileNumber){
+        String lastFourDigits = mobileNumber.substring(mobileNumber.length() - 4);
+
+        int numXs = mobileNumber.length() - 4;
+
+        StringBuilder maskBuilder = new StringBuilder();
+        for (int i = 0; i < numXs; i++) {
+            maskBuilder.append('x');
+        }
+        String mask = maskBuilder.toString();
+
+        String maskedNumber = mask + lastFourDigits;
+        return  maskedNumber;
+    }
+
 
 
     private synchronized String generateOTP() {

@@ -111,7 +111,9 @@ public class ServiceProviderEntity  {
     private String total_marks;
     private String marks_obtained;
     private String cgpa;
-    private boolean isCgpa;
+    private double latitude,longitude;
+    private int rank;
+    private int signedUp=0;
 
     @ManyToMany
     @JoinTable(

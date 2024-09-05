@@ -25,22 +25,24 @@ public class ServiceProviderLanguageService {
     private EntityManager entityManager;
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
+    @Autowired
+    private ResponseService responseService;
     @Transactional
     public ResponseEntity<?> addLanguage(@RequestBody Map<String,Object> language) {
         try{
             String languageName=(String)language.get("language_name");
             if(languageName==null||languageName.isEmpty())
-                return new ResponseEntity<>("Error saving language : Language Name required", HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Error saving language : Language Name required", HttpStatus.BAD_REQUEST);
             ServiceProviderLanguage languageTobeSaved=new ServiceProviderLanguage();
             int id=(int)findCount();
             languageTobeSaved.setLanguage_id(++id);
             languageTobeSaved.setLanguage_name(languageName);
             entityManager.persist(languageTobeSaved);
-            return new ResponseEntity<>(languageTobeSaved,HttpStatus.OK);
+            return responseService.generateSuccessResponse("Language added successfully",languageTobeSaved,HttpStatus.OK);
         }catch (Exception exception)
         {
             exceptionHandling.handleException(exception);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error saving language : " + exception.getMessage());
+            return responseService.generateErrorResponse("Error saving language : " + exception.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     public long findCount() {

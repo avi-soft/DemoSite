@@ -35,7 +35,9 @@ public class ExaminationController {
         this.examinationService=examinationService;
     }
 
-    @GetMapping("/get-all-examinations")
+
+    @GetMapping("/get-all-exams")
+
     public ResponseEntity<?> getAllExaminations() {
         TypedQuery<Examination> query = entityManager.createQuery(FIND_ALL_EXAMINATIONS_QUERY, Examination.class);
         List<Examination> examinations = query.getResultList();

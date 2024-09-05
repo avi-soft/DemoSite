@@ -43,12 +43,12 @@
 
         <class>com.community.api.entity.CustomProduct</class>
         <class>com.community.api.entity.CustomProductState</class>
-        <class>com.community.api.entity.CustomNotifyingAuthority</class>
+        <class>com.community.api.entity.CustomApplicationScope</class>
         <class>com.community.api.entity.CustomReserveCategory</class>
-        <class>com.community.api.entity.ProductReserveCategoryFeePostRef</class>
-        <class>com.community.api.entity.ProductReserveCategoryBornBeforeAfterRef</class>
-        <class>com.community.api.entity.ServiceProviderTest</class>
-        <class>com.community.api.entity.TypingText</class>
+        <class>com.community.api.entity.CustomProductReserveCategoryFeePostRef</class>
+        <class>com.community.api.entity.CustomProductReserveCategoryBornBeforeAfterRef</class>
+        <class>com.community.api.entity.CustomJobGroup</class>
+
         <exclude-unlisted-classes/>
     </persistence-unit>
     
@@ -85,6 +85,7 @@
         <class>com.community.api.entity.ServiceProviderTest</class>
         <class>com.community.api.entity.Image</class>
         <class>com.community.api.entity.SignatureImage</class>
+        <class>com.community.api.entity.TypingText</class>
         <exclude-unlisted-classes/>
     </persistence-unit>
 
