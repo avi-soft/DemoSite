@@ -73,10 +73,14 @@ public class CustomerEndpoint {
     private ExceptionHandlingService exceptionHandlingService;
 
     @Autowired
-    private static ResponseService responseService;
+    private  JwtUtil jwtTokenUtil;
 
     @Autowired
-    private CategoryService categoryService;
+    private  RoleService roleService;
+
+
+    @Autowired
+    private static ResponseService responseService;
 
     @Autowired
     private DocumentStorageService documentStorageService;
@@ -159,7 +163,10 @@ public class CustomerEndpoint {
     public ResponseEntity<?> updateCustomer(
             @RequestParam Long customerId,
             @RequestPart("customerDetails") CustomCustomer customerDetails,
-            @RequestPart("files") MultipartFile[] files) {
+            @RequestPart(value = "aadharCard", required = false) MultipartFile aadharCard,
+            @RequestPart(value = "panCard", required = false) MultipartFile panCard,
+            @RequestPart(value = "photo", required = false) MultipartFile photo,
+            @RequestHeader(value = "Authorization") String authHeader) {
         try {
             if (customerService == null) {
                 return responseService.generateErrorResponse("Customer service is not initialized.",HttpStatus.INTERNAL_SERVER_ERROR);
@@ -214,36 +221,56 @@ public class CustomerEndpoint {
             if(customerDetails.getEmailAddress()!=null){
                 customer.setEmailAddress(customerDetails.getEmailAddress());
             }
+            String jwtToken = authHeader.substring(7);
+            Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
+            String role = roleService.getRoleByRoleId(roleId).getRole_name();
 
-            if (files != null && files.length > 0) {
-                for (MultipartFile file : files) {
-                    try {
+            Map<String, MultipartFile> files = new HashMap<>();
+            if (aadharCard != null) {
+                if (files.containsKey("Aadhar Card")) {
+                    return responseService.generateErrorResponse("Only one aadhar card image is allowed", HttpStatus.BAD_REQUEST);
+                }
+                files.put("Aadhar Card", aadharCard);
+            }
+            if (panCard != null) {
+                if (files.containsKey("PAN Card")) {
+                    return responseService.generateErrorResponse("Only one pan card image is allowed", HttpStatus.BAD_REQUEST);
+                }
+                files.put("PAN Card", panCard);
+            }
+            if (photo != null) {
+                if (files.containsKey("Photo")) {
+                    return responseService.generateErrorResponse("Only one photo is allowed", HttpStatus.BAD_REQUEST);
+                }
+                files.put("Photo", photo);
+            }
 
-                        if (!DocumentStorageService.isValidFileType(file)) {
-                            throw new InvalidFileTypeException("Invalid file type: " + file.getOriginalFilename());
-                        }
-                        if (file.getSize() > Constant.MAX_FILE_SIZE) {
-                            throw new FileSizeExceededException("File size exceeds the maximum allowed size: " + file.getOriginalFilename());
-                        }
-
-                        String documentType = DocumentStorageService.getDocumentTypeFromMultipartFile(file);
-
-                        String fileName = file.getOriginalFilename();
-                        try (InputStream fileInputStream = file.getInputStream()) {
-                            documentStorageService.saveDocument(customerId.toString(), documentType, fileName, fileInputStream, "customer");
-                        }
-
-                        Document doc = new Document();
-                        Document newDocumentType = new Document();
-                        doc.setName(fileName);
-                        doc.setFilePath(DocumentStorageService.BASE_DIRECTORY + customerId + "\\" + documentType + "\\" + fileName);
-                        doc.setData(file.getBytes());
-                        doc.setCustomCustomer(customCustomer);
-                        doc.setDocumentType(newDocumentType);
-                        em.persist(doc);
-                    }  catch (Exception e) {
-                        return responseService.generateErrorResponse("Error uploading documents", HttpStatus.INTERNAL_SERVER_ERROR);
+            for (Map.Entry<String, MultipartFile> entry : files.entrySet()) {
+                String documentType = entry.getKey();
+                MultipartFile file = entry.getValue();
+                try {
+                    if (!DocumentStorageService.isValidFileType(file)) {
+                        throw new InvalidFileTypeException("Invalid file type: " + file.getOriginalFilename());
                     }
+                    if (file.getSize() > Constant.MAX_FILE_SIZE) {
+                        throw new FileSizeExceededException("File size exceeds the maximum allowed size: " + file.getOriginalFilename());
+                    }
+
+                    String fileName = file.getOriginalFilename();
+                    try (InputStream fileInputStream = file.getInputStream()) {
+                        documentStorageService.saveDocument(customerId.toString(), documentType, fileName, fileInputStream, role);
+                    }
+
+                    Document doc = new Document();
+                    DocumentType documentTypeobj = new DocumentType();
+                    doc.setName(fileName);
+                    doc.setFilePath(DocumentStorageService.BASE_DIRECTORY + "\\" + role + "\\" + customerId + "\\" + documentType + "\\" + fileName);
+                    doc.setData(file.getBytes());
+                    doc.setCustomCustomer(customCustomer);
+                    doc.setDocumentType(documentTypeobj);
+                    em.persist(doc);
+                } catch (Exception e) {
+                    return responseService.generateErrorResponse("Error uploading document", HttpStatus.INTERNAL_SERVER_ERROR);
                 }
             }
 

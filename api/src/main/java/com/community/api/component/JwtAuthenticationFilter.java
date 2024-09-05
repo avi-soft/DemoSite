@@ -47,9 +47,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private CustomCustomerService customCustomerService;
     @Autowired
     private RoleService roleService;
+
     @Autowired
     private CustomerService CustomerService;
-
 
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
