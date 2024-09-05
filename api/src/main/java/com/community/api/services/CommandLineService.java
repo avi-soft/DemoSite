@@ -2,6 +2,7 @@ package com.community.api.services;
 
 import com.community.api.endpoint.serviceProvider.ServiceProviderStatus;
 import com.community.api.entity.CustomApplicationScope;
+import com.community.api.entity.CustomJobGroup;
 import com.community.api.entity.CustomProductState;
 import com.community.api.entity.CustomReserveCategory;
 import com.community.api.entity.Districts;
@@ -40,6 +41,13 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(new CustomProductState(3L, "LIVE"));
             entityManager.persist(new CustomProductState(4L, "EXPIRED"));
             entityManager.persist(new CustomProductState(5L, "REJECTED"));
+        }
+
+        if(entityManager.createQuery("SELECT COUNT(c) FROM CustomJobGroup c", Long.class).getSingleResult() == 0) {
+            entityManager.persist(new CustomJobGroup(1L, 'A'));
+            entityManager.persist(new CustomJobGroup(2L, 'B'));
+            entityManager.persist(new CustomJobGroup(3L, 'C'));
+            entityManager.persist(new CustomJobGroup(4L, 'D'));
         }
 
         if (entityManager.createQuery("SELECT COUNT(c) FROM CustomApplicationScope c", Long.class).getSingleResult() == 0) {
