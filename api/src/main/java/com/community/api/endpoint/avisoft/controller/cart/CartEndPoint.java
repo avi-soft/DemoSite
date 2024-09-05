@@ -218,11 +218,12 @@ public class CartEndPoint extends BaseEndpoint {
                   Long productId=Long.parseLong(orderItem.getOrderItemAttributes().get("productId").getValue());
                     Product product = catalogService.findProductById(productId);
                     if (product != null) {
-                        Map<String,Object>productDetails=sharedUtilityService.createProductResponseMap(product);
+                        Map<String,Object>productDetails=sharedUtilityService.createProductResponseMap(product,orderItem);
                         products.add(productDetails);
                             subTotal += product.getDefaultSku().getCost().doubleValue();
                     }
                 }
+                response.put("cart_id",cart.getId());
                 response.put("products",products.toArray());
                 response.put("sub_total",subTotal);
                 return responseService.generateSuccessResponse("Cart items",response,HttpStatus.OK);

@@ -6,6 +6,7 @@ import com.community.api.entity.Skill;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import org.broadleafcommerce.core.catalog.domain.Product;
+import org.broadleafcommerce.core.order.domain.OrderItem;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -35,10 +36,11 @@ public class SharedUtilityService {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSXXX");
         return zonedDateTime.format(formatter);
     }
-    public Map<String,Object> createProductResponseMap(Product product)
+    public Map<String,Object> createProductResponseMap(Product product, OrderItem orderItem)
     {
         Map<String, Object> productDetails = new HashMap<>();
         CustomProduct customProduct=entityManager.find(CustomProduct.class,product.getId());
+        productDetails.put("order_item_id",orderItem.getId());
         productDetails.put("product_id", product.getId());
         productDetails.put("url", product.getUrl());
         productDetails.put("url_key", product.getUrlKey());
