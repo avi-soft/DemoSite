@@ -79,6 +79,6 @@ public class CustomCustomer extends CustomerImpl {
 
     @JsonIgnore
     @Nullable
-    @OneToMany(mappedBy = "customCustomer", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "custom_customer", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Qualification>qualificationList;
 }

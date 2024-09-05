@@ -1,9 +1,11 @@
 package com.community.api.endpoint.avisoft.controller.notification;
 
 import com.community.api.services.NotificationService;
+import com.community.api.services.ResponseService;
 import com.community.api.services.exception.CustomerDoesNotExistsException;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,23 +22,29 @@ public class NotificationController
         private EntityManager entityManager;
         @Autowired
         ExceptionHandlingImplement exceptionHandlingImplement;
+        @Autowired
+        ResponseService responseService;
 
         @PostMapping("/notify/{customerId}")
-        public ResponseEntity<String> notifyCustomer(@PathVariable Long customerId) throws IOException {
+        public ResponseEntity<?> notifyCustomer(@PathVariable Long customerId) throws Exception {
             try
             {
                 notificationService.notifyCustomer(customerId);
                 notificationService.notifyCustomer(customerId);
-                return ResponseEntity.ok("Notification sent successfully");
             }
             catch (CustomerDoesNotExistsException customerDoesNotExistsException)
             {
                 exceptionHandlingImplement.handleException(customerDoesNotExistsException);
                 return ResponseEntity.status(404).body("Customer does not exist with id " + customerId);
             }
+            catch (RuntimeException e)
+            {
+                ResponseService.generateErrorResponse("Email address of customer is null. Please add email address ", HttpStatus.BAD_REQUEST);
+            }
             catch (Exception e) {
                 exceptionHandlingImplement.handleException(e);
-                throw new RuntimeException("An unexpected error occurred while notifying the customer", e);
+                throw new Exception("Something went wrong");
             }
+            return responseService.generateResponse(HttpStatus.OK,"Notification is sent",customerId);
         }
 }
