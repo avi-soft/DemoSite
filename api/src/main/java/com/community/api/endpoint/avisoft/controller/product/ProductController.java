@@ -342,7 +342,7 @@ public class ProductController extends CatalogEndpoint {
                 return ResponseService.generateErrorResponse("PRODUCT ID CANNOT BE <= 0", HttpStatus.BAD_REQUEST);
             }
             CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
-            if (customProduct == null || (((Status) customProduct).getArchived() != 'Y')) {
+            if (customProduct == null || ((Status) customProduct).getArchived() == 'Y') {
                 return ResponseService.generateErrorResponse(PRODUCTNOTFOUND, HttpStatus.NOT_FOUND);
             }
 
@@ -356,15 +356,14 @@ public class ProductController extends CatalogEndpoint {
             } else if (role.equals(Constant.SERVICE_PROVIDER)) {
 
                 userId = jwtTokenUtil.extractId(jwtToken);
-                if (!customProduct.getUserId().equals(userId)) {
-                    List<Privileges> privileges = privilegeService.getServiceProviderPrivilege(userId);
-                    for (Privileges privilege : privileges) {
-                        if (privilege.getPrivilege_name().equals(Constant.PRIVILEGE_UPDATE_PRODUCT)) {
-                            accessGrant = true;
-                            break;
-                        }
+                List<Privileges> privileges = privilegeService.getServiceProviderPrivilege(userId);
+                for (Privileges privilege : privileges) {
+                    if (privilege.getPrivilege_name().equals(Constant.PRIVILEGE_UPDATE_PRODUCT)) {
+                        accessGrant = true;
+                        break;
                     }
                 }
+
             }
 
             if (!accessGrant) {
@@ -460,7 +459,7 @@ public class ProductController extends CatalogEndpoint {
                 customProduct.setGoLiveDate(addProductDto.getGoLiveDate());
             }
 
-            CustomJobGroup jobGroup = null;
+            CustomJobGroup jobGroup;
             if (addProductDto.getJobGroup() != null) {
 
                 jobGroup = jobGroupService.getJobGroupById(addProductDto.getJobGroup());
@@ -558,6 +557,10 @@ public class ProductController extends CatalogEndpoint {
             }
 
             if (addProductDto.getProductState() != null) {
+
+                if(customProduct.getUserId().equals(userId)) {
+                    return ResponseService.generateErrorResponse("SERVICE PROVIDER WHO CREATED THE PRODUCT CANNOT CHANGE ITS STATE", HttpStatus.NOT_FOUND);
+                }
                 CustomProductState customProductState = productStateService.getProductStateById(addProductDto.getProductState());
                 if (customProductState == null) {
                     return ResponseService.generateErrorResponse("NO PRODUCT STATE EXIST WITH THIS ID", HttpStatus.NOT_FOUND);
@@ -578,6 +581,10 @@ public class ProductController extends CatalogEndpoint {
                 }
                 customProduct.setProductState(customProductState);
             }
+
+            customProduct.setModifiedDate(new Date());
+            customProduct.setModifierRole(roleService.getRoleByRoleId(roleId));
+            customProduct.setModifierUserId(userId);
 
             entityManager.persist(customProduct);
 
@@ -634,9 +641,6 @@ public class ProductController extends CatalogEndpoint {
                     }
                     entityManager.persist(customProductReserveCategoryBornBeforeAfterRef);
 
-                    if (addProductDto.getBornAfter() != null) {
-                        dateFormat.parse(dateFormat.format(addProductDto.getBornAfter()));
-                    }
                     if (addProductDto.getFee() != null) {
                         if (addProductDto.getFee() <= 0) {
                             return ResponseService.generateErrorResponse(FEELESSTHANOREQUALZERO, HttpStatus.BAD_REQUEST);
@@ -653,7 +657,7 @@ public class ProductController extends CatalogEndpoint {
 
                 } else {
                     if (addProductDto.getFee() == null || addProductDto.getBornAfter() == null || addProductDto.getBornBefore() == null) {
-                        return ResponseService.generateErrorResponse("FEE, BORN BEFORE AND BORN AFTER ARE MANDATORY FOR NEW RESERVE CATEGORY DATA", HttpStatus.BAD_REQUEST);
+                        return ResponseService.generateErrorResponse("FEE, POST, BORN BEFORE AND BORN AFTER ARE MANDATORY FOR NEW RESERVE CATEGORY DATA", HttpStatus.BAD_REQUEST);
                     }
                     if (addProductDto.getFee() <= 0) {
                         return ResponseService.generateErrorResponse(FEELESSTHANOREQUALZERO, HttpStatus.BAD_REQUEST);
@@ -678,8 +682,10 @@ public class ProductController extends CatalogEndpoint {
                 }
             }
 
+            List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(productId);
+
             CustomProductWrapper wrapper = new CustomProductWrapper();
-            wrapper.wrapDetails(customProduct);
+            wrapper.wrapDetails(customProduct, reserveCategoryDtoList);
             return ResponseService.generateSuccessResponse("Product Updated Successfully", wrapper, HttpStatus.OK);
 
         } catch (NumberFormatException numberFormatException) {
