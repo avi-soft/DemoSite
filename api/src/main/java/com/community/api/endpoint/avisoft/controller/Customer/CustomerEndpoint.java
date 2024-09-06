@@ -159,6 +159,10 @@ public class CustomerEndpoint {
                 return responseService.generateErrorResponse("Customer service is not initialized.",HttpStatus.INTERNAL_SERVER_ERROR);
 
             }
+            if(customerDetails.getUsername()!=null)
+                return responseService.generateErrorResponse("Cannot update username",HttpStatus.UNPROCESSABLE_ENTITY);
+            if(customerDetails.getPassword()!=null)
+                return responseService.generateErrorResponse("Cannot update password",HttpStatus.UNPROCESSABLE_ENTITY);
             CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
             if (customCustomer == null) {
                 return responseService.generateErrorResponse("No data found for this customerId",HttpStatus.NOT_FOUND);
@@ -238,6 +242,8 @@ public class CustomerEndpoint {
                 return responseService.generateErrorResponse("username Empty", HttpStatus.BAD_REQUEST);
 
             }
+            if(customer.getUsername().equals(username))
+                return responseService.generateErrorResponse("New username and old username cannot be same", HttpStatus.BAD_REQUEST);
 
             if ((existingCustomerByUsername != null) && !existingCustomerByUsername.getId().equals(customerId)) {
                 return responseService.generateErrorResponse("Username is not available", HttpStatus.BAD_REQUEST);
