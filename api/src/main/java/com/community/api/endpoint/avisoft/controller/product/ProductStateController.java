@@ -57,7 +57,8 @@ public class ProductStateController {
     @GetMapping("/get-product-state-by-name/{productStateName}")
     public ResponseEntity<?> getProductStateByName(@PathVariable String productStateName) {
         try {
-            CustomProductState productState = productStateService.getProductStateByName(productStateName);
+
+            CustomProductState productState = productStateService.getProductStateByName(productStateName.toUpperCase());
             if (productState == null) {
                 return ResponseService.generateErrorResponse("NO PRODUCT STATE FOUND", HttpStatus.NOT_FOUND);
             }
