@@ -4,6 +4,8 @@ import com.community.api.component.Constant;
 import com.community.api.entity.Skill;
 import com.community.api.entity.StateCode;
 import com.community.api.services.ResponseService;
+import com.community.api.services.SanitizerService;
+import com.community.api.services.SharedUtilityService;
 import com.community.api.services.SkillService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,10 +32,19 @@ public class SkillController {
         private SkillService skillService;
         @Autowired
         private ResponseService responseService;
+        @Autowired
+        private SharedUtilityService sharedUtilityService;
+        @Autowired
+        private SanitizerService sanitizerService;
         @Transactional
         @PostMapping("/add-skill")
         public ResponseEntity<?> addSkill(@RequestBody Map<String,Object> skill) {
             try{
+                if(!sharedUtilityService.validateInputMap(skill).equals(SharedUtilityService.ValidationResult.SUCCESS))
+                {
+                    return ResponseService.generateErrorResponse("Invalid Request Body",HttpStatus.UNPROCESSABLE_ENTITY);
+                }
+                skill=sanitizerService.sanitizeInputMap(skill);
                return skillService.addSkill(skill);
         }catch (Exception exception)
             {

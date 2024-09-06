@@ -2,7 +2,9 @@ package com.community.api.endpoint.avisoft.controller.Admin;
 
 import com.community.api.entity.ServiceProviderLanguage;
 import com.community.api.services.ResponseService;
+import com.community.api.services.SanitizerService;
 import com.community.api.services.ServiceProviderLanguageService;
+import com.community.api.services.SharedUtilityService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.twilio.http.Response;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,11 +35,20 @@ public class ServiceProviderLanguageController {
     private ServiceProviderLanguageService languageService;
     @Autowired
     private ResponseService responseService;
+    @Autowired
+    private SharedUtilityService sharedUtilityService;
+    @Autowired
+    private SanitizerService sanitizerService;
     @Transactional
     @PostMapping("add-language")
     private ResponseEntity<?> addLanguage(@RequestBody Map<String,Object> serviceProviderLanguage)
     {
         try{
+            if(!sharedUtilityService.validateInputMap(serviceProviderLanguage).equals(SharedUtilityService.ValidationResult.SUCCESS))
+            {
+                return ResponseService.generateErrorResponse("Invalid Request Body",HttpStatus.UNPROCESSABLE_ENTITY);
+            }
+            serviceProviderLanguage=sanitizerService.sanitizeInputMap(serviceProviderLanguage);
             return languageService.addLanguage(serviceProviderLanguage);
         }catch (Exception exception)
         {

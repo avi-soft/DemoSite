@@ -49,6 +49,8 @@ public class AccountEndPoint {
     @Autowired
     private  SharedUtilityService sharedUtilityService;
     @Autowired
+    private SanitizerService sanitizerService;
+    @Autowired
     private RoleService roleService;
     @Autowired
     private ServiceProviderServiceImpl serviceProviderService;
@@ -102,6 +104,7 @@ public class AccountEndPoint {
             {
                 return ResponseService.generateErrorResponse("Invalid Request Body",HttpStatus.UNPROCESSABLE_ENTITY);
             }
+            loginDetails=sanitizerService.sanitizeInputMap(loginDetails);
             String mobileNumber = (String) loginDetails.get("mobileNumber");
             int i=0;
             for(;i<mobileNumber.length();i++)
