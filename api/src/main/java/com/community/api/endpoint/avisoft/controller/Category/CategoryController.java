@@ -64,7 +64,7 @@ public class CategoryController extends CatalogEndpoint {
                 return ResponseService.generateErrorResponse(CATALOGSERVICENOTINITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            if (addCategoryDto.getName() == null && addCategoryDto.getName().trim().isEmpty()) {
+            if (addCategoryDto.getName() == null || addCategoryDto.getName().trim().isEmpty()) {
                 return ResponseService.generateErrorResponse("CATEGORY TITLE CANNOT BE EMPTY OR NULL", HttpStatus.BAD_REQUEST);
             }
             addCategoryDto.setName(addCategoryDto.getName().trim());
@@ -135,8 +135,8 @@ public class CategoryController extends CatalogEndpoint {
         }
     }
 
-    @GetMapping(value = "/get-products-by-category-id")
-    public ResponseEntity<?> getProductsByCategoryId(HttpServletRequest request, @RequestParam(value = "id") String id) throws Exception {
+    @GetMapping(value = "/get-products-by-category-id/{id}")
+    public ResponseEntity<?> getProductsByCategoryId(HttpServletRequest request, @PathVariable String id) {
         try {
             if (catalogService == null) {
                 return ResponseService.generateErrorResponse("CATALOG SERVICE IS NULL", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -173,7 +173,11 @@ public class CategoryController extends CatalogEndpoint {
 
             return ResponseService.generateSuccessResponse("CATEGORY DATA FOUND", categoryWrapper, HttpStatus.OK);
 
-        } catch (Exception exception) {
+        } catch (NumberFormatException numberFormatException) {
+            exceptionHandlingService.handleException(numberFormatException);
+            return ResponseService.generateErrorResponse(numberFormatException.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+        catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return ResponseService.generateErrorResponse(SOMEEXCEPTIONOCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -192,7 +196,7 @@ public class CategoryController extends CatalogEndpoint {
             }
             Category category = this.catalogService.findCategoryById(categoryId);
 
-            if (category != null) {
+            if (category != null && ((Status)category).getArchived() != 'Y') {
 
                 catalogService.removeCategory(category);
                 return ResponseService.generateSuccessResponse("CATEGORY DELETED SUCCESSFULLY", "DELETED", HttpStatus.OK);
@@ -223,7 +227,7 @@ public class CategoryController extends CatalogEndpoint {
 
             Category category = this.catalogService.findCategoryById(categoryId);
 
-            if (category != null) {
+            if (category != null && ((Status)category).getArchived() != 'Y') {
 
                 if (!addCategoryDto.getName().isEmpty() && !addCategoryDto.getName().trim().isEmpty()) { // trim works on nonNull values only.
                     category.setName(addCategoryDto.getName().trim());

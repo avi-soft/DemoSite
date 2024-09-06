@@ -18,8 +18,6 @@ public class AddCategoryDto {
     protected String description;
     @JsonProperty("long_description")
     protected String longDescription;
-    @JsonProperty("active")
-    protected Boolean active;
     @JsonProperty("url")
     protected String url;
     @JsonProperty("url_key")
