@@ -50,7 +50,7 @@ public class CustomCustomer extends CustomerImpl {
 
 
     @Column(name = "category")
-    private String category;
+    private String category; //@TODO -make it int for using in cart
 
     @Column(name = "sub_category")
     private String subcategory;

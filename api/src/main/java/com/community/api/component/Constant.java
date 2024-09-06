@@ -67,6 +67,7 @@ public class Constant {
     public static String PRODUCT_STATE_APPROVED = "APPROVED";
     public static String PRODUCT_STATE_EXPIRED = "EXPIRED";
     public static String PRODUCT_STATE_END = "END";
+    public static String PRODUCT_STATE_REJECTED = "REJECTED";
     /*public static String GET_STATES_LIST="SELECT s FROM StateCode s";*/
     public static String SERVICE_PROVIDER_PRIVILEGE = "SELECT privilege_id FROM service_provider_privileges WHERE service_provider_id = :serviceProviderId";
     public static String GET_ROLE_BY_ROLE_ID = "SELECT r FROM Role r WHERE r.role_id = :roleId";

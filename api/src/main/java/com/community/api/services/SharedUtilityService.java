@@ -6,6 +6,7 @@ import com.community.api.entity.Skill;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import org.broadleafcommerce.core.catalog.domain.Product;
+import org.broadleafcommerce.core.order.domain.OrderItem;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,7 +24,8 @@ import java.util.Map;
 public class SharedUtilityService {
     @Autowired
     private EntityManager entityManager;
-
+    @Autowired
+    private  ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService;
     public long findCount(String queryString) {
         TypedQuery<Long> query = entityManager.createQuery(queryString, Long.class);
         return query.getSingleResult();
@@ -35,33 +37,24 @@ public class SharedUtilityService {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSXXX");
         return zonedDateTime.format(formatter);
     }
-    public Map<String,Object> createProductResponseMap(Product product)
+    public Map<String,Object> createProductResponseMap(Product product, OrderItem orderItem)
     {
         Map<String, Object> productDetails = new HashMap<>();
         CustomProduct customProduct=entityManager.find(CustomProduct.class,product.getId());
-        productDetails.put("id", product.getId());
+        productDetails.put("order_item_id",orderItem.getId());
+        productDetails.put("product_id", product.getId());
         productDetails.put("url", product.getUrl());
-        productDetails.put("urlKey", product.getUrlKey());
+        productDetails.put("url_key", product.getUrlKey());
         productDetails.put("platform_fee",customProduct.getPlatformFee());
-        productDetails.put("displayTemplate", product.getDisplayTemplate());
-        productDetails.put("defaultSkuId", product.getDefaultSku().getId());
-        productDetails.put("defaultSkuExternalId", product.getDefaultSku().getExternalId());
-        productDetails.put("defaultSkuUrlKey", product.getDefaultSku().getUrlKey());
-        productDetails.put("defaultSkuDisplayTemplate", product.getDefaultSku().getDisplayTemplate());
-        productDetails.put("defaultSkuSalePrice", product.getDefaultSku().getSalePrice());
-        productDetails.put("defaultSkuRetailPrice", product.getDefaultSku().getRetailPrice());
-        productDetails.put("defaultSkuCostAmount", product.getDefaultSku().getCost().getAmount());
-        productDetails.put("defaultSkuCostCurrency", product.getDefaultSku().getCost().getCurrency());
-        productDetails.put("defaultSkuName", product.getDefaultSku().getName());
-        productDetails.put("defaultSkuDescription", product.getDefaultSku().getDescription());
-        productDetails.put("defaultSkuLongDescription", product.getDefaultSku().getLongDescription());
-        productDetails.put("defaultSkuTaxCode", product.getDefaultSku().getTaxCode());
-        productDetails.put("defaultSkuTaxable", product.getDefaultSku().isTaxable());
-        productDetails.put("defaultSkuDiscountable", product.getDefaultSku().isDiscountable());
-        productDetails.put("defaultSkuActiveStartDate", product.getDefaultSku().getActiveStartDate());
-        productDetails.put("cost",product.getDefaultSku().getCost());
-        productDetails.put("categoryId",product.getCategory().getId());
-        productDetails.put("defaultSkuActiveEndDate", product.getDefaultSku().getActiveEndDate());
+        productDetails.put("display_template", product.getDisplayTemplate());
+        productDetails.put("default_sku_id", product.getDefaultSku().getId());
+        productDetails.put("default_sku_name", product.getDefaultSku().getName());
+        productDetails.put("sku_description", product.getDefaultSku().getDescription());
+        productDetails.put("long_description", product.getDefaultSku().getLongDescription());
+        productDetails.put("active_start_date", product.getDefaultSku().getActiveStartDate());//@TODO-Fee is dependent on category
+        productDetails.put("fee",productReserveCategoryFeePostRefService.getCustomProductReserveCategoryFeePostRefByProductIdAndReserveCategoryId(product.getId(),1L).getFee());//this is dummy data
+        productDetails.put("category_id",product.getCategory().getId());
+        productDetails.put("active_end_date", product.getDefaultSku().getActiveEndDate());
         return productDetails;
     }
 }
