@@ -230,44 +230,34 @@ public class CustomerEndpoint {
 
     @Transactional
     @PostMapping("/upload-documents")
-        public ResponseEntity<?> updateCustomer(
+    public ResponseEntity<?> updateCustomer(
             @RequestParam Long customerId,
             @RequestPart(value = "Aadhaar Card", required = false) MultipartFile aadharCard,
             @RequestPart(value = "PAN Card", required = false) MultipartFile panCard,
             @RequestPart(value = "Passport Size Photo", required = false) MultipartFile photo) {
         try {
-        if (customerService == null) {
-            return responseService.generateErrorResponse("Customer service is not initialized.",HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
-        if (customCustomer == null) {
-            return responseService.generateErrorResponse("No data found for this customerId",HttpStatus.NOT_FOUND);
-
-        }
-        Map<String, Object> responseData = new HashMap<>();
-        Map<String, MultipartFile> files = new HashMap<>();
-        if (aadharCard != null) {
-            if (files.containsKey("Aadhar Card")) {
-                return responseService.generateErrorResponse("Only one aadhar card image is allowed", HttpStatus.BAD_REQUEST);
+            if (customerService == null) {
+                return responseService.generateErrorResponse("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
-            files.put("Aadhar Card", aadharCard);
-        }
-        if (panCard != null) {
-            if (files.containsKey("PAN Card")) {
-                return responseService.generateErrorResponse("Only one pan card image is allowed", HttpStatus.BAD_REQUEST);
-            }
-            files.put("PAN Card", panCard);
-        }
-        if (photo != null) {
-            if (files.containsKey("Photo")) {
-                return responseService.generateErrorResponse("Only one photo is allowed", HttpStatus.BAD_REQUEST);
-            }
-            files.put("Photo", photo);
-        }
 
+            CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
+            if (customCustomer == null) {
+                return responseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
+            }
 
-        try{
+            Map<String, Object> responseData = new HashMap<>();
+            Map<String, MultipartFile> files = new HashMap<>();
+
+            if (aadharCard != null) {
+                files.put("Aadhar Card", aadharCard);
+            }
+            if (panCard != null) {
+                files.put("PAN Card", panCard);
+            }
+            if (photo != null) {
+                files.put("Passport Size Photo", photo);
+            }
+
             for (Map.Entry<String, MultipartFile> entry : files.entrySet()) {
                 String documentType = entry.getKey();
                 MultipartFile file = entry.getValue();
@@ -275,25 +265,47 @@ public class CustomerEndpoint {
                 ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(file, documentType, customerId, "customer");
                 Map<String, Object> responseBody = savedResponse.getBody();
 
-                if (savedResponse.getStatusCode() == HttpStatus.OK) {
-                    responseData.put(documentType, responseBody.get("data"));
-                } else {
+                if (savedResponse.getStatusCode() != HttpStatus.OK) {
                     return responseService.generateErrorResponse("Error uploading " + documentType, HttpStatus.INTERNAL_SERVER_ERROR);
                 }
+
+                System.out.println(documentType.trim() + " documentType.trim()");
+                // Find or create DocumentType
+                DocumentType documentTypeObj = em.createQuery(
+                                "SELECT dt FROM DocumentType dt WHERE dt.document_type_name = :documentTypeName", DocumentType.class)
+                        .setParameter("documentTypeName", documentType.trim())
+                        .getResultStream()
+                        .findFirst()
+                        .orElseGet(null);
+
+                String fileName = file.getOriginalFilename();
+                Document doc = new Document();
+                doc.setName(fileName);
+                String filePath = "avisoft"
+                        + File.separator
+                        + "customer"
+                        + File.separator
+                        + customerId
+                        + File.separator
+                        + documentType
+                        + File.separator
+                        + fileName;
+                doc.setFilePath(filePath);
+                doc.setData(file.getBytes());
+                doc.setCustomCustomer(customCustomer);
+                doc.setDocumentType(documentTypeObj);
+                em.persist(doc);
+
+                responseData.put(documentType, responseBody.get("data"));
             }
+
+            return responseService.generateSuccessResponse("Documents uploaded successfully", responseData, HttpStatus.OK);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Error updating in documents", HttpStatus.INTERNAL_SERVER_ERROR);
-
+            return responseService.generateErrorResponse("Error updating documents", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-            return responseService.generateSuccessResponse("Documents uploaded successfully", responseData, HttpStatus.OK);
-    } catch (Exception e) {
-        exceptionHandling.handleException(e);
-        return responseService.generateErrorResponse("Error updating", HttpStatus.INTERNAL_SERVER_ERROR);
-
     }
 
-    }
 
    /* @PostMapping("/upload-documents")
     public ResponseEntity<?> uploadBasicDocuments(@RequestBody Map<String, Object> request, @RequestPart("files") MultipartFile[] files) {
@@ -363,6 +375,73 @@ public class CustomerEndpoint {
         }
     }
 */
+
+    @Transactional
+    @PostMapping("/upload-documents")
+    public ResponseEntity<?> updateCustomer(
+            @RequestParam Long customerId,
+            @RequestParam Map<String, MultipartFile> files) {
+        try {
+            if (customerService == null) {
+                return responseService.generateErrorResponse("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
+            if (customCustomer == null) {
+                return responseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
+            }
+
+            Map<String, Object> responseData = new HashMap<>();
+
+            for (Map.Entry<String, MultipartFile> entry : files.entrySet()) {
+                String fileName = entry.getKey();
+                MultipartFile file = entry.getValue();
+
+                DocumentType documentTypeObj = em.createQuery(
+                                "SELECT dt FROM DocumentType dt WHERE dt.document_type_id = :documentTypeName", DocumentType.class)
+                        .setParameter("documentTypeName", fileName)
+                        .getResultStream()
+                        .findFirst()
+                        .orElse(null);
+                ;
+                if (documentTypeObj == null) {
+                    return responseService.generateErrorResponse("Unknown document type for file: " + fileName, HttpStatus.BAD_REQUEST);
+                }
+
+                ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(file, documentTypeObj.getDocument_type_name(), customerId, "customer");
+                Map<String, Object> responseBody = savedResponse.getBody();
+
+                if (savedResponse.getStatusCode() != HttpStatus.OK) {
+                    return responseService.generateErrorResponse("Error uploading " + documentTypeObj.getDocument_type_name(), HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+
+                String filePath = "avisoft"
+                        + File.separator
+                        + "customer"
+                        + File.separator
+                        + customerId
+                        + File.separator
+                        + documentTypeObj.getDocument_type_name()
+                        + File.separator
+                        + fileName;
+                Document doc = new Document();
+                doc.setName(fileName);
+                doc.setFilePath(filePath);
+                doc.setData(file.getBytes());
+                doc.setCustomCustomer(customCustomer);
+                doc.setDocumentType(documentTypeObj);
+                em.persist(doc);
+
+                responseData.put(documentTypeObj.getDocument_type_name(), responseBody.get("data"));
+            }
+
+            return responseService.generateSuccessResponse("Documents uploaded successfully", responseData, HttpStatus.OK);
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return responseService.generateErrorResponse("Error updating documents", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 
     @Transactional
     @RequestMapping(value = "update-username", method = RequestMethod.POST)

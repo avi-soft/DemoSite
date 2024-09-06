@@ -30,7 +30,4 @@ public class ApiConstants {
     public static final String INVALID_ROLE = "Invalid Role";
     public static final String CUSTOMER_SERVICE_NOT_INITIALIZED = "Customer Service Not Initialized";
     public static final String ROLE_EMPTY = "Role cannot be empty";
-    ;
-    ;
-    ;
 }

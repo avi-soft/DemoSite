@@ -35,5 +35,4 @@ public class Document {
     @JoinColumn(name = "document_type_Id")
     private DocumentType documentType;
 
-
 }
