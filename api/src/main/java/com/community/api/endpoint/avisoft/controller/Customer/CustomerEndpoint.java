@@ -43,6 +43,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
+import java.io.File;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.math.BigInteger;
@@ -159,14 +160,9 @@ public class CustomerEndpoint {
     }
 
     @Transactional
-    @RequestMapping(value = "update", method = RequestMethod.POST, consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> updateCustomer(
-            @RequestParam Long customerId,
-            @RequestPart("customerDetails") CustomCustomer customerDetails,
-            @RequestPart(value = "aadharCard", required = false) MultipartFile aadharCard,
-            @RequestPart(value = "panCard", required = false) MultipartFile panCard,
-            @RequestPart(value = "photo", required = false) MultipartFile photo,
-            @RequestHeader(value = "Authorization") String authHeader) {
+    @RequestMapping(value = "update", method = RequestMethod.POST)
+    public ResponseEntity<?> updateCustomer(@RequestBody CustomCustomer customerDetails, @RequestParam Long customerId) {
+
         try {
             if (customerService == null) {
                 return responseService.generateErrorResponse("Customer service is not initialized.",HttpStatus.INTERNAL_SERVER_ERROR);
@@ -221,58 +217,6 @@ public class CustomerEndpoint {
             if(customerDetails.getEmailAddress()!=null){
                 customer.setEmailAddress(customerDetails.getEmailAddress());
             }
-            String jwtToken = authHeader.substring(7);
-            Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
-            String role = roleService.getRoleByRoleId(roleId).getRole_name();
-
-            Map<String, MultipartFile> files = new HashMap<>();
-            if (aadharCard != null) {
-                if (files.containsKey("Aadhar Card")) {
-                    return responseService.generateErrorResponse("Only one aadhar card image is allowed", HttpStatus.BAD_REQUEST);
-                }
-                files.put("Aadhar Card", aadharCard);
-            }
-            if (panCard != null) {
-                if (files.containsKey("PAN Card")) {
-                    return responseService.generateErrorResponse("Only one pan card image is allowed", HttpStatus.BAD_REQUEST);
-                }
-                files.put("PAN Card", panCard);
-            }
-            if (photo != null) {
-                if (files.containsKey("Photo")) {
-                    return responseService.generateErrorResponse("Only one photo is allowed", HttpStatus.BAD_REQUEST);
-                }
-                files.put("Photo", photo);
-            }
-
-            for (Map.Entry<String, MultipartFile> entry : files.entrySet()) {
-                String documentType = entry.getKey();
-                MultipartFile file = entry.getValue();
-                try {
-                    if (!DocumentStorageService.isValidFileType(file)) {
-                        throw new InvalidFileTypeException("Invalid file type: " + file.getOriginalFilename());
-                    }
-                    if (file.getSize() > Constant.MAX_FILE_SIZE) {
-                        throw new FileSizeExceededException("File size exceeds the maximum allowed size: " + file.getOriginalFilename());
-                    }
-
-                    String fileName = file.getOriginalFilename();
-                    try (InputStream fileInputStream = file.getInputStream()) {
-                        documentStorageService.saveDocument(customerId.toString(), documentType, fileName, fileInputStream, role);
-                    }
-
-                    Document doc = new Document();
-                    DocumentType documentTypeobj = new DocumentType();
-                    doc.setName(fileName);
-                    doc.setFilePath(DocumentStorageService.BASE_DIRECTORY + "\\" + role + "\\" + customerId + "\\" + documentType + "\\" + fileName);
-                    doc.setData(file.getBytes());
-                    doc.setCustomCustomer(customCustomer);
-                    doc.setDocumentType(documentTypeobj);
-                    em.persist(doc);
-                } catch (Exception e) {
-                    return responseService.generateErrorResponse("Error uploading document", HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-            }
 
             em.merge(customCustomer);
             return responseService.generateSuccessResponse("User details updated successfully : ",customer, HttpStatus.OK);
@@ -284,43 +228,136 @@ public class CustomerEndpoint {
         }
     }
 
+    @Transactional
     @PostMapping("/upload-documents")
-    public ResponseEntity<?> uploadDocuments(@RequestParam Long customerId, @RequestPart("files") MultipartFile[] files) {
+        public ResponseEntity<?> updateCustomer(
+            @RequestParam Long customerId,
+            @RequestPart(value = "Aadhaar Card", required = false) MultipartFile aadharCard,
+            @RequestPart(value = "PAN Card", required = false) MultipartFile panCard,
+            @RequestPart(value = "Passport Size Photo", required = false) MultipartFile photo) {
         try {
+        if (customerService == null) {
+            return responseService.generateErrorResponse("Customer service is not initialized.",HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
+        if (customCustomer == null) {
+            return responseService.generateErrorResponse("No data found for this customerId",HttpStatus.NOT_FOUND);
+
+        }
+
+        Customer customer = customerService.readCustomerById(customerId);
+
+        Map<String, MultipartFile> files = new HashMap<>();
+        if (aadharCard != null) {
+            if (files.containsKey("Aadhar Card")) {
+                return responseService.generateErrorResponse("Only one aadhar card image is allowed", HttpStatus.BAD_REQUEST);
+            }
+            files.put("Aadhar Card", aadharCard);
+        }
+        if (panCard != null) {
+            if (files.containsKey("PAN Card")) {
+                return responseService.generateErrorResponse("Only one pan card image is allowed", HttpStatus.BAD_REQUEST);
+            }
+            files.put("PAN Card", panCard);
+        }
+        if (photo != null) {
+            if (files.containsKey("Photo")) {
+                return responseService.generateErrorResponse("Only one photo is allowed", HttpStatus.BAD_REQUEST);
+            }
+            files.put("Photo", photo);
+        }
+
+        try{
+            for (Map.Entry<String, MultipartFile> entry : files.entrySet()) {
+                String documentType = entry.getKey();
+                MultipartFile file = entry.getValue();
+
+                ResponseEntity<?> savedresponse =   documentStorageService.saveDocuments(file,documentType,customerId,"customer");
+                return responseService.generateSuccessResponse("Documents uploaded : ",savedresponse, HttpStatus.OK);
+            }
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return responseService.generateErrorResponse("Error updating in documents", HttpStatus.INTERNAL_SERVER_ERROR);
+
+        }
+
+    } catch (Exception e) {
+        exceptionHandling.handleException(e);
+        return responseService.generateErrorResponse("Error updating", HttpStatus.INTERNAL_SERVER_ERROR);
+
+    }
+        return null;
+    }
+
+   /* @PostMapping("/upload-documents")
+    public ResponseEntity<?> uploadBasicDocuments(@RequestBody Map<String, Object> request, @RequestPart("files") MultipartFile[] files) {
+        try {
+
+            Long customerId = (Long) request.get("customerId");
+            Integer role = (Integer) request.get("role");
+
+            if (role == null) {
+                return responseService.generateErrorResponse(ApiConstants.ROLE_EMPTY, HttpStatus.BAD_REQUEST);
+            }
+            if (customerId == null) {
+                return responseService.generateErrorResponse("Customer Id can not be empty", HttpStatus.BAD_REQUEST);
+            }
+
             CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
             if (customCustomer == null) {
                 return responseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
             }
-            System.out.println(files + " files");
+            List<DocumentType> allDocumentTypes = documentStorageService.getAllDocumentTypes();
+
             if (files != null && files.length > 0) {
                 for (MultipartFile file : files) {
-                    String documentType = DocumentStorageService.getDocumentTypeFromMultipartFile(file);
+                    String documentTypeName = documentStorageService.getDocumentTypeFromMultipartFile(file, allDocumentTypes);
+                    System.out.println(documentTypeName + " documentTypeName");
+                    DocumentType documentType = em.createQuery("SELECT dt FROM DocumentType dt WHERE dt.document_type_name = :typeName", DocumentType.class)
+                            .setParameter("typeName", documentTypeName)
+                            .getResultStream()
+                            .findFirst()
+                            .orElse(null);
+                    if (documentType == null) {
+                        return responseService.generateErrorResponse("Document type not found: " + documentTypeName, HttpStatus.BAD_REQUEST);
+                    }
+                    String Role = "";
+                    if(role==5){
+                         Role = "CUSTOMER";
+                    }else if(role==4){
+                         Role = "SERVICE_PROVIDER";
+                    }else{
+                        Role = "Admin";
+                    }
+
                     String fileName = file.getOriginalFilename();
                     try (InputStream fileInputStream = file.getInputStream()) {
-                        documentStorageService.saveDocument(customerId.toString(), documentType, fileName, fileInputStream, "customer");
-
+                        documentStorageService.saveDocument(customerId.toString(), documentTypeName, fileName, fileInputStream, Role);
                         Document doc = new Document();
-                        DocumentType newDocumentType = new DocumentType();
                         doc.setName(fileName);
-                        doc.setFilePath(DocumentStorageService.BASE_DIRECTORY + customerId + "\\" + documentType + "\\" + fileName);
+                        doc.setFilePath(DocumentStorageService.BASE_DIRECTORY + File.separator   + Role + File.separator + customerId + File.separator + documentTypeName + File.separator + fileName);
                         doc.setData(file.getBytes());
                         doc.setCustomCustomer(customCustomer);
-                        doc.setDocumentType(newDocumentType);
+                        doc.setDocumentType(documentType);
                         em.persist(doc);
                     } catch (Exception e) {
                         exceptionHandling.handleException(e);
-                        return responseService.generateErrorResponse("Error uploading documents", HttpStatus.INTERNAL_SERVER_ERROR);
+                        return responseService.generateErrorResponse("Error processing file: " + fileName, HttpStatus.INTERNAL_SERVER_ERROR);
                     }
                 }
+            } else {
+                return responseService.generateErrorResponse("No files provided for upload", HttpStatus.BAD_REQUEST);
             }
 
             return responseService.generateSuccessResponse("Documents uploaded successfully", null, HttpStatus.OK);
 
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Error uploading documents", HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("Error updating user details", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+*/
 
     @Transactional
     @RequestMapping(value = "update-username", method = RequestMethod.POST)
