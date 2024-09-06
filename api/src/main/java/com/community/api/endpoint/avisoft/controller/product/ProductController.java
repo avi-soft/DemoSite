@@ -73,6 +73,14 @@ import static com.community.api.component.Constant.*;
 @RequestMapping(value = "/product-custom", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
 public class ProductController extends CatalogEndpoint {
 
+    public static final String TENTATIVEDATEAFTERACTIVEENDDATE = "BOTH TENTATIVE EXAMINATION DATA MUST BE AFTER ACTIVE END DATE";
+    public static final String TENTATIVEEXAMDATETOAFTEREXAMDATEFROM = "TENTATIVE EXAM DATE TO MUST BE EITHER EQUAL OR BEFORE OF TENTATIVE EXAM DATE FROM";
+    public static final String FEELESSTHANOREQUALZERO = "FEE CANNOT BE LESS THAN OR EQUAL TO ZERO";
+    public static final String  TENTATIVEEXAMDATEAFTERACTIVEENDDATE = "TENTATIVE EXAMINATION DATE MUST BE AFTER ACTIVE END DATE";
+    public static final String POSTLESSTHANORZERO = "NUMBER OF POST CANNOT BE LESS THAN OR EQUAL TO ZERO";
+    public static final String PRODUCTNOTFOUND = "PRODUCT NOT FOUND";
+    public static final String PRODUCTFOUNDSUCCESSFULLY = "PRODUCTS FOUND SUCCESSFULLY";
+
     private final ExceptionHandlingService exceptionHandlingService;
     private final EntityManager entityManager;
     private final JwtUtil jwtTokenUtil;
@@ -176,7 +184,11 @@ public class ProductController extends CatalogEndpoint {
             }
             addProductDto.setMetaTitle(addProductDto.getMetaTitle().trim());
             product.setMetaTitle(addProductDto.getMetaTitle()); // Also adding the same metaTitle in the sku.name as this will generate the auto-url.
-            product.setDisplayTemplate(addProductDto.getMetaTitle());
+            if(addProductDto.getDisplayTemplate() != null && addProductDto.getDisplayTemplate().trim().isEmpty()) {
+                product.setDisplayTemplate(addProductDto.getDisplayTemplate().trim());
+            }else{
+                product.setDisplayTemplate(addProductDto.getMetaTitle());
+            }
 
             if (addProductDto.getMetaDescription() != null) {
                 addProductDto.setMetaDescription(addProductDto.getMetaDescription().trim());
@@ -193,14 +205,14 @@ public class ProductController extends CatalogEndpoint {
                 return ResponseService.generateErrorResponse("ACTIVE END DATE AND GO LIVE DATE CANNOT BE EMPTY", HttpStatus.BAD_REQUEST);
             }
 
-            // Validation on date for being wrong types. -> these needs to be changed or we have to add exception.
+            // Validation on date for being wrong types. -> these needs to be changed, or we have to add exception.
             dateFormat.parse(dateFormat.format(addProductDto.getActiveEndDate()));
             dateFormat.parse(dateFormat.format(addProductDto.getGoLiveDate()));
 
             if (!addProductDto.getActiveEndDate().after(activeStartDate)) {
                 return ResponseService.generateErrorResponse("EXPIRATION DATE CANNOT BE BEFORE OR EQUAL OF CURRENT DATE", HttpStatus.BAD_REQUEST);
             } else if (!addProductDto.getActiveEndDate().after(addProductDto.getGoLiveDate()) || !addProductDto.getGoLiveDate().after(activeStartDate)) {
-                return ResponseService.generateErrorResponse("GO LIVE DATE CANNOT BE BEFORE OR EQUAL OF ACTIVE END DATE AND BEFORE OR EQUAL OF CURRENT DATE", HttpStatus.BAD_REQUEST);
+                return ResponseService.generateErrorResponse("GO LIVE DATE CANNOT BE AFTER OR EQUAL OF ACTIVE END DATE AND BEFORE OR EQUAL OF CURRENT DATE", HttpStatus.BAD_REQUEST);
             }
 
             Sku sku = catalogService.createSku(); // Create a new Sku Object
@@ -224,9 +236,9 @@ public class ProductController extends CatalogEndpoint {
             dateFormat.parse(dateFormat.format(addProductDto.getExamDateTo()));
 
             if (!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate()) || !addProductDto.getExamDateTo().after(addProductDto.getActiveEndDate())) {
-                return ResponseService.generateErrorResponse("BOTH TENTATIVE EXAMINATION DATA MUST BE AFTER ACTIVE END DATE", HttpStatus.BAD_REQUEST);
+                return ResponseService.generateErrorResponse(TENTATIVEDATEAFTERACTIVEENDDATE, HttpStatus.BAD_REQUEST);
             } else if (addProductDto.getExamDateTo().before(addProductDto.getExamDateFrom())) {
-                return ResponseService.generateErrorResponse("TENTATIVE EXAM DATE TO MUST BE EITHER EQUAL OR BEFORE OF TENTATIVE EXAM DATE FROM", HttpStatus.BAD_REQUEST);
+                return ResponseService.generateErrorResponse(TENTATIVEEXAMDATETOAFTEREXAMDATEFROM, HttpStatus.BAD_REQUEST);
             }
 
             product.setDefaultSku(sku); // Set default SKU in the product
@@ -240,13 +252,13 @@ public class ProductController extends CatalogEndpoint {
             if (addProductDto.getFee() == null) {
                 return ResponseService.generateErrorResponse("FEE IS MANDATORY", HttpStatus.INTERNAL_SERVER_ERROR);
             } else if (addProductDto.getFee() <= 0) {
-                return ResponseService.generateErrorResponse("FEE CANNOT BE LESS THAN OR EQUAL TO ZERO", HttpStatus.BAD_REQUEST);
+                return ResponseService.generateErrorResponse(FEELESSTHANOREQUALZERO, HttpStatus.BAD_REQUEST);
             }
 
             if (addProductDto.getPost() == null) {
                 addProductDto.setPost(Constant.DEFAULT_QUANTITY);
             } else if (addProductDto.getPost() <= 0) {
-                return ResponseService.generateErrorResponse("NUMBER OF POST CANNOT BE LESS THAN OR EQUAL TO ZERO", HttpStatus.BAD_REQUEST);
+                return ResponseService.generateErrorResponse(POSTLESSTHANORZERO, HttpStatus.BAD_REQUEST);
             }
 
             if (addProductDto.getBornBefore() == null || addProductDto.getBornAfter() == null) {
@@ -375,8 +387,12 @@ public class ProductController extends CatalogEndpoint {
                 addProductDto.setMetaTitle(addProductDto.getMetaTitle().trim());
                 customProduct.setMetaTitle(addProductDto.getMetaTitle());
                 customProduct.getDefaultSku().setName(addProductDto.getMetaTitle());
-                customProduct.setDisplayTemplate(addProductDto.getMetaTitle());
             }
+
+            if(addProductDto.getDisplayTemplate() != null && !addProductDto.getDisplayTemplate().trim().isEmpty()) {
+                customProduct.setDisplayTemplate(addProductDto.getDisplayTemplate().trim());
+            }
+
             if (addProductDto.getMetaDescription() != null && !addProductDto.getMetaDescription().trim().isEmpty()) {
                 addProductDto.setMetaDescription(addProductDto.getMetaDescription().trim());
                 customProduct.setMetaDescription(addProductDto.getMetaDescription());
@@ -461,17 +477,17 @@ public class ProductController extends CatalogEndpoint {
                 dateFormat.parse(dateFormat.format(addProductDto.getExamDateTo()));
 
                 if (addProductDto.getExamDateTo().before(addProductDto.getExamDateFrom())) {
-                    return ResponseService.generateErrorResponse("TENTATIVE EXAM DATE TO MUST BE EITHER EQUAL OR BEFORE OF TENTATIVE EXAM DATE FROM", HttpStatus.BAD_REQUEST);
+                    return ResponseService.generateErrorResponse(TENTATIVEEXAMDATETOAFTEREXAMDATEFROM, HttpStatus.BAD_REQUEST);
                 }
 
                 if (addProductDto.getActiveEndDate() != null) {
                     if (!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate()) || !addProductDto.getExamDateTo().after(addProductDto.getActiveEndDate())) {
-                        return ResponseService.generateErrorResponse("BOTH TENTATIVE EXAMINATION DATA MUST BE AFTER ACTIVE END DATE", HttpStatus.BAD_REQUEST);
+                        return ResponseService.generateErrorResponse(TENTATIVEDATEAFTERACTIVEENDDATE, HttpStatus.BAD_REQUEST);
                     }
 
                 } else {
                     if (!addProductDto.getExamDateFrom().after(customProduct.getActiveEndDate()) || !addProductDto.getExamDateTo().after(customProduct.getActiveEndDate())) {
-                        return ResponseService.generateErrorResponse("BOTH TENTATIVE EXAMINATION DATA MUST BE AFTER ACTIVE END DATE", HttpStatus.BAD_REQUEST);
+                        return ResponseService.generateErrorResponse(TENTATIVEDATEAFTERACTIVEENDDATE, HttpStatus.BAD_REQUEST);
                     }
                 }
                 customProduct.setExamDateFrom(addProductDto.getExamDateFrom());
@@ -481,16 +497,16 @@ public class ProductController extends CatalogEndpoint {
 
                 dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
                 if (customProduct.getExamDateTo().before(addProductDto.getExamDateFrom())) {
-                    return ResponseService.generateErrorResponse("TENTATIVE EXAM DATE TO MUST BE EITHER EQUAL OR BEFORE OF TENTATIVE EXAM DATE FROM", HttpStatus.BAD_REQUEST);
+                    return ResponseService.generateErrorResponse(TENTATIVEEXAMDATETOAFTEREXAMDATEFROM, HttpStatus.BAD_REQUEST);
                 }
 
                 if (addProductDto.getActiveEndDate() == null) {
                     if (!addProductDto.getExamDateFrom().after(customProduct.getActiveEndDate())) {
-                        return ResponseService.generateErrorResponse("TENTATIVE EXAMINATION DATE MUST BE AFTER ACTIVE END DATE", HttpStatus.BAD_REQUEST);
+                        return ResponseService.generateErrorResponse(TENTATIVEEXAMDATEAFTERACTIVEENDDATE, HttpStatus.BAD_REQUEST);
                     }
                 } else {
                     if (!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate())) {
-                        return ResponseService.generateErrorResponse("TENTATIVE EXAMINATION DATE MUST BE AFTER ACTIVE END DATE", HttpStatus.BAD_REQUEST);
+                        return ResponseService.generateErrorResponse(TENTATIVEEXAMDATEAFTERACTIVEENDDATE, HttpStatus.BAD_REQUEST);
                     }
                 }
                 customProduct.setExamDateFrom(addProductDto.getExamDateFrom());
@@ -499,11 +515,11 @@ public class ProductController extends CatalogEndpoint {
 
                 dateFormat.parse(dateFormat.format(addProductDto.getExamDateTo()));
                 if (addProductDto.getExamDateTo().before(customProduct.getExamDateFrom())) {
-                    return ResponseService.generateErrorResponse("TENTATIVE EXAM DATE TO MUST BE EITHER EQUAL OR BEFORE OF TENTATIVE EXAM DATE FROM", HttpStatus.BAD_REQUEST);
+                    return ResponseService.generateErrorResponse(TENTATIVEEXAMDATETOAFTEREXAMDATEFROM, HttpStatus.BAD_REQUEST);
                 }
                 if (addProductDto.getActiveEndDate() == null) {
                     if (!addProductDto.getExamDateTo().after(customProduct.getActiveEndDate())) {
-                        return ResponseService.generateErrorResponse("TENTATIVE EXAMINATION DATE MUST BE AFTER ACTIVE END DATE", HttpStatus.BAD_REQUEST);
+                        return ResponseService.generateErrorResponse(TENTATIVEEXAMDATEAFTERACTIVEENDDATE, HttpStatus.BAD_REQUEST);
                     }
                 } else {
                     if (!addProductDto.getExamDateTo().after(addProductDto.getActiveEndDate())) {
@@ -623,13 +639,13 @@ public class ProductController extends CatalogEndpoint {
                     }
                     if (addProductDto.getFee() != null) {
                         if (addProductDto.getFee() <= 0) {
-                            return ResponseService.generateErrorResponse("FEE CANNOT BE LESS THAN OR EQUAL TO ZERO", HttpStatus.BAD_REQUEST);
+                            return ResponseService.generateErrorResponse(FEELESSTHANOREQUALZERO, HttpStatus.BAD_REQUEST);
                         }
                         customProductReserveCategoryFeePostRef.setFee(addProductDto.getFee());
                     }
                     if (addProductDto.getPost() != null) {
                         if (addProductDto.getPost() <= 0) {
-                            return ResponseService.generateErrorResponse("NUMBER OF POST CANNOT BE LESS THAN OR EQUAL TO ZERO", HttpStatus.BAD_REQUEST);
+                            return ResponseService.generateErrorResponse(POSTLESSTHANORZERO, HttpStatus.BAD_REQUEST);
                         }
                         customProductReserveCategoryFeePostRef.setPost(addProductDto.getPost());
                     }
@@ -640,12 +656,12 @@ public class ProductController extends CatalogEndpoint {
                         return ResponseService.generateErrorResponse("FEE, BORN BEFORE AND BORN AFTER ARE MANDATORY FOR NEW RESERVE CATEGORY DATA", HttpStatus.BAD_REQUEST);
                     }
                     if (addProductDto.getFee() <= 0) {
-                        return ResponseService.generateErrorResponse("FEE CANNOT BE LESS THAN OR EQUAL TO ZERO", HttpStatus.BAD_REQUEST);
+                        return ResponseService.generateErrorResponse(FEELESSTHANOREQUALZERO, HttpStatus.BAD_REQUEST);
                     }
                     if (addProductDto.getPost() == null) {
                         addProductDto.setPost(Constant.DEFAULT_QUANTITY);
                     } else if (addProductDto.getPost() <= 0) {
-                        return ResponseService.generateErrorResponse("NUMBER OF POST CANNOT BE LESS THAN OR EQUAL TO ZERO", HttpStatus.BAD_REQUEST);
+                        return ResponseService.generateErrorResponse(POSTLESSTHANORZERO, HttpStatus.BAD_REQUEST);
                     }
 
                     dateFormat.parse(dateFormat.format(addProductDto.getBornAfter()));
@@ -662,7 +678,9 @@ public class ProductController extends CatalogEndpoint {
                 }
             }
 
-            return ResponseService.generateSuccessResponse("Product Updated Successfully", "UPDATED", HttpStatus.OK);
+            CustomProductWrapper wrapper = new CustomProductWrapper();
+            wrapper.wrapDetails(customProduct);
+            return ResponseService.generateSuccessResponse("Product Updated Successfully", wrapper, HttpStatus.OK);
 
         } catch (NumberFormatException numberFormatException) {
             exceptionHandlingService.handleException(numberFormatException);
@@ -728,7 +746,7 @@ public class ProductController extends CatalogEndpoint {
             List<Product> products = catalogService.findAllProducts(); // find all the products.
 
             if (products.isEmpty()) {
-                return ResponseService.generateErrorResponse("NO PRODUCT FOUND", HttpStatus.NOT_FOUND);
+                return ResponseService.generateErrorResponse(PRODUCTNOTFOUND, HttpStatus.NOT_FOUND);
             }
 
             List<Map<String, CustomProductWrapper>> responses = new ArrayList<>();
@@ -754,7 +772,7 @@ public class ProductController extends CatalogEndpoint {
                 }
             }
 
-            return ResponseService.generateSuccessResponse("PRODUCTS FOUND SUCCESSFULLY", responses, HttpStatus.OK);
+            return ResponseService.generateSuccessResponse(PRODUCTFOUNDSUCCESSFULLY, responses, HttpStatus.OK);
 
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
@@ -803,7 +821,7 @@ public class ProductController extends CatalogEndpoint {
             List<Product> products = catalogService.findAllProducts(); // find all the products.
 
             if (products.isEmpty()) {
-                return ResponseService.generateErrorResponse("NO PRODUCT FOUND", HttpStatus.NOT_FOUND);
+                return ResponseService.generateErrorResponse(PRODUCTNOTFOUND, HttpStatus.NOT_FOUND);
             }
 
             List<Map<String, CustomProductWrapper>> responses = new ArrayList<>();
@@ -830,7 +848,7 @@ public class ProductController extends CatalogEndpoint {
                 }
             }
 
-            return ResponseService.generateSuccessResponse("PRODUCTS FOUND SUCCESSFULLY", responses, HttpStatus.OK);
+            return ResponseService.generateSuccessResponse(PRODUCTFOUNDSUCCESSFULLY, responses, HttpStatus.OK);
 
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
@@ -850,7 +868,7 @@ public class ProductController extends CatalogEndpoint {
             List<Product> products = catalogService.findAllProducts(); // find all the products.
 
             if (products.isEmpty()) {
-                return ResponseService.generateErrorResponse("NO PRODUCT FOUND", HttpStatus.NOT_FOUND);
+                return ResponseService.generateErrorResponse(PRODUCTNOTFOUND, HttpStatus.NOT_FOUND);
             }
 
             List<Map<String, CustomProductWrapper>> responses = new ArrayList<>();
@@ -876,7 +894,7 @@ public class ProductController extends CatalogEndpoint {
                 }
             }
 
-            return ResponseService.generateSuccessResponse("PRODUCTS FOUND SUCCESSFULLY", responses, HttpStatus.OK);
+            return ResponseService.generateSuccessResponse(PRODUCTFOUNDSUCCESSFULLY, responses, HttpStatus.OK);
 
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);

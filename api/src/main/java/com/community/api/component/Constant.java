@@ -3,6 +3,8 @@ package com.community.api.component;
 import org.broadleafcommerce.core.order.domain.DiscreteOrderItem;
 
 public class Constant {
+
+    public static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
     public static String COUNTRY_CODE = "+91";
     public static String PHONE_QUERY = "SELECT c FROM CustomCustomer c WHERE c.mobileNumber = :mobileNumber AND c.countryCode = :countryCode";
     public static String PHONE_QUERY_OTP = "SELECT c FROM CustomCustomer c WHERE c.mobileNumber = :mobileNumber AND c.countryCode = :countryCode AND c.otp=:otp";

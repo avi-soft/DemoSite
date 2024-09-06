@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.*;
 
@@ -20,14 +21,19 @@ public class Document {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long documentId;
 
+    private String name;
+    private String filePath;
 
     @Lob
     private byte[] data;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "custom_customer_id")
     private CustomCustomer customCustomer;
+
     @OneToOne
     @JoinColumn(name = "document_type_Id")
     private DocumentType documentType;
+
+
 }

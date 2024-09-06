@@ -1,9 +1,13 @@
 package com.community.api.endpoint.avisoft.controller.Customer;
 
 
+import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
+
 import com.community.api.dto.AddCategoryDto;
+
 import com.community.api.dto.CustomProductWrapper;
+import com.community.api.dto.DocumentDTO;
 import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.AddressDTO;
 import com.community.api.entity.CustomCustomer;
@@ -11,6 +15,13 @@ import com.community.api.entity.CustomProduct;
 import com.community.api.services.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.exception.ExceptionHandlingService;
+
+import com.community.api.services.exception.FileSizeExceededException;
+import com.community.api.services.exception.InvalidFileTypeException;
+import com.community.api.utils.Document;
+
+import com.community.api.utils.DocumentType;
+
 import org.broadleafcommerce.common.persistence.Status;
 import org.broadleafcommerce.core.catalog.domain.Category;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
@@ -25,17 +36,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
+
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
+import java.io.File;
+import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.util.*;
@@ -59,19 +68,23 @@ public class CustomerEndpoint {
     private AddressService addressService;
     private CustomerAddressService customerAddressService;
     private JwtUtil jwtUtil;
-    private  ResponseService responseService;
 
 
     @Autowired
     private ExceptionHandlingService exceptionHandlingService;
 
     @Autowired
-    public void setResponseService(ResponseService responseService) {
-        this.responseService = responseService;
-    }
+    private  JwtUtil jwtTokenUtil;
 
     @Autowired
-    private CategoryService categoryService;
+    private  RoleService roleService;
+
+
+    @Autowired
+    private static ResponseService responseService;
+
+    @Autowired
+    private DocumentStorageService documentStorageService;
 
     @Autowired
     private CatalogService catalogService;
@@ -120,7 +133,6 @@ public class CustomerEndpoint {
         this.jwtUtil= jwtUtil;
     }
 
-
     @Autowired
     public void setJwtUtil(JwtUtil jwtUtil) {
         this.jwtUtil = jwtUtil;
@@ -150,11 +162,12 @@ public class CustomerEndpoint {
     @Transactional
     @RequestMapping(value = "update", method = RequestMethod.POST)
     public ResponseEntity<?> updateCustomer(@RequestBody CustomCustomer customerDetails, @RequestParam Long customerId) {
+
         try {
             if (customerService == null) {
                 return responseService.generateErrorResponse("Customer service is not initialized.",HttpStatus.INTERNAL_SERVER_ERROR);
-
             }
+
             CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
             if (customCustomer == null) {
                 return responseService.generateErrorResponse("No data found for this customerId",HttpStatus.NOT_FOUND);
@@ -171,6 +184,7 @@ public class CustomerEndpoint {
             if (customerDetails.getUsername() != null) {
                 existingCustomerByUsername = customerService.readCustomerByUsername(customerDetails.getUsername());
             }
+
             if (customerDetails.getEmailAddress() != null) {
                 existingCustomerByEmail = customerService.readCustomerByEmail(customerDetails.getEmailAddress());
             }
@@ -203,6 +217,7 @@ public class CustomerEndpoint {
             if(customerDetails.getEmailAddress()!=null){
                 customer.setEmailAddress(customerDetails.getEmailAddress());
             }
+
             em.merge(customCustomer);
             return responseService.generateSuccessResponse("User details updated successfully : ",customer, HttpStatus.OK);
 
@@ -212,6 +227,142 @@ public class CustomerEndpoint {
 
         }
     }
+
+    @Transactional
+    @PostMapping("/upload-documents")
+        public ResponseEntity<?> updateCustomer(
+            @RequestParam Long customerId,
+            @RequestPart(value = "Aadhaar Card", required = false) MultipartFile aadharCard,
+            @RequestPart(value = "PAN Card", required = false) MultipartFile panCard,
+            @RequestPart(value = "Passport Size Photo", required = false) MultipartFile photo) {
+        try {
+        if (customerService == null) {
+            return responseService.generateErrorResponse("Customer service is not initialized.",HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
+        if (customCustomer == null) {
+            return responseService.generateErrorResponse("No data found for this customerId",HttpStatus.NOT_FOUND);
+
+        }
+        Map<String, Object> responseData = new HashMap<>();
+        Map<String, MultipartFile> files = new HashMap<>();
+        if (aadharCard != null) {
+            if (files.containsKey("Aadhar Card")) {
+                return responseService.generateErrorResponse("Only one aadhar card image is allowed", HttpStatus.BAD_REQUEST);
+            }
+            files.put("Aadhar Card", aadharCard);
+        }
+        if (panCard != null) {
+            if (files.containsKey("PAN Card")) {
+                return responseService.generateErrorResponse("Only one pan card image is allowed", HttpStatus.BAD_REQUEST);
+            }
+            files.put("PAN Card", panCard);
+        }
+        if (photo != null) {
+            if (files.containsKey("Photo")) {
+                return responseService.generateErrorResponse("Only one photo is allowed", HttpStatus.BAD_REQUEST);
+            }
+            files.put("Photo", photo);
+        }
+
+
+        try{
+            for (Map.Entry<String, MultipartFile> entry : files.entrySet()) {
+                String documentType = entry.getKey();
+                MultipartFile file = entry.getValue();
+
+                ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(file, documentType, customerId, "customer");
+                Map<String, Object> responseBody = savedResponse.getBody();
+
+                if (savedResponse.getStatusCode() == HttpStatus.OK) {
+                    responseData.put(documentType, responseBody.get("data"));
+                } else {
+                    return responseService.generateErrorResponse("Error uploading " + documentType, HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+            }
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return responseService.generateErrorResponse("Error updating in documents", HttpStatus.INTERNAL_SERVER_ERROR);
+
+        }
+            return responseService.generateSuccessResponse("Documents uploaded successfully", responseData, HttpStatus.OK);
+    } catch (Exception e) {
+        exceptionHandling.handleException(e);
+        return responseService.generateErrorResponse("Error updating", HttpStatus.INTERNAL_SERVER_ERROR);
+
+    }
+
+    }
+
+   /* @PostMapping("/upload-documents")
+    public ResponseEntity<?> uploadBasicDocuments(@RequestBody Map<String, Object> request, @RequestPart("files") MultipartFile[] files) {
+        try {
+
+            Long customerId = (Long) request.get("customerId");
+            Integer role = (Integer) request.get("role");
+
+            if (role == null) {
+                return responseService.generateErrorResponse(ApiConstants.ROLE_EMPTY, HttpStatus.BAD_REQUEST);
+            }
+            if (customerId == null) {
+                return responseService.generateErrorResponse("Customer Id can not be empty", HttpStatus.BAD_REQUEST);
+            }
+
+            CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
+            if (customCustomer == null) {
+                return responseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
+            }
+            List<DocumentType> allDocumentTypes = documentStorageService.getAllDocumentTypes();
+
+            if (files != null && files.length > 0) {
+                for (MultipartFile file : files) {
+                    String documentTypeName = documentStorageService.getDocumentTypeFromMultipartFile(file, allDocumentTypes);
+                    System.out.println(documentTypeName + " documentTypeName");
+                    DocumentType documentType = em.createQuery("SELECT dt FROM DocumentType dt WHERE dt.document_type_name = :typeName", DocumentType.class)
+                            .setParameter("typeName", documentTypeName)
+                            .getResultStream()
+                            .findFirst()
+                            .orElse(null);
+                    if (documentType == null) {
+                        return responseService.generateErrorResponse("Document type not found: " + documentTypeName, HttpStatus.BAD_REQUEST);
+                    }
+                    String Role = "";
+                    if(role==5){
+                         Role = "CUSTOMER";
+                    }else if(role==4){
+                         Role = "SERVICE_PROVIDER";
+                    }else{
+                        Role = "Admin";
+                    }
+
+                    String fileName = file.getOriginalFilename();
+                    try (InputStream fileInputStream = file.getInputStream()) {
+                        documentStorageService.saveDocument(customerId.toString(), documentTypeName, fileName, fileInputStream, Role);
+                        Document doc = new Document();
+                        doc.setName(fileName);
+                        doc.setFilePath(DocumentStorageService.BASE_DIRECTORY + File.separator   + Role + File.separator + customerId + File.separator + documentTypeName + File.separator + fileName);
+                        doc.setData(file.getBytes());
+                        doc.setCustomCustomer(customCustomer);
+                        doc.setDocumentType(documentType);
+                        em.persist(doc);
+                    } catch (Exception e) {
+                        exceptionHandling.handleException(e);
+                        return responseService.generateErrorResponse("Error processing file: " + fileName, HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
+                }
+            } else {
+                return responseService.generateErrorResponse("No files provided for upload", HttpStatus.BAD_REQUEST);
+            }
+
+            return responseService.generateSuccessResponse("Documents uploaded successfully", null, HttpStatus.OK);
+
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return responseService.generateErrorResponse("Error updating user details", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+*/
 
     @Transactional
     @RequestMapping(value = "update-username", method = RequestMethod.POST)
@@ -442,7 +593,7 @@ public class CustomerEndpoint {
         addressDTO.setPhoneNumber(customCustomer.getMobileNumber());
         return addressDTO;
     }
-    public  ResponseEntity<?> createAuthResponse(String token, Customer customer ) {
+    public static ResponseEntity<?> createAuthResponse(String token, Customer customer ) {
         OtpEndpoint.ApiResponse authResponse = new OtpEndpoint.ApiResponse(token, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
         return responseService.generateSuccessResponse("Token details : ", authResponse, HttpStatus.OK);
     }
