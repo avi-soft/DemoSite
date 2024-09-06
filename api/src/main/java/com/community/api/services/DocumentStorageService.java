@@ -40,30 +40,47 @@ public class DocumentStorageService {
     @Autowired
     private DocumentStorageService documentStorageService;
 
-    public ResponseEntity<?> saveDocuments(MultipartFile file, String documentTypeStr, Long customerId, String role) {
+    public ResponseEntity<Map<String, Object>> saveDocuments(MultipartFile file, String documentTypeStr, Long customerId, String role) {
         try {
             if (!DocumentStorageService.isValidFileType(file)) {
-                throw new InvalidFileTypeException("Invalid file type: " + file.getOriginalFilename());
+
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", ApiConstants.STATUS_ERROR,
+                        "status_code", HttpStatus.BAD_REQUEST,
+                        "message", "Invalid file type: " + file.getOriginalFilename()
+                ));
             }
 
             if (file.getSize() > Constant.MAX_FILE_SIZE) {
-                throw new FileSizeExceededException("File size exceeds the maximum allowed size: " + file.getOriginalFilename());
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", ApiConstants.STATUS_ERROR,
+                        "status_code", HttpStatus.BAD_REQUEST,
+                        "message", "File size exceeds the maximum allowed size: " + file.getOriginalFilename()
+                ));
             }
 
             CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
             if (customCustomer == null) {
-                throw new EntityNotFoundException("Customer not found with ID: " + customerId);
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", ApiConstants.STATUS_ERROR,
+                        "status_code", HttpStatus.BAD_REQUEST,
+                        "message", "Customer not found with ID: " + customerId
+                ));
             }
 
-
+        System.out.println(documentTypeStr.trim() + " documentTypeStr.trim()");
        DocumentType documentType = em.createQuery(
                             "SELECT dt FROM DocumentType dt WHERE dt.document_type_name = :document_type_name", DocumentType.class)
-                    .setParameter("document_type_name", documentTypeStr)
+                    .setParameter("document_type_name", documentTypeStr.trim())
                     .getResultStream()
                     .findFirst()
                     .orElse(null);
             if (documentType == null) {
-                throw new EntityNotFoundException("DocumentType not found : " + documentTypeStr);
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", ApiConstants.STATUS_ERROR,
+                        "status_code", HttpStatus.BAD_REQUEST,
+                        "message", "DocumentType not found : " + documentTypeStr
+                ));
             }
 
             String fileName = file.getOriginalFilename();
@@ -90,11 +107,25 @@ public class DocumentStorageService {
             doc.setDocumentType(documentType);
             em.persist(doc);
 
-            return responseService.generateSuccessResponse("Documents uploaded", doc, HttpStatus.OK);
+            Map<String, Object> responseBody = Map.of(
+                    "message", "Documents uploaded successfully",
+                    "data", Map.of(
+                            "documentId", doc.getDocumentId(),
+                            "name", doc.getName(),
+                            "filePath", doc.getFilePath()
+                    ),
+                    "status", "OK",
+                    "status_code", HttpStatus.OK.value()
+            );
 
+            return ResponseEntity.ok(responseBody);
         } catch (Exception e) {
             exceptionHandlingService.handleException(e);
-            return responseService.generateErrorResponse("Error uploading document", HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+                    "status", ApiConstants.STATUS_ERROR,
+                    "message", "Error uploading document" + e.getMessage(),
+                    "status_code", HttpStatus.INTERNAL_SERVER_ERROR
+            ));
         }
     }
 

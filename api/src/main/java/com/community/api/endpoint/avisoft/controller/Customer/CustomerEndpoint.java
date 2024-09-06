@@ -245,9 +245,7 @@ public class CustomerEndpoint {
             return responseService.generateErrorResponse("No data found for this customerId",HttpStatus.NOT_FOUND);
 
         }
-
-        Customer customer = customerService.readCustomerById(customerId);
-
+        Map<String, Object> responseData = new HashMap<>();
         Map<String, MultipartFile> files = new HashMap<>();
         if (aadharCard != null) {
             if (files.containsKey("Aadhar Card")) {
@@ -268,26 +266,33 @@ public class CustomerEndpoint {
             files.put("Photo", photo);
         }
 
+
         try{
             for (Map.Entry<String, MultipartFile> entry : files.entrySet()) {
                 String documentType = entry.getKey();
                 MultipartFile file = entry.getValue();
 
-                ResponseEntity<?> savedresponse =   documentStorageService.saveDocuments(file,documentType,customerId,"customer");
-                return responseService.generateSuccessResponse("Documents uploaded : ",savedresponse, HttpStatus.OK);
+                ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(file, documentType, customerId, "customer");
+                Map<String, Object> responseBody = savedResponse.getBody();
+
+                if (savedResponse.getStatusCode() == HttpStatus.OK) {
+                    responseData.put(documentType, responseBody.get("data"));
+                } else {
+                    return responseService.generateErrorResponse("Error uploading " + documentType, HttpStatus.INTERNAL_SERVER_ERROR);
+                }
             }
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Error updating in documents", HttpStatus.INTERNAL_SERVER_ERROR);
 
         }
-
+            return responseService.generateSuccessResponse("Documents uploaded successfully", responseData, HttpStatus.OK);
     } catch (Exception e) {
         exceptionHandling.handleException(e);
         return responseService.generateErrorResponse("Error updating", HttpStatus.INTERNAL_SERVER_ERROR);
 
     }
-        return null;
+
     }
 
    /* @PostMapping("/upload-documents")
