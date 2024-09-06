@@ -342,7 +342,7 @@ public class ProductController extends CatalogEndpoint {
                 return ResponseService.generateErrorResponse("PRODUCT ID CANNOT BE <= 0", HttpStatus.BAD_REQUEST);
             }
             CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
-            if (customProduct == null) {
+            if (customProduct == null || (((Status) customProduct).getArchived() != 'Y')) {
                 return ResponseService.generateErrorResponse(PRODUCTNOTFOUND, HttpStatus.NOT_FOUND);
             }
 
@@ -792,7 +792,7 @@ public class ProductController extends CatalogEndpoint {
 
             CustomProduct customProduct = entityManager.find(CustomProduct.class, productId); // Find the Custom Product
 
-            if (customProduct == null) {
+            if (customProduct == null || (((Status) customProduct).getArchived() != 'Y')) {
                 return ResponseService.generateErrorResponse(PRODUCTNOTFOUND, HttpStatus.NOT_FOUND);
             }
 
