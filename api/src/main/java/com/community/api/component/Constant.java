@@ -1,6 +1,8 @@
 package com.community.api.component;
 
 public class Constant {
+
+    public static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
     public static String COUNTRY_CODE = "+91";
     public static String PHONE_QUERY = "SELECT c FROM CustomCustomer c WHERE c.mobileNumber = :mobileNumber AND c.countryCode = :countryCode";
     public static String PHONE_QUERY_OTP = "SELECT c FROM CustomCustomer c WHERE c.mobileNumber = :mobileNumber AND c.countryCode = :countryCode AND c.otp=:otp";
@@ -63,6 +65,7 @@ public class Constant {
     public static String PRODUCT_STATE_APPROVED = "APPROVED";
     public static String PRODUCT_STATE_EXPIRED = "EXPIRED";
     public static String PRODUCT_STATE_END = "END";
+    public static String PRODUCT_STATE_REJECTED = "REJECTED";
     /*public static String GET_STATES_LIST="SELECT s FROM StateCode s";*/
     public static String SERVICE_PROVIDER_PRIVILEGE = "SELECT privilege_id FROM service_provider_privileges WHERE service_provider_id = :serviceProviderId";
     public static String GET_ROLE_BY_ROLE_ID = "SELECT r FROM Role r WHERE r.role_id = :roleId";

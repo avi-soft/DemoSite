@@ -11,16 +11,13 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class AddCategoryDto {
-    @JsonProperty("id")
-    protected Long id;
+
     @JsonProperty("name")
     protected String name;
     @JsonProperty("description")
     protected String description;
     @JsonProperty("long_description")
     protected String longDescription;
-    @JsonProperty("active")
-    protected Boolean active;
     @JsonProperty("url")
     protected String url;
     @JsonProperty("url_key")

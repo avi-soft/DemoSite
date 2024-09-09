@@ -21,6 +21,11 @@ public class Document {
     @Column(name = "document_id")
     private Long document_id;
 
+    private String name;
+
+    @Column(name = "file_path")
+    private String file_path;
+
     @Lob
     @Basic(fetch = FetchType.EAGER)
     @Column(name = "data")
