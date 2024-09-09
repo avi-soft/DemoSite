@@ -74,7 +74,7 @@ public class ServiceProviderController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error assigning skill: " + e.getMessage());
         }
     }
-    @PatchMapping("saveServiceProvider")
+    @PatchMapping("save-service-provider")
     public ResponseEntity<?> updateServiceProvider(@RequestParam Long userId, @RequestBody Map<String,Object> serviceProviderDetails) throws Exception {
         try{
         return serviceProviderService.updateServiceProvider(userId,serviceProviderDetails);
@@ -132,7 +132,7 @@ public class ServiceProviderController {
                 return responseService.generateErrorResponse("Error changing/updating password: " + e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
             }
     }
-    @GetMapping("getServiceProivider")
+    @GetMapping("get-service-provider")
     public ResponseEntity<?> getServiceProviderById(@RequestParam Long userId) throws Exception {
         try {
             ServiceProviderEntity serviceProviderEntity = serviceProviderService.getServiceProviderById(userId);
@@ -147,7 +147,7 @@ public class ServiceProviderController {
     }
 
     @Transactional
-    @PostMapping("/addAddress")
+    @PostMapping("/add-address")
     public ResponseEntity<?> addAddress(@RequestParam long serviceProviderId,@RequestBody ServiceProviderAddress serviceProviderAddress) throws Exception {
         try{
             if(serviceProviderAddress==null)
@@ -173,7 +173,7 @@ public class ServiceProviderController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error adding address " + e.getMessage());
         }
     }
-    @GetMapping("/getAddressNames")
+    @GetMapping("/get-address-names")
     public ResponseEntity<?> getAddressTypes()
     {
         try{

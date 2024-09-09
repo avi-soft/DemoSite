@@ -1,33 +1,38 @@
 package com.community.api.utils;
 
 import com.community.api.entity.CustomCustomer;
-import com.community.api.utils.DocumentType;
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
 import javax.persistence.*;
 
 @Entity
-@AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class Document {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long documentId;
-
+    @Column(name = "document_id")
+    private Long document_id;
 
     @Lob
+    @Basic(fetch = FetchType.EAGER)
+    @Column(name = "data")
     private byte[] data;
 
-    @OneToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "custom_customer_id")
-    private CustomCustomer customCustomer;
-    @OneToOne
-    @JoinColumn(name = "document_type_Id")
-    private DocumentType documentType;
+    @JsonIgnore
+    private CustomCustomer custom_customer;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "document_type_id")
+    private DocumentType document_type;
+
 }

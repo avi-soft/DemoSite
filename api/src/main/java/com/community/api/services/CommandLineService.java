@@ -1,18 +1,8 @@
 package com.community.api.services;
 
 import com.community.api.endpoint.serviceProvider.ServiceProviderStatus;
-import com.community.api.entity.CustomApplicationScope;
-import com.community.api.entity.CustomJobGroup;
-import com.community.api.entity.CustomProductState;
-import com.community.api.entity.CustomReserveCategory;
-import com.community.api.entity.Districts;
-import com.community.api.entity.Examination;
-import com.community.api.entity.Role;
-import com.community.api.entity.ServiceProviderAddressRef;
-import com.community.api.entity.ServiceProviderInfra;
-import com.community.api.entity.ServiceProviderLanguage;
-import com.community.api.entity.Skill;
-import com.community.api.entity.StateCode;
+import com.community.api.entity.*;
+import com.community.api.entity.Qualification;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -257,14 +247,15 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(status3);
             entityManager.persist(status4);
         }
-        count = entityManager.createQuery("SELECT COUNT(e) FROM Examination e", Long.class).getSingleResult();
+        count = entityManager.createQuery("SELECT COUNT(e) FROM Qualification e", Long.class).getSingleResult();
 
         if (count == 0) {
-            entityManager.persist(new Examination(1L,"10th"));
-            entityManager.persist(new Examination(2L,"10+2"));
-            entityManager.persist(new Examination(3L,"Bachelors"));
-            entityManager.persist(new Examination(4L,"Masters"));
-            entityManager.persist(new Examination(5L,"PhD"));
+            entityManager.persist(new Qualification(1L, "MATRICULATION", "Completed secondary education or equivalent"));
+            entityManager.persist(new Qualification(2L, "INTERMEDIATE", "Completed higher secondary education or equivalent"));
+            entityManager.persist(new Qualification(3L, "BACHELORS", "Completed undergraduate degree program"));
+            entityManager.persist(new Qualification(4L, "MASTERS", "Completed postgraduate degree program"));
+            entityManager.persist(new Qualification(5L, "DOCTORATE", "Completed doctoral degree program"));
+
         }
     }
 }
