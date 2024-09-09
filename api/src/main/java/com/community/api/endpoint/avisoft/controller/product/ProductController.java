@@ -76,7 +76,7 @@ public class ProductController extends CatalogEndpoint {
     public static final String TENTATIVEDATEAFTERACTIVEENDDATE = "BOTH TENTATIVE EXAMINATION DATA MUST BE AFTER ACTIVE END DATE";
     public static final String TENTATIVEEXAMDATETOAFTEREXAMDATEFROM = "TENTATIVE EXAM DATE TO MUST BE EITHER EQUAL OR BEFORE OF TENTATIVE EXAM DATE FROM";
     public static final String FEELESSTHANOREQUALZERO = "FEE CANNOT BE LESS THAN OR EQUAL TO ZERO";
-    public static final String  TENTATIVEEXAMDATEAFTERACTIVEENDDATE = "TENTATIVE EXAMINATION DATE MUST BE AFTER ACTIVE END DATE";
+    public static final String TENTATIVEEXAMDATEAFTERACTIVEENDDATE = "TENTATIVE EXAMINATION DATE MUST BE AFTER ACTIVE END DATE";
     public static final String POSTLESSTHANORZERO = "NUMBER OF POST CANNOT BE LESS THAN OR EQUAL TO ZERO";
     public static final String PRODUCTNOTFOUND = "PRODUCT NOT FOUND";
     public static final String PRODUCTFOUNDSUCCESSFULLY = "PRODUCTS FOUND SUCCESSFULLY";
@@ -401,12 +401,17 @@ public class ProductController extends CatalogEndpoint {
                 customProduct.getDefaultSku().setDescription(addProductDto.getMetaDescription());
             }
 
+            // Validation of getActiveEndDate and getGoLiveDate.
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); // Set active start date to current date and time in "yyyy-MM-dd HH:mm:ss" format
             String formattedDate = dateFormat.format(new Date());
             Date currentDate = dateFormat.parse(formattedDate); // Convert formatted date string back to Date
             customProduct.setModifiedDate(currentDate);
 
-            if (addProductDto.getActiveEndDate() != null && addProductDto.getGoLiveDate() != null) {
+            ResponseEntity<?> responseService1 = productService.validateAndSetActiveEndDateAndGoLiveDateFields(addProductDto, customProduct, dateFormat);
+            if(responseService1.getStatusCode().equals(HttpStatus.OK)){
+                return responseService1;
+            }
+            /*if (addProductDto.getActiveEndDate() != null && addProductDto.getGoLiveDate() != null) {
 
                 dateFormat.parse(dateFormat.format(addProductDto.getActiveEndDate()));
                 dateFormat.parse(dateFormat.format(addProductDto.getGoLiveDate()));
@@ -460,7 +465,7 @@ public class ProductController extends CatalogEndpoint {
                     return ResponseService.generateErrorResponse("GO LIVE DATE CANNOT BE AFTER AND EQUAL OF EXPIRY DATE", HttpStatus.BAD_REQUEST);
                 }
                 customProduct.setGoLiveDate(addProductDto.getGoLiveDate());
-            }
+            }*/
 
             CustomJobGroup jobGroup;
             if (addProductDto.getJobGroup() != null) {
@@ -584,7 +589,6 @@ public class ProductController extends CatalogEndpoint {
                 }
                 customProduct.setProductState(customProductState);
             }
-
             customProduct.setModifiedDate(new Date());
             customProduct.setModifierRole(roleService.getRoleByRoleId(roleId));
             customProduct.setModifierUserId(userId);
