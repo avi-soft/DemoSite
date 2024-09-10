@@ -115,7 +115,7 @@ public class DocumentEndpoint {
                 return responseService.generateResponse(HttpStatus.OK, "No document found", null);
             }
 
-            List<DocumentResponse> documentResponses = documents.stream()
+           /* List<DocumentResponse> documentResponses = documents.stream()
                     .map(document -> {
                         String fileName = document.getName();
                         String filePath = document.getFilePath();
@@ -124,7 +124,7 @@ public class DocumentEndpoint {
 
                         return new DocumentResponse(fileName, fileUrl,fileurl);
                     })
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toList());*/
             return responseService.generateSuccessResponse("Documents retrieved successfully", documents, HttpStatus.OK);
         } catch (Exception e) {
             exceptionHandling.handleException(e);

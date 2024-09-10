@@ -1,16 +1,14 @@
 package com.community.api.endpoint.avisoft.controller;
 import com.community.api.component.JwtUtil;
 import com.community.api.services.CustomCustomerService;
+import com.community.api.services.DocumentStorageService;
 import com.community.api.services.RateLimiterService;
 import io.github.bucket4j.Bucket;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 
 import javax.servlet.http.HttpServletRequest;
@@ -26,6 +24,10 @@ public class TestController {
     private ExceptionHandlingImplement exceptionHandling;
 
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private DocumentStorageService documentStorageService;
+
 
     private CustomCustomerService customCustomerService;
     public TestController(RateLimiterService rateLimiterService,ExceptionHandlingImplement exceptionHandling,JwtUtil jwtUtil,CustomCustomerService customCustomerService) {
@@ -71,5 +73,10 @@ public class TestController {
         }
     }
 
+    @PostMapping("/api/data-entry")
+    public String dataEntry(@RequestParam String userId) {
+        documentStorageService.saveAllDocumentTypes();
+        return "Documents inserted successfully";
+    }
 
 }

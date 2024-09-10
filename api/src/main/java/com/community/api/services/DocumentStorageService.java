@@ -1,20 +1,16 @@
 package com.community.api.services;
 import com.community.api.component.Constant;
-import com.community.api.entity.CustomCustomer;
-import com.community.api.entity.ErrorResponse;
 import com.community.api.services.exception.ExceptionHandlingService;
-import com.community.api.services.exception.FileSizeExceededException;
-import com.community.api.services.exception.InvalidFileTypeException;
 import com.community.api.utils.Document;
 import com.community.api.utils.DocumentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -39,6 +35,9 @@ public class DocumentStorageService {
 
     @Autowired
     private DocumentStorageService documentStorageService;
+
+    @Autowired
+    private EntityManager entityManager;
 
     public ResponseEntity<Map<String, Object>> saveDocuments(MultipartFile file, String documentTypeStr, Long customerId, String role) {
         try {
@@ -160,4 +159,31 @@ public class DocumentStorageService {
         return "Unknown Document Type";
     }
 
+
+    @Transactional
+    public void saveDocumentType(DocumentType document) {
+        entityManager.persist(document);
+    }
+
+    @Transactional
+    public void saveAllDocumentTypes() {
+
+                DocumentType[] documents = {
+                new DocumentType(5, "EWS_CERTIFICATE", "Certificate for individuals and families below a certain income threshold to access various benefits and concessions."),
+                new DocumentType(6, "DIPLOMA", "Official academic certificate awarded upon completion of an undergraduate or vocational course, certifying knowledge and skills in a specific field."),
+                new DocumentType(7, "GRADUATION", "Awarded upon completion of a degree program, signifying fulfillment of academic requirements in a specific discipline."),
+                new DocumentType(8, "POST_GRADUATION", "Issued after completing a postgraduate degree, acknowledging advanced training in a specialized field."),
+                new DocumentType(9, "CASTE_CERTIFICATE", "Certifies an individual's caste for reservations and benefits in education and employment."),
+                new DocumentType(10, "ADDRESS_CERTIFICATE", "Verifies an individual’s residential address for identity verification and other purposes."),
+                new DocumentType(11, "INCOME_CERTIFICATE", "Confirms an individual’s or family’s annual income for applying for government benefits and financial assistance."),
+                new DocumentType(12, "DRIVING_LICENSE", "Authorizes an individual to operate motor vehicles, confirming knowledge of traffic laws and vehicle operation skills."),
+                new DocumentType(13, "OTHERS", "Includes other document types not listed above, tailored to specific needs or contexts.")
+        };
+
+
+
+        for (DocumentType document : documents) {
+            saveDocumentType(document);
+        }
+    }
 }
