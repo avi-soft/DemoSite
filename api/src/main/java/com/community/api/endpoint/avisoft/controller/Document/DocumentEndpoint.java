@@ -114,7 +114,7 @@ public class DocumentEndpoint {
             if (customer == null) {
                 return responseService.generateErrorResponse("Customer not found", HttpStatus.NOT_FOUND);
             }
-            List<Document> documents = entityManager.createQuery("SELECT d FROM Document d WHERE d.customCustomer = :customer", Document.class)
+            List<Document> documents = entityManager.createQuery("SELECT d FROM Document d WHERE d.custom_customer = :customer", Document.class)
                     .setParameter("customer", customer)
                     .getResultList();
 
