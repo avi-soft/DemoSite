@@ -313,7 +313,7 @@ public class CustomerEndpoint {
                 }
 
                 Document existingDocument = em.createQuery(
-                                "SELECT d FROM Document d WHERE d.customCustomer = :customCustomer AND d.documentType = :documentType", Document.class)
+                                "SELECT d FROM Document d WHERE d.custom_customer = :customCustomer AND d.documentType = :documentType", Document.class)
                         .setParameter("customCustomer", customCustomer)
                         .setParameter("documentType", documentTypeObj)
                         .getResultStream()
