@@ -61,11 +61,19 @@ public class DocumentStorageService {
             String fileName = file.getOriginalFilename();
             try (InputStream fileInputStream = file.getInputStream()) {
                 this.saveDocumentOndirctory(customerId.toString(), documentTypeStr, fileName, fileInputStream, role);
+            }catch(Exception e){
+                exceptionHandlingService.handleException(e);
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", ApiConstants.STATUS_ERROR,
+                        "status_code", HttpStatus.BAD_REQUEST.value(),
+                        "message", "Invalid file : " + file
+                ));
             }
 
             Map<String, Object> responseBody = Map.of(
                     "message", "Document uploaded successfully",
                     "status", "OK",
+                    "data",documentTypeStr +" uploaded successfully",
                     "status_code", HttpStatus.OK.value()
             );
 
@@ -93,6 +101,7 @@ public class DocumentStorageService {
      * @throws IOException If an I/O error occurs.
      */
     public void saveDocumentOndirctory(String customerId, String documentType, String fileName, InputStream fileInputStream, String role) throws IOException {
+
         File baseDir = new File(BASE_DIRECTORY);
         if (!baseDir.exists()) {
             baseDir.mkdirs();

@@ -42,9 +42,9 @@ public class Constant {
     public static String GET_COUNT_OF_STATUS="Select COUNT(*) from ServiceProviderStatus";
     public static String GET_ALL_STATUS="Select s from ServiceProviderStatus s";
     public static String GET_ALL_ROLES="Select r from Role r";
-    public static String SOME_EXCEPTION_OCCURRED = "Some Exception Occurred";
-    public static String NUMBER_FORMAT_EXCEPTION = "Number Format Exception";
-    public static String CATALOG_SERVICE_NOT_INITIALIZED = "Catalog Service Not Initialized";
+    public static String SOME_EXCEPTION_OCCURRED = "Some exception occurred";
+    public static String NUMBER_FORMAT_EXCEPTION = "Number format exception";
+    public static String CATALOG_SERVICE_NOT_INITIALIZED = "Catalog service not initialized";
     public static String GET_STATES_LIST="Select s from StateCode s";
     public static String GET_EXAMINATIONS_COUNT = "SELECT COUNT(*) FROM Examination";
 
@@ -82,7 +82,7 @@ public class Constant {
     public static String PRIVILEGE_UPDATE_PRODUCT = "UPDATE_PRODUCT";
     public static String APPLICATION_SCOPE_CENTER = "CENTER";
     public static String PRIVILEGE_APPROVE_PRODUCT = "APPROVE_PRODUCT";
-    public static final String PRODUCTNOTFOUND = "Product not Found";
-    public static final String CATEGORYNOTFOUND = "Category not Found";
-    public static final String PRODUCTTITLENOTGIVEN = "Product MetaTitle not Given";
+    public static final String PRODUCTNOTFOUND = "Product not found";
+    public static final String CATEGORYNOTFOUND = "Category not found";
+    public static final String PRODUCTTITLENOTGIVEN = "Product metaTitle not given";
 }

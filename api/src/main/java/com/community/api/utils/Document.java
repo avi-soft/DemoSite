@@ -31,8 +31,9 @@ public class Document {
     @JoinColumn(name = "custom_customer_id")
     private CustomCustomer customCustomer;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "document_type_Id")
     private DocumentType documentType;
+
 
 }

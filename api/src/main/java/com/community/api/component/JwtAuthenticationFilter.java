@@ -109,13 +109,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         );
 
         boolean isBypassed = bypassUris.stream().anyMatch(path::equals);
-        logger.info(isBypassed + " isBypassed");
         return isBypassed;
     }
 
     private boolean validateApiKey(HttpServletRequest request) {
         String requestApiKey = request.getHeader("x-api-key");
-        logger.info(apiKey + " apiKey", requestApiKey + "requestApiKey");
         return apiKey.equals(requestApiKey);
     }
 
