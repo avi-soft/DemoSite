@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
+import java.io.File;
 import java.util.Iterator;
 
 import javax.persistence.EntityManager;
@@ -27,15 +28,44 @@ public class ImageService {
         this.entityManager = entityManager;
     }
 
-    public Image saveImage(MultipartFile file) throws IOException {
-        Image image = new Image();
-        image.setFile_name(file.getOriginalFilename());
-        image.setFile_type(file.getContentType());
-        image.setImage_data(file.getBytes());
+//    public Image saveImage(MultipartFile file) throws IOException {
+//        Image image = new Image();
+//        image.setFile_name(file.getOriginalFilename());
+//        image.setFile_type(file.getContentType());
+//        image.setImage_data(file.getBytes());
+//
+//        entityManager.persist(image);
+//        return image;
+//    }
+public Image saveImage(MultipartFile file) throws IOException {
+    // Define the directory where you want to store the images
+    String uploadDir = "C:/Users/91774/Documents/RandomImages";
 
-        entityManager.persist(image);
-        return image;
+    // Create the directory if it doesn't exist
+    File directory = new File(uploadDir);
+    if (!directory.exists()) {
+        directory.mkdirs();
     }
+
+    // Generate the file path
+    String filePath = uploadDir + file.getOriginalFilename();
+
+    // Save the file to the directory
+    File destinationFile = new File(filePath);
+    file.transferTo(destinationFile);
+
+    // Create and populate the Image entity
+    Image image = new Image();
+    image.setFile_name(file.getOriginalFilename());
+    image.setFile_type(file.getContentType());
+    image.setImage_data(file.getBytes()); // Optionally, you can store the file as byte data or skip this if you only want to store the path
+    image.setFile_path(filePath); // Store the file path
+
+    // Persist the image entity to the database
+    entityManager.persist(image);
+    return image;
+}
+
 
     public Image getImage(Long id) {
         Image image = entityManager.find(Image.class, id);

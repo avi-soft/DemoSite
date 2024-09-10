@@ -3,7 +3,6 @@ package com.community.api.services;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.Image;
 import com.community.api.entity.ServiceProviderTest;
-import com.community.api.entity.SignatureImage;
 import com.community.api.entity.TypingText;
 import com.community.api.services.exception.EntityDoesNotExistsException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,13 +40,11 @@ public class ServiceProviderTestService {
         }
         Image randomImage = getRandomImage();
         String randomText= getRandomTypingText();
-        SignatureImage randomSignatureImage = getRandomSignatureImage();
 
         ServiceProviderTest test = new ServiceProviderTest();
         test.setService_provider(serviceProvider);
         test.setDownloaded_image(randomImage);
         test.setTyping_test_text(randomText);
-        test.setDownloaded_signature_image(randomSignatureImage);
         entityManager.persist(test);
         return test;
     }
@@ -128,20 +125,6 @@ private boolean validateResizedImage(ServiceProviderTest test) throws IOExceptio
         return typingText.getText();
     }
 
-    private SignatureImage getRandomSignatureImage() {
-        // Fetch the count of available signature images in the database
-        long count = (long) entityManager.createQuery("SELECT COUNT(s) FROM SignatureImage s").getSingleResult();
-        if (count == 0) {
-            throw new EntityNotFoundException("No signature images available");
-        }
-        // Get a random index within the range of available signature images
-        int randomIndex = new Random().nextInt((int) count);
-        return (SignatureImage) entityManager.createQuery("SELECT s FROM SignatureImage s")
-                .setFirstResult(randomIndex)
-                .setMaxResults(1)
-                .getSingleResult();
-    }
-
     @Transactional
     public ServiceProviderTest submitTypedText(Long testId, String typedText) throws EntityNotFoundException{
         ServiceProviderTest test = entityManager.find(ServiceProviderTest.class, testId);
@@ -220,8 +203,6 @@ private boolean validateResizedImage(ServiceProviderTest test) throws IOExceptio
 
         // Validate the image size
         if (signatureFile.getSize() > MAX_IMAGE_SIZE_MB) {
-           test.setIs_signature_test_passed(false);
-            entityManager.merge(test);
             throw new IllegalArgumentException("Signature image size exceeds 2 MB");
         }
         byte[] resizedSignatureData;
@@ -230,34 +211,7 @@ private boolean validateResizedImage(ServiceProviderTest test) throws IOExceptio
         }
         test.setResized_signature_image_data(resizedSignatureData);
         entityManager.merge(test);
-        // Validate the resized image
-        boolean isImageValid = compareSignatures(signatureFile,testId);
-        if (isImageValid) {
-            test.setIs_signature_test_passed(true); // Set the image test to false if validation fails
-        }
-        else {
-            test.setIs_signature_test_passed(false);
-            throw new Exception();
-        }
-
-        // Persist the changes
         return test;
-    }
-    public boolean compareSignatures(MultipartFile uploadedFile, Long serviceProviderId) throws IOException {
-        ServiceProviderTest test = entityManager.find(ServiceProviderTest.class,serviceProviderId);
-        if(test ==null)
-        {
-            throw new EntityNotFoundException("Service Provider not found");
-        }
-        byte[] uploadedImageData = uploadedFile.getBytes();
-        byte[] downloadedImageData = test.getDownloaded_signature_image().getSignature_image_data();
-
-        boolean isSignatureMatched = SignatureImageService.compareSignatures(uploadedImageData, downloadedImageData);
-
-        test.setIs_signature_test_passed(isSignatureMatched);
-        entityManager.persist(test);
-
-        return isSignatureMatched;
     }
 }
 

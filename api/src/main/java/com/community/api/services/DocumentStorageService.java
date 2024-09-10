@@ -110,9 +110,9 @@ public class DocumentStorageService {
             Map<String, Object> responseBody = Map.of(
                     "message", "Documents uploaded successfully",
                     "data", Map.of(
-                            "documentId", doc.getDocument_id(),
+                            "document_id", doc.getDocument_id(),
                             "name", doc.getName(),
-                            "filePath", doc.getFile_path()
+                            "file_path", doc.getFile_path()
                     ),
                     "status", "OK",
                     "status_code", HttpStatus.OK.value()

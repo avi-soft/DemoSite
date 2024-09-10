@@ -31,10 +31,6 @@ public class ServiceProviderTest {
     @Column(name = "resized_image_data")
     private byte[] resized_image_data;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "downloaded_signature_image_id", nullable=true)
-    private SignatureImage downloaded_signature_image;
-
     @Lob
     @Column(name = "resized_signature_image_data")
     private byte[] resized_signature_image_data;
@@ -51,6 +47,4 @@ public class ServiceProviderTest {
     @Column(name ="is_image_test_passed")
     private Boolean is_image_test_passed;
 
-    @Column(name = "is_signature_test_passed")
-    private Boolean is_signature_test_passed;
 }
