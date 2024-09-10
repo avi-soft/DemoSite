@@ -341,24 +341,24 @@ public class CustomerEndpoint {
                     em.merge(existingDocument);
                 } else if (documentTypeObj.getDocument_type_id() == 13) {
                     if (existingDocument != null) {
-                                String oldFileName = existingDocument.getName();
-                                String newFileName = file.getOriginalFilename();
+                        String oldFileName = existingDocument.getName();
+                        String newFileName = file.getOriginalFilename();
 
-                                System.out.println(oldFileName + " oldFileName" + newFileName  + " newFileName");
-                                if (!newFileName.equals(oldFileName)) {
-                                    Document newDocument = new Document();
-                                    newDocument.setName(file.getOriginalFilename());
-                                    newDocument.setCustomCustomer(customCustomer);
-                                    newDocument.setDocumentType(documentTypeObj);
-                                    em.persist(newDocument);
+                        System.out.println(oldFileName + " oldFileName" + newFileName  + " newFileName");
+                        if (!newFileName.equals(oldFileName)) {
+                            Document newDocument = new Document();
+                            newDocument.setName(file.getOriginalFilename());
+                            newDocument.setCustomCustomer(customCustomer);
+                            newDocument.setDocumentType(documentTypeObj);
+                            em.persist(newDocument);
 
-                                    String newFilePath = DocumentStorageService.BASE_DIRECTORY + File.separator + "avisoft"
-                                            + File.separator + "customer" + File.separator + customerId
-                                            + File.separator + documentTypeObj.getDocument_type_name()
-                                            + File.separator + file.getOriginalFilename();
-                                    newDocument.setFilePath(newFilePath);
-                                    em.merge(newDocument);
-                                }
+                            String newFilePath = DocumentStorageService.BASE_DIRECTORY + File.separator + "avisoft"
+                                    + File.separator + "customer" + File.separator + customerId
+                                    + File.separator + documentTypeObj.getDocument_type_name()
+                                    + File.separator + file.getOriginalFilename();
+                            newDocument.setFilePath(newFilePath);
+                            em.merge(newDocument);
+                        }
 
 
                     }

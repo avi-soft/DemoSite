@@ -11,14 +11,22 @@ import com.community.api.services.RoleService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.utils.Document;
 import com.community.api.utils.DocumentType;
+import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityManager;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import java.io.File;
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
+import java.net.URL;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -100,11 +108,10 @@ public class DocumentEndpoint {
     }
 
     @GetMapping("/get-document-of-customer")
-    public ResponseEntity<?> getDocumentOfCustomer(@RequestParam Long customerId) {
+    public ResponseEntity<?> getDocumentOfCustomer(@RequestParam Long customerId, HttpServletRequest request) {
         try {
-
             CustomCustomer customer = entityManager.find(CustomCustomer.class, customerId);
-            if(customer == null) {
+            if (customer == null) {
                 return responseService.generateErrorResponse("Customer not found", HttpStatus.NOT_FOUND);
             }
             List<Document> documents = entityManager.createQuery("SELECT d FROM Document d WHERE d.customCustomer = :customer", Document.class)
@@ -115,31 +122,49 @@ public class DocumentEndpoint {
                 return responseService.generateResponse(HttpStatus.OK, "No document found", null);
             }
 
-           /* List<DocumentResponse> documentResponses = documents.stream()
+            List<DocumentResponse> documentResponses = documents.stream()
                     .map(document -> {
                         String fileName = document.getName();
                         String filePath = document.getFilePath();
-                        String fileUrl = fileService.getFileUrl(filePath);
-                        File fileurl =  fileService.getFile(document.getFilePath());
+                        String fileUrl = fileService.getFileUrl(filePath, request);
+                        File file = fileService.getFile(filePath);
 
-                        return new DocumentResponse(fileName, fileUrl,fileurl);
+                        return new DocumentResponse(fileName, fileUrl, file);
                     })
-                    .collect(Collectors.toList());*/
-            return responseService.generateSuccessResponse("Documents retrieved successfully", documents, HttpStatus.OK);
+                    .collect(Collectors.toList());
+            return responseService.generateSuccessResponse("Documents retrieved successfully", documentResponses, HttpStatus.OK);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Error retrieving Documents", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
+    @GetMapping("/download-file")
+    public void downloadFile(@RequestParam("filePath") String filePath, HttpServletRequest request, HttpServletResponse response) {
+        String fileUrl = fileService.getFileUrl(filePath, request);
+        try {
+            URL url = new URL(fileUrl);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("GET");
+            int responseCode = connection.getResponseCode();
+            if (responseCode == 200) {
+                response.setContentType("application/octet-stream");
+                response.setHeader("Content-Disposition", "attachment; filename=\"" + filePath + "\"");
+                IOUtils.copy(connection.getInputStream(), response.getOutputStream());
+            } else {
+                response.setStatus(responseCode);
+            }
+        } catch (IOException e) {
+            exceptionHandling.handleException(e);
+        }
+    }
 
     private class DocumentResponse {
 
         private String fileName;
         private String fileUrl;
-        private String FileUrl;
+        private File FileUrl;
 
-        public DocumentResponse(String fileName, String fileUrl, String FileUrl) {
+        public DocumentResponse(String fileName, String fileUrl, File FileUrl) {
             this.fileName = fileName;
             this.fileUrl = fileUrl;
             this.FileUrl = FileUrl;
@@ -152,7 +177,7 @@ public class DocumentEndpoint {
         public String getFileUrl() {
             return fileUrl;
         }
-        public String getFileUrl1() {
+        public File getFileUrl1() {
             return FileUrl;
         }
 
