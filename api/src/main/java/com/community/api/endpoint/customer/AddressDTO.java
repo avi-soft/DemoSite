@@ -16,6 +16,7 @@ import javax.persistence.ManyToOne;
 @Getter
 @Component
 public class AddressDTO {
+    private long addressId;
     private String addressName,address,state,district,city,pinCode,phoneNumber;
     private long customerId;
 }
