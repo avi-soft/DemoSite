@@ -100,6 +100,9 @@ public class DocumentEndpoint {
     public ResponseEntity<?> getAllDocuments() {
         try {
             List<DocumentType> documentTypes = entityManager.createQuery("SELECT dt FROM DocumentType dt", DocumentType.class).getResultList();
+            if (documentTypes.isEmpty()) {
+                return responseService.generateErrorResponse("No document found",HttpStatus.NOT_FOUND);
+            }
             return responseService.generateSuccessResponse("Document Types retrieved successfully",documentTypes, HttpStatus.OK);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
@@ -119,7 +122,7 @@ public class DocumentEndpoint {
                     .getResultList();
 
             if (documents.isEmpty()) {
-                return responseService.generateResponse(HttpStatus.OK, "No document found", null);
+                return responseService.generateErrorResponse("No document found",HttpStatus.NOT_FOUND);
             }
 
             List<DocumentResponse> documentResponses = documents.stream()
@@ -127,9 +130,8 @@ public class DocumentEndpoint {
                         String fileName = document.getName();
                         String filePath = document.getFilePath();
                         String fileUrl = fileService.getFileUrl(filePath, request);
-                        File file = fileService.getFile(filePath);
 
-                        return new DocumentResponse(fileName, fileUrl, file);
+                        return new DocumentResponse(fileName, fileUrl);
                     })
                     .collect(Collectors.toList());
             return responseService.generateSuccessResponse("Documents retrieved successfully", documentResponses, HttpStatus.OK);
@@ -162,12 +164,12 @@ public class DocumentEndpoint {
 
         private String fileName;
         private String fileUrl;
-        private File FileUrl;
 
-        public DocumentResponse(String fileName, String fileUrl, File FileUrl) {
+
+        public DocumentResponse(String fileName, String fileUrl) {
             this.fileName = fileName;
             this.fileUrl = fileUrl;
-            this.FileUrl = FileUrl;
+
         }
 
         public String getFileName() {
@@ -176,9 +178,6 @@ public class DocumentEndpoint {
 
         public String getFileUrl() {
             return fileUrl;
-        }
-        public File getFileUrl1() {
-            return FileUrl;
         }
 
     }
