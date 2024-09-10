@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -39,7 +40,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
     private static final int BEARER_PREFIX_LENGTH = BEARER_PREFIX.length();
-    private String apiKey="IaJGL98yHnKjnlhKshiWiy1IhZ+uFsKnktaqFX3Dvfg=\n";
+    private static final Pattern UNSECURED_URI_PATTERN = Pattern.compile(
+            "^/api/v1/(account|otp|test|files/avisoftdocument/[^/]+/[^/]+|files/[^/]+|avisoftdocument/[^/]+|swagger-ui.html|swagger-resources|v2/api-docs|images|webjars).*"
+    );
+    private String apiKey="IaJGL98yHnKjnlhKshiWiy1IhZ+uFsKnktaqFX3Dvfg=";
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -66,7 +70,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
 
             String requestURI = request.getRequestURI();
-            if (isUnsecuredUri(requestURI)) {
+            if (isUnsecuredUri(requestURI) || bypassimages(requestURI)) {
                 chain.doFilter(request, response);
                 return;
             }
@@ -99,6 +103,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     }
 
+    private boolean bypassimages(String requestURI) {
+        return UNSECURED_URI_PATTERN.matcher(requestURI).matches();
+
+    }
+
     private boolean isApiKeyRequiredUri(HttpServletRequest request) {
         String requestURI = request.getRequestURI();
         String path = requestURI.split("\\?")[0].trim();
@@ -121,6 +130,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return requestURI.startsWith("/api/v1/account")
                 || requestURI.startsWith("/api/v1/otp")
                 || requestURI.startsWith("/api/v1/test")
+                || requestURI.startsWith("/api/v1/files/avisoftdocument/**")
+                || requestURI.startsWith("/api/v1/files/**")
+                || requestURI.startsWith("/api/v1/avisoftdocument/**")
                 || requestURI.startsWith("/api/v1/swagger-ui.html")
                 || requestURI.startsWith("/api/v1/swagger-resources")
                 || requestURI.startsWith("/api/v1/v2/api-docs")
