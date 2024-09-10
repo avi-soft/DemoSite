@@ -34,7 +34,7 @@ public class ServiceProviderAddressTypeController {
         return responseService.generateSuccessResponse("List fetched successfully",query.getResultList(), HttpStatus.OK);
     }
     @Transactional
-    @PostMapping("/addAddressType")
+    @PostMapping("/add-address-type")
     public ResponseEntity<?> addAddressType(@RequestBody Map<String,Object> details)
     {
         try{

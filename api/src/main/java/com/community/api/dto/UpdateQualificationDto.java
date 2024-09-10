@@ -4,9 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
 import javax.validation.constraints.*;
-import java.time.Year;
 
 @Data
 @NoArgsConstructor
@@ -45,7 +43,7 @@ public class UpdateQualificationDto
     @Min(value = 0, message = "Marks obtained cannot be negative")
     private Integer marks_obtained;
 
-    private Long examination_id;
+    private Long qualification_id;
 
     @AssertTrue(message = "Total marks cannot be less than marks obtained")
     private boolean isMarksTotalValid() {

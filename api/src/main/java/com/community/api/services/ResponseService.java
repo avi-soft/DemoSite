@@ -41,23 +41,10 @@ public class ResponseService {
     public  ResponseEntity<Object> generateResponse(HttpStatus httpStatus,String msg,Object responseBody)
     {
         Map<String,Object> map = new HashMap<>();
-        try
-        {
             map.put("message",msg);
             map.put("data",responseBody);
             map.put("status",httpStatus);
             map.put("status_code",httpStatus.value());
-
-
             return new ResponseEntity<>(map,httpStatus);
-        }
-        catch ( Exception exception)
-        {
-            map.put("status", HttpStatus.INTERNAL_SERVER_ERROR);
-            map.put("isSuccess",false);
-            map.put("message",exception.getMessage());
-            map.put("data",null);
-            return new ResponseEntity<>(map,httpStatus);
-        }
     }
 }

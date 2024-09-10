@@ -101,18 +101,18 @@ public class DocumentStorageService {
                     + documentTypeStr
                     + File.separator
                     + fileName;
-            doc.setFilePath(filePath);
+            doc.setFile_path(filePath);
             doc.setData(file.getBytes());
-            doc.setCustomCustomer(customCustomer);
-            doc.setDocumentType(documentType);
+            doc.setCustom_customer(customCustomer);
+            doc.setDocument_type(documentType);
             em.persist(doc);
 
             Map<String, Object> responseBody = Map.of(
                     "message", "Documents uploaded successfully",
                     "data", Map.of(
-                            "documentId", doc.getDocumentId(),
+                            "documentId", doc.getDocument_id(),
                             "name", doc.getName(),
-                            "filePath", doc.getFilePath()
+                            "filePath", doc.getFile_path()
                     ),
                     "status", "OK",
                     "status_code", HttpStatus.OK.value()

@@ -1,7 +1,9 @@
 package com.community.api.endpoint.avisoft.controller.ServiceProvider;
 
 import com.community.api.component.Constant;
+import com.community.api.dto.RetrieveServiceProviderDetailDto;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
+import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.ServiceProviderAddress;
 import com.community.api.entity.ServiceProviderAddressRef;
 import com.community.api.entity.Skill;
@@ -16,14 +18,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.*;
+
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
@@ -74,7 +70,7 @@ public class ServiceProviderController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error assigning skill: " + e.getMessage());
         }
     }
-    @PatchMapping("saveServiceProvider")
+    @PatchMapping("save-service-provider")
     public ResponseEntity<?> updateServiceProvider(@RequestParam Long userId, @RequestBody Map<String,Object> serviceProviderDetails) throws Exception {
         try{
         return serviceProviderService.updateServiceProvider(userId,serviceProviderDetails);
@@ -147,7 +143,7 @@ public class ServiceProviderController {
     }
 
     @Transactional
-    @PostMapping("/addAddress")
+    @PostMapping("/add-address")
     public ResponseEntity<?> addAddress(@RequestParam long serviceProviderId,@RequestBody ServiceProviderAddress serviceProviderAddress) throws Exception {
         try{
             if(serviceProviderAddress==null)
@@ -173,7 +169,7 @@ public class ServiceProviderController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error adding address " + e.getMessage());
         }
     }
-    @GetMapping("/getAddressNames")
+    @GetMapping("/get-address-names")
     public ResponseEntity<?> getAddressTypes()
     {
         try{
@@ -184,4 +180,72 @@ public class ServiceProviderController {
             return responseService.generateErrorResponse("Some issue in fetching addressNames " + e.getMessage(),HttpStatus.BAD_REQUEST);
         }
     }
+
+
+    @GetMapping("/get-all-details/{serviceProviderId}")
+    public ResponseEntity<?> getAllDetails(@PathVariable Long serviceProviderId)
+    {
+        try
+        {
+            ServiceProviderEntity serviceProviderEntity= entityManager.find(ServiceProviderEntity.class,serviceProviderId);
+            if(serviceProviderEntity==null)
+            {
+                return ResponseService.generateErrorResponse("Service provider does not found",HttpStatus.NOT_FOUND);
+            }
+
+            RetrieveServiceProviderDetailDto dto= new RetrieveServiceProviderDetailDto();
+            dto.setService_provider_id(serviceProviderEntity.getService_provider_id());
+            dto.setUser_name(serviceProviderEntity.getUser_name());
+            dto.setFirst_name(serviceProviderEntity.getFirst_name());
+            dto.setLast_name(serviceProviderEntity.getLast_name());
+            dto.setCountry_code(serviceProviderEntity.getCountry_code());
+            dto.setFather_name(serviceProviderEntity.getFather_name());
+            dto.setDate_of_birth(serviceProviderEntity.getDate_of_birth());
+            dto.setAadhaar_number(serviceProviderEntity.getAadhaar_number());
+            dto.setPan_number(serviceProviderEntity.getPan_number());
+            dto.setPersonal_photo(serviceProviderEntity.getPersonal_photo());
+            dto.setMobileNumber(serviceProviderEntity.getMobileNumber());
+            dto.setOtp(serviceProviderEntity.getOtp());
+            dto.setSecondary_mobile_number(serviceProviderEntity.getSecondary_mobile_number());
+            dto.setRole(serviceProviderEntity.getRole());
+            dto.setWhatsapp_number(serviceProviderEntity.getWhatsapp_number());
+            dto.setPrimary_email(serviceProviderEntity.getPrimary_email());
+            dto.setSecondary_email(serviceProviderEntity.getSecondary_email());
+            dto.setPassword(serviceProviderEntity.getPassword());
+            dto.setIs_running_business_unit(serviceProviderEntity.getIs_running_business_unit());
+            dto.setBusiness_name(serviceProviderEntity.getBusiness_name());
+            dto.setBusiness_location(serviceProviderEntity.getBusiness_location());
+            dto.setBusiness_email(serviceProviderEntity.getBusiness_email());
+            dto.setNumber_of_employees(serviceProviderEntity.getNumber_of_employees());
+            dto.setBusiness_photo(serviceProviderEntity.getBusiness_photo());
+            dto.setIsCFormAvailable(serviceProviderEntity.getIsCFormAvailable());
+            dto.setRegistration_number(serviceProviderEntity.getRegistration_number());
+            dto.setCFormPhoto(serviceProviderEntity.getCFormPhoto());
+            dto.setHas_technical_knowledge(serviceProviderEntity.getHas_technical_knowledge());
+            dto.setWork_experience_in_months(serviceProviderEntity.getWork_experience_in_months());
+            dto.setHighest_qualification(serviceProviderEntity.getHighest_qualification());
+            dto.setName_of_institute(serviceProviderEntity.getName_of_institute());
+            dto.setYear_of_passing(serviceProviderEntity.getYear_of_passing());
+            dto.setBoard_or_university(serviceProviderEntity.getBoard_or_university());
+            dto.setTotal_marks(serviceProviderEntity.getTotal_marks());
+            dto.setMarks_obtained(serviceProviderEntity.getMarks_obtained());
+            dto.setCgpa(serviceProviderEntity.getCgpa());
+            dto.setLatitude(serviceProviderEntity.getLatitude());
+            dto.setLongitude(serviceProviderEntity.getLongitude());
+            dto.setRank(serviceProviderEntity.getRank());
+            dto.setSignedUp(serviceProviderEntity.getSignedUp());
+            dto.setSkills(serviceProviderEntity.getSkills());
+            dto.setSpAddresses(serviceProviderEntity.getSpAddresses());
+            dto.setStatus(serviceProviderEntity.getStatus());
+            dto.setPrivileges(serviceProviderEntity.getPrivileges());
+            dto.setInfra(serviceProviderEntity.getInfra());
+            dto.setLanguages(serviceProviderEntity.getLanguages());
+            return ResponseService.generateSuccessResponse("Service Provider details retrieved successfully",dto,HttpStatus.OK);
+        }
+        catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseService.generateErrorResponse("Some issue in fetching service provider details " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
 }
