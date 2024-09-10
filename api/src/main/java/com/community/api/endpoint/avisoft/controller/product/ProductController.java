@@ -25,6 +25,7 @@ import org.broadleafcommerce.core.catalog.domain.Sku;
 
 import org.broadleafcommerce.core.catalog.service.type.ProductType;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -49,6 +50,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.persistence.EntityManager;
@@ -407,9 +409,10 @@ public class ProductController extends CatalogEndpoint {
             Date currentDate = dateFormat.parse(formattedDate); // Convert formatted date string back to Date
             customProduct.setModifiedDate(currentDate);
 
-            ResponseEntity<?> responseService1 = productService.validateAndSetActiveEndDateAndGoLiveDateFields(addProductDto, customProduct, dateFormat);
-            if(responseService1.getStatusCode().equals(HttpStatus.OK)){
-                return responseService1;
+            // MODULAR
+            ResponseEntity<?> validateAndSetActiveEndDateAndGoLiveDateFields = productService.validateAndSetActiveEndDateAndGoLiveDateFields(addProductDto, customProduct);
+            if(!validateAndSetActiveEndDateAndGoLiveDateFields.getStatusCode().equals(HttpStatus.OK)){
+                return validateAndSetActiveEndDateAndGoLiveDateFields;
             }
             /*if (addProductDto.getActiveEndDate() != null && addProductDto.getGoLiveDate() != null) {
 
@@ -477,7 +480,12 @@ public class ProductController extends CatalogEndpoint {
                 customProduct.setJobGroup(jobGroup);
             }
 
-            if (addProductDto.getExamDateFrom() != null && addProductDto.getExamDateTo() != null) {
+            // MODULAR
+            ResponseEntity<?> validateAndSetExamDateFromAndExamDateToFields = productService.validateAndSetExamDateFromAndExamDateToFields(addProductDto, customProduct);
+            if(!validateAndSetExamDateFromAndExamDateToFields.getStatusCode().equals(HttpStatus.OK)){
+                return validateAndSetExamDateFromAndExamDateToFields;
+            }
+            /*if (addProductDto.getExamDateFrom() != null && addProductDto.getExamDateTo() != null) {
 
                 // Validation on date for being wrong types. -> these needs to be changed or we have to add exception.
                 dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
@@ -535,7 +543,7 @@ public class ProductController extends CatalogEndpoint {
                 }
                 customProduct.setExamDateTo(addProductDto.getExamDateTo());
 
-            }
+            }*/
 
             if (addProductDto.getPlatformFee() != null) {
                 if (addProductDto.getPlatformFee() <= 0) {
@@ -596,7 +604,12 @@ public class ProductController extends CatalogEndpoint {
             entityManager.persist(customProduct);
 
             // We have to mapped the new reserveCategories.
-            if (addProductDto.getReservedCategory() != null) {
+            // MODULAR
+            ResponseEntity<?> validateAndSetReserveCategoryFields = productService.validateAndSetReserveCategoryFields(addProductDto, customProduct);
+            if(!validateAndSetReserveCategoryFields.getStatusCode().equals(HttpStatus.OK)){
+                return validateAndSetReserveCategoryFields;
+            }
+            /*if (addProductDto.getReservedCategory() != null) {
                 List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(productId);
                 boolean reserveCategoryFound = false;
                 for (ReserveCategoryDto reserveCategoryDto : reserveCategoryDtoList) {
@@ -687,7 +700,7 @@ public class ProductController extends CatalogEndpoint {
                     productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getFee(), addProductDto.getPost(), customProduct, reserveCategoryService.getReserveCategoryById(addProductDto.getReservedCategory()));
 
                 }
-            }
+            }*/
 
             List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(productId);
 
@@ -915,4 +928,49 @@ public class ProductController extends CatalogEndpoint {
         }
     }
 
+    @GetMapping("/get-filter-products")
+    public ResponseEntity<?> getFilterProducts(
+            @RequestParam(value = "date_from", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date dateFrom,
+            @RequestParam(value = "date_to", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date dateTo,
+            @RequestParam(value = "status", required = false) List<Long> state,
+            @RequestParam(value = "category", required = false) List<Long> categories,
+            @RequestParam(value = "min_price", required = false) Double minPrice,
+            @RequestParam(value = "max_price", required = false) Double maxPrice) {
+
+        try {
+            // Call the service to get filtered products
+            List<CustomProduct> products = productService.filterProducts(state, categories);
+
+            if (products.isEmpty()) {
+                return ResponseService.generateErrorResponse("NO PRODUCTS FOUND WITH THE GIVEN CRITERIA", HttpStatus.NOT_FOUND);
+            }
+
+            List<Map<String, CustomProductWrapper>> responses = new ArrayList<>();
+            for (CustomProduct customProduct : products) {
+
+                if (customProduct != null) {
+
+                    if ((((Status) customProduct).getArchived() != 'Y')) {
+
+                        CustomProductWrapper wrapper = new CustomProductWrapper();
+                        wrapper.wrapDetails(customProduct);
+
+                        Map<String, CustomProductWrapper> productDetails = new HashMap<>();
+
+                        productDetails.put("key_" + customProduct.getId(), wrapper);
+                        productDetails.remove("key_" + customProduct.getId(), "reserveCategoryDtoList"); // gives us empty list
+
+                        responses.add(productDetails);
+                    }
+
+                }
+            }
+
+            return ResponseService.generateSuccessResponse("PRODUCTS RETRIEVED SUCCESSFULLY", responses, HttpStatus.OK);
+
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return ResponseService.generateErrorResponse("SOME EXCEPTION OCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
