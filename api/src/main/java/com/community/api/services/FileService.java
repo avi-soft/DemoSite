@@ -25,14 +25,5 @@ public class FileService {
         return baseUrl + "/files/" + encodedFilePath;
     }
 
-    /**
-     * Retrieves a file object.
-     *
-     * @param basePath The base path for the files.
-     * @return The File object for the specified path.
-     */
-    public File getFile(String basePath) {
-        String normalizedFilePath = basePath.replace("\\", "/");
-        return new File(normalizedFilePath);
-    }
+
 }

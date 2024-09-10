@@ -41,11 +41,12 @@ public class DocumentStorageService {
 
     public ResponseEntity<Map<String, Object>> saveDocuments(MultipartFile file, String documentTypeStr, Long customerId, String role) {
         try {
-            if (!DocumentStorageService.isValidFileType(file)) {
+
+            if (!isValidFileType(file)) {
                 return ResponseEntity.badRequest().body(Map.of(
                         "status", ApiConstants.STATUS_ERROR,
                         "status_code", HttpStatus.BAD_REQUEST.value(),
-                        "message", "Invalid file type: " + file.getOriginalFilename()
+                        "message", "Invalid file type: "
                 ));
             }
 
@@ -101,12 +102,12 @@ public class DocumentStorageService {
      */
     public void saveDocumentOndirctory(String customerId, String documentType, String fileName, InputStream fileInputStream, String role) throws IOException {
 
-        File baseDir = new File(BASE_DIRECTORY);
+        /*File baseDir = new File(BASE_DIRECTORY);
         if (!baseDir.exists()) {
             baseDir.mkdirs();
-        }
+        }*/
 
-        File avisoftDir = new File(baseDir, "avisoft");
+        File avisoftDir = new File("avisoftdocument");
         if (!avisoftDir.exists()) {
             avisoftDir.mkdirs();
         }
@@ -138,7 +139,6 @@ public class DocumentStorageService {
 
 
     public static boolean isValidFileType(MultipartFile file) {
-
         String[] allowedFileTypes = {"application/pdf", "image/jpeg", "image/png"};
         return Arrays.asList(allowedFileTypes).contains(file.getContentType());
     }
