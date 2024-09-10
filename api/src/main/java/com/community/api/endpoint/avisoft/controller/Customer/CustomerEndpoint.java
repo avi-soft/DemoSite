@@ -174,7 +174,8 @@ public class CustomerEndpoint {
             }
             customerDetails.setId(customerId);
             customerDetails.setMobileNumber(customCustomer.getMobileNumber());
-            customerDetails.setQualificationList(customCustomer.getQualificationList());
+            customerDetails.setQualificationDetailsList(customCustomer.getQualificationDetailsList());
+//            customerDetails.setQualificationList(customCustomer.getQualificationList());
             customerDetails.setCountryCode(customCustomer.getCountryCode());
             Customer customer = customerService.readCustomerById(customerId);
             //using reflections
@@ -267,7 +268,7 @@ public class CustomerEndpoint {
                         + fileName;
                 doc.setFilePath(filePath);
 //                doc.setData(file.getBytes());
-                doc.setCustomCustomer(customCustomer);
+                doc.setCustom_customer(customCustomer);
                 doc.setDocumentType(documentTypeObj);
                 em.persist(doc);
 
@@ -348,7 +349,7 @@ public class CustomerEndpoint {
                         if (!newFileName.equals(oldFileName)) {
                             Document newDocument = new Document();
                             newDocument.setName(file.getOriginalFilename());
-                            newDocument.setCustomCustomer(customCustomer);
+                            newDocument.setCustom_customer(customCustomer);
                             newDocument.setDocumentType(documentTypeObj);
                             em.persist(newDocument);
 
@@ -367,7 +368,7 @@ public class CustomerEndpoint {
                 } else {
                     Document newDocument = new Document();
                     newDocument.setName(file.getOriginalFilename());
-                    newDocument.setCustomCustomer(customCustomer);
+                    newDocument.setCustom_customer(customCustomer);
                     newDocument.setDocumentType(documentTypeObj);
                     em.persist(newDocument);
 
