@@ -428,7 +428,7 @@ public class CustomerEndpoint {
                 }
 
                 Document existingDocument = em.createQuery(
-                                "SELECT d FROM Document d WHERE d.customCustomer = :customCustomer AND d.documentType = :documentType", Document.class)
+                                "SELECT d FROM Document d WHERE d.custom_customer = :customCustomer AND d.documentType = :documentType", Document.class)
                         .setParameter("customCustomer", customCustomer)
                         .setParameter("documentType", documentTypeObj)
                         .getResultStream()
@@ -498,7 +498,7 @@ public class CustomerEndpoint {
                     em.merge(existingDocument);
                 } else {
                     Document newDocument = em.createQuery(
-                                    "SELECT d FROM Document d WHERE d.customCustomer = :customCustomer AND d.documentType = :documentType", Document.class)
+                                    "SELECT d FROM Document d WHERE d.custom_customer = :customCustomer AND d.documentType = :documentType", Document.class)
                             .setParameter("customCustomer", customCustomer)
                             .setParameter("documentType", documentTypeObj)
                             .getResultStream()
