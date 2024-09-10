@@ -48,16 +48,11 @@ public class CustomCustomer extends CustomerImpl {
     @Size(min = 12, max = 12)
     private String adharNumber;
 
-
     @Column(name = "category")
     private String category; //@TODO -make it int for using in cart
 
     @Column(name = "sub_category")
     private String subcategory;
-
-    @OneToOne(cascade = CascadeType.ALL)
-    private Document domicile;
-
 
     @Column(name = "secondary_mobile_number")
     private String secondaryMobileNumber;
@@ -68,11 +63,10 @@ public class CustomCustomer extends CustomerImpl {
     private String secondaryEmail;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "customCustomer", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<Document>documentList;
-
-    @JsonIgnore
     @Nullable
+    @OneToMany(mappedBy = "custom_customer", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
+    List<QualificationDetails> qualificationDetailsList;
+
     @OneToMany(mappedBy = "custom_customer", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<Qualification>qualificationList;
+    private List<Document> documents;
 }
