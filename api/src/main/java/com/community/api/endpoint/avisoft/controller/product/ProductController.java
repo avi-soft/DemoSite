@@ -190,9 +190,12 @@ public class ProductController extends CatalogEndpoint {
                 product.setDisplayTemplate(addProductDto.getMetaTitle());
             }
 
-            if (addProductDto.getMetaDescription() != null) {
+            if (addProductDto.getMetaDescription() != null && !addProductDto.getMetaDescription().trim().isEmpty()) {
                 addProductDto.setMetaDescription(addProductDto.getMetaDescription().trim());
+
                 product.setMetaDescription(addProductDto.getMetaDescription());
+            }else {
+                return ResponseService.generateErrorResponse("DESCRIPTION CANNOT BE NULL OR EMPTY",HttpStatus.BAD_REQUEST);
             }
 
             product = catalogService.saveProduct(product); // Save or update the product with values from requestBody.
