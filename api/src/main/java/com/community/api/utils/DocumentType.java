@@ -21,4 +21,9 @@ public class DocumentType {
     private String document_type_name;
     @Column(name = "description")
     private String description;
+
+    public DocumentType(String documentTypeName, String description) {
+        this.document_type_name = documentTypeName;
+        this.description = description;
+    }
 }
