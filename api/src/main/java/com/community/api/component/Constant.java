@@ -40,9 +40,9 @@ public class Constant {
     public static String GET_COUNT_OF_STATUS="Select COUNT(*) from ServiceProviderStatus";
     public static String GET_ALL_STATUS="Select s from ServiceProviderStatus s";
     public static String GET_ALL_ROLES="Select r from Role r";
-    public static String SOME_EXCEPTION_OCCURRED = "Some Exception Occurred";
-    public static String NUMBER_FORMAT_EXCEPTION = "Number Format Exception";
-    public static String CATALOG_SERVICE_NOT_INITIALIZED = "Catalog Service Not Initialized";
+    public static String SOME_EXCEPTION_OCCURRED = "Some exception occurred";
+    public static String NUMBER_FORMAT_EXCEPTION = "Number format exception";
+    public static String CATALOG_SERVICE_NOT_INITIALIZED = "Catalog service not initialized";
     public static String GET_STATES_LIST="Select s from StateCode s";
     public static String GET_QUALIFICATIONS_COUNT = "SELECT COUNT(*) FROM Qualification";
 
@@ -70,6 +70,7 @@ public class Constant {
     public static String SERVICE_PROVIDER_PRIVILEGE = "SELECT privilege_id FROM service_provider_privileges WHERE service_provider_id = :serviceProviderId";
     public static String GET_ROLE_BY_ROLE_ID = "SELECT r FROM Role r WHERE r.role_id = :roleId";
     public static String PRIVILEGE_ADD_PRODUCT = "ADD_PRODUCT";
+    public static String PRIVILEGE_ADD_DOCUMENT_TYPE = "ADD_DOCUMENT_TYPE";
     public static String GET_PRODUCT_RESERVECATEGORY_BORNBEFORE_BORNAFTER = "SELECT c FROM CustomProductReserveCategoryBornBeforeAfterRef c WHERE c.customProduct = :customProduct";
     public static String GET_PRODUCT_RESERVECATEGORY_FEE_POST = "SELECT c FROM CustomProductReserveCategoryFeePostRef c WHERE c.customProduct = :customProduct";
     public static String ADD_PRODUCT_RESERVECATEOGRY_BORNBEFORE_BORNAFTER = "INSERT INTO custom_product_reserve_category_born_before_after_reference (product_id, reserve_category_id, born_before, born_after) VALUES (:productId, :reserveCategoryId, :bornBefore, :bornAfter)";
@@ -79,7 +80,7 @@ public class Constant {
     public static String PRIVILEGE_UPDATE_PRODUCT = "UPDATE_PRODUCT";
     public static String APPLICATION_SCOPE_CENTER = "CENTER";
     public static String PRIVILEGE_APPROVE_PRODUCT = "APPROVE_PRODUCT";
-    public static final String PRODUCTNOTFOUND = "Product not Found";
-    public static final String CATEGORYNOTFOUND = "Category not Found";
-    public static final String PRODUCTTITLENOTGIVEN = "Product MetaTitle not Given";
+    public static final String PRODUCTNOTFOUND = "Product not found";
+    public static final String CATEGORYNOTFOUND = "Category not found";
+    public static final String PRODUCTTITLENOTGIVEN = "Product metaTitle not given";
 }

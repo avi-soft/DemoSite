@@ -1,43 +1,43 @@
 package com.community.api.utils;
 
 import com.community.api.entity.CustomCustomer;
+import com.community.api.utils.DocumentType;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.*;
 
 @Entity
+@AllArgsConstructor
+@NoArgsConstructor
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
 public class Document {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "document_id")
-    private Long document_id;
+    private Long documentId;
 
     private String name;
-
-    @Column(name = "file_path")
-    private String file_path;
+    private String filePath;
 
     @Lob
-    @Basic(fetch = FetchType.EAGER)
-    @Column(name = "data")
     private byte[] data;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne
     @JoinColumn(name = "custom_customer_id")
-    @JsonIgnore
     private CustomCustomer custom_customer;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "document_type_id")
-    private DocumentType document_type;
+    @ManyToOne
+    @JoinColumn(name = "document_type_Id")
+    private DocumentType documentType;
+
+
+
+
 
 }

@@ -10,7 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Setter
 @Getter
 @Component
-public class DocumentDTO {
+public class DocumentDtO {
     private MultipartFile file;
     private DocumentType documentType;
 
