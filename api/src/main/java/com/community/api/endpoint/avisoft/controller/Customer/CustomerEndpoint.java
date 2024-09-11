@@ -343,10 +343,9 @@ public class CustomerEndpoint {
                             .findFirst()
                             .orElse(null);
 
-                    System.out.println(file + " file");
+                    System.out.println(file.getContentType() + " file");
                     if ((file.isEmpty() || file ==null) && existingDocument!=null) {
                         if (existingDocument != null) {
-                            System.out.println(existingDocument + " if");
                             String filePath = existingDocument.getFilePath();
                             System.out.println(filePath + " filePath");
                             if (filePath != null) {
@@ -355,18 +354,11 @@ public class CustomerEndpoint {
                                     filesobj.delete();
                                 }
                             }
-                         /*  existingDocument.setDocumentType(null);
-                        existingDocument.setName(null);
-                        existingDocument.setFilePath(null);
-                        em.persist(existingDocument);*/
-                            if (em.contains(existingDocument)) {
 
-                              /*  em.remove(existingDocument);
-                                em.flush();*/
                                existingDocument.setDocumentType(null);
                                existingDocument.setFilePath(null);
                                existingDocument.setName(null);
-                            }
+
 
                             deletedDocumentMessages.add("File for document type '" + documentTypeObj.getDocument_type_name() + "' has been deleted.");
                         }
