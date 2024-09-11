@@ -47,6 +47,10 @@ public class AccountEndPoint {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
+    private  SharedUtilityService sharedUtilityService;
+    @Autowired
+    private SanitizerService sanitizerService;
+    @Autowired
     private RoleService roleService;
     @Autowired
     private ServiceProviderServiceImpl serviceProviderService;
@@ -95,18 +99,25 @@ public class AccountEndPoint {
     @ResponseBody
     public ResponseEntity<?> verifyAndLogin(@RequestBody Map<String, Object> loginDetails, HttpSession session) {
         try {
-            String mobileNumber = (String) loginDetails.get("mobileNumber");
-            int i=0;
-            for(;i<mobileNumber.length();i++)
+            //validating input map
+            if(!sharedUtilityService.validateInputMap(loginDetails).equals(SharedUtilityService.ValidationResult.SUCCESS))
             {
-                if(mobileNumber.charAt(i)!='0')
-                    break;
+                return ResponseService.generateErrorResponse("Invalid Request Body",HttpStatus.UNPROCESSABLE_ENTITY);
             }
-            //if(mobileNumber.startsWith("0")) {
-                mobileNumber = mobileNumber.substring(i);
-                loginDetails.put("mobileNumber", mobileNumber);
+            loginDetails=sanitizerService.sanitizeInputMap(loginDetails);
+            String mobileNumber = (String) loginDetails.get("mobileNumber");
             //}
             if (mobileNumber != null) {
+
+                int i=0;
+                for(;i<mobileNumber.length();i++)
+                {
+                    if(mobileNumber.charAt(i)!='0')
+                        break;
+                }
+                //if(mobileNumber.startsWith("0")) {
+                mobileNumber = mobileNumber.substring(i);
+                loginDetails.put("mobileNumber", mobileNumber);
                 if (customCustomerService.isValidMobileNumber(mobileNumber) && isNumeric(mobileNumber)) {
                     return loginWithPhoneOtp(loginDetails, session);
                 } else {
@@ -258,13 +269,13 @@ public class AccountEndPoint {
                     String ipAddress = request.getRemoteAddr();
                     String userAgent = request.getHeader("User-Agent");
                     if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
-                        OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(existingToken, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been signed in");
+                        OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(existingToken, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been signed in");
                         return ResponseEntity.ok(response);
 
                     } else {
                         String token = jwtUtil.generateToken(customer.getId(), role, ipAddress, userAgent);
                         session.setAttribute(tokenKey, token);
-                        OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(token, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been signed in");
+                        OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(token, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been signed in");
                         return ResponseEntity.ok(response);
                     }
                 } else {
@@ -371,13 +382,13 @@ public class AccountEndPoint {
                         String userAgent = request.getHeader("User-Agent");
                         if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
 
-                            OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(existingToken, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
+                            OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(existingToken, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
                             return responseService.generateSuccessResponse("Logged in Successfully",response,HttpStatus.OK);
                         } else {
 
                             String token = jwtUtil.generateToken(existingCustomer.getId(), role, ipAddress, userAgent);
                             session.setAttribute(tokenKey, token);
-                          OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(token, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
+                          OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(token, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
                             return ResponseEntity.ok(response);
                         }
 

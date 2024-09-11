@@ -113,8 +113,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String path = requestURI.split("\\?")[0].trim();
 
         List<String> bypassUris = Arrays.asList(
-                "/api/v1/categoryCustom/getProductsByCategoryId",
-                "/api/v1/categoryCustom/getAllCategories"
+                "/api/v1/category-custom/get-products-by-category-id",
+                "/api/v1/category-custom/get-all-categories"
         );
 
         boolean isBypassed = bypassUris.stream().anyMatch(path::equals);
