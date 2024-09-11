@@ -386,7 +386,7 @@ public class ProductService {
         }
     }*/
 
-    public List<CustomProduct> filterProducts(List<Long> states, List<Long> categories, String title, Double fee, Integer post) {
+    public List<CustomProduct> filterProducts(List<Long> states, List<Long> categories, List<Long> reserveCategories, String title, Double fee, Integer post) {
         List<CustomProductState> customProductStates = new ArrayList<>();
         for (Long id : states) {
             customProductStates.add(productStateService.getProductStateById(id));
@@ -394,6 +394,10 @@ public class ProductService {
         List<Category> categoryList = new ArrayList<>();
         for (Long id : categories) {
             categoryList.add(catalogService.findCategoryById(id));
+        }
+        List<CustomReserveCategory> customReserveCategoryList = new ArrayList<>();
+        for(Long id: reserveCategories) {
+            customReserveCategoryList.add(reserveCategoryService.getReserveCategoryById(id));
         }
         /*String jpql = "SELECT p FROM CustomProduct p WHERE p.productState IN :states AND p.defaultCategory IN :categories AND p.metaTitle LIKE :title"
                 + " JOIN CustomProductReserveCategoryFeePostRef r ON p.productId = r.customProduct.productId "
@@ -406,15 +410,17 @@ public class ProductService {
                 + "WHERE p.productState IN :states "
                 + "AND p.defaultCategory IN :categories "
                 + "AND p.metaTitle LIKE :title "
-                + "AND r.fee > :fee ";
-//                + "AND r.post > :post";
+                + "AND r.fee > :fee "
+                + "AND r.post > :post "
+                + "AND r.customReserveCategory IN :reserveCategories";
 
         TypedQuery<CustomProduct> query = entityManager.createQuery(jpql, CustomProduct.class);
         query.setParameter("states", customProductStates);
         query.setParameter("categories", categoryList);
         query.setParameter("title", "%" + title + "%");
         query.setParameter("fee", fee);
-//        query.setParameter("post", post);
+        query.setParameter("post", post);
+        query.setParameter("reserveCategories", customReserveCategoryList);
 
         return query.getResultList();
 
