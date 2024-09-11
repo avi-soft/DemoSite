@@ -344,7 +344,7 @@ public class CustomerEndpoint {
                             .orElse(null);
 
                     System.out.println(file + " file");
-                    if (file.isEmpty() || file ==null) {
+                    if ((file.isEmpty() || file ==null) && existingDocument!=null) {
                         if (existingDocument != null) {
                             System.out.println(existingDocument + " if");
                             String filePath = existingDocument.getFilePath();
@@ -360,9 +360,12 @@ public class CustomerEndpoint {
                         existingDocument.setFilePath(null);
                         em.persist(existingDocument);*/
                             if (em.contains(existingDocument)) {
-                                em.remove(existingDocument);
-                                em.flush();
-                                System.out.println("Document removed from database.");
+
+                              /*  em.remove(existingDocument);
+                                em.flush();*/
+                               existingDocument.setDocumentType(null);
+                               existingDocument.setFilePath(null);
+                               existingDocument.setName(null);
                             }
 
                             deletedDocumentMessages.add("File for document type '" + documentTypeObj.getDocument_type_name() + "' has been deleted.");
@@ -436,18 +439,17 @@ public class CustomerEndpoint {
                             .findFirst()
                             .orElse(null);
 
-                    if (file.isEmpty() || file ==null) {
+                    if ((file.isEmpty() || file ==null) && existingDocument!=null) {
                         if (existingDocument != null) {
-                            System.out.println(existingDocument + " if");
+
                             String filePath = existingDocument.getFilePath();
-                            System.out.println(filePath + " filePath");
                             if (filePath != null) {
                                 File filesobj = new File(filePath);
                                 if (filesobj.exists()) {
                                     filesobj.delete();
                                 }
                             }
-                         existingDocument.setDocumentType(null);
+                            existingDocument.setDocumentType(null);
                         existingDocument.setName(null);
                         existingDocument.setFilePath(null);
                         em.persist(existingDocument);
