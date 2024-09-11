@@ -60,8 +60,10 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.community.api.component.Constant.*;
 
@@ -184,6 +186,7 @@ public class ProductController extends CatalogEndpoint {
             if (addProductDto.getMetaTitle() == null || addProductDto.getMetaTitle().trim().isEmpty()) {
                 return ResponseService.generateErrorResponse(PRODUCTTITLENOTGIVEN, HttpStatus.BAD_REQUEST);
             }
+
             addProductDto.setMetaTitle(addProductDto.getMetaTitle().trim());
             product.setMetaTitle(addProductDto.getMetaTitle()); // Also adding the same metaTitle in the sku.name as this will generate the auto-url.
             if(addProductDto.getDisplayTemplate() != null && !addProductDto.getDisplayTemplate().trim().isEmpty()) {
@@ -247,37 +250,40 @@ public class ProductController extends CatalogEndpoint {
             }
 
             product.setDefaultSku(sku); // Set default SKU in the product
+            
+            Set<Long> reserveCategoryId = new HashSet<>();
+            for(int reserveCategoryIndex=0; reserveCategoryIndex<addProductDto.getReservedCategory().size(); reserveCategoryIndex++){
+                reserveCategoryId.add(addProductDto.getReservedCategory().get(reserveCategoryIndex).getReserveCategory());
 
-            if (addProductDto.getPlatformFee() == null) {
-                return ResponseService.generateErrorResponse("PLATFORM FEE IS MANDATORY", HttpStatus.INTERNAL_SERVER_ERROR);
-            } else if (addProductDto.getPlatformFee() <= 0) {
-                return ResponseService.generateErrorResponse("PLATFORM FEE CANNOT BE LESS THAN OR EQUAL TO ZERO", HttpStatus.BAD_REQUEST);
+                if (addProductDto.getReservedCategory().get(reserveCategoryIndex).getFee() == null) {
+                    return ResponseService.generateErrorResponse("FEE IS MANDATORY", HttpStatus.INTERNAL_SERVER_ERROR);
+                } else if (addProductDto.getReservedCategory().get(reserveCategoryIndex).getFee() <= 0) {
+                    return ResponseService.generateErrorResponse(FEELESSTHANOREQUALZERO, HttpStatus.BAD_REQUEST);
+                }
+
+                if (addProductDto.getReservedCategory().get(reserveCategoryIndex).getPost() == null) {
+                    addProductDto.getReservedCategory().get(reserveCategoryIndex).setPost(Constant.DEFAULT_QUANTITY);
+                } else if (addProductDto.getReservedCategory().get(reserveCategoryIndex).getPost() <= 0) {
+                    return ResponseService.generateErrorResponse(POSTLESSTHANORZERO, HttpStatus.BAD_REQUEST);
+                }
+
+                if (addProductDto.getReservedCategory().get(reserveCategoryIndex).getBornBefore() == null || addProductDto.getReservedCategory().get(reserveCategoryIndex).getBornAfter() == null) {
+                    return ResponseService.generateErrorResponse("BORN BEFORE DATE AND BORN AFTER DATE CANNOT BE EMPTY", HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+                
+                // Validation on date for being wrong types. -> these needs to be changed or we have to add exception.
+                dateFormat.parse(dateFormat.format(addProductDto.getReservedCategory().get(reserveCategoryIndex).getBornAfter()));
+                dateFormat.parse(dateFormat.format(addProductDto.getReservedCategory().get(reserveCategoryIndex).getBornBefore()));
+
+                if (!addProductDto.getReservedCategory().get(reserveCategoryIndex).getBornBefore().before(new Date()) || !addProductDto.getReservedCategory().get(reserveCategoryIndex).getBornAfter().before(new Date())) {
+                    return ResponseService.generateErrorResponse("BORN BEFORE DATE AND BORN AFTER DATE MUST BE OF PAST", HttpStatus.BAD_REQUEST);
+                } else if (!addProductDto.getReservedCategory().get(reserveCategoryIndex).getBornAfter().before(addProductDto.getReservedCategory().get(reserveCategoryIndex).getBornBefore())) {
+                    return ResponseService.generateErrorResponse("BORN AFTER DATE MUST BE PAST OF BORN BEFORE DATE", HttpStatus.BAD_REQUEST);
+                }
+                
             }
-
-            if (addProductDto.getFee() == null) {
-                return ResponseService.generateErrorResponse("FEE IS MANDATORY", HttpStatus.INTERNAL_SERVER_ERROR);
-            } else if (addProductDto.getFee() <= 0) {
-                return ResponseService.generateErrorResponse(FEELESSTHANOREQUALZERO, HttpStatus.BAD_REQUEST);
-            }
-
-            if (addProductDto.getPost() == null) {
-                addProductDto.setPost(Constant.DEFAULT_QUANTITY);
-            } else if (addProductDto.getPost() <= 0) {
-                return ResponseService.generateErrorResponse(POSTLESSTHANORZERO, HttpStatus.BAD_REQUEST);
-            }
-
-            if (addProductDto.getBornBefore() == null || addProductDto.getBornAfter() == null) {
-                return ResponseService.generateErrorResponse("BORN BEFORE DATE AND BORN AFTER DATE CANNOT BE EMPTY", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
-            // Validation on date for being wrong types. -> these needs to be changed or we have to add exception.
-            dateFormat.parse(dateFormat.format(addProductDto.getBornAfter()));
-            dateFormat.parse(dateFormat.format(addProductDto.getBornBefore()));
-
-            if (!addProductDto.getBornBefore().before(new Date()) || !addProductDto.getBornAfter().before(new Date())) {
-                return ResponseService.generateErrorResponse("BORN BEFORE DATE AND BORN AFTER DATE MUST BE OF PAST", HttpStatus.BAD_REQUEST);
-            } else if (!addProductDto.getBornAfter().before(addProductDto.getBornBefore())) {
-                return ResponseService.generateErrorResponse("BORN AFTER DATE MUST BE PAST OF BORN BEFORE DATE", HttpStatus.BAD_REQUEST);
+            if(reserveCategoryId.size() != addProductDto.getReservedCategory().size() || reserveCategoryId.isEmpty()){
+                return ResponseService.generateErrorResponse("RESERVE CATEGORY MUST NOT BE EMPTY OR DUPLICATED", HttpStatus.BAD_REQUEST);
             }
 
             if (addProductDto.getApplicationScope() == null) {
@@ -308,13 +314,11 @@ public class ProductController extends CatalogEndpoint {
             }
 
             productService.saveCustomProduct(product, addProductDto, addProductDto.getExamDateFrom(), addProductDto.getExamDateTo(), addProductDto.getGoLiveDate(), addProductDto.getPlatformFee(), addProductDto.getPriorityLevel(), applicationScope, jobGroup, customProductState, roleService.getRoleByRoleId(roleId), userId, addProductDto.getNotifyingAuthority(), product.getActiveStartDate(), null, null); // Save external product with provided dates and get status code
-            productReserveCategoryBornBeforeAfterRefService.saveBornBeforeAndBornAfter(addProductDto.getBornBefore(), addProductDto.getBornAfter(), product, reserveCategoryService.getReserveCategoryById(addProductDto.getReservedCategory()));
-            productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getFee(), addProductDto.getPost(), product, reserveCategoryService.getReserveCategoryById(addProductDto.getReservedCategory()));
-            CustomReserveCategory customReserveCategory = reserveCategoryService.getReserveCategoryById(addProductDto.getReservedCategory());
+            productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getReservedCategory(), product);
+            productReserveCategoryBornBeforeAfterRefService.saveBornBeforeAndBornAfter(addProductDto.getReservedCategory(), product);
 
-//            // Wrap and return the updated product details
             CustomProductWrapper wrapper = new CustomProductWrapper();
-            wrapper.wrapDetailsAddProduct(product, addProductDto, jobGroup, customProductState, applicationScope, customReserveCategory, userId, roleService.getRoleByRoleId(roleId));
+            wrapper.wrapDetailsAddProduct(product, addProductDto, jobGroup, customProductState, applicationScope, userId, roleService.getRoleByRoleId(roleId), reserveCategoryService);
 
             return ResponseService.generateSuccessResponse("PRODUCT ADDED SUCCESSFULLY", wrapper, HttpStatus.OK);
 
@@ -329,7 +333,7 @@ public class ProductController extends CatalogEndpoint {
 
 
     @Transactional
-    @PutMapping("/update/{productId}")
+   /* @PutMapping("/update/{productId}")
     public ResponseEntity<?> updateProduct(HttpServletRequest request, @RequestBody AddProductDto addProductDto, @PathVariable Long productId, @RequestHeader(value = "Authorization") String authHeader) {
 
         try {
@@ -414,7 +418,7 @@ public class ProductController extends CatalogEndpoint {
             if(!validateAndSetActiveEndDateAndGoLiveDateFields.getStatusCode().equals(HttpStatus.OK)){
                 return validateAndSetActiveEndDateAndGoLiveDateFields;
             }
-            /*if (addProductDto.getActiveEndDate() != null && addProductDto.getGoLiveDate() != null) {
+            *//*if (addProductDto.getActiveEndDate() != null && addProductDto.getGoLiveDate() != null) {
 
                 dateFormat.parse(dateFormat.format(addProductDto.getActiveEndDate()));
                 dateFormat.parse(dateFormat.format(addProductDto.getGoLiveDate()));
@@ -468,7 +472,7 @@ public class ProductController extends CatalogEndpoint {
                     return ResponseService.generateErrorResponse("GO LIVE DATE CANNOT BE AFTER AND EQUAL OF EXPIRY DATE", HttpStatus.BAD_REQUEST);
                 }
                 customProduct.setGoLiveDate(addProductDto.getGoLiveDate());
-            }*/
+            }*//*
 
             CustomJobGroup jobGroup;
             if (addProductDto.getJobGroup() != null) {
@@ -485,7 +489,7 @@ public class ProductController extends CatalogEndpoint {
             if(!validateAndSetExamDateFromAndExamDateToFields.getStatusCode().equals(HttpStatus.OK)){
                 return validateAndSetExamDateFromAndExamDateToFields;
             }
-            /*if (addProductDto.getExamDateFrom() != null && addProductDto.getExamDateTo() != null) {
+            *//*if (addProductDto.getExamDateFrom() != null && addProductDto.getExamDateTo() != null) {
 
                 // Validation on date for being wrong types. -> these needs to be changed or we have to add exception.
                 dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
@@ -543,7 +547,7 @@ public class ProductController extends CatalogEndpoint {
                 }
                 customProduct.setExamDateTo(addProductDto.getExamDateTo());
 
-            }*/
+            }*//*
 
             if (addProductDto.getPlatformFee() != null) {
                 if (addProductDto.getPlatformFee() <= 0) {
@@ -609,7 +613,7 @@ public class ProductController extends CatalogEndpoint {
             if(!validateAndSetReserveCategoryFields.getStatusCode().equals(HttpStatus.OK)){
                 return validateAndSetReserveCategoryFields;
             }
-            /*if (addProductDto.getReservedCategory() != null) {
+            *//*if (addProductDto.getReservedCategory() != null) {
                 List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(productId);
                 boolean reserveCategoryFound = false;
                 for (ReserveCategoryDto reserveCategoryDto : reserveCategoryDtoList) {
@@ -700,7 +704,7 @@ public class ProductController extends CatalogEndpoint {
                     productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getFee(), addProductDto.getPost(), customProduct, reserveCategoryService.getReserveCategoryById(addProductDto.getReservedCategory()));
 
                 }
-            }*/
+            }*//*
 
             List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(productId);
 
@@ -717,7 +721,7 @@ public class ProductController extends CatalogEndpoint {
         }
 
     }
-
+*/
     @GetMapping("/get-product-by-id/{productId}")
     public ResponseEntity<?> retrieveProductById(HttpServletRequest request, @PathVariable("productId") String productIdPath) {
 
@@ -934,12 +938,15 @@ public class ProductController extends CatalogEndpoint {
             @RequestParam(value = "date_to", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date dateTo,
             @RequestParam(value = "status", required = false) List<Long> state,
             @RequestParam(value = "category", required = false) List<Long> categories,
+            @RequestParam(value = "title", required = false) String title,
+            @RequestParam(value = "fee", required = false) Double fee,
+            @RequestParam(value = "post", required = false) Integer post,
             @RequestParam(value = "min_price", required = false) Double minPrice,
             @RequestParam(value = "max_price", required = false) Double maxPrice) {
 
         try {
             // Call the service to get filtered products
-            List<CustomProduct> products = productService.filterProducts(state, categories);
+            List<CustomProduct> products = productService.filterProducts(state, categories, title, fee, post);
 
             if (products.isEmpty()) {
                 return ResponseService.generateErrorResponse("NO PRODUCTS FOUND WITH THE GIVEN CRITERIA", HttpStatus.NOT_FOUND);

@@ -1,12 +1,11 @@
 package com.community.api.services;
 
 import com.community.api.component.Constant;
+import com.community.api.dto.AddReserveCategoryDto;
 import com.community.api.entity.CustomProduct;
-import com.community.api.entity.CustomProductReserveCategoryBornBeforeAfterRef;
 import com.community.api.entity.CustomProductReserveCategoryFeePostRef;
 import com.community.api.entity.CustomReserveCategory;
 import com.community.api.services.exception.ExceptionHandlingService;
-import org.broadleafcommerce.common.money.Money;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,26 +13,27 @@ import org.springframework.stereotype.Service;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import java.util.Date;
 import java.util.List;
 
 @Service
 public class ProductReserveCategoryFeePostRefService {
 
+    private final ExceptionHandlingService exceptionHandlingService;
+    private final ProductService productService;
+    private final ReserveCategoryService reserveCategoryService;
+
     @PersistenceContext
     protected EntityManager entityManager;
 
     @Autowired
-    protected ExceptionHandlingService exceptionHandlingService;
+    public ProductReserveCategoryFeePostRefService(ExceptionHandlingService exceptionHandlingService, ProductService productService, ReserveCategoryService reserveCategoryService) {
+        this.exceptionHandlingService = exceptionHandlingService;
+        this.productService = productService;
+        this.reserveCategoryService = reserveCategoryService;
+    }
 
-    @Autowired
-    protected ProductService productService;
-
-    @Autowired
-    protected  ReserveCategoryService reserveCategoryService;
-
-    public List<CustomProductReserveCategoryFeePostRef> getProductReserveCategoryFeeAndPostByProductId(Long productId){
-        try{
+    public List<CustomProductReserveCategoryFeePostRef> getProductReserveCategoryFeeAndPostByProductId(Long productId) {
+        try {
 
             CustomProduct customProduct = productService.getCustomProductByCustomProductId(productId);
             Query query = entityManager.createQuery(Constant.GET_PRODUCT_RESERVECATEGORY_FEE_POST, CustomProductReserveCategoryFeePostRef.class);
@@ -42,27 +42,31 @@ public class ProductReserveCategoryFeePostRefService {
 
             return productReserveCategoryFeePostList;
 
-        } catch(Exception exception) {
+        } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return null;
         }
     }
 
-    public void saveFeeAndPost(Double fee, Integer post, Product product, CustomReserveCategory reserveCategory) {
-        try{
+    public void saveFeeAndPost(List<AddReserveCategoryDto> addReserveCategoryDtoList, Product product) {
+        try {
 
-            Query query = entityManager.createNativeQuery(Constant.ADD_PRODUCT_RESERVECATEOGRY_FEE_POST);
-            query.setParameter("productId", product);
-            query.setParameter("reserveCategoryId", reserveCategory);
-            query.setParameter("fee", fee);
-            query.setParameter("post", post);
-            int affectedRows = query.executeUpdate();
+            for (AddReserveCategoryDto addReserveCategoryDto : addReserveCategoryDtoList) {
+                CustomReserveCategory reserveCategory = reserveCategoryService.getReserveCategoryById(addReserveCategoryDto.getReserveCategory());
 
-            if(affectedRows == 0){
-                throw new RuntimeException("Error inserting values in mapping table of CustomProductReserveCategoryFeePostRef");
+                Query query = entityManager.createNativeQuery(Constant.ADD_PRODUCT_RESERVECATEOGRY_FEE_POST);
+                query.setParameter("productId", product.getId());
+                query.setParameter("reserveCategoryId", reserveCategory.getReserveCategoryId());
+                query.setParameter("fee", addReserveCategoryDto.getFee());
+                query.setParameter("post", addReserveCategoryDto.getPost());
+                int affectedRows = query.executeUpdate();
+
+                if (affectedRows == 0) {
+                    throw new RuntimeException("Error inserting values in mapping table of CustomProductReserveCategoryFeePostRef");
+                }
             }
 
-        } catch(Exception exception) {
+        } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
         }
     }

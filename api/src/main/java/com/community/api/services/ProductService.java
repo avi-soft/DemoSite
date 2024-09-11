@@ -257,7 +257,7 @@ public class ProductService {
         }
     }
 
-    public ResponseEntity<?> validateAndSetReserveCategoryFields(AddProductDto addProductDto, CustomProduct customProduct) {
+/*    public ResponseEntity<?> validateAndSetReserveCategoryFields(AddProductDto addProductDto, CustomProduct customProduct) {
         try {
             if (addProductDto.getReservedCategory() != null) {
                 List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(customProduct.getId());
@@ -359,7 +359,7 @@ public class ProductService {
         } catch (Exception exception) {
             return ResponseService.generateErrorResponse("SOME EXCEPTION OCCURRED: " + exception.getMessage(), HttpStatus.BAD_REQUEST);
         }
-    }
+    }*/
 
 //    @Query("SELECT p FROM CustomProduct p WHERE " +
 ////            "(:dateFrom IS NULL OR p.dateAdded >= :dateFrom) AND " +
@@ -371,22 +371,38 @@ public class ProductService {
 //    public List<CustomProduct> findFilteredProducts (@Param("states") List<CustomProductState> states);
 
 
-    public List<CustomProduct> filterProducts(List<Long> states, List<Long> categories) {
-        System.out.println(states.size());
+    public List<CustomProduct> filterProducts(List<Long> states, List<Long> categories, String title, Double fee, Integer post) {
         List<CustomProductState> customProductStates = new ArrayList<>();
         for (Long id : states) {
             customProductStates.add(productStateService.getProductStateById(id));
-            System.out.println("ID is: " + id);
         }
         List<Category> categoryList = new ArrayList<>();
         for (Long id : categories) {
             categoryList.add(catalogService.findCategoryById(id));
         }
-        String jpql = "SELECT p FROM CustomProduct p WHERE p.productState IN :states AND p.defaultCategory IN :categories";
+        /*String jpql = "SELECT p FROM CustomProduct p WHERE p.productState IN :states AND p.defaultCategory IN :categories AND p.metaTitle LIKE :title"
+                + " JOIN CustomProductReserveCategoryFeePostRef r ON p.productId = r.customProduct.productId "
+                + "AND r.fee > :fee "
+                + "AND r.post > :post ";*/
+
+        String jpql = "SELECT DISTINCT p FROM CustomProduct p "
+                + "JOIN CustomProductReserveCategoryFeePostRef r "
+                + "ON r.customProduct = p "
+                + "WHERE p.productState IN :states "
+                + "AND p.defaultCategory IN :categories "
+                + "AND p.metaTitle LIKE :title "
+                + "AND r.fee > :fee ";
+//                + "AND r.post > :post";
+
+
         TypedQuery<CustomProduct> query = entityManager.createQuery(jpql, CustomProduct.class);
         query.setParameter("states", customProductStates);
         query.setParameter("categories", categoryList);
+        query.setParameter("title", "%"+title+"%");
+        query.setParameter("fee", fee);
+//        query.setParameter("post", post);
 
         return query.getResultList();
+
     }
 }

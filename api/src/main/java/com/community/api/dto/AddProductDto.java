@@ -9,6 +9,7 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
+import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -57,8 +58,10 @@ public class AddProductDto {
     Integer priorityLevel;
     @JsonProperty("meta_description")
     String metaDescription;
+
     @JsonProperty("reserve_category")
-    Long reservedCategory;
+    List<AddReserveCategoryDto> reservedCategory;
+
     @JsonProperty("notifying_authority")
     String notifyingAuthority;
     @JsonProperty("post")
@@ -73,6 +76,5 @@ public class AddProductDto {
     Long productState;
     @JsonProperty("display_template")
     String displayTemplate;
-
 
 }
