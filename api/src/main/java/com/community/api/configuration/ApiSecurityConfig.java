@@ -82,7 +82,7 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .authorizeRequests()
                 .antMatchers("/swagger-ui.html/**","/v2/api-docs",  "/webjars/**","/images/**","/swagger-resources/**","/avisoftdocument/**","/files/**").permitAll()
-                .antMatchers("/otp/**","/swagger-resources/**", "/account/**", "/test/**","/category-custom/get-products-by-category-id","/category-custom/get-all-categories").permitAll()
+                .antMatchers("/otp/**","/swagger-resources/**", "/account/**", "/test/**","/category-custom/get-products-by-category-id/**","/category-custom/get-all-categories").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)

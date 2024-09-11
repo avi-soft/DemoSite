@@ -322,10 +322,18 @@ public class CustomerEndpoint {
                 Map<String, Object> responseData = new HashMap<>();
                 List<String> deletedDocumentMessages = new ArrayList<>();
 
-                // Handle file uploads and deletions
+
                 for (Map.Entry<String, MultipartFile> entry : files.entrySet()) {
                     Integer fileNameId = Integer.parseInt(entry.getKey());
                     MultipartFile file = entry.getValue();
+                    System.out.println(file.getContentType() + "fregf" );
+                    if (!DocumentStorageService.isValidFileType(file)) {
+                        return ResponseEntity.badRequest().body(Map.of(
+                                "status", ApiConstants.STATUS_ERROR,
+                                "status_code", HttpStatus.BAD_REQUEST.value(),
+                                "message", "Invalid file type: "
+                        ));
+                    }
 
                     DocumentType documentTypeObj = em.createQuery(
                                     "SELECT dt FROM DocumentType dt WHERE dt.document_type_id = :documentTypeId", DocumentType.class)
