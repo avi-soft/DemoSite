@@ -121,7 +121,7 @@ public class ServiceProviderEntity  {
             joinColumns = @JoinColumn(name = "service_provider_id"), // Foreign key for ServiceProvider
             inverseJoinColumns = @JoinColumn(name = "skill_id")) // Foreign key for Skill
     private List<Skill> skills;
-    @JsonBackReference
+
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "service_provider_id")
     private List<ServiceProviderAddress> spAddresses;
