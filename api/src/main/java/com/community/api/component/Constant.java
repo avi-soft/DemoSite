@@ -2,7 +2,7 @@ package com.community.api.component;
 
 public class Constant {
 
-    public static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
+    public static final long MAX_FILE_SIZE = 2 * 1024 * 1024;
     public static String COUNTRY_CODE = "+91";
     public static String PHONE_QUERY = "SELECT c FROM CustomCustomer c WHERE c.mobileNumber = :mobileNumber AND c.countryCode = :countryCode";
     public static String PHONE_QUERY_OTP = "SELECT c FROM CustomCustomer c WHERE c.mobileNumber = :mobileNumber AND c.countryCode = :countryCode AND c.otp=:otp";
@@ -87,4 +87,6 @@ public class Constant {
     public static final String PRODUCTTITLENOTGIVEN = "Product MetaTitle not Given";
     public static final int MAX_REQUEST_SIZE=100;
     public static  final int MAX_NESTED_KEY_SIZE=100;
+    public static final String GET_ALL_SERVICE_PROVIDERS="Select s from ServiceProviderEntity s";
+    public static final String GET_ALL_CUSTOMERS="Select c from CustomCustomer c";
 }

@@ -121,7 +121,16 @@ public class SharedUtilityService {
         customerDetails.put("secondaryMobileNumber", customCustomer.getSecondaryMobileNumber());
         customerDetails.put("whatsappNumber", customCustomer.getWhatsappNumber());
         customerDetails.put("secondaryEmail", customCustomer.getSecondaryEmail());
-        customerDetails.put("savedForms", customCustomer.getSavedForms());
+      /*  customerDetails.put("qualificationDetails",customCustomer.getQualificationDetailsList());
+        customerDetails.put("documentList",customCustomer.getDocumentList());
+        List<Map<String,Object>>listOfSavedProducts=new ArrayList<>();*/
+    /*    if(!customCustomer.getSavedForms().isEmpty()) {
+            for (Product product : customCustomer.getSavedForms()) {
+                listOfSavedProducts.add(createProductResponseMap(product, null));
+            }
+        }
+
+        customerDetails.put("savedForms",listOfSavedProducts);*/
             List<CustomerAddressDTO>addresses=new ArrayList<>();
         for(CustomerAddress customerAddress:customer.getCustomerAddresses())
         {

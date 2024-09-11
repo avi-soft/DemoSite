@@ -4,6 +4,7 @@ import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.AddressDTO;
+import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.CustomProduct;
 import com.community.api.services.*;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.io.File;
@@ -54,6 +56,8 @@ public class CustomerEndpoint {
     private JwtUtil jwtUtil;
     private SanitizerService sanitizerService;
 
+    @Autowired
+    private static SharedUtilityService sharedUtilityServiceApi;
 
     @Autowired
     private ExceptionHandlingService exceptionHandlingService;
@@ -102,7 +106,7 @@ public class CustomerEndpoint {
         this.customCustomerService = customCustomerService;
     }
     @Autowired
-    private static SharedUtilityService sharedUtilityService;
+    private  SharedUtilityService sharedUtilityService;
 
     @Autowired
     public void setAddressService(AddressService addressService) {
@@ -683,7 +687,7 @@ public class CustomerEndpoint {
         addressDTO.setPhoneNumber(customCustomer.getMobileNumber());
         return addressDTO;
     }
-    public static ResponseEntity<?> createAuthResponse(String token, Customer customer ) {
+    public  ResponseEntity<?> createAuthResponse(String token, Customer customer ) {
         OtpEndpoint.ApiResponse authResponse = new OtpEndpoint.ApiResponse(token, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(), "User has been logged in");
         return ResponseService.generateSuccessResponse("Token details : ", authResponse, HttpStatus.OK);
     }
@@ -817,6 +821,31 @@ public class CustomerEndpoint {
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @GetMapping("/get-all-customers")
+    public ResponseEntity<?> getAllCustomers(
+            @RequestParam(defaultValue = "0") int offset,
+            @RequestParam(defaultValue = "10") int limit)
+    {
+        try {
+            // Calculate the start position for pagination
+            int startPosition = offset * limit;
+            // Create the query
+            TypedQuery<CustomCustomer> query = entityManager.createQuery(Constant.GET_ALL_CUSTOMERS, CustomCustomer.class);
+            // Apply pagination
+            query.setFirstResult(startPosition);
+            query.setMaxResults(limit);
+            List<Map> results = new ArrayList<>();
+            for(CustomCustomer customer:query.getResultList())
+            {
+                Customer customerToadd=customerService.readCustomerById(customer.getId());
+                results.add(sharedUtilityService.breakReferenceForCustomer(customerToadd));
+            }
+            return ResponseService.generateSuccessResponse("List of customers : ", results, HttpStatus.OK);
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseService.generateErrorResponse("Some issue in customers: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 
