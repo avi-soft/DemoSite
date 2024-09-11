@@ -242,7 +242,7 @@ public class CustomerEndpoint {
                 Map<String, Object> responseBody = savedResponse.getBody();
 
                 if (savedResponse.getStatusCode() != HttpStatus.OK) {
-                    return responseService.generateErrorResponse("Error uploading " + documentType, HttpStatus.INTERNAL_SERVER_ERROR);
+                    return responseService.generateErrorResponse("Error uploading " + responseBody.get("message"), HttpStatus.INTERNAL_SERVER_ERROR);
                 }
 
                 System.out.println(documentType.trim() + " documentType.trim()");
@@ -302,6 +302,11 @@ public class CustomerEndpoint {
 
             if (!customerId.equals(toke_userId)) {
                 return responseService.generateErrorResponse("Unauthorized request.", HttpStatus.UNAUTHORIZED);
+            }
+
+            if(files.size()==0){
+                return responseService.generateErrorResponse("Invalid request.", HttpStatus.BAD_REQUEST);
+
             }
 
             if (customerService == null) {

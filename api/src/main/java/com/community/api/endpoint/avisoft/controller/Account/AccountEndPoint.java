@@ -128,10 +128,10 @@ public class AccountEndPoint {
     public ResponseEntity<?> loginWithPassword(@RequestBody Map<String, Object> loginDetails, HttpSession session, HttpServletRequest request) {
         try {
             String mobileNumber = (String) loginDetails.get("mobileNumber");
-            if(mobileNumber.startsWith("0"))
-                mobileNumber=mobileNumber.substring(1);
             String username = (String) loginDetails.get("username");
             if (mobileNumber != null) {
+                if(mobileNumber.startsWith("0"))
+                    mobileNumber=mobileNumber.substring(1);
                 if (customCustomerService.isValidMobileNumber(mobileNumber) && isNumeric(mobileNumber)) {
                     return loginWithCustomerPassword(loginDetails, session, request);
                 } else {
