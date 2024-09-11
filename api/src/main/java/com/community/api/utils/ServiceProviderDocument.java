@@ -14,6 +14,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 @Getter
 @Setter
+@Table(name = "service_provider_documents")
 public class ServiceProviderDocument {
 
     @Id
