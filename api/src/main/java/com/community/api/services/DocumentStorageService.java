@@ -1,20 +1,16 @@
 package com.community.api.services;
 import com.community.api.component.Constant;
-import com.community.api.entity.CustomCustomer;
-import com.community.api.entity.ErrorResponse;
 import com.community.api.services.exception.ExceptionHandlingService;
-import com.community.api.services.exception.FileSizeExceededException;
-import com.community.api.services.exception.InvalidFileTypeException;
 import com.community.api.utils.Document;
 import com.community.api.utils.DocumentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.EntityManager;
-import javax.persistence.EntityNotFoundException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -40,94 +36,58 @@ public class DocumentStorageService {
     @Autowired
     private DocumentStorageService documentStorageService;
 
+    @Autowired
+    private EntityManager entityManager;
+
     public ResponseEntity<Map<String, Object>> saveDocuments(MultipartFile file, String documentTypeStr, Long customerId, String role) {
         try {
-            if (!DocumentStorageService.isValidFileType(file)) {
 
+            if (!isValidFileType(file)) {
                 return ResponseEntity.badRequest().body(Map.of(
                         "status", ApiConstants.STATUS_ERROR,
-                        "status_code", HttpStatus.BAD_REQUEST,
-                        "message", "Invalid file type: " + file.getOriginalFilename()
+                        "status_code", HttpStatus.BAD_REQUEST.value(),
+                        "message", "Invalid file type: "
                 ));
             }
 
             if (file.getSize() > Constant.MAX_FILE_SIZE) {
                 return ResponseEntity.badRequest().body(Map.of(
                         "status", ApiConstants.STATUS_ERROR,
-                        "status_code", HttpStatus.BAD_REQUEST,
+                        "status_code", HttpStatus.BAD_REQUEST.value(),
                         "message", "File size exceeds the maximum allowed size: " + file.getOriginalFilename()
-                ));
-            }
-
-            CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
-            if (customCustomer == null) {
-                return ResponseEntity.badRequest().body(Map.of(
-                        "status", ApiConstants.STATUS_ERROR,
-                        "status_code", HttpStatus.BAD_REQUEST,
-                        "message", "Customer not found with ID: " + customerId
-                ));
-            }
-
-        System.out.println(documentTypeStr.trim() + " documentTypeStr.trim()");
-       DocumentType documentType = em.createQuery(
-                            "SELECT dt FROM DocumentType dt WHERE dt.document_type_name = :document_type_name", DocumentType.class)
-                    .setParameter("document_type_name", documentTypeStr.trim())
-                    .getResultStream()
-                    .findFirst()
-                    .orElse(null);
-            if (documentType == null) {
-                return ResponseEntity.badRequest().body(Map.of(
-                        "status", ApiConstants.STATUS_ERROR,
-                        "status_code", HttpStatus.BAD_REQUEST,
-                        "message", "DocumentType not found : " + documentTypeStr
                 ));
             }
 
             String fileName = file.getOriginalFilename();
             try (InputStream fileInputStream = file.getInputStream()) {
-                documentStorageService.saveDocumentOndirctory(customerId.toString(), documentTypeStr, fileName, fileInputStream, role);
+                this.saveDocumentOndirctory(customerId.toString(), documentTypeStr, fileName, fileInputStream, role);
+            }catch(Exception e){
+                exceptionHandlingService.handleException(e);
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", ApiConstants.STATUS_ERROR,
+                        "status_code", HttpStatus.BAD_REQUEST.value(),
+                        "message", "Invalid file : " + file
+                ));
             }
 
-            Document doc = new Document();
-            doc.setName(fileName);
-            String filePath = DocumentStorageService.BASE_DIRECTORY
-                    + File.separator
-                    + "avisoft"
-                    + File.separator
-                    + role
-                    + File.separator
-                    + customerId
-                    + File.separator
-                    + documentTypeStr
-                    + File.separator
-                    + fileName;
-            doc.setFilePath(filePath);
-            doc.setData(file.getBytes());
-            doc.setCustomCustomer(customCustomer);
-            doc.setDocumentType(documentType);
-            em.persist(doc);
-
             Map<String, Object> responseBody = Map.of(
-                    "message", "Documents uploaded successfully",
-                    "data", Map.of(
-                            "documentId", doc.getDocumentId(),
-                            "name", doc.getName(),
-                            "filePath", doc.getFilePath()
-                    ),
+                    "message", "Document uploaded successfully",
                     "status", "OK",
+                    "data",documentTypeStr +" uploaded successfully",
                     "status_code", HttpStatus.OK.value()
             );
 
             return ResponseEntity.ok(responseBody);
         } catch (Exception e) {
             exceptionHandlingService.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of(
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "status", ApiConstants.STATUS_ERROR,
-                    "message", "Error uploading document" + e.getMessage(),
-                    "status_code", HttpStatus.INTERNAL_SERVER_ERROR
+                    "message", "Error uploading document: " + e.getMessage(),
+                    "status_code", HttpStatus.INTERNAL_SERVER_ERROR.value()
             ));
         }
     }
+
 
 
 
@@ -141,12 +101,13 @@ public class DocumentStorageService {
      * @throws IOException If an I/O error occurs.
      */
     public void saveDocumentOndirctory(String customerId, String documentType, String fileName, InputStream fileInputStream, String role) throws IOException {
-        File baseDir = new File(BASE_DIRECTORY);
+
+        /*File baseDir = new File(BASE_DIRECTORY);
         if (!baseDir.exists()) {
             baseDir.mkdirs();
-        }
+        }*/
 
-        File avisoftDir = new File(baseDir, "avisoft");
+        File avisoftDir = new File("avisoftdocument");
         if (!avisoftDir.exists()) {
             avisoftDir.mkdirs();
         }
@@ -178,7 +139,6 @@ public class DocumentStorageService {
 
 
     public static boolean isValidFileType(MultipartFile file) {
-
         String[] allowedFileTypes = {"application/pdf", "image/jpeg", "image/png"};
         return Arrays.asList(allowedFileTypes).contains(file.getContentType());
     }
@@ -199,4 +159,31 @@ public class DocumentStorageService {
         return "Unknown Document Type";
     }
 
+
+    @Transactional
+    public void saveDocumentType(DocumentType document) {
+        entityManager.persist(document);
+    }
+
+    @Transactional
+    public void saveAllDocumentTypes() {
+
+                DocumentType[] documents = {
+                new DocumentType(5, "EWS_CERTIFICATE", "Certificate for individuals and families below a certain income threshold to access various benefits and concessions."),
+                new DocumentType(6, "DIPLOMA", "Official academic certificate awarded upon completion of an undergraduate or vocational course, certifying knowledge and skills in a specific field."),
+                new DocumentType(7, "GRADUATION", "Awarded upon completion of a degree program, signifying fulfillment of academic requirements in a specific discipline."),
+                new DocumentType(8, "POST_GRADUATION", "Issued after completing a postgraduate degree, acknowledging advanced training in a specialized field."),
+                new DocumentType(9, "CASTE_CERTIFICATE", "Certifies an individual's caste for reservations and benefits in education and employment."),
+                new DocumentType(10, "ADDRESS_CERTIFICATE", "Verifies an individual’s residential address for identity verification and other purposes."),
+                new DocumentType(11, "INCOME_CERTIFICATE", "Confirms an individual’s or family’s annual income for applying for government benefits and financial assistance."),
+                new DocumentType(12, "DRIVING_LICENSE", "Authorizes an individual to operate motor vehicles, confirming knowledge of traffic laws and vehicle operation skills."),
+                new DocumentType(13, "OTHERS", "Includes other document types not listed above, tailored to specific needs or contexts.")
+        };
+
+
+
+        for (DocumentType document : documents) {
+            saveDocumentType(document);
+        }
+    }
 }

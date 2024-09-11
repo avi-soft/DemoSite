@@ -2,6 +2,8 @@ package com.community.api.utils;
 
 import com.community.api.entity.CustomCustomer;
 import com.community.api.utils.DocumentType;
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,13 +29,18 @@ public class Document {
     @Lob
     private byte[] data;
 
+    @JsonBackReference
     @ManyToOne
     @JoinColumn(name = "custom_customer_id")
-    private CustomCustomer customCustomer;
+    private CustomCustomer custom_customer;
 
-    @OneToOne
+
+    @ManyToOne
     @JoinColumn(name = "document_type_Id")
     private DocumentType documentType;
+
+
+
 
 
 }

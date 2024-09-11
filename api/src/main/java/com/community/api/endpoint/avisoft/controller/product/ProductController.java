@@ -184,15 +184,18 @@ public class ProductController extends CatalogEndpoint {
             }
             addProductDto.setMetaTitle(addProductDto.getMetaTitle().trim());
             product.setMetaTitle(addProductDto.getMetaTitle()); // Also adding the same metaTitle in the sku.name as this will generate the auto-url.
-            if(addProductDto.getDisplayTemplate() != null && addProductDto.getDisplayTemplate().trim().isEmpty()) {
+            if(addProductDto.getDisplayTemplate() != null && !addProductDto.getDisplayTemplate().trim().isEmpty()) {
                 product.setDisplayTemplate(addProductDto.getDisplayTemplate().trim());
             }else{
                 product.setDisplayTemplate(addProductDto.getMetaTitle());
             }
 
-            if (addProductDto.getMetaDescription() != null) {
+            if (addProductDto.getMetaDescription() != null && !addProductDto.getMetaDescription().trim().isEmpty()) {
                 addProductDto.setMetaDescription(addProductDto.getMetaDescription().trim());
+
                 product.setMetaDescription(addProductDto.getMetaDescription());
+            }else {
+                return ResponseService.generateErrorResponse("DESCRIPTION CANNOT BE NULL OR EMPTY",HttpStatus.BAD_REQUEST);
             }
 
             product = catalogService.saveProduct(product); // Save or update the product with values from requestBody.
@@ -798,7 +801,7 @@ public class ProductController extends CatalogEndpoint {
 
             CustomProduct customProduct = entityManager.find(CustomProduct.class, productId); // Find the Custom Product
 
-            if (customProduct == null || (((Status) customProduct).getArchived() != 'Y')) {
+            if (customProduct == null || (((Status) customProduct).getArchived() == 'Y')) {
                 return ResponseService.generateErrorResponse(PRODUCTNOTFOUND, HttpStatus.NOT_FOUND);
             }
 

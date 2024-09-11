@@ -49,7 +49,6 @@ public class CustomCustomer extends CustomerImpl {
     @Size(min = 12, max = 12)
     private String adharNumber;
 
-
     @Column(name = "category")
     private String category; //@TODO -make it int for using in cart
 
@@ -58,7 +57,6 @@ public class CustomCustomer extends CustomerImpl {
 
     @OneToOne(cascade = CascadeType.ALL)
     private Document domicile;
-
 
     @Column(name = "secondary_mobile_number")
     private String secondaryMobileNumber;
@@ -69,13 +67,13 @@ public class CustomCustomer extends CustomerImpl {
     private String secondaryEmail;
 
     @JsonIgnore
-    @OneToMany(mappedBy = "customCustomer", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "custom_customer", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Document>documentList;
 
-    @JsonIgnore
+   /* @JsonIgnore
     @Nullable
     @OneToMany(mappedBy = "custom_customer", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<Qualification>qualificationList;
+    List<Qualification>qualificationList;*/
 
     @Nullable
     @ManyToMany
@@ -84,4 +82,11 @@ public class CustomCustomer extends CustomerImpl {
             joinColumns = @JoinColumn(name = "customer_id"), // Foreign key for ServiceProvider
             inverseJoinColumns = @JoinColumn(name = "product_id")) // Foreign key for Skill
     private List<CustomProduct>savedForms;
+
+    @Nullable
+    @OneToMany(mappedBy = "custom_customer", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<QualificationDetails> qualificationDetailsList;
+
+    @OneToMany(mappedBy = "custom_customer", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
+    private List<Document> documents;
 }

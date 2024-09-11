@@ -500,6 +500,11 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 mobileNumber= mobileNumber.substring(1);
             ServiceProviderEntity existingServiceProvider = findServiceProviderByPhone(mobileNumber, countryCode);
 
+            if(existingServiceProvider == null){
+                return responseService.generateErrorResponse("Invalid Data Provided ",HttpStatus.UNAUTHORIZED);
+
+            }
+
             String storedOtp =  existingServiceProvider.getOtp();
             String ipAddress = request.getRemoteAddr();
             String userAgent = request.getHeader("User-Agent");

@@ -106,17 +106,18 @@ public class AccountEndPoint {
             }
             loginDetails=sanitizerService.sanitizeInputMap(loginDetails);
             String mobileNumber = (String) loginDetails.get("mobileNumber");
-            int i=0;
-            for(;i<mobileNumber.length();i++)
-            {
-                if(mobileNumber.charAt(i)!='0')
-                    break;
-            }
-            //if(mobileNumber.startsWith("0")) {
-                mobileNumber = mobileNumber.substring(i);
-                loginDetails.put("mobileNumber", mobileNumber);
             //}
             if (mobileNumber != null) {
+
+                int i=0;
+                for(;i<mobileNumber.length();i++)
+                {
+                    if(mobileNumber.charAt(i)!='0')
+                        break;
+                }
+                //if(mobileNumber.startsWith("0")) {
+                mobileNumber = mobileNumber.substring(i);
+                loginDetails.put("mobileNumber", mobileNumber);
                 if (customCustomerService.isValidMobileNumber(mobileNumber) && isNumeric(mobileNumber)) {
                     return loginWithPhoneOtp(loginDetails, session);
                 } else {
@@ -138,10 +139,11 @@ public class AccountEndPoint {
     public ResponseEntity<?> loginWithPassword(@RequestBody Map<String, Object> loginDetails, HttpSession session, HttpServletRequest request) {
         try {
             String mobileNumber = (String) loginDetails.get("mobileNumber");
-            if(mobileNumber.startsWith("0"))
-                mobileNumber=mobileNumber.substring(1);
+
             String username = (String) loginDetails.get("username");
             if (mobileNumber != null) {
+                if(mobileNumber.startsWith("0"))
+                    mobileNumber=mobileNumber.substring(1);
                 if (customCustomerService.isValidMobileNumber(mobileNumber) && isNumeric(mobileNumber)) {
                     return loginWithCustomerPassword(loginDetails, session, request);
                 } else {

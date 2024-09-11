@@ -2,6 +2,7 @@ package com.community.api.entity;
 
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,5 +28,6 @@ public class ServiceProviderAddress
     @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY) // Use lazy loading to improve performance if needed
     @JoinColumn(name = "service_provider_id") // Explicitly specify the foreign key column
+    @JsonIgnore
     private ServiceProviderEntity serviceProviderEntity;
 }
