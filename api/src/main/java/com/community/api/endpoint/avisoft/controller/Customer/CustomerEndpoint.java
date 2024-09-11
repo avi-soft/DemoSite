@@ -857,10 +857,12 @@ public class CustomerEndpoint {
         addressDTO.setPhoneNumber(customCustomer.getMobileNumber());
         return addressDTO;
     }
+/*
     public static ResponseEntity<?> createAuthResponse(String token, Customer customer ) {
         OtpEndpoint.ApiResponse authResponse = new OtpEndpoint.ApiResponse(token, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
         return responseService.generateSuccessResponse("Token details : ", authResponse, HttpStatus.OK);
     }
+*/
 
 
 
