@@ -41,4 +41,6 @@ public class DocumentEndpoint {
             return responseService.generateErrorResponse("Error retrieving Customer", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
 }

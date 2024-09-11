@@ -39,11 +39,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
     private static final int BEARER_PREFIX_LENGTH = BEARER_PREFIX.length();
-
-
-
-    private String apiKey="IaJGL98yHnKjnlhKshiWiy1IhZ+uFsKnktaqFX3Dvfg=";
-
+    private String apiKey="IaJGL98yHnKjnlhKshiWiy1IhZ+uFsKnktaqFX3Dvfg=\n";
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -51,9 +47,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private CustomCustomerService customCustomerService;
     @Autowired
     private RoleService roleService;
+
     @Autowired
     private CustomerService CustomerService;
-
 
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
@@ -198,6 +194,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
             response.getWriter().write("{\"status\":401,\"message\":\"" + message + "\"}");
+
+
             response.getWriter().flush();
         }
     }

@@ -71,5 +71,8 @@ public class AddProductDto {
     Boolean domicileRequired;
     @JsonProperty("product_state")
     Long productState;
+    @JsonProperty("display_template")
+    String displayTemplate;
+
 
 }

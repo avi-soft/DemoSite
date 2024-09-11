@@ -3,13 +3,13 @@ package com.community.api.component;
 import org.broadleafcommerce.core.order.domain.DiscreteOrderItem;
 
 public class Constant {
+
+    public static final long MAX_FILE_SIZE = 10 * 1024 * 1024;
     public static String COUNTRY_CODE = "+91";
     public static String PHONE_QUERY = "SELECT c FROM CustomCustomer c WHERE c.mobileNumber = :mobileNumber AND c.countryCode = :countryCode";
     public static String PHONE_QUERY_OTP = "SELECT c FROM CustomCustomer c WHERE c.mobileNumber = :mobileNumber AND c.countryCode = :countryCode AND c.otp=:otp";
     public static String ID_QUERY = "SELECT c FROM CustomCustomer c WHERE c.customer_id = :customer_id";
-    public static final String FIND_ALL_QUALIFICATIONS_QUERY = "SELECT q FROM Qualification q";
     public static final String FIND_ALL_EXAMINATIONS_QUERY = "SELECT q FROM Examination q";
-    public static final String FIND_EXAMINATION_BY_NAME_QUERY = "SELECT e FROM Examination e WHERE e.examinationName = :examinationName";
     public static String PHONE_QUERY_SERVICE_PROVIDER = "SELECT c FROM ServiceProviderEntity c WHERE c.mobileNumber = :mobileNumber AND c.country_code = :country_code";
     public static String USERNAME_QUERY_SERVICE_PROVIDER = "SELECT c FROM ServiceProviderEntity c WHERE c.user_name = :username";
     public static final String ADMIN = "ADMIN";
@@ -46,6 +46,8 @@ public class Constant {
     public static String NUMBER_FORMAT_EXCEPTION = "Number Format Exception";
     public static String CATALOG_SERVICE_NOT_INITIALIZED = "Catalog Service Not Initialized";
     public static String GET_STATES_LIST="Select s from StateCode s";
+    public static String GET_EXAMINATIONS_COUNT = "SELECT COUNT(*) FROM Examination";
+
     public static String GET_ORDER_ITEM_PRODUCT="Select p.product_id from custom_order_item_product p where p.order_item_id =:orderItemId";
     public static String CANNOT_ADD_MORE_THAN_ONE_FORM="You can only add one of this form. Please choose a different form if you need more";
     public static String GET_ALL_APPLICATION_SCOPE = "SELECT * FROM custom_application_scope";
@@ -65,6 +67,7 @@ public class Constant {
     public static String PRODUCT_STATE_APPROVED = "APPROVED";
     public static String PRODUCT_STATE_EXPIRED = "EXPIRED";
     public static String PRODUCT_STATE_END = "END";
+    public static String PRODUCT_STATE_REJECTED = "REJECTED";
     /*public static String GET_STATES_LIST="SELECT s FROM StateCode s";*/
     public static String SERVICE_PROVIDER_PRIVILEGE = "SELECT privilege_id FROM service_provider_privileges WHERE service_provider_id = :serviceProviderId";
     public static String GET_ROLE_BY_ROLE_ID = "SELECT r FROM Role r WHERE r.role_id = :roleId";
