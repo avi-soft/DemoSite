@@ -19,6 +19,7 @@ public class AddReserveCategoryDto {
     Integer post;
     @JsonProperty("reserve_category_id")
     Long reserveCategory;
+
     @JsonProperty("born_before")
     Date bornBefore;
     @JsonProperty("born_after")

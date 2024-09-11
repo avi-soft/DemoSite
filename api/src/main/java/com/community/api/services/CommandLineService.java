@@ -41,6 +41,7 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(new CustomProductState(3L, "LIVE"));
             entityManager.persist(new CustomProductState(4L, "EXPIRED"));
             entityManager.persist(new CustomProductState(5L, "REJECTED"));
+            entityManager.persist(new CustomProductState(6L, "MODIFIED"));
         }
 
         if(entityManager.createQuery("SELECT COUNT(c) FROM CustomJobGroup c", Long.class).getSingleResult() == 0) {
