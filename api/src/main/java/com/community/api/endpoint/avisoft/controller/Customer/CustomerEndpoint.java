@@ -1,18 +1,16 @@
 package com.community.api.endpoint.avisoft.controller.Customer;
-
-
+import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
-import com.community.api.dto.AddCategoryDto;
-import com.community.api.dto.CustomProductWrapper;
 import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.AddressDTO;
+import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.CustomCustomer;
-import com.community.api.entity.CustomProduct;
 import com.community.api.services.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.exception.ExceptionHandlingService;
-import org.broadleafcommerce.common.persistence.Status;
-import org.broadleafcommerce.core.catalog.domain.Category;
+import com.community.api.utils.Document;
+import com.community.api.utils.DocumentType;
+import com.community.api.utils.ServiceProviderDocument;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.broadleafcommerce.profile.core.domain.Address;
 import org.broadleafcommerce.profile.core.domain.Customer;
@@ -25,19 +23,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
+import java.io.File;
 import java.lang.reflect.Field;
-import java.math.BigInteger;
 import java.util.*;
 
 @RestController
@@ -54,24 +47,27 @@ public class CustomerEndpoint {
     private CustomerService customerService;  //@TODO- do this task asap
     private ExceptionHandlingImplement exceptionHandling;
     private EntityManager em;
-    private TwilioService twilioService;
     private CustomCustomerService customCustomerService;
     private AddressService addressService;
     private CustomerAddressService customerAddressService;
     private JwtUtil jwtUtil;
-    private  ResponseService responseService;
 
 
     @Autowired
     private ExceptionHandlingService exceptionHandlingService;
 
     @Autowired
-    public void setResponseService(ResponseService responseService) {
-        this.responseService = responseService;
-    }
+    private  JwtUtil jwtTokenUtil;
 
     @Autowired
-    private CategoryService categoryService;
+    private  RoleService roleService;
+
+
+    @Autowired
+    private static ResponseService responseService;
+
+    @Autowired
+    private DocumentStorageService documentStorageService;
 
     @Autowired
     private CatalogService catalogService;
@@ -100,11 +96,6 @@ public class CustomerEndpoint {
     }
 
     @Autowired
-    public void setTwilioService(TwilioService twilioService) {
-        this.twilioService = twilioService;
-    }
-
-    @Autowired
     public void setCustomCustomerService(CustomCustomerService customCustomerService) {
         this.customCustomerService = customCustomerService;
     }
@@ -119,7 +110,6 @@ public class CustomerEndpoint {
         this.customerAddressService = customerAddressService;
         this.jwtUtil= jwtUtil;
     }
-
 
     @Autowired
     public void setJwtUtil(JwtUtil jwtUtil) {
@@ -150,11 +140,12 @@ public class CustomerEndpoint {
     @Transactional
     @RequestMapping(value = "update", method = RequestMethod.POST)
     public ResponseEntity<?> updateCustomer(@RequestBody CustomCustomer customerDetails, @RequestParam Long customerId) {
+
         try {
             if (customerService == null) {
                 return responseService.generateErrorResponse("Customer service is not initialized.",HttpStatus.INTERNAL_SERVER_ERROR);
-
             }
+
             CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
             if (customCustomer == null) {
                 return responseService.generateErrorResponse("No data found for this customerId",HttpStatus.NOT_FOUND);
@@ -171,6 +162,7 @@ public class CustomerEndpoint {
             if (customerDetails.getUsername() != null) {
                 existingCustomerByUsername = customerService.readCustomerByUsername(customerDetails.getUsername());
             }
+
             if (customerDetails.getEmailAddress() != null) {
                 existingCustomerByEmail = customerService.readCustomerByEmail(customerDetails.getEmailAddress());
             }
@@ -185,7 +177,8 @@ public class CustomerEndpoint {
             }
             customerDetails.setId(customerId);
             customerDetails.setMobileNumber(customCustomer.getMobileNumber());
-            customerDetails.setQualificationList(customCustomer.getQualificationList());
+            customerDetails.setQualificationDetailsList(customCustomer.getQualificationDetailsList());
+
             customerDetails.setCountryCode(customCustomer.getCountryCode());
             Customer customer = customerService.readCustomerById(customerId);
             //using reflections
@@ -203,6 +196,7 @@ public class CustomerEndpoint {
             if(customerDetails.getEmailAddress()!=null){
                 customer.setEmailAddress(customerDetails.getEmailAddress());
             }
+
             em.merge(customCustomer);
             return responseService.generateSuccessResponse("User details updated successfully : ",customer, HttpStatus.OK);
 
@@ -212,6 +206,421 @@ public class CustomerEndpoint {
 
         }
     }
+
+    @Transactional
+    @PostMapping("/upload-document")
+    public ResponseEntity<?> updateDocument(
+            @RequestParam Long customerId,
+            @RequestPart(value = "Aadhaar Card", required = false) MultipartFile aadharCard,
+            @RequestPart(value = "PAN Card", required = false) MultipartFile panCard,
+            @RequestPart(value = "Passport Size Photo", required = false) MultipartFile photo) {
+        try {
+            if (customerService == null) {
+                return responseService.generateErrorResponse("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
+            if (customCustomer == null) {
+                return responseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
+            }
+
+            Map<String, Object> responseData = new HashMap<>();
+            Map<String, MultipartFile> files = new HashMap<>();
+
+            if (aadharCard != null) {
+                files.put("Aadhar Card", aadharCard);
+            }
+            if (panCard != null) {
+                files.put("PAN Card", panCard);
+            }
+            if (photo != null) {
+                files.put("Passport Size Photo", photo);
+            }
+
+            for (Map.Entry<String, MultipartFile> entry : files.entrySet()) {
+                String documentType = entry.getKey();
+                MultipartFile file = entry.getValue();
+
+                ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(file, documentType, customerId, "customer");
+                Map<String, Object> responseBody = savedResponse.getBody();
+
+                if (savedResponse.getStatusCode() != HttpStatus.OK) {
+                    return responseService.generateErrorResponse("Error uploading " + documentType, HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+
+                System.out.println(documentType.trim() + " documentType.trim()");
+                // Find or create DocumentType
+                DocumentType documentTypeObj = em.createQuery(
+                                "SELECT dt FROM DocumentType dt WHERE dt.document_type_name = :documentTypeName", DocumentType.class)
+                        .setParameter("documentTypeName", documentType.trim())
+                        .getResultStream()
+                        .findFirst()
+                        .orElseGet(null);
+
+                String fileName = file.getOriginalFilename();
+                Document doc = new Document();
+                doc.setName(fileName);
+                String filePath = "avisoft"
+                        + File.separator
+                        + "customer"
+                        + File.separator
+                        + customerId
+                        + File.separator
+                        + documentType
+                        + File.separator
+                        + fileName;
+                doc.setFilePath(filePath);
+//                doc.setData(file.getBytes());
+                doc.setCustom_customer(customCustomer);
+                doc.setDocumentType(documentTypeObj);
+                em.persist(doc);
+
+                responseData.put(documentType, responseBody.get("data"));
+            }
+
+            return responseService.generateSuccessResponse("Documents uploaded successfully", responseData, HttpStatus.OK);
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return responseService.generateErrorResponse("Error updating documents", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @Transactional
+    @PostMapping("/upload-documents")
+    public ResponseEntity<?> updateDocuments(
+            @RequestParam Long customerId,
+            @RequestParam Map<String, MultipartFile> files,
+            @RequestHeader(value = "Authorization") String authHeader) {
+        try {
+
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return responseService.generateErrorResponse("Authorization header is missing or invalid.", HttpStatus.UNAUTHORIZED);
+            }
+            if (files.isEmpty()) {
+                return responseService.generateErrorResponse("No files provided for upload.", HttpStatus.BAD_REQUEST);
+            }
+
+            String jwtToken = authHeader.substring(7);
+            Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
+            Long tokenUserId = jwtTokenUtil.extractId(jwtToken);
+            String role = roleService.getRoleByRoleId(roleId).getRole_name();
+
+            if (!customerId.equals(tokenUserId)) {
+                return responseService.generateErrorResponse("Unauthorized request.", HttpStatus.UNAUTHORIZED);
+            }
+
+            if (roleService.findRoleName(roleId).equals(Constant.roleUser)) {
+                CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
+                if (customCustomer == null) {
+                    return responseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
+                }
+
+                Map<String, Object> responseData = new HashMap<>();
+                List<String> deletedDocumentMessages = new ArrayList<>();
+
+                // Handle file uploads and deletions
+                for (Map.Entry<String, MultipartFile> entry : files.entrySet()) {
+                    Integer fileNameId = Integer.parseInt(entry.getKey());
+                    MultipartFile file = entry.getValue();
+
+                    DocumentType documentTypeObj = em.createQuery(
+                                    "SELECT dt FROM DocumentType dt WHERE dt.document_type_id = :documentTypeId", DocumentType.class)
+                            .setParameter("documentTypeId", fileNameId)
+                            .getResultStream()
+                            .findFirst()
+                            .orElse(null);
+
+                    if (documentTypeObj == null) {
+                        return responseService.generateErrorResponse("Unknown document type for file: " + fileNameId, HttpStatus.BAD_REQUEST);
+                    }
+
+                    Document existingDocument = em.createQuery(
+                                    "SELECT d FROM Document d WHERE d.custom_customer = :customCustomer AND d.documentType = :documentType", Document.class)
+                            .setParameter("customCustomer", customCustomer)
+                            .setParameter("documentType", documentTypeObj)
+                            .getResultStream()
+                            .findFirst()
+                            .orElse(null);
+
+                    System.out.println(file.getContentType() + " file");
+                    if ((file.isEmpty() || file ==null) && existingDocument!=null) {
+                        if (existingDocument != null) {
+                            String filePath = existingDocument.getFilePath();
+                            System.out.println(filePath + " filePath");
+                            if (filePath != null) {
+                                File filesobj = new File(filePath);
+                                if (filesobj.exists()) {
+                                    filesobj.delete();
+                                }
+                            }
+
+                               existingDocument.setDocumentType(null);
+                               existingDocument.setFilePath(null);
+                               existingDocument.setName(null);
+
+
+                            deletedDocumentMessages.add("File for document type '" + documentTypeObj.getDocument_type_name() + "' has been deleted.");
+                        }
+                        continue;
+                    }
+
+                    // If the file is not empty and a document already exists, update the document
+                    if (existingDocument != null && (!file.isEmpty() || file !=null)) {
+                        String filePath = existingDocument.getFilePath();
+                        if (filePath != null) {
+                            File oldFile = new File(filePath);
+                            String oldFileName = oldFile.getName();
+                            String newFileName = file.getOriginalFilename();
+
+                            if (!newFileName.equals(oldFileName)) {
+                                oldFile.delete();
+                                documentStorageService.updateOrCreateDocument(existingDocument, file, documentTypeObj, customerId, role);
+                            }
+                        }
+                    } else {
+                        // If the file is not empty create the document
+                        if(!file.isEmpty() || file !=null){
+                            documentStorageService.createDocument(file, documentTypeObj, customCustomer, customerId, role);
+                        }
+                    }
+
+                    ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(file, documentTypeObj.getDocument_type_name(), customerId, role);
+                    Map<String, Object> responseBody = savedResponse.getBody();
+                    if (!deletedDocumentMessages.isEmpty()) {
+                        responseData.put("deletedMessages", deletedDocumentMessages);
+                    } else if (!file.isEmpty() || file !=null && savedResponse.getStatusCode() != HttpStatus.OK ) {
+                        String status = (String) responseBody.get("status");
+                        HttpStatus httpStatus = HttpStatus.valueOf((Integer) responseBody.get("status_code"));
+                        return responseService.generateErrorResponse((String) responseBody.get("message"), httpStatus);
+                    }
+
+                    responseData.put(documentTypeObj.getDocument_type_name(), responseBody.get("data"));
+                }
+
+            }else{
+                ServiceProviderEntity serviceProviderEntity = em.find(ServiceProviderEntity.class, customerId);
+                if (serviceProviderEntity == null) {
+                    return responseService.generateErrorResponse("No data found for this serviceProvider", HttpStatus.NOT_FOUND);
+                }
+
+                Map<String, Object> responseData = new HashMap<>();
+                List<String> deletedDocumentMessages = new ArrayList<>();
+
+                // Handle file uploads and deletions
+                for (Map.Entry<String, MultipartFile> entry : files.entrySet()) {
+                    Integer fileNameId = Integer.parseInt(entry.getKey());
+                    MultipartFile file = entry.getValue();
+
+                    DocumentType documentTypeObj = em.createQuery(
+                                    "SELECT dt FROM DocumentType dt WHERE dt.document_type_id = :documentTypeId", DocumentType.class)
+                            .setParameter("documentTypeId", fileNameId)
+                            .getResultStream()
+                            .findFirst()
+                            .orElse(null);
+
+                    if (documentTypeObj == null) {
+                        return responseService.generateErrorResponse("Unknown document type for file: " + fileNameId, HttpStatus.BAD_REQUEST);
+                    }
+
+                    ServiceProviderDocument existingDocument = em.createQuery(
+                                    "SELECT d FROM ServiceProviderDocument d WHERE d.serviceProviderEntity = :serviceProviderEntity AND d.documentType = :documentType", ServiceProviderDocument.class)
+                            .setParameter("serviceProviderEntity", serviceProviderEntity)
+                            .setParameter("documentType", documentTypeObj)
+                            .getResultStream()
+                            .findFirst()
+                            .orElse(null);
+
+                    if ((file.isEmpty() || file ==null) && existingDocument!=null) {
+                        if (existingDocument != null) {
+
+                            String filePath = existingDocument.getFilePath();
+                            if (filePath != null) {
+                                File filesobj = new File(filePath);
+                                if (filesobj.exists()) {
+                                    filesobj.delete();
+                                }
+                            }
+                            existingDocument.setDocumentType(null);
+                        existingDocument.setName(null);
+                        existingDocument.setFilePath(null);
+                        em.persist(existingDocument);
+
+                            deletedDocumentMessages.add("File for document type '" + documentTypeObj.getDocument_type_name() + "' has been deleted.");
+                        }
+                        continue;
+                    }
+
+                    // If the file is not empty and a document already exists, update the document
+                    if (existingDocument != null && (!file.isEmpty() || file !=null)) {
+                        String filePath = existingDocument.getFilePath();
+                        if (filePath != null) {
+                            File oldFile = new File(filePath);
+                            String oldFileName = oldFile.getName();
+                            String newFileName = file.getOriginalFilename();
+
+                            if (!newFileName.equals(oldFileName)) {
+                                oldFile.delete();
+                                documentStorageService.updateOrCreateServiceProvider(existingDocument, file, documentTypeObj, customerId, role);
+                            }
+                        }
+                    } else {
+                        // If the file is not empty create the document
+                        if(!file.isEmpty() || file !=null){
+                            documentStorageService.createDocumentServiceProvider(file, documentTypeObj, serviceProviderEntity, customerId, role);
+                        }
+                    }
+
+                    ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(file, documentTypeObj.getDocument_type_name(), customerId, role);
+                    Map<String, Object> responseBody = savedResponse.getBody();
+                    if (!deletedDocumentMessages.isEmpty()) {
+                        responseData.put("deletedMessages", deletedDocumentMessages);
+                    } else if (!file.isEmpty() || file !=null && savedResponse.getStatusCode() != HttpStatus.OK ) {
+                        String status = (String) responseBody.get("status");
+                        HttpStatus httpStatus = HttpStatus.valueOf((Integer) responseBody.get("status_code"));
+                        return responseService.generateErrorResponse((String) responseBody.get("message"), httpStatus);
+                    }
+
+                    responseData.put(documentTypeObj.getDocument_type_name(), responseBody.get("data"));
+                }
+                return responseService.generateSuccessResponse("Documents updated successfully", responseData, HttpStatus.OK);
+            }
+
+
+            return responseService.generateSuccessResponse("Invalid request", null, HttpStatus.BAD_REQUEST);
+
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return responseService.generateErrorResponse("Error updating documents: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+
+
+/*    @Transactional
+    @PostMapping("/upload-documents")
+    public ResponseEntity<?> updateDocuments(
+            @RequestParam Long customerId,
+            @RequestParam Map<String, MultipartFile> files, HttpServletRequest request) {
+        try {
+            if (customerService == null) {
+                return responseService.generateErrorResponse("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
+            if (customCustomer == null) {
+                return responseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
+            }
+
+            Map<String, Object> responseData = new HashMap<>();
+
+            for (Map.Entry<String, MultipartFile> entry : files.entrySet()) {
+                Integer fileNameId = Integer.parseInt(entry.getKey());
+                MultipartFile file = entry.getValue();
+
+                DocumentType documentTypeObj = em.createQuery(
+                                "SELECT dt FROM DocumentType dt WHERE dt.document_type_id = :documentTypeId", DocumentType.class)
+                        .setParameter("documentTypeId", fileNameId)
+                        .getResultStream()
+                        .findFirst()
+                        .orElse(null);
+                if (documentTypeObj == null) {
+                    return responseService.generateErrorResponse("Unknown document type for file: " + fileNameId, HttpStatus.BAD_REQUEST);
+                }
+
+                Document existingDocument = em.createQuery(
+                                "SELECT d FROM Document d WHERE d.custom_customer = :customCustomer AND d.documentType = :documentType", Document.class)
+                        .setParameter("customCustomer", customCustomer)
+                        .setParameter("documentType", documentTypeObj)
+                        .getResultStream()
+                        .findFirst()
+                        .orElse(null);
+
+                String filePath = null;
+
+                System.out.println(documentTypeObj.getDocument_type_id() + "id");
+                if (existingDocument != null && documentTypeObj.getDocument_type_id()!=13) {
+                    filePath = existingDocument.getFilePath();
+                    if (filePath != null) {
+                        File oldFile = new File(filePath);
+                        System.out.println("Attempting to delete file: " + oldFile.getAbsolutePath());
+
+                        if (oldFile.exists()) {
+                            String oldFileName = oldFile.getName();
+                            String newFileName = file.getOriginalFilename();
+                            if (!newFileName.equals(oldFileName)) {
+                                boolean deleted = oldFile.delete();
+                            }
+
+                        }
+                    }
+                }else if (documentTypeObj.getDocument_type_id() == 13) {
+                    Document newDocument = new Document();
+                    newDocument.setName(file.getOriginalFilename());
+                    newDocument.setCustomCustomer(customCustomer);
+                    newDocument.setDocumentType(documentTypeObj);
+                    em.persist(newDocument);
+
+                    String newFilePath = DocumentStorageService.BASE_DIRECTORY + File.separator + "avisoft"
+                            + File.separator + "customer" + File.separator + customerId
+                            + File.separator + documentTypeObj.getDocument_type_name()
+                            + File.separator + file.getOriginalFilename();
+                    newDocument.setFilePath(newFilePath);
+                    em.merge(newDocument);
+                }
+                else {
+                    Document newDocument = new Document();
+                    newDocument.setName(file.getOriginalFilename());
+                    newDocument.setCustomCustomer(customCustomer);
+                    newDocument.setDocumentType(documentTypeObj);
+                    em.persist(newDocument);
+                }
+
+                ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(file, documentTypeObj.getDocument_type_name(), customerId, "customer");
+                Map<String, Object> responseBody = savedResponse.getBody();
+                if (savedResponse.getStatusCode() != HttpStatus.OK) {
+                    return responseService.generateErrorResponse("Error uploading " + documentTypeObj.getDocument_type_name(), HttpStatus.INTERNAL_SERVER_ERROR);
+                }
+
+                String scheme = request.getScheme();
+                String serverName = request.getServerName();
+                String newFilePath = DocumentStorageService.BASE_DIRECTORY +  File.separator + "avisoft"
+                        + File.separator
+                        + "customer"
+                        + File.separator
+                        + customerId
+                        + File.separator
+                        + documentTypeObj.getDocument_type_name()
+                        + File.separator
+                        + file.getOriginalFilename();
+
+                if (existingDocument != null && documentTypeObj.getDocument_type_id()!=13) {
+                    existingDocument.setFilePath(newFilePath);
+                    em.merge(existingDocument);
+                } else {
+                    Document newDocument = em.createQuery(
+                                    "SELECT d FROM Document d WHERE d.custom_customer = :customCustomer AND d.documentType = :documentType", Document.class)
+                            .setParameter("customCustomer", customCustomer)
+                            .setParameter("documentType", documentTypeObj)
+                            .getResultStream()
+                            .findFirst()
+                            .orElse(null);
+                    if (newDocument != null) {
+                        newDocument.setFilePath(newFilePath);
+                        em.merge(newDocument);
+                    }
+                }
+
+                responseData.put(documentTypeObj.getDocument_type_name(), responseBody.get("data"));
+            }
+
+            return responseService.generateSuccessResponse("Documents uploaded successfully", responseData, HttpStatus.OK);
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return responseService.generateErrorResponse("Error updating documents: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }*/
 
     @Transactional
     @RequestMapping(value = "update-username", method = RequestMethod.POST)
@@ -442,10 +851,12 @@ public class CustomerEndpoint {
         addressDTO.setPhoneNumber(customCustomer.getMobileNumber());
         return addressDTO;
     }
-    public  ResponseEntity<?> createAuthResponse(String token, Customer customer ) {
+/*
+    public static ResponseEntity<?> createAuthResponse(String token, Customer customer ) {
         OtpEndpoint.ApiResponse authResponse = new OtpEndpoint.ApiResponse(token, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
         return responseService.generateSuccessResponse("Token details : ", authResponse, HttpStatus.OK);
     }
+*/
 
 
 

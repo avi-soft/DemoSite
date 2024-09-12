@@ -2,6 +2,7 @@ package com.community.api.endpoint.avisoft.controller.cart;
 import com.broadleafcommerce.rest.api.endpoint.BaseEndpoint;
 import com.community.api.component.Constant;
 import com.community.api.services.CartService;
+import com.community.api.services.ProductReserveCategoryFeePostRefService;
 import com.community.api.services.ResponseService;
 import com.community.api.services.SharedUtilityService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
@@ -55,7 +56,8 @@ public class CartEndPoint extends BaseEndpoint {
     public void setSharedUtilityService(SharedUtilityService sharedUtilityService) {
         this.sharedUtilityService=sharedUtilityService;
     }
-
+    @Autowired
+    private ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService;
     @Autowired
     public void setResponseService(ResponseService responseService) {
         this.responseService=responseService;
@@ -151,6 +153,7 @@ public class CartEndPoint extends BaseEndpoint {
             orderItemRequest.setItemAttributes(atrtributes);
             OrderItem orderItem = orderItemService.createOrderItem(orderItemRequest);
             List<OrderItem> items = cart.getOrderItems();
+            Map<String,Object>responseBody=new HashMap<>();
             boolean flag=false;
             for(OrderItem existingOrderItem:items)
             {
@@ -162,7 +165,9 @@ public class CartEndPoint extends BaseEndpoint {
             if(!flag)
                 items.add(orderItem);
             cart.setOrderItems(items);
-            return responseService.generateSuccessResponse("Cart updated",orderItem.getOrderItemAttributes().toString(), HttpStatus.OK);
+            responseBody.put("order_id",cart.getId());
+            responseBody.put("added_product_id",orderItem.getOrderItemAttributes().get("productId").getValue());
+            return responseService.generateSuccessResponse("Cart updated",responseBody, HttpStatus.OK);
         } catch (Exception e) {
             return responseService.generateErrorResponse("Error adding item to cart : "+e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -175,9 +180,11 @@ public class CartEndPoint extends BaseEndpoint {
                 return responseService.generateErrorResponse("One or more Serivces not initialized",HttpStatus.INTERNAL_SERVER_ERROR);
             }
             Customer customer = customerService.readCustomerById(customerId);
+            Map<String,Object>responseBody=new HashMap<>();
             if (customer != null) {
                 if (orderService.findOrderById(orderId) != null) {
-                    return responseService.generateSuccessResponse("Items in cart :",orderService.findOrderById(orderId).getOrderItems().size(), HttpStatus.OK);
+                    responseBody.put("number_of_items",orderService.findOrderById(orderId).getOrderItems().size());
+                    return responseService.generateSuccessResponse("Items in cart :",responseBody, HttpStatus.OK);
                 } else
                     return responseService.generateErrorResponse("No items found", HttpStatus.NOT_FOUND);
             } else
@@ -212,11 +219,12 @@ public class CartEndPoint extends BaseEndpoint {
                   Long productId=Long.parseLong(orderItem.getOrderItemAttributes().get("productId").getValue());
                     Product product = catalogService.findProductById(productId);
                     if (product != null) {
-                        Map<String,Object>productDetails=sharedUtilityService.createProductResponseMap(product);
+                        Map<String,Object>productDetails=sharedUtilityService.createProductResponseMap(product,orderItem);
                         products.add(productDetails);
-                            subTotal += product.getDefaultSku().getCost().doubleValue();
+                            subTotal =subTotal+ productReserveCategoryFeePostRefService.getCustomProductReserveCategoryFeePostRefByProductIdAndReserveCategoryId(product.getId(),1L).getFee();
                     }
                 }
+                response.put("cart_id",cart.getId());
                 response.put("products",products.toArray());
                 response.put("sub_total",subTotal);
                 return responseService.generateSuccessResponse("Cart items",response,HttpStatus.OK);

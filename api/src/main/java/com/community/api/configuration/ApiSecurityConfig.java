@@ -81,7 +81,7 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/swagger-ui.html/**","/v2/api-docs",  "/webjars/**","/images/**","/swagger-resources/**").permitAll()
+                .antMatchers("/swagger-ui.html/**","/v2/api-docs",  "/webjars/**","/images/**","/swagger-resources/**","/avisoftdocument/**","/files/**").permitAll()
                 .antMatchers("/otp/**","/swagger-resources/**", "/account/**", "/test/**","/categoryCustom/getProductsByCategoryId","/categoryCustom/getAllCategories").permitAll()
                 .anyRequest().authenticated()
                 .and()

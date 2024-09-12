@@ -4,6 +4,7 @@ package com.community.api.endpoint.serviceProvider;
 import com.community.api.entity.*;
 import com.community.api.utils.Document;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.micrometer.core.lang.Nullable;
@@ -27,6 +28,7 @@ import java.util.Set;
 @NoArgsConstructor
 @Getter
 @Setter
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class ServiceProviderEntity  {
 
     @Id
@@ -119,7 +121,7 @@ public class ServiceProviderEntity  {
             joinColumns = @JoinColumn(name = "service_provider_id"), // Foreign key for ServiceProvider
             inverseJoinColumns = @JoinColumn(name = "skill_id")) // Foreign key for Skill
     private List<Skill> skills;
-    @JsonBackReference
+
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "service_provider_id")
     private List<ServiceProviderAddress> spAddresses;
