@@ -1,8 +1,11 @@
 package com.community.api.services;
 import com.community.api.component.Constant;
+import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
+import com.community.api.entity.CustomCustomer;
 import com.community.api.services.exception.ExceptionHandlingService;
 import com.community.api.utils.Document;
 import com.community.api.utils.DocumentType;
+import com.community.api.utils.ServiceProviderDocument;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -41,11 +44,12 @@ public class DocumentStorageService {
 
     public ResponseEntity<Map<String, Object>> saveDocuments(MultipartFile file, String documentTypeStr, Long customerId, String role) {
         try {
-            if (!DocumentStorageService.isValidFileType(file)) {
+
+            if (!isValidFileType(file)) {
                 return ResponseEntity.badRequest().body(Map.of(
                         "status", ApiConstants.STATUS_ERROR,
                         "status_code", HttpStatus.BAD_REQUEST.value(),
-                        "message", "Invalid file type: " + file.getOriginalFilename()
+                        "message", "Invalid file type: "
                 ));
             }
 
@@ -88,8 +92,6 @@ public class DocumentStorageService {
     }
 
 
-
-
     /**
      * Saves a file to a dynamic directory structure.
      *
@@ -101,12 +103,12 @@ public class DocumentStorageService {
      */
     public void saveDocumentOndirctory(String customerId, String documentType, String fileName, InputStream fileInputStream, String role) throws IOException {
 
-        File baseDir = new File(BASE_DIRECTORY);
+        /*File baseDir = new File(BASE_DIRECTORY);
         if (!baseDir.exists()) {
             baseDir.mkdirs();
-        }
+        }*/
 
-        File avisoftDir = new File(baseDir, "avisoft");
+        File avisoftDir = new File("avisoftdocument");
         if (!avisoftDir.exists()) {
             avisoftDir.mkdirs();
         }
@@ -138,10 +140,19 @@ public class DocumentStorageService {
 
 
     public static boolean isValidFileType(MultipartFile file) {
-
         String[] allowedFileTypes = {"application/pdf", "image/jpeg", "image/png"};
-        return Arrays.asList(allowedFileTypes).contains(file.getContentType());
+        String contentType = file.getContentType();
+
+        System.out.println("MIME type: " + contentType);
+
+        boolean isContentTypeValid = Arrays.asList(allowedFileTypes).contains(contentType);
+
+        String fileName = file.getOriginalFilename();
+        boolean isExtensionValid = fileName != null && (fileName.endsWith(".pdf") || fileName.endsWith(".jpeg") || fileName.endsWith(".jpg") || fileName.endsWith(".png"));
+
+        return isContentTypeValid && isExtensionValid;
     }
+
 
     public List<DocumentType> getAllDocumentTypes() {
         return em.createQuery("SELECT dt FROM DocumentType dt", DocumentType.class).getResultList();
@@ -186,4 +197,85 @@ public class DocumentStorageService {
             saveDocumentType(document);
         }
     }
+
+
+    @Transactional
+    public void deleteDocument(Document document) {
+
+        String filePath = document.getFilePath();
+        System.out.println(filePath + " filePath");
+        if (filePath != null) {
+            File file = new File(filePath);
+            if (file.exists()) {
+                file.delete();
+            }
+        }
+        em.remove(document);
+    }
+
+    @Transactional
+    public void updateOrCreateDocument(Document existingDocument, MultipartFile file, DocumentType documentTypeObj, Long customerId, String role) {
+        String newFilePath = "avisoftdocument"
+                + File.separator + role + File.separator + customerId
+                + File.separator + documentTypeObj.getDocument_type_name()
+                + File.separator + file.getOriginalFilename();
+
+        existingDocument.setFilePath(newFilePath);
+        existingDocument.setName(file.getOriginalFilename());
+        em.merge(existingDocument);
+    }
+
+    @Transactional
+    public void createDocument(MultipartFile file, DocumentType documentTypeObj, CustomCustomer customCustomer, Long customerId, String role) {
+        Document newDocument = new Document();
+        newDocument.setName(file.getOriginalFilename());
+        newDocument.setCustom_customer(customCustomer);
+        newDocument.setDocumentType(documentTypeObj);
+
+
+        String newFilePath = "avisoftdocument"
+                + File.separator + role + File.separator + customerId
+                + File.separator + documentTypeObj.getDocument_type_name()
+                + File.separator + file.getOriginalFilename();
+
+
+        newDocument.setFilePath(newFilePath);
+        em.persist(newDocument);
+    }
+    @Transactional
+    public void createDocumentServiceProvider(MultipartFile file, DocumentType documentTypeObj, ServiceProviderEntity serviceProviderEntity, Long customerId, String role) {
+        ServiceProviderDocument newDocument = new ServiceProviderDocument();
+        newDocument.setName(file.getOriginalFilename());
+        newDocument.setServiceProviderEntity(serviceProviderEntity);
+        newDocument.setDocumentType(documentTypeObj);
+
+
+        String newFilePath = "avisoftdocument"
+                + File.separator + role + File.separator + customerId
+                + File.separator + documentTypeObj.getDocument_type_name()
+                + File.separator + file.getOriginalFilename();
+
+
+        newDocument.setFilePath(newFilePath);
+        em.persist(newDocument);
+    }
+    @Transactional
+    public void updateOrCreateServiceProvider(ServiceProviderDocument existingDocument, MultipartFile file, DocumentType documentTypeObj, Long customerId, String role) {
+        String newFilePath = "avisoftdocument"
+                + File.separator + role + File.separator + customerId
+                + File.separator + documentTypeObj.getDocument_type_name()
+                + File.separator + file.getOriginalFilename();
+
+        existingDocument.setFilePath(newFilePath);
+        existingDocument.setName(file.getOriginalFilename());
+        em.merge(existingDocument);
+    }
+    public String findRoleName(DocumentType documentTypeId) {
+        return entityManager.createQuery("SELECT dt.document_type_name FROM DocumentType dt WHERE dt.document_type_id = :documentTypeId", String.class)
+                .setParameter("documentTypeId", documentTypeId.getDocument_type_id())
+                .getResultStream()
+                .findFirst()
+                .orElse(null);
+    }
+
 }

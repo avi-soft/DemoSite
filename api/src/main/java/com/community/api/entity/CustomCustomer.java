@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.profile.core.domain.CustomerImpl;
 
 import javax.persistence.*;
@@ -54,6 +55,9 @@ public class CustomCustomer extends CustomerImpl {
     @Column(name = "sub_category")
     private String subcategory;
 
+    @OneToOne(cascade = CascadeType.ALL)
+    private Document domicile;
+
     @Column(name = "secondary_mobile_number")
     private String secondaryMobileNumber;
 
@@ -61,6 +65,23 @@ public class CustomCustomer extends CustomerImpl {
     private String whatsappNumber;
     @Column(name = "secondary_email")
     private String secondaryEmail;
+
+//    @JsonIgnore
+//    @OneToMany(mappedBy = "custom_customer", cascade = CascadeType.ALL, orphanRemoval = true)
+//    List<Document>documentList;
+
+   /* @JsonIgnore
+    @Nullable
+    @OneToMany(mappedBy = "custom_customer", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<Qualification>qualificationList;*/
+
+    @Nullable
+    @ManyToMany
+    @JoinTable(
+            name = "customer_saved_forms", // The name of the join table
+            joinColumns = @JoinColumn(name = "customer_id"), // Foreign key for ServiceProvider
+            inverseJoinColumns = @JoinColumn(name = "product_id")) // Foreign key for Skill
+    private List<CustomProduct>savedForms;
 
     @Nullable
     @OneToMany(mappedBy = "custom_customer", cascade = CascadeType.ALL, orphanRemoval = true)

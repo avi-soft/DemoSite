@@ -26,9 +26,18 @@ public class SkillService {
     private ExceptionHandlingImplement exceptionHandling;
     @Autowired
     private ResponseService responseService;
+    @Autowired
+    private SharedUtilityService sharedUtilityService;
+    @Autowired
+    private SanitizerService sanitizerService;
     @Transactional
     public ResponseEntity<?> addSkill(@RequestBody Map<String,Object> skill) {
         try{
+            if(!sharedUtilityService.validateInputMap(skill).equals(SharedUtilityService.ValidationResult.SUCCESS))
+            {
+                return ResponseService.generateErrorResponse("Invalid Request Body",HttpStatus.UNPROCESSABLE_ENTITY);
+            }
+            skill=sanitizerService.sanitizeInputMap(skill);
             String skillName=(String)skill.get("skill_name");
             if(skillName==null||skillName.isEmpty())
                 return responseService.generateErrorResponse("Error saving skill : Skill Name required", HttpStatus.BAD_REQUEST);

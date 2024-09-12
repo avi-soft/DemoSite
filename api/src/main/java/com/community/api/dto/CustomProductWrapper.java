@@ -12,6 +12,7 @@ import com.community.api.entity.CustomProduct;
 import com.community.api.entity.CustomProductState;
 import com.community.api.entity.CustomReserveCategory;
 import com.community.api.entity.Role;
+import com.community.api.services.ReserveCategoryService;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -19,6 +20,7 @@ import org.broadleafcommerce.common.rest.api.wrapper.APIWrapper;
 import org.broadleafcommerce.common.rest.api.wrapper.BaseWrapper;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.common.persistence.Status;
+import org.springframework.beans.factory.annotation.Autowired;
 
 
 @Data
@@ -94,7 +96,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
     @JsonProperty("exam_date_to")
     protected Date examDateTo;
 
-    public void wrapDetailsAddProduct(Product product, AddProductDto addProductDto, CustomJobGroup customJobGroup, CustomProductState customProductState, CustomApplicationScope customApplicationScope, CustomReserveCategory customReserveCategory, Long creatorUserId, Role creatorRole) {
+    public void wrapDetailsAddProduct(Product product, AddProductDto addProductDto, CustomJobGroup customJobGroup, CustomProductState customProductState, CustomApplicationScope customApplicationScope, Long creatorUserId, Role creatorRole, ReserveCategoryService reserveCategoryService) {
 
         this.id = product.getId();
         this.metaTitle = product.getMetaTitle();
@@ -115,14 +117,21 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
 
         this.displayTemplate = product.getDisplayTemplate();
 
-        ReserveCategoryDto reserveCategoryDto = new ReserveCategoryDto();
-        reserveCategoryDto.setProductId(product.getId());
-        reserveCategoryDto.setReserveCategoryId(addProductDto.getReservedCategory());
-        reserveCategoryDto.setReserveCategory(customReserveCategory.getReserveCategoryName());
-        reserveCategoryDto.setFee(addProductDto.getFee());
-        reserveCategoryDto.setPost(addProductDto.getPost());
-        reserveCategoryDto.setBornBefore(addProductDto.getBornBefore());
-        reserveCategoryDto.setBornAfter(addProductDto.getBornAfter());
+        for(int i=0; i<addProductDto.getReservedCategory().size(); i++) {
+
+            CustomReserveCategory customReserveCategory = reserveCategoryService.getReserveCategoryById(addProductDto.getReservedCategory().get(i).reserveCategory);
+
+            ReserveCategoryDto reserveCategoryDto = new ReserveCategoryDto();
+            reserveCategoryDto.setProductId(product.getId());
+            reserveCategoryDto.setReserveCategoryId(addProductDto.getReservedCategory().get(i).getReserveCategory());
+            reserveCategoryDto.setReserveCategory(customReserveCategory.getReserveCategoryName());
+            reserveCategoryDto.setFee(addProductDto.getReservedCategory().get(i).getFee());
+            reserveCategoryDto.setPost(addProductDto.getReservedCategory().get(i).getPost());
+            reserveCategoryDto.setBornBefore(addProductDto.getReservedCategory().get(i).getBornBefore());
+            reserveCategoryDto.setBornAfter(addProductDto.getReservedCategory().get(i).getBornAfter());
+
+            reserveCategoryDtoList.add(reserveCategoryDto);
+        }
 
         this.platformFee = addProductDto.getPlatformFee();
         this.notifyingAuthority = addProductDto.notifyingAuthority;
@@ -130,7 +139,6 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.customApplicationScope = customApplicationScope;
         this.customJobGroup = customJobGroup;
         this.customProductState = customProductState;
-        this.reserveCategoryDtoList.add(reserveCategoryDto);
 
         this.modifiedDate = product.getActiveStartDate();
         this.creatorUserId = creatorUserId;

@@ -2,22 +2,24 @@ package com.community.api.endpoint.avisoft.controller.Document;
 
 import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
+import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.Privileges;
-import com.community.api.services.FileService;
-import com.community.api.services.PrivilegeService;
-import com.community.api.services.ResponseService;
-import com.community.api.services.RoleService;
+import com.community.api.services.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.utils.Document;
 import com.community.api.utils.DocumentType;
+import com.community.api.utils.ServiceProviderDocument;
+import com.twilio.twiml.voice.Connect;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
@@ -43,10 +45,13 @@ public class DocumentEndpoint {
     private FileService fileService;
 
     @Autowired
+   private DocumentStorageService documentStorageService;
+
+    @Autowired
     private RoleService roleService;
     private EntityManager entityManager;
     private ExceptionHandlingImplement exceptionHandling;
-   private ResponseService responseService;
+    private ResponseService responseService;
     public DocumentEndpoint(EntityManager entityManager,ExceptionHandlingImplement exceptionHandling,ResponseService responseService)
     {
         this.entityManager=entityManager;
@@ -100,6 +105,9 @@ public class DocumentEndpoint {
     public ResponseEntity<?> getAllDocuments() {
         try {
             List<DocumentType> documentTypes = entityManager.createQuery("SELECT dt FROM DocumentType dt", DocumentType.class).getResultList();
+            if (documentTypes.isEmpty()) {
+                return responseService.generateErrorResponse("No document found",HttpStatus.NOT_FOUND);
+            }
             return responseService.generateSuccessResponse("Document Types retrieved successfully",documentTypes, HttpStatus.OK);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
@@ -108,36 +116,79 @@ public class DocumentEndpoint {
     }
 
     @GetMapping("/get-document-of-customer")
-    public ResponseEntity<?> getDocumentOfCustomer(@RequestParam Long customerId, HttpServletRequest request) {
+    public ResponseEntity<?> getDocumentOfCustomer(
+            @RequestParam Long customerId,
+            @RequestParam(required = false) Integer role,
+            HttpServletRequest request) {
         try {
-            CustomCustomer customer = entityManager.find(CustomCustomer.class, customerId);
-            if (customer == null) {
-                return responseService.generateErrorResponse("Customer not found", HttpStatus.NOT_FOUND);
+
+            if(role!=null){
+                if (roleService.findRoleName(role).equals(Constant.SERVICE_PROVIDER)) {
+
+                    ServiceProviderEntity serviceProviderEntity = entityManager.find(ServiceProviderEntity.class,customerId);
+
+                    if(serviceProviderEntity==null){
+                        return responseService.generateErrorResponse("Data not found", HttpStatus.NOT_FOUND);
+
+                    }
+                    StringBuilder jpql = new StringBuilder("SELECT d FROM ServiceProviderDocument d WHERE d.serviceProviderEntity = :serviceProviderEntity");
+                    jpql.append(" AND d.filePath != null");
+                    TypedQuery<ServiceProviderDocument> query1 = entityManager.createQuery(jpql.toString(), ServiceProviderDocument.class);
+                    query1.setParameter("serviceProviderEntity", serviceProviderEntity);
+                    List<ServiceProviderDocument> serviceProviderDocuments = query1.getResultList();
+                    if (serviceProviderDocuments.isEmpty()) {
+                        return responseService.generateErrorResponse("No documents found", HttpStatus.NOT_FOUND);
+                    }
+                    List<DocumentResponse> documentResponses = serviceProviderDocuments.stream()
+                            .map(serviceProviderDocument -> {
+                                String fileName = serviceProviderDocument.getName();
+                                String filePath = serviceProviderDocument.getFilePath();
+                                String fileUrl = fileService.getFileUrl(filePath, request);
+                                String document_name = documentStorageService.findRoleName(serviceProviderDocument.getDocumentType());
+
+                                return new DocumentResponse(fileName, fileUrl,document_name);
+                            })
+                            .collect(Collectors.toList());
+                    return responseService.generateSuccessResponse("Documents retrieved successfully", documentResponses, HttpStatus.OK);
+                }
+
+            }else{
+                CustomCustomer customer = entityManager.find(CustomCustomer.class, customerId);
+                if (customer == null) {
+                    return responseService.generateErrorResponse("Customer not found", HttpStatus.NOT_FOUND);
+                }
+
+                StringBuilder jpql = new StringBuilder("SELECT d FROM Document d WHERE d.custom_customer = :customer");
+                jpql.append(" AND d.filePath != null");
+                TypedQuery<Document> query = entityManager.createQuery(jpql.toString(), Document.class);
+                query.setParameter("customer", customer);
+                List<Document> documents = query.getResultList();
+                if (documents.isEmpty()) {
+                    return responseService.generateErrorResponse("No documents found", HttpStatus.NOT_FOUND);
+                }
+                List<DocumentResponse> documentResponses = documents.stream()
+                        .map(document -> {
+                            String fileName = document.getName();
+                            String filePath = document.getFilePath();
+                            String fileUrl = fileService.getFileUrl(filePath, request);
+
+                            String document_name = documentStorageService.findRoleName(document.getDocumentType());
+
+                            return new DocumentResponse(fileName, fileUrl,document_name);
+                        })
+                        .collect(Collectors.toList());
+                return responseService.generateSuccessResponse("Documents retrieved successfully", documentResponses, HttpStatus.OK);
+
             }
-            List<Document> documents = entityManager.createQuery("SELECT d FROM Document d WHERE d.custom_customer = :customer", Document.class)
-                    .setParameter("customer", customer)
-                    .getResultList();
+            return responseService.generateErrorResponse("Invalid request", HttpStatus.BAD_REQUEST);
 
-            if (documents.isEmpty()) {
-                return responseService.generateResponse(HttpStatus.OK, "No document found", null);
-            }
 
-            List<DocumentResponse> documentResponses = documents.stream()
-                    .map(document -> {
-                        String fileName = document.getName();
-                        String filePath = document.getFilePath();
-                        String fileUrl = fileService.getFileUrl(filePath, request);
-                        File file = fileService.getFile(filePath);
-
-                        return new DocumentResponse(fileName, fileUrl, file);
-                    })
-                    .collect(Collectors.toList());
-            return responseService.generateSuccessResponse("Documents retrieved successfully", documentResponses, HttpStatus.OK);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Error retrieving Documents", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
     @GetMapping("/download-file")
     public void downloadFile(@RequestParam("filePath") String filePath, HttpServletRequest request, HttpServletResponse response) {
         String fileUrl = fileService.getFileUrl(filePath, request);
@@ -162,12 +213,15 @@ public class DocumentEndpoint {
 
         private String fileName;
         private String fileUrl;
-        private File FileUrl;
 
-        public DocumentResponse(String fileName, String fileUrl, File FileUrl) {
+        private String document_name;
+
+
+        public DocumentResponse(String fileName, String fileUrl,String document_name) {
             this.fileName = fileName;
             this.fileUrl = fileUrl;
-            this.FileUrl = FileUrl;
+            this.document_name = document_name;
+
         }
 
         public String getFileName() {
@@ -177,8 +231,9 @@ public class DocumentEndpoint {
         public String getFileUrl() {
             return fileUrl;
         }
-        public File getFileUrl1() {
-            return FileUrl;
+
+        public String  getDocument_name(){
+            return document_name;
         }
 
     }

@@ -65,8 +65,8 @@ public class QualificationDetails {
 //    private boolean isYearOfPassingValid() {
 //        return year_of_passing <= Year.now().getValue();
 //    }
-    @ManyToOne
     @JsonBackReference
+    @ManyToOne
     @JoinColumn(name = "custom_customer_id")
     private CustomCustomer custom_customer;
 

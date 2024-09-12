@@ -5,8 +5,12 @@ import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.*;
 import com.community.api.services.DistrictService;
 import com.community.api.services.ResponseService;
+import com.community.api.entity.CustomCustomer;
+import com.community.api.entity.ServiceProviderAddress;
+import com.community.api.entity.ServiceProviderAddressRef;
+import com.community.api.entity.Skill;
+import com.community.api.services.*;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
-import com.community.api.services.TwilioServiceForServiceProvider;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +50,10 @@ public class ServiceProviderController {
     private CustomerService customerService;
     @Autowired
     private DistrictService districtService;
+    @Autowired
+    private SharedUtilityService sharedUtilityService;
+    @Autowired
+    private SanitizerService sanitizerService;
 
     @Transactional
     @PostMapping("/assign-skill")
@@ -94,6 +102,11 @@ public class ServiceProviderController {
     public ResponseEntity<?>deleteServiceProvider(@RequestBody Map<String,Object>passwordDetails,@RequestParam long userId)
     {
         try {
+            if(!sharedUtilityService.validateInputMap(passwordDetails).equals(SharedUtilityService.ValidationResult.SUCCESS))
+            {
+                return ResponseService.generateErrorResponse("Invalid Request Body",HttpStatus.UNPROCESSABLE_ENTITY);
+            }
+            passwordDetails=sanitizerService.sanitizeInputMap(passwordDetails);
             String password = (String) passwordDetails.get("password");
            // String newPassword = (String) passwordDetails.get("newPassword");
             ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, userId);

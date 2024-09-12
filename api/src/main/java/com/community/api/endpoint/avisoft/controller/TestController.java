@@ -8,9 +8,11 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 
+import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import java.security.Key;
 import java.util.Base64;
@@ -26,22 +28,25 @@ public class TestController {
     private JwtUtil jwtUtil;
 
     @Autowired
+    private EntityManager entityManager;
+
+    @Autowired
     private DocumentStorageService documentStorageService;
 
 
     private CustomCustomerService customCustomerService;
-    public TestController(RateLimiterService rateLimiterService,ExceptionHandlingImplement exceptionHandling,JwtUtil jwtUtil,CustomCustomerService customCustomerService) {
+
+    public TestController(RateLimiterService rateLimiterService, ExceptionHandlingImplement exceptionHandling, JwtUtil jwtUtil, CustomCustomerService customCustomerService) {
         this.rateLimiterService = rateLimiterService;
         this.exceptionHandling = exceptionHandling;
-        this.jwtUtil=jwtUtil;
-        this.customCustomerService=customCustomerService;
+        this.jwtUtil = jwtUtil;
+        this.customCustomerService = customCustomerService;
     }
-
 
 
     @GetMapping("/catch-error")
     public ResponseEntity<String> catcherror() {
-        
+
         try {
             int x = 5 / 0;
         } catch (Exception e) {
@@ -64,7 +69,7 @@ public class TestController {
 
     @GetMapping("/api/rate-limit")
     public String rateLimit(@RequestParam String userId, HttpServletRequest request) {
-        Bucket bucket = rateLimiterService.resolveBucket(userId,"/api/rate-limit");
+        Bucket bucket = rateLimiterService.resolveBucket(userId, "/api/rate-limit");
 
         if (bucket.tryConsume(1)) {
             return "Request successful!";
@@ -79,4 +84,19 @@ public class TestController {
         return "Documents inserted successfully";
     }
 
+
+    @PostMapping("/alter/document")
+    @Transactional
+    public String alterDocument(@RequestParam String userId) {
+        String sql = "ALTER TABLE Document ADD COLUMN role INTEGER";
+
+        try {
+            entityManager.createNativeQuery(sql).executeUpdate();
+            return "Column 'role' added to Document table successfully";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Error occurred while altering the Document table";
+
+        }
+    }
 }
