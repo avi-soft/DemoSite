@@ -11,8 +11,6 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AddReserveCategoryDto {
-    @JsonProperty("product_id")
-    Long productId;
     @JsonProperty("fee")
     Double fee;
     @JsonProperty("post")
