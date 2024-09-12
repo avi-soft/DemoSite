@@ -14,20 +14,37 @@ import java.util.List;
 
 @Service
 public class ReserveCategoryDtoService {
+    private EntityManager entityManager;
+
+    private ExceptionHandlingService exceptionHandlingService;
+    private ProductReserveCategoryBornBeforeAfterRefService productReserveCategoryBornBeforeAfterRefService;
+    private ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService;
+    private ReserveCategoryService reserveCategoryService;
+
     @PersistenceContext
-    protected EntityManager entityManager;
+    public void setEntityManager(EntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
 
     @Autowired
-    protected ExceptionHandlingService exceptionHandlingService;
+    public void setExceptionHandlingService(ExceptionHandlingService exceptionHandlingService) {
+        this.exceptionHandlingService = exceptionHandlingService;
+    }
 
     @Autowired
-    ProductReserveCategoryBornBeforeAfterRefService productReserveCategoryBornBeforeAfterRefService;
+    public void setProductReserveCategoryBornBeforeAfterRefService(ProductReserveCategoryBornBeforeAfterRefService productReserveCategoryBornBeforeAfterRefService) {
+        this.productReserveCategoryBornBeforeAfterRefService = productReserveCategoryBornBeforeAfterRefService;
+    }
 
     @Autowired
-    ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService;
+    public void setProductReserveCategoryFeePostRefService(ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService) {
+        this.productReserveCategoryFeePostRefService = productReserveCategoryFeePostRefService;
+    }
 
     @Autowired
-    ReserveCategoryService reserveCategoryService;
+    public void setReserveCategoryService(ReserveCategoryService reserveCategoryService) {
+        this.reserveCategoryService = reserveCategoryService;
+    }
 
     public List<ReserveCategoryDto> getReserveCategoryDto(Long productId) {
         try{

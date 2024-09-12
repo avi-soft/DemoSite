@@ -13,6 +13,7 @@ import com.community.api.services.*;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.broadleafcommerce.profile.core.service.CustomerService;
+import org.ehcache.spi.service.ServiceProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -189,7 +190,35 @@ public class ServiceProviderController {
         }
     }
 
+
     @Transactional
+
+
+
+
+
+
+    @GetMapping("/get-all-service-providers")
+    public ResponseEntity<?> getAllServiceProviders(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit)
+    {
+        try {
+            // Calculate the start position for pagination
+            int startPosition = page * limit;
+            // Create the query
+            TypedQuery<ServiceProviderEntity> query = entityManager.createQuery(Constant.GET_ALL_SERVICE_PROVIDERS, ServiceProviderEntity.class);
+            // Apply pagination
+            query.setFirstResult(startPosition);
+            query.setMaxResults(limit);
+            List<ServiceProviderEntity> results = query.getResultList();
+            return ResponseService.generateSuccessResponse("List of service providers: ", results, HttpStatus.OK);
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseService.generateErrorResponse("Some issue in fetching service providers: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
     @GetMapping("/get-all-details/{serviceProviderId}")
     public ResponseEntity<?> getAllDetails(@PathVariable Long serviceProviderId)
     {

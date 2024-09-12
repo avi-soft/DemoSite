@@ -18,17 +18,25 @@ import java.util.List;
 @Service
 public class ProductReserveCategoryFeePostRefService {
 
-    private final ExceptionHandlingService exceptionHandlingService;
-    private final ProductService productService;
-    private final ReserveCategoryService reserveCategoryService;
+    private ExceptionHandlingService exceptionHandlingService;
+    private ProductService productService;
+    private ReserveCategoryService reserveCategoryService;
 
     @PersistenceContext
     protected EntityManager entityManager;
 
     @Autowired
-    public ProductReserveCategoryFeePostRefService(ExceptionHandlingService exceptionHandlingService, ProductService productService, ReserveCategoryService reserveCategoryService) {
+    public void setExceptionHandlingService(ExceptionHandlingService exceptionHandlingService) {
         this.exceptionHandlingService = exceptionHandlingService;
+    }
+
+    @Autowired
+    public void setProductService(ProductService productService) {
         this.productService = productService;
+    }
+
+    @Autowired
+    public void setReserveCategoryService(ReserveCategoryService reserveCategoryService) {
         this.reserveCategoryService = reserveCategoryService;
     }
 
