@@ -1,5 +1,6 @@
 package com.community.api.endpoint.avisoft.controller.Customer;
 import com.community.api.component.JwtUtil;
+import com.community.api.dto.RetrieveCustomerDetailDto;
 import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.AddressDTO;
 import com.community.api.entity.CustomCustomer;
@@ -29,6 +30,7 @@ import javax.transaction.Transactional;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/customer",
@@ -201,6 +203,70 @@ public class CustomerEndpoint {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Error updating", HttpStatus.INTERNAL_SERVER_ERROR);
 
+        }
+    }
+
+    @Transactional
+    @RequestMapping(value = "/get-customer-details/{customerId}", method = RequestMethod.GET)
+    public ResponseEntity<?> getUserDetails(@PathVariable Long customerId) {
+        try {
+            CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
+            if (customCustomer == null) {
+                return responseService.generateErrorResponse("Customer not found", HttpStatus.NOT_FOUND);
+            }
+
+            RetrieveCustomerDetailDto dto = new RetrieveCustomerDetailDto();
+            dto.setId(customCustomer.getId()); // If inherited from CustomerImpl
+            dto.setAuditable(customCustomer.getAuditable());
+            dto.setUsername(customCustomer.getUsername());
+            dto.setPassword(customCustomer.getPassword());
+            dto.setExternalId(customCustomer.getExternalId());
+            dto.setChallengeQuestion(customCustomer.getChallengeQuestion());
+            dto.setChallengeAnswer(customCustomer.getChallengeAnswer());
+            dto.setCustomerLocale(customCustomer.getCustomerLocale());
+            dto.setCustomerAttributes(customCustomer.getCustomerAttributes());
+            dto.setCustomerPhones(customCustomer.getCustomerPhones());
+            dto.setCustomerPayments(customCustomer.getCustomerPayments());
+            dto.setTaxExemptionCode(customCustomer.getTaxExemptionCode());
+            dto.setUnencodedPassword(customCustomer.getUnencodedPassword());
+            dto.setUnencodedChallengeAnswer(customCustomer.getUnencodedChallengeAnswer());
+            dto.setAnonymous(customCustomer.isAnonymous());
+            dto.setCookied(customCustomer.isCookied());
+            dto.setLoggedIn(customCustomer.isLoggedIn());
+            dto.setTransientProperties(customCustomer.getTransientProperties());
+
+
+            dto.setFirstName(customCustomer.getFirstName());
+            dto.setLastName(customCustomer.getLastName());
+            dto.setEmailAddress(customCustomer.getEmailAddress());
+            dto.setMobileNumber(customCustomer.getMobileNumber());
+            dto.setCountryCode(customCustomer.getCountryCode());
+            dto.setOtp(customCustomer.getOtp());
+            dto.setFathersName(customCustomer.getFathersName());
+            dto.setMothersName(customCustomer.getMothersName());
+            dto.setDob(customCustomer.getDob());
+            dto.setGender(customCustomer.getGender());
+            dto.setAdharNumber(customCustomer.getAdharNumber());
+            dto.setCategory(customCustomer.getCategory());
+            dto.setSubcategory(customCustomer.getSubcategory());
+            dto.setSecondaryMobileNumber(customCustomer.getSecondaryMobileNumber());
+            dto.setWhatsappNumber(customCustomer.getWhatsappNumber());
+            dto.setSecondaryEmail(customCustomer.getSecondaryEmail());
+
+            List<AddressDTO> addressDtos = customCustomer.getCustomerAddresses().stream()
+                    .map(this::makeAddressDTO)
+                    .collect(Collectors.toList());
+
+            dto.setCustomerAddresses(addressDtos);
+
+            // Manually set the QualificationDetails and Document lists
+            dto.setQualificationDetailsList(customCustomer.getQualificationDetailsList());
+            dto.setDocuments(customCustomer.getDocuments());
+            return responseService.generateSuccessResponse("User details retrieved successfully", dto, HttpStatus.OK);
+
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return responseService.generateErrorResponse("Error retrieving user details", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -739,6 +805,7 @@ public class CustomerEndpoint {
     public AddressDTO makeAddressDTO(CustomerAddress customerAddress)
     {
         AddressDTO addressDTO=new AddressDTO();
+        addressDTO.setAddressId(customerAddress.getAddress().getId());
         addressDTO.setAddress(customerAddress.getAddress().getAddressLine1());
         addressDTO.setPinCode(customerAddress.getAddress().getPostalCode());
         addressDTO.setState(customerAddress.getAddress().getStateProvinceRegion());
@@ -753,8 +820,6 @@ public class CustomerEndpoint {
         OtpEndpoint.ApiResponse authResponse = new OtpEndpoint.ApiResponse(token, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
         return responseService.generateSuccessResponse("Token details : ", authResponse, HttpStatus.OK);
     }
-
-
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout(@RequestBody Map<String, String> request) {

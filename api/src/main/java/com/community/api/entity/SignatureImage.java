@@ -1,5 +1,6 @@
 package com.community.api.entity;
-
+import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,7 +10,7 @@ import javax.persistence.*;
 @Entity
 @Data
 @NoArgsConstructor
-public class Image {
+public class SignatureImage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,4 +30,10 @@ public class Image {
 
     @Column(name="file_path")
     private String file_path;
+
+    @JsonBackReference
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "service_provider_id")
+    private ServiceProviderEntity serviceProvider;
 }
+

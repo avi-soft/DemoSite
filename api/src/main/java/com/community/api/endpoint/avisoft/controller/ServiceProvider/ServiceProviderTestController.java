@@ -31,22 +31,27 @@ public class ServiceProviderTestController {
         return responseService.generateResponse(HttpStatus.OK,"Test started",test);
     }
 
-    @PostMapping("/{testId}/upload-resized-image")
-    public ResponseEntity<?> uploadResizedImage(@PathVariable Long testId, @RequestParam("resizedImage") MultipartFile resizedImage) throws Exception {
-        ServiceProviderTest test = testService.uploadResizedImage(testId, resizedImage);
+    @PostMapping("/{serviceProviderId}/{testId}/upload-resized-image")
+    public ResponseEntity<?> uploadResizedImage(@PathVariable Long serviceProviderId,@PathVariable Long testId, @RequestParam("resizedImage") MultipartFile resizedImage) throws Exception {
+        ServiceProviderTest test = testService.uploadResizedImage(serviceProviderId,testId, resizedImage);
         return responseService.generateResponse(HttpStatus.OK,"Image is uploaded",test);
-
     }
-    @PostMapping("/{testId}/submit-text")
-    public ResponseEntity<?> submitTypedText(@PathVariable Long testId, @RequestBody SubmitTextDto submitTextDto) throws EntityNotFoundException{
-        ServiceProviderTest test = testService.submitTypedText(testId, submitTextDto.getTypedText());
+
+    @PostMapping("/{serviceProviderId}/{testId}/submit-text")
+    public ResponseEntity<?> submitTypedText(@PathVariable Long serviceProviderId,@PathVariable Long testId, @RequestBody SubmitTextDto submitTextDto) throws Exception {
+        ServiceProviderTest test = testService.submitTypedText(serviceProviderId,testId, submitTextDto.getTypedText());
         return responseService.generateResponse(HttpStatus.OK,"Text is submitted",test);
     }
 
-    @PostMapping("/{testId}/upload-resized-signature")
-    public ResponseEntity<?> uploadResizedSignature(@PathVariable Long testId, @RequestParam("resizedSignature") MultipartFile resizedSignature) throws Exception {
-        ServiceProviderTest test = testService.uploadSignatureImage(testId, resizedSignature);
+    @PostMapping("/{serviceProviderId}/{testId}/upload-resized-signature")
+    public ResponseEntity<?> uploadResizedSignature(@PathVariable Long serviceProviderId,@PathVariable Long testId, @RequestParam("resizedSignature") MultipartFile resizedSignature) throws Exception {
+        ServiceProviderTest test = testService.uploadSignatureImage(serviceProviderId,testId, resizedSignature);
         return responseService.generateResponse(HttpStatus.OK,"Signature image is uploaded",test);
+    }
+
+    @GetMapping("/{serviceProviderId}/getAll")
+    public ResponseEntity<?> getAllTests(@PathVariable Long serviceProviderId) throws EntityNotFoundException, RuntimeException, EntityDoesNotExistsException, CustomerDoesNotExistsException {
+        return responseService.generateSuccessResponse("All tests are found", testService.getServiceProviderTestByServiceProviderId(serviceProviderId), HttpStatus.OK);
     }
 
     @ExceptionHandler({ EntityDoesNotExistsException.class, EntityNotFoundException.class, RuntimeException.class,IllegalArgumentException.class, Exception.class})
@@ -69,7 +74,12 @@ public class ServiceProviderTestController {
         }
         else if (e instanceof Exception) {
             status = HttpStatus.BAD_REQUEST;
-            message = "Uploaded image is different from expected image";
+            message = "";
+        }
+        else if(e instanceof RuntimeException)
+        {
+            status= HttpStatus.OK;
+            message= "Service Provider test list is empty";
         }
         else {
             status = HttpStatus.BAD_REQUEST;

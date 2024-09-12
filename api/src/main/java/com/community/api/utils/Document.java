@@ -1,13 +1,11 @@
 package com.community.api.utils;
 
 import com.community.api.entity.CustomCustomer;
-import com.community.api.utils.DocumentType;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.*;
 
@@ -30,6 +28,7 @@ public class Document {
 
     @ManyToOne
     @JoinColumn(name = "custom_customer_id")
+    @JsonBackReference
     private CustomCustomer custom_customer;
 
     @ManyToOne

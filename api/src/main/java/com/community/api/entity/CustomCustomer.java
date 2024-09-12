@@ -62,7 +62,6 @@ public class CustomCustomer extends CustomerImpl {
     @Column(name = "secondary_email")
     private String secondaryEmail;
 
-    @JsonIgnore
     @Nullable
     @OneToMany(mappedBy = "custom_customer", cascade = CascadeType.ALL, orphanRemoval = true)
     List<QualificationDetails> qualificationDetailsList;

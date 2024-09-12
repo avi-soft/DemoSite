@@ -12,6 +12,7 @@ import java.util.Iterator;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
+import javax.transaction.Transactional;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -28,18 +29,10 @@ public class ImageService {
         this.entityManager = entityManager;
     }
 
-//    public Image saveImage(MultipartFile file) throws IOException {
-//        Image image = new Image();
-//        image.setFile_name(file.getOriginalFilename());
-//        image.setFile_type(file.getContentType());
-//        image.setImage_data(file.getBytes());
-//
-//        entityManager.persist(image);
-//        return image;
-//    }
+@Transactional
 public Image saveImage(MultipartFile file) throws IOException {
     // Define the directory where you want to store the images
-    String uploadDir = "C:/Users/91774/Documents/RandomImages";
+    String uploadDir = "C:\\Avisoft\\RandomImages";
 
     // Create the directory if it doesn't exist
     File directory = new File(uploadDir);
@@ -47,19 +40,22 @@ public Image saveImage(MultipartFile file) throws IOException {
         directory.mkdirs();
     }
 
-    // Generate the file path
-    String filePath = uploadDir + file.getOriginalFilename();
+    byte[] fileBytes = file.getBytes();
+    // Generate the file path (append the filename properly with a separator)
+    String filePath = uploadDir + File.separator + file.getOriginalFilename();
 
     // Save the file to the directory
     File destinationFile = new File(filePath);
+
+    // Transfer the file to the destination immediately
     file.transferTo(destinationFile);
 
     // Create and populate the Image entity
     Image image = new Image();
     image.setFile_name(file.getOriginalFilename());
     image.setFile_type(file.getContentType());
-    image.setImage_data(file.getBytes()); // Optionally, you can store the file as byte data or skip this if you only want to store the path
-    image.setFile_path(filePath); // Store the file path
+    image.setImage_data(fileBytes);
+    image.setFile_path(filePath); // Store the file path in the database
 
     // Persist the image entity to the database
     entityManager.persist(image);

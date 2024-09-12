@@ -1,4 +1,5 @@
 package com.community.api.entity;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -65,9 +66,8 @@ public class QualificationDetails {
 //        return year_of_passing <= Year.now().getValue();
 //    }
     @ManyToOne
-    @JsonIgnore
+    @JsonBackReference
     @JoinColumn(name = "custom_customer_id")
     private CustomCustomer custom_customer;
-
 
 }
