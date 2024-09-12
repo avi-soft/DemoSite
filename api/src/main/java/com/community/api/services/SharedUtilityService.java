@@ -34,10 +34,19 @@ import java.util.Map;
 
 @Service
 public class SharedUtilityService {
-    @Autowired
     private EntityManager entityManager;
+    private ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService;
+
     @Autowired
-    private  ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService;
+    public void setEntityManager(EntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
+
+    @Autowired
+    public void setProductReserveCategoryFeePostRefService(ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService) {
+        this.productReserveCategoryFeePostRefService = productReserveCategoryFeePostRefService;
+    }
+
     public long findCount(String queryString) {
         TypedQuery<Long> query = entityManager.createQuery(queryString, Long.class);
         return query.getSingleResult();
