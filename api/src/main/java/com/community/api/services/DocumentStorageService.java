@@ -140,14 +140,17 @@ public class DocumentStorageService {
 
 
     public static boolean isValidFileType(MultipartFile file) {
-        String[] allowedFileTypes = {"application/pdf", "image/jpeg", "image/png"};
+        String[] allowedFileTypes = {"application/pdf", "image/jpeg", "image/png", "image/jpg"};
         String contentType = file.getContentType();
-
-        System.out.println("MIME type: " + contentType);
 
         boolean isContentTypeValid = Arrays.asList(allowedFileTypes).contains(contentType);
 
         String fileName = file.getOriginalFilename();
+
+        System.out.println(fileName + " filename");
+
+        System.out.println(contentType + " contentType");
+
         boolean isExtensionValid = fileName != null && (fileName.endsWith(".pdf") || fileName.endsWith(".jpeg") || fileName.endsWith(".jpg") || fileName.endsWith(".png"));
 
         return isContentTypeValid && isExtensionValid;

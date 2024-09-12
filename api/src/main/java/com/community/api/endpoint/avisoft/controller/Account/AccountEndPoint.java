@@ -139,7 +139,6 @@ public class AccountEndPoint {
     public ResponseEntity<?> loginWithPassword(@RequestBody Map<String, Object> loginDetails, HttpSession session, HttpServletRequest request) {
         try {
             String mobileNumber = (String) loginDetails.get("mobileNumber");
-
             String username = (String) loginDetails.get("username");
             if (mobileNumber != null) {
                 if(mobileNumber.startsWith("0"))

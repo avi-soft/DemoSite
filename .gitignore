@@ -13,3 +13,4 @@ bin/
 **/*externalToolBuilders
 .sts4-cache
 data
+api/avisoftdocument

@@ -28,16 +28,15 @@ import java.util.List;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(value = {  HttpRequestMethodNotSupportedException.class })
-    @Order(Ordered.HIGHEST_PRECEDENCE)
     public ResponseEntity<ErrorResponse> handleNotFoundRequests(Exception ex, WebRequest request) {
 
-        return generateErrorResponse("Invalid request body", HttpStatus.BAD_REQUEST);
+        return generateErrorResponse("Invalid request body", HttpStatus.BAD_REQUEST,ex.getMessage());
 
     }
 
     @ExceptionHandler(value = NoHandlerFoundException.class)
     public ResponseEntity<ErrorResponse> handleNoHandlerFoundException(NoHandlerFoundException ex, WebRequest request) {
-        return generateErrorResponse("Invalid request body", HttpStatus.BAD_REQUEST);
+        return generateErrorResponse("Invalid request body", HttpStatus.BAD_REQUEST,ex.getMessage());
     }
 
         public ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body, HttpHeaders headers, HttpStatus status, WebRequest request) {
@@ -50,45 +49,43 @@ public class GlobalExceptionHandler {
 
 
     @ExceptionHandler(value = { MethodArgumentNotValidException.class })
-    @Order(Ordered.HIGHEST_PRECEDENCE)
     public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex, WebRequest request) {
         BindingResult bindingResult = ex.getBindingResult();
         List<String> errorMessages = new ArrayList<>();
         bindingResult.getFieldErrors().forEach(fieldError -> {
             errorMessages.add(fieldError.getField() + ": " + fieldError.getDefaultMessage());
         });
-        return generateErrorResponse("Invalid request parameters: " + errorMessages, HttpStatus.BAD_REQUEST);
+        return generateErrorResponse("Invalid request parameters: " + errorMessages, HttpStatus.BAD_REQUEST,ex.getMessage());
     }
 
     @ExceptionHandler(value = { BindException.class })
-    @Order(Ordered.HIGHEST_PRECEDENCE)
     public ResponseEntity<ErrorResponse> handleBindException(BindException ex, WebRequest request) {
-        return generateErrorResponse("Invalid request body", HttpStatus.BAD_REQUEST);
+        return generateErrorResponse("Invalid request body", HttpStatus.BAD_REQUEST,ex.getMessage());
     }
 
     @ExceptionHandler(value = { NullPointerException.class })
-    @Order(Ordered.HIGHEST_PRECEDENCE)
     public ResponseEntity<ErrorResponse> handleNullPointerException(NullPointerException ex, WebRequest request) {
-        return generateErrorResponse("Null pointer exception", HttpStatus.INTERNAL_SERVER_ERROR);
+        return generateErrorResponse("Null pointer exception", HttpStatus.INTERNAL_SERVER_ERROR,ex.getMessage());
     }
 
     @ExceptionHandler(value = { IllegalArgumentException.class })
-    @Order(Ordered.HIGHEST_PRECEDENCE)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex, WebRequest request) {
-        return generateErrorResponse("Invalid argument", HttpStatus.BAD_REQUEST);
+        return generateErrorResponse("Invalid argument", HttpStatus.BAD_REQUEST,ex.getMessage());
     }
 
     @ExceptionHandler(value = { RuntimeException.class })
-    @Order(Ordered.HIGHEST_PRECEDENCE)
     public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex, WebRequest request) {
-        return generateErrorResponse("Runtime exception " , HttpStatus.INTERNAL_SERVER_ERROR);
+
+        return generateErrorResponse("Runtime exception" , HttpStatus.INTERNAL_SERVER_ERROR,ex.getMessage());
+
     }
 
-    public static ResponseEntity<ErrorResponse> generateErrorResponse(String message, HttpStatus status) {
+    public static ResponseEntity<ErrorResponse> generateErrorResponse(String message, HttpStatus status,String trace) {
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setMessage(message);
         errorResponse.setStatus_code(status.value());
         errorResponse.setStatus(status);
+        errorResponse.setTrace(trace);
         return new ResponseEntity<>(errorResponse, status);
     }
 }
@@ -99,5 +96,6 @@ class ErrorResponse {
     private String message;
     private int status_code;
     private HttpStatus status;
+    private  String trace;
 
 }
