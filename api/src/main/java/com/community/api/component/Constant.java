@@ -87,4 +87,6 @@ public class Constant {
     public static final String PRODUCTTITLENOTGIVEN = "Product MetaTitle not Given";
     public static final int MAX_REQUEST_SIZE=100;
     public static  final int MAX_NESTED_KEY_SIZE=100;
+    public static final String GET_ALL_SERVICE_PROVIDERS="Select s from ServiceProviderEntity s";
+    public static final String GET_ALL_CUSTOMERS="Select c from CustomCustomer c";
 }
