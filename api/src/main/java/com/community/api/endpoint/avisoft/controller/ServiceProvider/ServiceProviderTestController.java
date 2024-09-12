@@ -72,15 +72,16 @@ public class ServiceProviderTestController {
             status = HttpStatus.BAD_REQUEST;
             message = "Service Provider does not exist";
         }
+        else if(e instanceof RuntimeException)
+        {
+            status= HttpStatus.OK;
+            message= "";
+        }
         else if (e instanceof Exception) {
             status = HttpStatus.BAD_REQUEST;
             message = "";
         }
-        else if(e instanceof RuntimeException)
-        {
-            status= HttpStatus.OK;
-            message= "Service Provider test list is empty";
-        }
+
         else {
             status = HttpStatus.BAD_REQUEST;
             message = "Some error occurred";

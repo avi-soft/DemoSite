@@ -1,7 +1,6 @@
 package com.community.api.endpoint.avisoft.controller.Customer;
 import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
-import com.community.api.dto.RetrieveCustomerDetailDto;
 import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.AddressDTO;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
@@ -17,6 +16,7 @@ import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.broadleafcommerce.profile.core.domain.Address;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.domain.CustomerAddress;
+import org.broadleafcommerce.profile.core.domain.CustomerImpl;
 import org.broadleafcommerce.profile.core.service.AddressService;
 import org.broadleafcommerce.profile.core.service.CustomerAddressService;
 import org.broadleafcommerce.profile.core.service.CustomerService;
@@ -35,7 +35,6 @@ import javax.transaction.Transactional;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/customer",
@@ -223,55 +222,12 @@ public class CustomerEndpoint {
             if (customCustomer == null) {
                 return responseService.generateErrorResponse("Customer not found", HttpStatus.NOT_FOUND);
             }
+            CustomerImpl customer = em.find(CustomerImpl.class, customerId);  // Assuming you retrieve the base Customer entity
+            Map<String, Object> customerDetails = sharedUtilityService.breakReferenceForCustomer(customer);
+            customerDetails.put("qualificationDetails",customCustomer.getQualificationDetailsList());
+            customerDetails.put("documents",customCustomer.getDocuments());
+            return responseService.generateSuccessResponse("User details retrieved successfully", customerDetails, HttpStatus.OK);
 
-            RetrieveCustomerDetailDto dto = new RetrieveCustomerDetailDto();
-            dto.setId(customCustomer.getId()); // If inherited from CustomerImpl
-            dto.setAuditable(customCustomer.getAuditable());
-            dto.setUsername(customCustomer.getUsername());
-            dto.setPassword(customCustomer.getPassword());
-            dto.setExternalId(customCustomer.getExternalId());
-            dto.setChallengeQuestion(customCustomer.getChallengeQuestion());
-            dto.setChallengeAnswer(customCustomer.getChallengeAnswer());
-            dto.setCustomerLocale(customCustomer.getCustomerLocale());
-            dto.setCustomerAttributes(customCustomer.getCustomerAttributes());
-            dto.setCustomerPhones(customCustomer.getCustomerPhones());
-            dto.setCustomerPayments(customCustomer.getCustomerPayments());
-            dto.setTaxExemptionCode(customCustomer.getTaxExemptionCode());
-            dto.setUnencodedPassword(customCustomer.getUnencodedPassword());
-            dto.setUnencodedChallengeAnswer(customCustomer.getUnencodedChallengeAnswer());
-            dto.setAnonymous(customCustomer.isAnonymous());
-            dto.setCookied(customCustomer.isCookied());
-            dto.setLoggedIn(customCustomer.isLoggedIn());
-            dto.setTransientProperties(customCustomer.getTransientProperties());
-
-
-            dto.setFirstName(customCustomer.getFirstName());
-            dto.setLastName(customCustomer.getLastName());
-            dto.setEmailAddress(customCustomer.getEmailAddress());
-            dto.setMobileNumber(customCustomer.getMobileNumber());
-            dto.setCountryCode(customCustomer.getCountryCode());
-            dto.setOtp(customCustomer.getOtp());
-            dto.setFathersName(customCustomer.getFathersName());
-            dto.setMothersName(customCustomer.getMothersName());
-            dto.setDob(customCustomer.getDob());
-            dto.setGender(customCustomer.getGender());
-            dto.setAdharNumber(customCustomer.getAdharNumber());
-            dto.setCategory(customCustomer.getCategory());
-            dto.setSubcategory(customCustomer.getSubcategory());
-            dto.setSecondaryMobileNumber(customCustomer.getSecondaryMobileNumber());
-            dto.setWhatsappNumber(customCustomer.getWhatsappNumber());
-            dto.setSecondaryEmail(customCustomer.getSecondaryEmail());
-
-            List<AddressDTO> addressDtos = customCustomer.getCustomerAddresses().stream()
-                    .map(this::makeAddressDTO)
-                    .collect(Collectors.toList());
-
-            dto.setCustomerAddresses(addressDtos);
-
-            // Manually set the QualificationDetails and Document lists
-            dto.setQualificationDetailsList(customCustomer.getQualificationDetailsList());
-            dto.setDocuments(customCustomer.getDocuments());
-            return responseService.generateSuccessResponse("User details retrieved successfully", dto, HttpStatus.OK);
 
         } catch (Exception e) {
             exceptionHandling.handleException(e);

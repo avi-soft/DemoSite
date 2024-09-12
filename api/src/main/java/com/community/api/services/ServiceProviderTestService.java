@@ -214,7 +214,7 @@ public class ServiceProviderTestService {
     }
 
     @Transactional
-    public List<ServiceProviderTest> getServiceProviderTestByServiceProviderId(Long serviceProviderId) throws CustomerDoesNotExistsException, RuntimeException, EntityDoesNotExistsException {
+    public List<ServiceProviderTest> getServiceProviderTestByServiceProviderId(Long serviceProviderId) throws  RuntimeException, EntityDoesNotExistsException {
         ServiceProviderEntity serviceProvider= entityManager.find(ServiceProviderEntity.class,serviceProviderId);
         if(serviceProvider==null)
         {
@@ -223,7 +223,7 @@ public class ServiceProviderTestService {
         List<ServiceProviderTest> serviceProviderTests = serviceProvider.getServiceProviderTests();
         if(serviceProviderTests.isEmpty())
         {
-            throw new RuntimeException();
+            throw new RuntimeException("Service provider Tests list is empty.");
         }
         return serviceProviderTests;
     }
