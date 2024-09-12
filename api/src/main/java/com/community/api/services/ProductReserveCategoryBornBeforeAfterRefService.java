@@ -1,6 +1,7 @@
 package com.community.api.services;
 
 import com.community.api.component.Constant;
+import com.community.api.dto.AddReserveCategoryDto;
 import com.community.api.entity.CustomProduct;
 import com.community.api.entity.CustomProductReserveCategoryBornBeforeAfterRef;
 import com.community.api.entity.CustomReserveCategory;
@@ -17,20 +18,23 @@ import java.util.List;
 
 @Service
 public class ProductReserveCategoryBornBeforeAfterRefService {
+
+    private final ExceptionHandlingService exceptionHandlingService;
+    private final ProductService productService;
+    private final ReserveCategoryService reserveCategoryService;
+
     @PersistenceContext
     protected EntityManager entityManager;
 
     @Autowired
-    protected ExceptionHandlingService exceptionHandlingService;
+    public ProductReserveCategoryBornBeforeAfterRefService(ExceptionHandlingService exceptionHandlingService, ProductService productService, ReserveCategoryService reserveCategoryService) {
+        this.exceptionHandlingService = exceptionHandlingService;
+        this.productService = productService;
+        this.reserveCategoryService = reserveCategoryService;
+    }
 
-    @Autowired
-    protected ProductService productService;
-
-    @Autowired
-    protected  ReserveCategoryService reserveCategoryService;
-
-    public List<CustomProductReserveCategoryBornBeforeAfterRef> getProductReserveCategoryBornBeforeAfterByProductId(Long productId){
-        try{
+    public List<CustomProductReserveCategoryBornBeforeAfterRef> getProductReserveCategoryBornBeforeAfterByProductId(Long productId) {
+        try {
             CustomProduct customProduct = productService.getCustomProductByCustomProductId(productId);
 
             Query query = entityManager.createQuery(Constant.GET_PRODUCT_RESERVECATEGORY_BORNBEFORE_BORNAFTER, CustomProductReserveCategoryBornBeforeAfterRef.class);
@@ -39,27 +43,34 @@ public class ProductReserveCategoryBornBeforeAfterRefService {
 
             return productReserveCategoryBornBeforeAfterRefList;
 
-        } catch(Exception exception) {
+        } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return null;
         }
     }
 
-    public void saveBornBeforeAndBornAfter(Date bornBefore, Date bornAfter, Product product, CustomReserveCategory reserveCategory) {
-        try{
+    public void saveBornBeforeAndBornAfter(List<AddReserveCategoryDto> addReserveCategoryDtoList, Product product) {
+        try {
+            for (AddReserveCategoryDto addReserveCategoryDto : addReserveCategoryDtoList) {
 
-            Query query = entityManager.createNativeQuery(Constant.ADD_PRODUCT_RESERVECATEOGRY_BORNBEFORE_BORNAFTER);
-            query.setParameter("productId", product);
-            query.setParameter("reserveCategoryId", reserveCategory);
-            query.setParameter("bornAfter", bornAfter);
-            query.setParameter("bornBefore", bornBefore);
-            int affectedRows = query.executeUpdate();
+                CustomReserveCategory reserveCategory = reserveCategoryService.getReserveCategoryById(addReserveCategoryDto.getReserveCategory());
+                Date bornAfter = addReserveCategoryDto.getBornAfter();
+                Date bornBefore = addReserveCategoryDto.getBornBefore();
 
-            if(affectedRows == 0){
-                throw new RuntimeException("Error inserting values in mapping table of CustomProductReserveCategoryBornBeforeAfterRef");
+                Query query = entityManager.createNativeQuery(Constant.ADD_PRODUCT_RESERVECATEOGRY_BORNBEFORE_BORNAFTER);
+                query.setParameter("productId", product.getId());
+                query.setParameter("reserveCategoryId", reserveCategory.getReserveCategoryId());
+                query.setParameter("bornAfter", bornAfter);
+                query.setParameter("bornBefore", bornBefore);
+
+                int affectedRows = query.executeUpdate();
+
+                if (affectedRows == 0) {
+                    throw new RuntimeException("Error inserting values in mapping table of CustomProductReserveCategoryBornBeforeAfterRef");
+                }
             }
 
-        } catch(Exception exception) {
+        } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
         }
     }
