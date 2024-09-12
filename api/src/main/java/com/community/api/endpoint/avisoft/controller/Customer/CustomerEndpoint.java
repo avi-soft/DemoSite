@@ -11,6 +11,7 @@ import com.community.api.services.exception.ExceptionHandlingService;
 import com.community.api.utils.Document;
 import com.community.api.utils.DocumentType;
 import com.community.api.utils.ServiceProviderDocument;
+import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.broadleafcommerce.profile.core.domain.Address;
 import org.broadleafcommerce.profile.core.domain.Customer;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.io.File;
@@ -52,6 +54,8 @@ public class CustomerEndpoint {
     private CustomerAddressService customerAddressService;
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private static SharedUtilityService sharedUtilityServiceApi;
 
     @Autowired
     private ExceptionHandlingService exceptionHandlingService;
@@ -99,6 +103,8 @@ public class CustomerEndpoint {
     public void setCustomCustomerService(CustomCustomerService customCustomerService) {
         this.customCustomerService = customCustomerService;
     }
+    @Autowired
+    private  SharedUtilityService sharedUtilityService;
 
     @Autowired
     public void setAddressService(AddressService addressService) {
@@ -851,14 +857,10 @@ public class CustomerEndpoint {
         addressDTO.setPhoneNumber(customCustomer.getMobileNumber());
         return addressDTO;
     }
-/*
-    public static ResponseEntity<?> createAuthResponse(String token, Customer customer ) {
-        OtpEndpoint.ApiResponse authResponse = new OtpEndpoint.ApiResponse(token, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
-        return responseService.generateSuccessResponse("Token details : ", authResponse, HttpStatus.OK);
+    public  ResponseEntity<?> createAuthResponse(String token, Customer customer ) {
+        OtpEndpoint.ApiResponse authResponse = new OtpEndpoint.ApiResponse(token, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(), "User has been logged in");
+        return ResponseService.generateSuccessResponse("Token details : ", authResponse, HttpStatus.OK);
     }
-*/
-
-
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout(@RequestBody Map<String, String> request) {
@@ -875,144 +877,89 @@ public class CustomerEndpoint {
         }
     }
 
-//    @GetMapping(value = "/savedForms/getProductsByUserId")
-//    public ResponseEntity<?> getSavedFormsByUserId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
-//        try {
-//            if (catalogService == null) {
-//                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
-//            }
-//
-//            Long categoryId = Long.parseLong(id);
-//            if(categoryId <= 0){
-//                return new ResponseEntity<>("CATEGORYCANNOTBELESSTHANOREQAULZERO", HttpStatus.INTERNAL_SERVER_ERROR);
-//            }
-//
-//            Category category = this.catalogService.findCategoryById(categoryId);
-//
-//            if (category == null) {
-//                return new ResponseEntity<>("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
-//            } else if (((Status) category).getArchived() == 'Y') {
-//                return new ResponseEntity<>("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
-//            }
-//
-//            List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
-//            List<CustomProductWrapper> products = new ArrayList<>();
-//
-//            for (BigInteger productId : productIdList) {
-//                CustomProduct customProduct = entityManager.find(CustomProduct.class, productId.longValue());
-//
-//                if(customProduct != null && (((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
-//                    CustomProductWrapper wrapper = new CustomProductWrapper();
-//                    wrapper.wrapDetails(customProduct);
-//                    products.add(wrapper);
-//                }
-//            }
-//
-//            AddCategoryDto categoryDao = new AddCategoryDto();
-//            categoryDao.setCategoryId(category.getId());
-//            categoryDao.setCategoryName(category.getName());
-//            categoryDao.setProducts(products);
-//            categoryDao.setTotalProducts(Long.valueOf(products.size()));
-//
-//            return ResponseEntity.status(HttpStatus.OK).body(categoryDao);
-//
-//        } catch (Exception exception) {
-//            exceptionHandlingService.handleException(exception);
-//            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
-//    }
-//    @GetMapping(value = "/recommendations/getProductsByUserId")
-//    public ResponseEntity<?> getRecommendationsBYUserId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
-//        try {
-//            if (catalogService == null) {
-//                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
-//            }
-//
-//            Long categoryId = Long.parseLong(id);
-//            if(categoryId <= 0){
-//                return new ResponseEntity<>("CATEGORYCANNOTBELESSTHANOREQAULZERO", HttpStatus.INTERNAL_SERVER_ERROR);
-//            }
-//
-//            Category category = this.catalogService.findCategoryById(categoryId);
-//
-//            if (category == null) {
-//                return new ResponseEntity<>("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
-//            } else if (((Status) category).getArchived() == 'Y') {
-//                return new ResponseEntity<>("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
-//            }
-//
-//            List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
-//            List<CustomProductWrapper> products = new ArrayList<>();
-//
-//            for (BigInteger productId : productIdList) {
-//                CustomProduct customProduct = entityManager.find(CustomProduct.class, productId.longValue());
-//
-//                if(customProduct != null && (((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
-//                    CustomProductWrapper wrapper = new CustomProductWrapper();
-//                    wrapper.wrapDetails(customProduct);
-//                    products.add(wrapper);
-//                }
-//            }
-//
-//            AddCategoryDto categoryDao = new AddCategoryDto();
-//            categoryDao.setCategoryId(category.getId());
-//            categoryDao.setCategoryName(category.getName());
-//            categoryDao.setProducts(products);
-//            categoryDao.setTotalProducts(Long.valueOf(products.size()));
-//
-//            return ResponseEntity.status(HttpStatus.OK).body(categoryDao);
-//
-//        } catch (Exception exception) {
-//            exceptionHandlingService.handleException(exception);
-//            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
-//    }
-//
-//    @GetMapping(value = "/filledForms/getProductsByUserId")
-//    public ResponseEntity<?> getFilledFormsByUserId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
-//        try {
-//            if (catalogService == null) {
-//                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
-//            }
-//
-//            Long categoryId = Long.parseLong(id);
-//            if(categoryId <= 0){
-//                return new ResponseEntity<>("CATEGORYCANNOTBELESSTHANOREQAULZERO", HttpStatus.INTERNAL_SERVER_ERROR);
-//            }
-//
-//            Category category = this.catalogService.findCategoryById(categoryId);
-//
-//            if (category == null) {
-//                return new ResponseEntity<>("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
-//            } else if (((Status) category).getArchived() == 'Y') {
-//                return new ResponseEntity<>("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
-//            }
-//
-//            List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
-//            List<CustomProductWrapper> products = new ArrayList<>();
-//
-//            for (BigInteger productId : productIdList) {
-//                CustomProduct customProduct = entityManager.find(CustomProduct.class, productId.longValue());
-//
-//                if(customProduct != null && (((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
-//                    CustomProductWrapper wrapper = new CustomProductWrapper();
-//                    wrapper.wrapDetails(customProduct);
-//                    products.add(wrapper);
-//                }
-//            }
-//
-//            AddCategoryDto categoryDao = new AddCategoryDto();
-//            categoryDao.setCategoryId(category.getId());
-//            categoryDao.setCategoryName(category.getName());
-//            categoryDao.setProducts(products);
-//            categoryDao.setTotalProducts(Long.valueOf(products.size()));
-//
-//            return ResponseEntity.status(HttpStatus.OK).body(categoryDao);
-//
-//        } catch (Exception exception) {
-//            exceptionHandlingService.handleException(exception);
-//            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
-//    }
+
+   @GetMapping(value = "/forms/show-saved-forms")
+    public ResponseEntity<?> getSavedForms(HttpServletRequest request,@RequestParam long  customer_id) throws Exception{
+       try {
+          CustomCustomer customer=entityManager.find(CustomCustomer.class,customer_id);
+          if(customer==null)
+              ResponseService.generateErrorResponse("Customer with this id not found",HttpStatus.NOT_FOUND);
+          if(customer.getSavedForms().isEmpty())
+              ResponseService.generateErrorResponse("Saved form list is empty",HttpStatus.NOT_FOUND);
+          List<Map<String,Object>>listOfSavedProducts=new ArrayList<>();
+          for(Product product:customer.getSavedForms())
+          {
+              listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product,null));
+          }
+          return ResponseService.generateSuccessResponse("Forms saved : ",listOfSavedProducts,HttpStatus.OK);
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping(value = "/forms/show-filled-forms")
+    public ResponseEntity<?> getFilledFormsByUserId(HttpServletRequest request,@RequestParam long customer_id) throws Exception{
+        try {
+            CustomCustomer customer=entityManager.find(CustomCustomer.class,customer_id);
+            if(customer==null)
+                ResponseService.generateErrorResponse("Customer with this id not found",HttpStatus.NOT_FOUND);
+            if(customer.getSavedForms().isEmpty())
+                ResponseService.generateErrorResponse("Saved form list is empty",HttpStatus.NOT_FOUND);
+            List<Map<String,Object>>listOfSavedProducts=new ArrayList<>();
+            for(Product product:customer.getSavedForms())
+            {
+                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product,null));
+            }
+            return ResponseService.generateSuccessResponse("Forms saved : ",listOfSavedProducts,HttpStatus.OK);
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @GetMapping(value = "/forms/show-recommended-forms")
+    public ResponseEntity<?> getRecommendedFormsByUserId(HttpServletRequest request,@RequestParam long customer_id) throws Exception{
+        try {
+            CustomCustomer customer=entityManager.find(CustomCustomer.class,customer_id);
+            if(customer==null)
+                ResponseService.generateErrorResponse("Customer with this id not found",HttpStatus.NOT_FOUND);
+            if(customer.getSavedForms().isEmpty())
+                ResponseService.generateErrorResponse("Saved form list is empty",HttpStatus.NOT_FOUND);
+            List<Map<String,Object>>listOfSavedProducts=new ArrayList<>();
+            for(Product product:customer.getSavedForms())
+            {
+                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product,null));
+            }
+            return ResponseService.generateSuccessResponse("Forms saved : ",listOfSavedProducts,HttpStatus.OK);
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @GetMapping("/get-all-customers")
+    public ResponseEntity<?> getAllCustomers(
+            @RequestParam(defaultValue = "0") int offset,
+            @RequestParam(defaultValue = "10") int limit)
+    {
+        try {
+            // Calculate the start position for pagination
+            int startPosition = offset * limit;
+            // Create the query
+            TypedQuery<CustomCustomer> query = entityManager.createQuery(Constant.GET_ALL_CUSTOMERS, CustomCustomer.class);
+            // Apply pagination
+            query.setFirstResult(startPosition);
+            query.setMaxResults(limit);
+            List<Map> results = new ArrayList<>();
+            for(CustomCustomer customer:query.getResultList())
+            {
+                Customer customerToadd=customerService.readCustomerById(customer.getId());
+                results.add(sharedUtilityService.breakReferenceForCustomer(customerToadd));
+            }
+            return ResponseService.generateSuccessResponse("List of customers : ", results, HttpStatus.OK);
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseService.generateErrorResponse("Some issue in customers: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
 
 }
