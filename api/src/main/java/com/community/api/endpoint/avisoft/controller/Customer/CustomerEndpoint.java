@@ -325,9 +325,6 @@ public class CustomerEndpoint {
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 return responseService.generateErrorResponse("Authorization header is missing or invalid.", HttpStatus.UNAUTHORIZED);
             }
-            if (files.isEmpty()) {
-                return responseService.generateErrorResponse("No files provided for upload.", HttpStatus.BAD_REQUEST);
-            }
 
             String jwtToken = authHeader.substring(7);
             Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
@@ -338,6 +335,12 @@ public class CustomerEndpoint {
                 return responseService.generateErrorResponse("Unauthorized request.", HttpStatus.UNAUTHORIZED);
             }
 
+            if(files.size()==0){
+                return ResponseService.generateErrorResponse("Invalid request.", HttpStatus.BAD_REQUEST);
+
+            }
+
+
             if (roleService.findRoleName(roleId).equals(Constant.roleUser)) {
                 CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
                 if (customCustomer == null) {
@@ -347,10 +350,18 @@ public class CustomerEndpoint {
                 Map<String, Object> responseData = new HashMap<>();
                 List<String> deletedDocumentMessages = new ArrayList<>();
 
-                // Handle file uploads and deletions
+
                 for (Map.Entry<String, MultipartFile> entry : files.entrySet()) {
                     Integer fileNameId = Integer.parseInt(entry.getKey());
                     MultipartFile file = entry.getValue();
+
+                    if (!DocumentStorageService.isValidFileType(file)) {
+                        return ResponseEntity.badRequest().body(Map.of(
+                                "status", ApiConstants.STATUS_ERROR,
+                                "status_code", HttpStatus.BAD_REQUEST.value(),
+                                "message", "Invalid file type: "
+                        ));
+                    }
 
                     DocumentType documentTypeObj = em.createQuery(
                                     "SELECT dt FROM DocumentType dt WHERE dt.document_type_id = :documentTypeId", DocumentType.class)
@@ -440,6 +451,15 @@ public class CustomerEndpoint {
                     Integer fileNameId = Integer.parseInt(entry.getKey());
                     MultipartFile file = entry.getValue();
 
+
+                    if (!DocumentStorageService.isValidFileType(file)) {
+                        return ResponseEntity.badRequest().body(Map.of(
+                                "status", ApiConstants.STATUS_ERROR,
+                                "status_code", HttpStatus.BAD_REQUEST.value(),
+                                "message", "Invalid file type: "
+                        ));
+                    }
+
                     DocumentType documentTypeObj = em.createQuery(
                                     "SELECT dt FROM DocumentType dt WHERE dt.document_type_id = :documentTypeId", DocumentType.class)
                             .setParameter("documentTypeId", fileNameId)
@@ -525,130 +545,6 @@ public class CustomerEndpoint {
 
 
 
-
-/*    @Transactional
-    @PostMapping("/upload-documents")
-    public ResponseEntity<?> updateDocuments(
-            @RequestParam Long customerId,
-            @RequestParam Map<String, MultipartFile> files, HttpServletRequest request) {
-        try {
-            if (customerService == null) {
-                return responseService.generateErrorResponse("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
-
-            CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
-            if (customCustomer == null) {
-                return responseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
-            }
-
-            Map<String, Object> responseData = new HashMap<>();
-
-            for (Map.Entry<String, MultipartFile> entry : files.entrySet()) {
-                Integer fileNameId = Integer.parseInt(entry.getKey());
-                MultipartFile file = entry.getValue();
-
-                DocumentType documentTypeObj = em.createQuery(
-                                "SELECT dt FROM DocumentType dt WHERE dt.document_type_id = :documentTypeId", DocumentType.class)
-                        .setParameter("documentTypeId", fileNameId)
-                        .getResultStream()
-                        .findFirst()
-                        .orElse(null);
-                if (documentTypeObj == null) {
-                    return responseService.generateErrorResponse("Unknown document type for file: " + fileNameId, HttpStatus.BAD_REQUEST);
-                }
-
-                Document existingDocument = em.createQuery(
-                                "SELECT d FROM Document d WHERE d.custom_customer = :customCustomer AND d.documentType = :documentType", Document.class)
-                        .setParameter("customCustomer", customCustomer)
-                        .setParameter("documentType", documentTypeObj)
-                        .getResultStream()
-                        .findFirst()
-                        .orElse(null);
-
-                String filePath = null;
-
-                System.out.println(documentTypeObj.getDocument_type_id() + "id");
-                if (existingDocument != null && documentTypeObj.getDocument_type_id()!=13) {
-                    filePath = existingDocument.getFilePath();
-                    if (filePath != null) {
-                        File oldFile = new File(filePath);
-                        System.out.println("Attempting to delete file: " + oldFile.getAbsolutePath());
-
-                        if (oldFile.exists()) {
-                            String oldFileName = oldFile.getName();
-                            String newFileName = file.getOriginalFilename();
-                            if (!newFileName.equals(oldFileName)) {
-                                boolean deleted = oldFile.delete();
-                            }
-
-                        }
-                    }
-                }else if (documentTypeObj.getDocument_type_id() == 13) {
-                    Document newDocument = new Document();
-                    newDocument.setName(file.getOriginalFilename());
-                    newDocument.setCustomCustomer(customCustomer);
-                    newDocument.setDocumentType(documentTypeObj);
-                    em.persist(newDocument);
-
-                    String newFilePath = DocumentStorageService.BASE_DIRECTORY + File.separator + "avisoft"
-                            + File.separator + "customer" + File.separator + customerId
-                            + File.separator + documentTypeObj.getDocument_type_name()
-                            + File.separator + file.getOriginalFilename();
-                    newDocument.setFilePath(newFilePath);
-                    em.merge(newDocument);
-                }
-                else {
-                    Document newDocument = new Document();
-                    newDocument.setName(file.getOriginalFilename());
-                    newDocument.setCustomCustomer(customCustomer);
-                    newDocument.setDocumentType(documentTypeObj);
-                    em.persist(newDocument);
-                }
-
-                ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(file, documentTypeObj.getDocument_type_name(), customerId, "customer");
-                Map<String, Object> responseBody = savedResponse.getBody();
-                if (savedResponse.getStatusCode() != HttpStatus.OK) {
-                    return responseService.generateErrorResponse("Error uploading " + documentTypeObj.getDocument_type_name(), HttpStatus.INTERNAL_SERVER_ERROR);
-                }
-
-                String scheme = request.getScheme();
-                String serverName = request.getServerName();
-                String newFilePath = DocumentStorageService.BASE_DIRECTORY +  File.separator + "avisoft"
-                        + File.separator
-                        + "customer"
-                        + File.separator
-                        + customerId
-                        + File.separator
-                        + documentTypeObj.getDocument_type_name()
-                        + File.separator
-                        + file.getOriginalFilename();
-
-                if (existingDocument != null && documentTypeObj.getDocument_type_id()!=13) {
-                    existingDocument.setFilePath(newFilePath);
-                    em.merge(existingDocument);
-                } else {
-                    Document newDocument = em.createQuery(
-                                    "SELECT d FROM Document d WHERE d.custom_customer = :customCustomer AND d.documentType = :documentType", Document.class)
-                            .setParameter("customCustomer", customCustomer)
-                            .setParameter("documentType", documentTypeObj)
-                            .getResultStream()
-                            .findFirst()
-                            .orElse(null);
-                    if (newDocument != null) {
-                        newDocument.setFilePath(newFilePath);
-                        em.merge(newDocument);
-                    }
-                }
-
-                responseData.put(documentTypeObj.getDocument_type_name(), responseBody.get("data"));
-            }
-
-            return responseService.generateSuccessResponse("Documents uploaded successfully", responseData, HttpStatus.OK);
-        } catch (Exception e) {
-            exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Error updating documents: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }*/
 
     @Transactional
     @RequestMapping(value = "update-username", method = RequestMethod.POST)
