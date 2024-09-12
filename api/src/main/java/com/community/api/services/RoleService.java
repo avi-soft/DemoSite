@@ -18,14 +18,31 @@ import java.util.List;
 
 @Service
 public class RoleService {
-    @Autowired
     private EntityManager entityManager;
-    @Autowired
     private SharedUtilityService sharedUtilityService;
-    @Autowired
     private ResponseService responseService;
-    @Autowired
     private ExceptionHandlingImplement exceptionHandling;
+
+    @Autowired
+    public void setEntityManager(EntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
+
+    @Autowired
+    public void setSharedUtilityService(SharedUtilityService sharedUtilityService) {
+        this.sharedUtilityService = sharedUtilityService;
+    }
+
+    @Autowired
+    public void setResponseService(ResponseService responseService) {
+        this.responseService = responseService;
+    }
+
+    @Autowired
+    public void setExceptionHandling(ExceptionHandlingImplement exceptionHandling) {
+        this.exceptionHandling = exceptionHandling;
+    }
+
     public String findRoleName(int role_id) {
         return entityManager.createQuery(Constant.FETCH_ROLE, String.class)
                 .setParameter("role_id", role_id)
