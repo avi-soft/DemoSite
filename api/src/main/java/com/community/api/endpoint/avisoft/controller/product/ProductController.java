@@ -202,52 +202,21 @@ public class ProductController extends CatalogEndpoint {
     }
 
 
-    @Transactional
-   /* @PutMapping("/update/{productId}")
+    /*@Transactional
+   @PutMapping("/update/{productId}")
     public ResponseEntity<?> updateProduct(HttpServletRequest request, @RequestBody AddProductDto addProductDto, @PathVariable Long productId, @RequestHeader(value = "Authorization") String authHeader) {
 
         try {
 
-            String jwtToken = authHeader.substring(7);
-
-            Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
-            String role = roleService.getRoleByRoleId(roleId).getRole_name();
+            if (!productService.updateProductAccessAuthorisation(authHeader, productId)) {
+                return ResponseService.generateErrorResponse("NOT AUTHORIZED TO UPDATE PRODUCT", HttpStatus.FORBIDDEN);
+            }
 
             if (catalogService == null) {
                 return ResponseService.generateErrorResponse(Constant.CATALOG_SERVICE_NOT_INITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            if (productId <= 0) {
-                return ResponseService.generateErrorResponse("PRODUCT ID CANNOT BE <= 0", HttpStatus.BAD_REQUEST);
-            }
-            CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
-            if (customProduct == null || ((Status) customProduct).getArchived() == 'Y') {
-                return ResponseService.generateErrorResponse(PRODUCTNOTFOUND, HttpStatus.NOT_FOUND);
-            }
 
-            boolean accessGrant = false;
-            Long userId = null;
-            if (role.equals(Constant.SUPER_ADMIN) || role.equals(Constant.ADMIN)) {
-                accessGrant = true;
-
-                // -> NEED TO ADD THE USER_ID OF ADMIN OR SUPER ADMIN.
-
-            } else if (role.equals(Constant.SERVICE_PROVIDER)) {
-
-                userId = jwtTokenUtil.extractId(jwtToken);
-                List<Privileges> privileges = privilegeService.getServiceProviderPrivilege(userId);
-                for (Privileges privilege : privileges) {
-                    if (privilege.getPrivilege_name().equals(Constant.PRIVILEGE_UPDATE_PRODUCT)) {
-                        accessGrant = true;
-                        break;
-                    }
-                }
-
-            }
-
-            if (!accessGrant) {
-                return ResponseService.generateErrorResponse("NOT AUTHORIZED TO UPDATE PRODUCT", HttpStatus.FORBIDDEN);
-            }
 
             // Validations and checks.
             if (addProductDto.getQuantity() != null) {
@@ -792,6 +761,7 @@ public class ProductController extends CatalogEndpoint {
                         responses.add(productDetails);
                     }
 
+
                 }
             }
 
@@ -805,20 +775,18 @@ public class ProductController extends CatalogEndpoint {
 
     @GetMapping("/get-filter-products")
     public ResponseEntity<?> getFilterProducts(
-            @RequestParam(value = "date_from", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date dateFrom,
-            @RequestParam(value = "date_to", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date dateTo,
+            @RequestParam(value = "date_from", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date dateFrom,
+            @RequestParam(value = "date_to", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date dateTo,
             @RequestParam(value = "status", required = false) List<Long> state,
             @RequestParam(value = "category", required = false) List<Long> categories,
             @RequestParam(value = "title", required = false) String title,
             @RequestParam(value = "fee", required = false) Double fee,
             @RequestParam(value = "post", required = false) Integer post,
-            @RequestParam(value = "min_price", required = false) Double minPrice,
-            @RequestParam(value = "max_price", required = false) Double maxPrice,
-            @RequestParam(value = "reserve_categories") List<Long> reserveCategories) {
+            @RequestParam(value = "reserve_categories", required = false) List<Long> reserveCategories) {
 
         try {
             // Call the service to get filtered products
-            List<CustomProduct> products = productService.filterProducts(state, categories, reserveCategories, title, fee, post);
+            List<CustomProduct> products = productService.filterProducts(state, categories, reserveCategories, title, fee, post, dateFrom, dateTo);
 
             if (products.isEmpty()) {
                 return ResponseService.generateErrorResponse("NO PRODUCTS FOUND WITH THE GIVEN CRITERIA", HttpStatus.NOT_FOUND);

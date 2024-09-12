@@ -7,6 +7,7 @@ import com.community.api.dto.CustomProductWrapper;
 import com.community.api.dto.ReserveCategoryDto;
 import com.community.api.entity.*;
 import com.community.api.services.exception.ExceptionHandlingService;
+import org.broadleafcommerce.common.persistence.Status;
 import org.broadleafcommerce.core.catalog.domain.Category;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.catalog.domain.ProductImpl;
@@ -386,46 +387,131 @@ public class ProductService {
         }
     }*/
 
-    public List<CustomProduct> filterProducts(List<Long> states, List<Long> categories, List<Long> reserveCategories, String title, Double fee, Integer post) {
-        List<CustomProductState> customProductStates = new ArrayList<>();
-        for (Long id : states) {
-            customProductStates.add(productStateService.getProductStateById(id));
-        }
-        List<Category> categoryList = new ArrayList<>();
-        for (Long id : categories) {
-            categoryList.add(catalogService.findCategoryById(id));
-        }
-        List<CustomReserveCategory> customReserveCategoryList = new ArrayList<>();
-        for(Long id: reserveCategories) {
-            customReserveCategoryList.add(reserveCategoryService.getReserveCategoryById(id));
-        }
-        /*String jpql = "SELECT p FROM CustomProduct p WHERE p.productState IN :states AND p.defaultCategory IN :categories AND p.metaTitle LIKE :title"
-                + " JOIN CustomProductReserveCategoryFeePostRef r ON p.productId = r.customProduct.productId "
-                + "AND r.fee > :fee "
-                + "AND r.post > :post ";*/
+    public List<CustomProduct> filterProducts(List<Long> states, List<Long> categories, List<Long> reserveCategories, String title, Double fee, Integer post, Date startRange, Date endRange) {
 
-        String jpql = "SELECT DISTINCT p FROM CustomProduct p "
+        /*String jpql = "SELECT DISTINCT p FROM CustomProduct p "
                 + "JOIN CustomProductReserveCategoryFeePostRef r "
                 + "ON r.customProduct = p "
-                + "WHERE p.productState IN :states "
-                + "AND p.defaultCategory IN :categories "
-                + "AND p.metaTitle LIKE :title "
-                + "AND r.fee > :fee "
-                + "AND r.post > :post "
-                + "AND r.customReserveCategory IN :reserveCategories";
+                + "WHERE " ;
 
         TypedQuery<CustomProduct> query = entityManager.createQuery(jpql, CustomProduct.class);
-        query.setParameter("states", customProductStates);
-        query.setParameter("categories", categoryList);
-        query.setParameter("title", "%" + title + "%");
-        query.setParameter("fee", fee);
-        query.setParameter("post", post);
-        query.setParameter("reserveCategories", customReserveCategoryList);
+
+        List<CustomProductState> customProductStates = new ArrayList<>();
+        if (states != null && !states.isEmpty()) {
+            for (Long id : states) {
+                customProductStates.add(productStateService.getProductStateById(id));
+            }
+            jpql += "p.productState IN :states ";
+            query.setParameter("states", customProductStates);
+        }
+        List<Category> categoryList = new ArrayList<>();
+        if (categories != null && !categories.isEmpty()) {
+            for (Long id : categories) {
+                categoryList.add(catalogService.findCategoryById(id));
+            }
+            jpql += "AND p.defaultCategory IN :categories ";
+            query.setParameter("categories", categoryList);
+        }
+        List<CustomReserveCategory> customReserveCategoryList = new ArrayList<>();
+        if (reserveCategories != null && !reserveCategories.isEmpty()) {
+            for (Long id : reserveCategories) {
+                customReserveCategoryList.add(reserveCategoryService.getReserveCategoryById(id));
+            }
+            jpql += "AND r.customReserveCategory IN :reserveCategories";
+            query.setParameter("reserveCategories", customReserveCategoryList);
+        }
+
+        if(title != null) {
+            jpql += "AND p.metaTitle LIKE :title ";
+            query.setParameter("title", "%" + title + "%");
+        }
+
+        if(fee != null) {
+            jpql += "AND r.fee > :fee ";
+            query.setParameter("fee", fee);
+        }
+
+        if(post != null) {
+            jpql += "AND r.post > :post ";
+            query.setParameter("post", post);
+        }
 
         return query.getResultList();
+*/
+        // Initialize the JPQL query
+        StringBuilder jpql = new StringBuilder("SELECT DISTINCT p FROM CustomProduct p ")
+                .append("JOIN CustomProductReserveCategoryFeePostRef r ON r.customProduct = p ")
+                .append("WHERE 1=1 "); // Use this to simplify appending conditions
 
+        // List to hold query parameters
+        List<CustomProductState> customProductStates = new ArrayList<>();
+        List<Category> categoryList = new ArrayList<>();
+        List<CustomReserveCategory> customReserveCategoryList = new ArrayList<>();
+
+        // Conditionally build the query
+        if (states != null && !states.isEmpty()) {
+            for (Long id : states) {
+                customProductStates.add(productStateService.getProductStateById(id));
+            }
+            jpql.append("AND p.productState IN :states ");
+        }
+
+        if (categories != null && !categories.isEmpty()) {
+            for (Long id : categories) {
+                categoryList.add(catalogService.findCategoryById(id));
+            }
+            jpql.append("AND p.defaultCategory IN :categories ");
+        }
+
+        if (reserveCategories != null && !reserveCategories.isEmpty()) {
+            for (Long id : reserveCategories) {
+                customReserveCategoryList.add(reserveCategoryService.getReserveCategoryById(id));
+            }
+            jpql.append("AND r.customReserveCategory IN :reserveCategories ");
+        }
+
+        if (title != null && !title.isEmpty()) {
+            jpql.append("AND p.metaTitle LIKE :title ");
+        }
+
+        if (fee != null) {
+            jpql.append("AND r.fee > :fee ");
+        }
+
+        if (post != null) {
+            jpql.append("AND r.post > :post ");
+        }
+
+
+
+
+
+        // Create the query with the final JPQL string
+        TypedQuery<CustomProduct> query = entityManager.createQuery(jpql.toString(), CustomProduct.class);
+
+        // Set parameters
+        if (!customProductStates.isEmpty()) {
+            query.setParameter("states", customProductStates);
+        }
+        if (!categoryList.isEmpty()) {
+            query.setParameter("categories", categoryList);
+        }
+        if (!customReserveCategoryList.isEmpty()) {
+            query.setParameter("reserveCategories", customReserveCategoryList);
+        }
+        if (title != null && !title.isEmpty()) {
+            query.setParameter("title", "%" + title + "%");
+        }
+        if (fee != null) {
+            query.setParameter("fee", fee);
+        }
+        if (post != null) {
+            query.setParameter("post", post);
+        }
+
+        // Execute and return the result
+        return query.getResultList();
     }
-
     public boolean addProductAccessAuthorisation(String authHeader) throws Exception {
         try {
             String jwtToken = authHeader.substring(7);
@@ -455,7 +541,6 @@ public class ProductService {
             throw new Exception("ERRORS WHILE VALIDATING AUTHORIZATION: " + exception.getMessage() + "\n");
         }
     }
-
     public Category validateCategory(Long categoryId) throws Exception {
         try {
             if (categoryId <= 0) throw new IllegalArgumentException("CATEGORY ID CANNOT BE <= 0");
@@ -466,7 +551,6 @@ public class ProductService {
             throw new Exception("ERRORS WHILE VALIDATING CATEGORY: " + exception.getMessage() + "\n");
         }
     }
-
     public boolean addProductDtoValidation(AddProductDto addProductDto) throws Exception {
         try {
             if (addProductDto.getQuantity() != null) {
@@ -611,7 +695,6 @@ public class ProductService {
             throw new Exception("SOME EXCEPTION WHILE VALIDATING AUTHORIZATION: " + exception.getMessage() + "\n");
         }
     }
-
     public boolean validateReserveCategory(AddProductDto addProductDto) throws Exception {
         try{
             Set<Long> reserveCategoryId = new HashSet<>();
@@ -659,6 +742,46 @@ public class ProductService {
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             throw new Exception("SOME EXCEPTION WHILE VALIDATING AUTHORIZATION: " + exception.getMessage() + "\n");
+        }
+    }
+
+    public boolean updateProductAccessAuthorisation(String authHeader, Long productId) throws Exception {
+        try {
+            String jwtToken = authHeader.substring(7);
+
+            Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
+            String role = roleService.getRoleByRoleId(roleId).getRole_name();
+
+            if (productId <= 0) {
+                throw new IllegalArgumentException("PRODUCT ID CANNOT BE <= 0");
+            }
+            CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
+            if (customProduct == null || ((Status) customProduct).getArchived() == 'Y') {
+                throw new IllegalArgumentException(PRODUCTNOTFOUND);
+            }
+
+            Long userId = null;
+            if (role.equals(Constant.SUPER_ADMIN) || role.equals(Constant.ADMIN)) {
+                return true;
+
+                // -> NEED TO ADD THE USER_ID OF ADMIN OR SUPER ADMIN.
+
+            } else if (role.equals(Constant.SERVICE_PROVIDER)) {
+
+                userId = jwtTokenUtil.extractId(jwtToken);
+                List<Privileges> privileges = privilegeService.getServiceProviderPrivilege(userId);
+                for (Privileges privilege : privileges) {
+                    if (privilege.getPrivilege_name().equals(Constant.PRIVILEGE_UPDATE_PRODUCT)) {
+                        return true;
+                    }
+                }
+
+            }
+
+            return false;
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            throw new Exception("ERRORS WHILE VALIDATING AUTHORIZATION: " + exception.getMessage() + "\n");
         }
     }
 }

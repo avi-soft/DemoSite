@@ -14,5 +14,4 @@ public class DocumentDTO {
     private MultipartFile file;
     private DocumentType documentType;
 
-
 }
