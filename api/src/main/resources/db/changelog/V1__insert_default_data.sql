@@ -192,9 +192,3 @@ VALUES(4, 'MASTERS', 'Completed postgraduate degree program');
 INSERT INTO qualification(qualification_id, qualification_name, qualification_description)
 VALUES(5, 'DOCTORATE', 'Completed doctoral degree program');
 
-INSERT INTO typing_text(id,text) VALUES (1,'The sun sets over the horizon, painting the sky with vibrant hues of orange and pink. Birds fly home, and the world quietly transitions into the peaceful calm of evening.')
-INSERT INTO typing_text(id,text) VALUES (2, 'A gentle breeze rustles the leaves, carrying the sweet scent of blooming flowers through the air. The world feels alive and at peace.');
-INSERT INTO typing_text(id,text) VALUES (3, 'The mountain stood tall, its peak covered in snow, contrasting sharply with the clear blue sky above. Nature\'s beauty was on full display.');
-INSERT INTO typing_text(id,text) VALUES (4, 'Waves crash against the shore, their rhythmic motion soothing to the soul. The ocean stretches endlessly, its mysteries hidden beneath the surface.');
-INSERT INTO typing_text(id,text) VALUES (5, 'In the heart of the forest, sunlight filters through the canopy, casting dappled shadows on the ground. A sense of tranquility fills the air.');
-

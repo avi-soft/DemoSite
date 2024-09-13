@@ -208,11 +208,10 @@ public class ServiceProviderTestService {
         if (signatureFile.getSize() > MAX_IMAGE_SIZE_MB) {
            throw new IllegalArgumentException("Signature image size exceeds 2 MB");
         }
-        List<String> allowedMimeTypes = Arrays.asList("image/jpeg", "image/png", "image/gif", "image/bmp", "image/tiff","image/jpg");
 
         // Check the MIME type of the file
-        String fileType = signatureFile.getContentType();
-        if (!allowedMimeTypes.contains(fileType)) {
+        if(!documentStorageService.isValidFileType(signatureFile))
+        {
             throw new IllegalArgumentException("Invalid file type. Only images are allowed.");
         }
         // Use the saveDocuments method to validate and store the signature image
