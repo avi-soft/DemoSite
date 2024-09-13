@@ -45,7 +45,6 @@ public class Constant {
     public static String NUMBER_FORMAT_EXCEPTION = "Number format exception";
     public static String CATALOG_SERVICE_NOT_INITIALIZED = "Catalog service not initialized";
     public static String GET_STATES_LIST="Select s from StateCode s";
-    public static String GET_EXAMINATIONS_COUNT = "SELECT COUNT(*) FROM Examination";
     public static String GET_QUALIFICATIONS_COUNT = "SELECT COUNT(*) FROM Qualification";
 
     public static String GET_ORDER_ITEM_PRODUCT="Select p.product_id from custom_order_item_product p where p.order_item_id =:orderItemId";

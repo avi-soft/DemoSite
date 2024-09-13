@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
+import javax.transaction.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +48,7 @@ public class QualificationController {
         return responseService.generateResponse(HttpStatus.OK,"Qualification List Retrieved Successfully", qualifications);
     }
 
+
     @PostMapping("/add")
     public ResponseEntity<?> addQualification(@RequestBody Qualification qualification) throws Exception {
         try
@@ -55,7 +57,7 @@ public class QualificationController {
             return responseService.generateResponse(HttpStatus.CREATED,"Qualification added successfully", addedQualification);
         }
         catch (IllegalArgumentException e) {
-            return responseService.generateErrorResponse("Qualification name cannot be empty",HttpStatus.BAD_REQUEST);
+            return responseService.generateErrorResponse(e.getMessage(),HttpStatus.BAD_REQUEST);
         }
         catch (Exception e)
         {
