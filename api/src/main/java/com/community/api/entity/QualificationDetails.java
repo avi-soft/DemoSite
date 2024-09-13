@@ -38,9 +38,8 @@ public class QualificationDetails {
     @Column(name = "subject_stream", nullable = false)
     private String subject_stream;
 
-
     @NotBlank(message = "Grade or percentage value is required")
-    @Pattern(regexp = "\\d+\\.?\\d*|[A-Z]|[a-z]", message = "Grade or percentage value must be either a number or a valid grade")
+    @Pattern(regexp = "^(100|[1-9]?[0-9](\\\\.\\\\d*)?)$|^[A-Za-z]+$", message = "Grade or percentage value must be either a number  (up to 100) or a valid grade")
     @Size(max = 10, message = "Grade or percentage value should not exceed 10 characters")
     @Column(name = "grade_or_percentage_value", nullable = false)
     private String grade_or_percentage_value;

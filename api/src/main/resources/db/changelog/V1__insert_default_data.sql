@@ -191,3 +191,4 @@ VALUES(4, 'MASTERS', 'Completed postgraduate degree program');
 
 INSERT INTO qualification(qualification_id, qualification_name, qualification_description)
 VALUES(5, 'DOCTORATE', 'Completed doctoral degree program');
+

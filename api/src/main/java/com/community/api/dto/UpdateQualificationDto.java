@@ -33,7 +33,7 @@ public class UpdateQualificationDto
     private String subject_stream;
 
     @Pattern(regexp = "^(?!\\s*$).+", message = "Grade or percentage value cannot be blank")
-    @Pattern(regexp = "\\d+\\.?\\d*|[A-Z]|[a-z]", message = "Grade or percentage value must be either a number or a valid grade")
+    @Pattern(regexp = "^(100|[1-9]?[0-9](\\\\.\\\\d*)?)$|^[A-Za-z]+$", message = "Grade or percentage value must be either a number  (up to 100) or a valid grade")
     @Size(max = 10, message = "Grade or percentage value should not exceed 10 characters")
     private String grade_or_percentage_value;
 
