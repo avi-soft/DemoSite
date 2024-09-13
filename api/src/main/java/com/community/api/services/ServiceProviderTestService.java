@@ -7,6 +7,8 @@ import com.community.api.services.exception.CustomerDoesNotExistsException;
 import com.community.api.services.exception.EntityDoesNotExistsException;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,6 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.Random;
 
 @Service
@@ -28,6 +31,8 @@ public class ServiceProviderTestService {
 
     @Autowired
     private EntityManager entityManager;
+    @Autowired
+    private DocumentStorageService documentStorageService;
     private static final long MAX_IMAGE_SIZE_MB = 2L * 1024 * 1024;   //(2MB)
 
     public ServiceProviderTestService(EntityManager entityManager) {
@@ -55,34 +60,41 @@ public class ServiceProviderTestService {
     }
 
     @Transactional
-    public ServiceProviderTest uploadResizedImage(Long serviceProviderId,Long testId, MultipartFile resizedFile) throws Exception {
+    public ServiceProviderTest uploadResizedImage(Long serviceProviderId, Long testId, MultipartFile resizedFile) throws Exception {
+        // Retrieve the service provider entity
         ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
-        if(serviceProvider==null)
-        {
+        if (serviceProvider == null) {
             throw new EntityDoesNotExistsException("Service Provider not found");
         }
-        ServiceProviderTest test =null;
+
+        // Find the specific test for the service provider
+        ServiceProviderTest test = null;
         List<ServiceProviderTest> serviceProviderTestList = serviceProvider.getServiceProviderTests();
-        for(ServiceProviderTest serviceProviderTest: serviceProviderTestList)
-        {
-            if(testId==serviceProviderTest.getTest_id())
-            {
-                test=serviceProviderTest;
+        for (ServiceProviderTest serviceProviderTest : serviceProviderTestList) {
+            if (testId.equals(serviceProviderTest.getTest_id())) {
+                test = serviceProviderTest;
                 break;
             }
         }
         if (test == null) {
             throw new EntityNotFoundException("Test not found with id: " + testId);
         }
-
-        // Validate the image size
         if (resizedFile.getSize() > MAX_IMAGE_SIZE_MB) {
             test.setIs_image_test_passed(false);
             entityManager.merge(test);
             throw new IllegalArgumentException("Image size exceeds 2 MB");
         }
 
-        // Create or update the Image object
+        // Validate the image size using saveDocuments method logic
+        ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(resizedFile, "RESIZED_IMAGES", serviceProviderId, "SERVICE_PROVIDER");
+        Map<String, Object> responseBody = savedResponse.getBody();
+
+        if (savedResponse.getStatusCode() != HttpStatus.OK) {
+            throw new Exception("Error uploading resized image: " + responseBody.get("message"));
+        }
+
+        // If successful, update the ServiceProviderTest with the image details
+        String fileName = resizedFile.getOriginalFilename();
         ResizedImage resizedImage = test.getResized_image();
         if (resizedImage == null) {
             resizedImage = new ResizedImage();
@@ -90,35 +102,40 @@ public class ServiceProviderTestService {
             test.setResized_image(resizedImage);
         }
 
-        String fileName = resizedFile.getOriginalFilename();
-        String basePath = "C:\\Avisoft\\ResizedImages";
-        String fullFilePath = basePath + "\\" + fileName;
+        String basePath = "api/avisoftdocument/service_provider/" + serviceProviderId + "/Resized Images";
 
+        // Ensure the directory exists, and create it if it doesn't
+        File baseDir = new File(basePath);
+        if (!baseDir.exists()) {
+            baseDir.mkdirs(); // Create the directory structure if it doesn't exist
+        }
+
+        // Full file path for the signature image
+        String fullFilePath = basePath + File.separator + fileName;
+
+        // Set file metadata in the ResizedImage object
         resizedImage.setFile_name(fileName);
         resizedImage.setFile_type(resizedFile.getContentType());
+        resizedImage.setFile_path(fullFilePath);
         resizedImage.setImage_data(resizedFile.getBytes());
-        resizedImage.setFile_path(fullFilePath);  // Set the full file path here
         resizedImage.setServiceProvider(serviceProvider);
 
-        // Save the file to the specified path
         try {
             File destFile = new File(fullFilePath);
             FileUtils.writeByteArrayToFile(destFile, resizedFile.getBytes());
         } catch (IOException e) {
-            throw new Exception("Failed to save the file", e);
+            throw new IllegalArgumentException("Failed to save the file", e);
         }
 
-        // Set the image data
+        // Set the image data and validate the resized image
         test.setResized_image_data(resizedFile.getBytes());
         entityManager.merge(test);
-
-        // Validate the resized image
         boolean isImageValid = validateResizedImage(test);
         if (isImageValid) {
             test.setIs_image_test_passed(true);
         } else {
             test.setIs_image_test_passed(false);
-            throw new Exception("Uploaded image is different from expected image");
+            throw new IllegalArgumentException("Uploaded image is different from expected image");
         }
         return test;
     }
@@ -152,38 +169,46 @@ public class ServiceProviderTestService {
         else
         {
             test.setIs_typing_test_passed(false);
-            throw new Exception("Typed text mismatch");
+            throw new IllegalArgumentException("Typed text mismatch");
         }
         // Persist the changes
         return entityManager.merge(test);
     }
 
     @Transactional
-    public ServiceProviderTest uploadSignatureImage(Long serviceProviderId,Long testId, MultipartFile signatureFile) throws Exception {
+    public ServiceProviderTest uploadSignatureImage(Long serviceProviderId, Long testId, MultipartFile signatureFile) throws Exception {
+        // Retrieve the service provider entity
         ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
-        if(serviceProvider==null)
-        {
+        if (serviceProvider == null) {
             throw new EntityDoesNotExistsException("Service Provider not found");
         }
-        ServiceProviderTest test =null;
+
+        // Find the specific test for the service provider
+        ServiceProviderTest test = null;
         List<ServiceProviderTest> serviceProviderTestList = serviceProvider.getServiceProviderTests();
-        for(ServiceProviderTest serviceProviderTest: serviceProviderTestList)
-        {
-            if(testId==serviceProviderTest.getTest_id())
-            {
-                test=serviceProviderTest;
+        for (ServiceProviderTest serviceProviderTest : serviceProviderTestList) {
+            if (testId.equals(serviceProviderTest.getTest_id())) {
+                test = serviceProviderTest;
                 break;
             }
         }
         if (test == null) {
-            throw new EntityNotFoundException();
+            throw new EntityNotFoundException("Service Provider Test not found");
         }
 
-        // Validate the image size
         if (signatureFile.getSize() > MAX_IMAGE_SIZE_MB) {
-            throw new IllegalArgumentException("Signature image size exceeds 2 MB");
+           throw new IllegalArgumentException("Signature image size exceeds 2 MB");
         }
-        // Create or update the Image object
+        // Use the saveDocuments method to validate and store the signature image
+        ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(signatureFile, "Signature Image", serviceProviderId, "SERVICE_PROVIDER");
+        Map<String, Object> responseBody = savedResponse.getBody();
+
+        if (savedResponse.getStatusCode() != HttpStatus.OK) {
+            throw new Exception("Error uploading signature image: " + responseBody.get("message"));
+        }
+
+        // If successful, update the ServiceProviderTest with the image details
+        String fileName = signatureFile.getOriginalFilename();
         SignatureImage signatureImage = test.getSignature_image();
         if (signatureImage == null) {
             signatureImage = new SignatureImage();
@@ -191,16 +216,24 @@ public class ServiceProviderTestService {
             test.setSignature_image(signatureImage);
         }
 
-        String fileName = signatureFile.getOriginalFilename();
-        String basePath = "C:\\Avisoft\\SignatureImages";
-        String fullFilePath = basePath + "\\" + fileName;
+        // Define the correct base path for storing the signature image in the api/avisoftdocument directory
+        String basePath = "api/avisoftdocument/service_provider/" + serviceProviderId + "/Signature Image";
 
+        // Ensure the directory exists, and create it if it doesn't
+        File baseDir = new File(basePath);
+        if (!baseDir.exists()) {
+            baseDir.mkdirs(); // Create the directory structure if it doesn't exist
+        }
+
+        // Full file path for the signature image
+        String fullFilePath = basePath + File.separator + fileName;
+
+        // Set the file details in the signatureImage entity
         signatureImage.setFile_name(fileName);
         signatureImage.setFile_type(signatureFile.getContentType());
+        signatureImage.setFile_path(fullFilePath);
         signatureImage.setImage_data(signatureFile.getBytes());
-        signatureImage.setFile_path(fullFilePath);  // Set the full file path here
         signatureImage.setServiceProvider(serviceProvider);
-
 
         // Save the file to the specified path
         try {
@@ -209,22 +242,21 @@ public class ServiceProviderTestService {
         } catch (IOException e) {
             throw new Exception("Failed to save the file", e);
         }
+
+        // Merge and persist changes
         entityManager.merge(test);
+
         return test;
     }
 
     @Transactional
-    public List<ServiceProviderTest> getServiceProviderTestByServiceProviderId(Long serviceProviderId) throws  RuntimeException, EntityDoesNotExistsException {
+    public List<ServiceProviderTest> getServiceProviderTestByServiceProviderId(Long serviceProviderId) throws   EntityDoesNotExistsException {
         ServiceProviderEntity serviceProvider= entityManager.find(ServiceProviderEntity.class,serviceProviderId);
         if(serviceProvider==null)
         {
             throw new EntityDoesNotExistsException("Service Provider not found");
         }
         List<ServiceProviderTest> serviceProviderTests = serviceProvider.getServiceProviderTests();
-        if(serviceProviderTests.isEmpty())
-        {
-            throw new RuntimeException("Service provider Tests list is empty.");
-        }
         return serviceProviderTests;
     }
 

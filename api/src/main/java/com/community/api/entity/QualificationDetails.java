@@ -24,7 +24,7 @@ public class QualificationDetails {
 //    @Min(value = 1900, message = "Year of passing should not be before 1900")
 //    @Max(value = 9999, message = "Year of passing should be a valid 4-digit year")
     @Column(name = "year_of_passing", nullable = false)
-    private int year_of_passing;
+    private Long year_of_passing;
 
     @NotBlank(message = "Board or University is required")
     @Size(max = 255, message = "Board or University name should not exceed 255 characters")
@@ -40,18 +40,18 @@ public class QualificationDetails {
 
 
     @NotBlank(message = "Grade or percentage value is required")
-    @Pattern(regexp = "\\d+\\.?\\d*|[A-F]|[a-f]", message = "Grade or percentage value must be either a number or a valid grade")
+    @Pattern(regexp = "\\d+\\.?\\d*|[A-Z]|[a-z]", message = "Grade or percentage value must be either a number or a valid grade")
     @Size(max = 10, message = "Grade or percentage value should not exceed 10 characters")
     @Column(name = "grade_or_percentage_value", nullable = false)
     private String grade_or_percentage_value;
 
     @Min(value = 1, message = "Total marks must be greater than zero")
     @Column(name = "total_marks", nullable = false)
-    private int total_marks;
+    private Long total_marks;
 
     @Min(value = 0, message = "Marks obtained cannot be negative")
     @Column(name = "marks_obtained", nullable = false)
-    private int marks_obtained;
+    private Long marks_obtained;
 
     @Column(name = "qualification_id", nullable = false)
     private long qualification_id;

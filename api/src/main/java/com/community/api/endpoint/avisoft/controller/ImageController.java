@@ -38,18 +38,4 @@ public class ImageController
         }
     }
 
-    @GetMapping("/get-image/{id}")
-    public ResponseEntity<byte[]> getImage(@PathVariable Long id) {
-        Image image = imageService.getImage(id);
-
-        if (image != null) {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.parseMediaType(image.getFile_type()));
-            headers.setContentDispositionFormData(image.getFile_name(), image.getFile_name());
-            return new ResponseEntity<>(image.getImage_data(), headers, HttpStatus.OK);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
-    }
-
 }
