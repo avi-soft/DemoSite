@@ -93,7 +93,7 @@ public class CartEndPoint extends BaseEndpoint {
 
 
     @RequestMapping(value = "empty", method = RequestMethod.DELETE)
-    public ResponseEntity<?> emptyTheCart(@RequestParam Long customer_id) {
+    public ResponseEntity<?> emptyTheCart(@RequestParam Long customer_id) { //@TODO-empty cart should remove each item one by one
         try {
             if (isAnyServiceNull()) {
                 return responseService.generateErrorResponse("One or more Serivces not initialized",HttpStatus.INTERNAL_SERVER_ERROR);
@@ -280,7 +280,8 @@ public class CartEndPoint extends BaseEndpoint {
                 ResponseService.generateErrorResponse("Cart items not found", HttpStatus.NOT_FOUND);
             Order cart = orderService.findCartForCustomer(customer);
             if (cart.getId() == orderId) {
-                OrderStatus orderStatus = OrderStatus.SUBMITTED;
+                
+                    OrderStatus orderStatus = new OrderStatus("ORDER_PLACED","Order Placed");
                 cart.setStatus(orderStatus);
                 entityManager.merge(cart);
                 return ResponseService.generateSuccessResponse("Order Placed", cart.getId(), HttpStatus.OK);
