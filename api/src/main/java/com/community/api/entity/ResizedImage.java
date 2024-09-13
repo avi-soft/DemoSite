@@ -10,7 +10,7 @@ import javax.persistence.*;
 @Entity
 @Data
 @NoArgsConstructor
-public class SignatureImage {
+public class ResizedImage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,4 +36,3 @@ public class SignatureImage {
     @JoinColumn(name = "service_provider_id")
     private ServiceProviderEntity serviceProvider;
 }
-

@@ -23,25 +23,20 @@ public class QualificationService {
     private QualificationService qualificationService;
     @Autowired
     private ResponseService responseService;
-    public List<Qualification> getAllQualifications() throws RuntimeException {
+    public List<Qualification> getAllQualifications() {
         TypedQuery<Qualification> query = entityManager.createQuery(Constant.FIND_ALL_QUALIFICATIONS_QUERY, Qualification.class);
         List<Qualification> qualifications = query.getResultList();
-        if(query.getResultList().isEmpty())
-        {
-             throw new RuntimeException();
-        }
         return qualifications;
 }
     @Transactional
-    public Qualification addQualification(@RequestBody Qualification qualification) throws Exception {
+    public Qualification addQualification(@RequestBody Qualification qualification) {
             Qualification qualificationToBeSaved =new Qualification();
-            int isSaved=0;
             long id = findCount() + 1;
             qualificationToBeSaved.setQualification_id(id);
             qualificationToBeSaved.setQualification_name(qualification.getQualification_name());
-        if (qualification.getQualification_name() == null || qualification.getQualification_name().isEmpty()) {
-            throw new Exception();
-        }
+            if (qualification.getQualification_name() == null || qualification.getQualification_name().isEmpty()) {
+            throw new IllegalArgumentException();
+            }
         entityManager.persist(qualificationToBeSaved);
         return qualification;
     }

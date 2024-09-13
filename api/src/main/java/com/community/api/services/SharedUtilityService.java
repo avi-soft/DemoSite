@@ -154,6 +154,7 @@ public class SharedUtilityService {
             addresses.add(addressDTO);
         }
         customerDetails.put("addresses",addresses);
+
         return customerDetails;
     }
     public ValidationResult validateInputMap(Map<String,Object>inputMap)

@@ -72,10 +72,6 @@ public class QualificationDetailsService
             throw new CustomerDoesNotExistsException("Customer does not exist with id "+ customCustomerId);
         }
        List<QualificationDetails> qualificationDetails = customCustomer.getQualificationDetailsList();
-        if(qualificationDetails.isEmpty())
-        {
-              throw new RuntimeException();
-        }
         return qualificationDetails;
     }
 
