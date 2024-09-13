@@ -148,4 +148,10 @@ public class ServiceProviderEntity  {
             joinColumns = @JoinColumn(name = "service_provider_id"), // Foreign key for ServiceProvider
             inverseJoinColumns = @JoinColumn(name = "language_id")) // Foreign key for Skill
     private List<ServiceProviderLanguage> languages;
+
+    @OneToMany(mappedBy = "service_provider", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
+    private List<ServiceProviderTest> serviceProviderTests;
+
+    @OneToMany(mappedBy = "serviceProvider", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ResizedImage> resizedImages;
 }

@@ -16,6 +16,7 @@ import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.broadleafcommerce.profile.core.domain.Address;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.domain.CustomerAddress;
+import org.broadleafcommerce.profile.core.domain.CustomerImpl;
 import org.broadleafcommerce.profile.core.service.AddressService;
 import org.broadleafcommerce.profile.core.service.CustomerAddressService;
 import org.broadleafcommerce.profile.core.service.CustomerService;
@@ -210,6 +211,27 @@ public class CustomerEndpoint {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Error updating", HttpStatus.INTERNAL_SERVER_ERROR);
 
+        }
+    }
+
+    @Transactional
+    @RequestMapping(value = "/get-customer-details/{customerId}", method = RequestMethod.GET)
+    public ResponseEntity<?> getUserDetails(@PathVariable Long customerId) {
+        try {
+            CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
+            if (customCustomer == null) {
+                return responseService.generateErrorResponse("Customer not found", HttpStatus.NOT_FOUND);
+            }
+            CustomerImpl customer = em.find(CustomerImpl.class, customerId);  // Assuming you retrieve the base Customer entity
+            Map<String, Object> customerDetails = sharedUtilityService.breakReferenceForCustomer(customer);
+            customerDetails.put("qualificationDetails",customCustomer.getQualificationDetailsList());
+            customerDetails.put("documents",customCustomer.getDocuments());
+            return responseService.generateSuccessResponse("User details retrieved successfully", customerDetails, HttpStatus.OK);
+
+
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return responseService.generateErrorResponse("Error retrieving user details", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -743,6 +765,7 @@ public class CustomerEndpoint {
     public AddressDTO makeAddressDTO(CustomerAddress customerAddress)
     {
         AddressDTO addressDTO=new AddressDTO();
+        addressDTO.setAddressId(customerAddress.getAddress().getId());
         addressDTO.setAddress(customerAddress.getAddress().getAddressLine1());
         addressDTO.setPinCode(customerAddress.getAddress().getPostalCode());
         addressDTO.setState(customerAddress.getAddress().getStateProvinceRegion());
