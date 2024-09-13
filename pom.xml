@@ -106,7 +106,7 @@
 
     <modules>
         <module>core</module>
-        <module>avisoft</module>
+
         <module>api</module>
     </modules>
 </project>
