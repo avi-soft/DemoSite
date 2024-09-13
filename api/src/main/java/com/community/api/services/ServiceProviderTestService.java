@@ -47,7 +47,15 @@ public class ServiceProviderTestService {
             throw new EntityDoesNotExistsException("Service Provider not found");
         }
         Image randomImage = getRandomImage();
+        if(randomImage==null )
+        {
+            throw new IllegalArgumentException("There is no any random image present. Add a image to be selected randomly.");
+        }
         String randomText= getRandomTypingText();
+        if(randomText==null)
+        {
+            throw new IllegalArgumentException("There is no any random typing text present. Add a typing text to be selected randomly.");
+        }
 
         ServiceProviderTest test = new ServiceProviderTest();
         test.setService_provider(serviceProvider);

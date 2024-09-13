@@ -37,6 +37,10 @@ public class ServiceProviderTestController {
         {
             return ResponseService.generateErrorResponse("Service Provider does not exist",HttpStatus.NOT_FOUND);
         }
+        catch (IllegalArgumentException e)
+        {
+            return ResponseService.generateErrorResponse(e.getMessage(),HttpStatus.BAD_REQUEST);
+        }
         catch (Exception e)
         {
             return ResponseService.generateErrorResponse("Something went wrong",HttpStatus.BAD_REQUEST);
