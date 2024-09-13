@@ -70,11 +70,7 @@
             <groupId>org.broadleafcommerce</groupId>
             <artifactId>broadleaf-framework-web</artifactId>
         </dependency>
-        <dependency>
-            <groupId>com.mycompany-community</groupId>
-            <artifactId>avisoft</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-        </dependency>
+
 
 
         <!-- this dependency is added for calling rest api of broadleaf such as for schemas or any wrapper implementation-->
