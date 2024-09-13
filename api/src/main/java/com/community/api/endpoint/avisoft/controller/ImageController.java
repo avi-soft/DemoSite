@@ -26,15 +26,11 @@ public class ImageController
     public ResponseEntity<?> uploadImage(@RequestParam("file") MultipartFile file) {
         try {
             Image savedImage = imageService.saveImage(file);
-            return ResponseEntity.status(HttpStatus.CREATED).body(savedImage);
+            return ResponseService.generateSuccessResponse("Image is saved",savedImage,HttpStatus.OK);
         } catch (IOException e) {
-            log.error("IO error occurred while saving image", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error saving image: " + e.getMessage());
+            return ResponseService.generateErrorResponse(e.getMessage(),HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
-            log.error("Unexpected error occurred while saving image", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Unexpected error: " + e.getMessage());
+            return ResponseService.generateErrorResponse(e.getMessage(),HttpStatus.BAD_REQUEST);
         }
     }
 

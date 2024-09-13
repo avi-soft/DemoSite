@@ -77,7 +77,8 @@ public class ServiceProviderEntity  {
 
     private Integer number_of_employees;
 
-//    @Lob
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
 //    @Column(name = "businessPhoto", columnDefinition="BLOB")
 //    @OneToOne(cascade = CascadeType.ALL)
 //    @JoinColumn(name = "business_photo_id")
@@ -88,7 +89,8 @@ public class ServiceProviderEntity  {
 
     private String registration_number;
 
-//    @Lob
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
 //    @Column(name = "cFormPhoto", columnDefinition="BLOB")
 //    @OneToOne(cascade = CascadeType.ALL)
 //    @JoinColumn(name = "c_form_photo_id")

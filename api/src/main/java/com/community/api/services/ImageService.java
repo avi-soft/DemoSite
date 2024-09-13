@@ -9,6 +9,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 import java.io.File;
+import java.util.Arrays;
 import java.util.Iterator;
 
 import javax.persistence.EntityManager;
@@ -19,6 +20,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ByteArrayInputStream;
 import java.security.MessageDigest;
+import java.util.List;
+
 import org.apache.commons.codec.binary.Hex;
 
 @Service
@@ -30,10 +33,53 @@ public class ImageService {
         this.entityManager = entityManager;
     }
 
+//    @Transactional
+//    public Image saveImage(MultipartFile file) throws Exception {
+//        // Define the directory where you want to store the images
+//        String uploadDir = "api/avisoftdocument/Random Images";
+//
+//        // Create the directory if it doesn't exist
+//        File directory = new File(uploadDir);
+//        if (!directory.exists()) {
+//            directory.mkdirs();
+//        }
+//
+//        byte[] fileBytes = file.getBytes();
+//        // Generate the file path (append the filename properly with a separator)
+//        String filePath = uploadDir + File.separator + file.getOriginalFilename();
+//
+//        try {
+//            File destFile = new File(filePath);
+//            FileUtils.writeByteArrayToFile(destFile, file.getBytes());
+//        } catch (IOException e) {
+//            throw new Exception("Failed to save the file", e);
+//        }
+//
+//        // Create and populate the Image entity
+//        Image image = new Image();
+//        image.setFile_name(file.getOriginalFilename());
+//        image.setFile_type(file.getContentType());
+//        image.setImage_data(fileBytes);
+//        image.setFile_path(filePath); // Store the file path in the database
+//
+//        // Persist the image entity to the database
+//        entityManager.persist(image);
+//        return image;
+//    }
+
     @Transactional
     public Image saveImage(MultipartFile file) throws Exception {
         // Define the directory where you want to store the images
         String uploadDir = "api/avisoftdocument/Random Images";
+
+        // Define acceptable image MIME types
+        List<String> allowedMimeTypes = Arrays.asList("image/jpeg", "image/png", "image/gif", "image/bmp", "image/tiff");
+
+        // Check the MIME type of the file
+        String fileType = file.getContentType();
+        if (!allowedMimeTypes.contains(fileType)) {
+            throw new IllegalArgumentException("Invalid file type. Only images are allowed.");
+        }
 
         // Create the directory if it doesn't exist
         File directory = new File(uploadDir);
@@ -55,7 +101,7 @@ public class ImageService {
         // Create and populate the Image entity
         Image image = new Image();
         image.setFile_name(file.getOriginalFilename());
-        image.setFile_type(file.getContentType());
+        image.setFile_type(fileType);
         image.setImage_data(fileBytes);
         image.setFile_path(filePath); // Store the file path in the database
 
@@ -63,4 +109,5 @@ public class ImageService {
         entityManager.persist(image);
         return image;
     }
+
 }
