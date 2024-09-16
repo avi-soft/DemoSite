@@ -2,8 +2,7 @@ package com.community.api.services;
 
 import com.community.api.endpoint.serviceProvider.ServiceProviderStatus;
 import com.community.api.entity.*;
-import jdk.jfr.Timestamp;
-import org.hibernate.query.criteria.internal.expression.function.CurrentDateFunction;
+import com.community.api.entity.Qualification;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -11,38 +10,43 @@ import org.springframework.stereotype.Component;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 import static org.broadleafcommerce.common.util.sql.importsql.DemoSqlServerSingleLineSqlCommandExtractor.CURRENT_TIMESTAMP;
 
 @Component
-public class CustomProductStateService implements CommandLineRunner {
+public class CommandLineService implements CommandLineRunner {
 
     @Autowired
     private EntityManager entityManager;
-   @Autowired
-   private SharedUtilityService sharedUtilityService;
+
     @Override
     @Transactional
     public void run(String... args) throws Exception {
         // Check if data already exists to avoid duplication
         if (entityManager.createQuery("SELECT COUNT(c) FROM CustomProductState c", Long.class).getSingleResult() == 0) {
-            entityManager.persist(new CustomProductState(1L, "New"));
-            entityManager.persist(new CustomProductState(2L, "Approved"));
-            entityManager.persist(new CustomProductState(3L, "Live"));
-            entityManager.persist(new CustomProductState(4L, "Expired"));
-            entityManager.persist(new CustomProductState(5L, "Rejected"));
+            entityManager.persist(new CustomProductState(1L, "NEW"));
+            entityManager.persist(new CustomProductState(2L, "APPROVED"));
+            entityManager.persist(new CustomProductState(3L, "LIVE"));
+            entityManager.persist(new CustomProductState(4L, "EXPIRED"));
+            entityManager.persist(new CustomProductState(5L, "REJECTED"));
         }
 
-        if (entityManager.createQuery("SELECT COUNT(c) FROM CustomNotifyingAuthority c", Long.class).getSingleResult() == 0) {
-            entityManager.persist(new CustomNotifyingAuthority(1L, "State"));
-            entityManager.persist(new CustomNotifyingAuthority(2L, "Government"));
+        if(entityManager.createQuery("SELECT COUNT(c) FROM CustomJobGroup c", Long.class).getSingleResult() == 0) {
+            entityManager.persist(new CustomJobGroup(1L, 'A'));
+            entityManager.persist(new CustomJobGroup(2L, 'B'));
+            entityManager.persist(new CustomJobGroup(3L, 'C'));
+            entityManager.persist(new CustomJobGroup(4L, 'D'));
+        }
+
+        if (entityManager.createQuery("SELECT COUNT(c) FROM CustomApplicationScope c", Long.class).getSingleResult() == 0) {
+            entityManager.persist(new CustomApplicationScope(1L, "STATE"));
+            entityManager.persist(new CustomApplicationScope(2L, "CENTER"));
         }
 
         if (entityManager.createQuery("SELECT COUNT(c) FROM CustomReserveCategory c", Long.class).getSingleResult() == 0) {
-            entityManager.persist(new CustomReserveCategory(1L, "GEN", "GENERAL", true));
+            entityManager.persist(new CustomReserveCategory(1L, "GEN", "General", true));
             entityManager.persist(new CustomReserveCategory(2L, "SC", "Schedule Caste", false));
             entityManager.persist(new CustomReserveCategory(3L, "ST", "Schedule Tribe", false));
             entityManager.persist(new CustomReserveCategory(4L, "OBC", "Other Backward Caste", false));
@@ -128,7 +132,8 @@ public class CustomProductStateService implements CommandLineRunner {
             entityManager.persist(new Districts(58, "Jhajjar", "HR"));
             entityManager.persist(new Districts(59, "Jind", "HR"));
             entityManager.persist(new Districts(60, "Kaithal", "HR"));
-            entityManager.persist(new Districts(61, "Karnal", "HR"));
+            entityManager.persist(
+                    new Districts(61, "Karnal", "HR"));
             entityManager.persist(new Districts(62, "Mahendragarh", "HR"));
             entityManager.persist(new Districts(63, "Mewat", "HR"));
             entityManager.persist(new Districts(64, "Palwal", "HR"));
@@ -226,7 +231,7 @@ public class CustomProductStateService implements CommandLineRunner {
         }
         count = entityManager.createQuery("SELECT COUNT(s) FROM ServiceProviderStatus s", Long.class).getSingleResult();
 
-        /*if (count == 0) {
+        if (count == 0) {
             // Get current date and time as a formatted string
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
             String now = LocalDateTime.now().format(formatter);
@@ -242,15 +247,16 @@ public class CustomProductStateService implements CommandLineRunner {
             entityManager.persist(status2);
             entityManager.persist(status3);
             entityManager.persist(status4);
-        }*/
-        count = entityManager.createQuery("SELECT COUNT(e) FROM Examination e", Long.class).getSingleResult();
+        }
+        count = entityManager.createQuery("SELECT COUNT(e) FROM Qualification e", Long.class).getSingleResult();
 
         if (count == 0) {
-            entityManager.persist(new Examination(1L,"10th"));
-            entityManager.persist(new Examination(2L,"10+2"));
-            entityManager.persist(new Examination(3L,"Bachelors"));
-            entityManager.persist(new Examination(4L,"Masters"));
-            entityManager.persist(new Examination(5L,"PhD"));
+            entityManager.persist(new Qualification(1L, "MATRICULATION", "Completed secondary education or equivalent"));
+            entityManager.persist(new Qualification(2L, "INTERMEDIATE", "Completed higher secondary education or equivalent"));
+            entityManager.persist(new Qualification(3L, "BACHELORS", "Completed undergraduate degree program"));
+            entityManager.persist(new Qualification(4L, "MASTERS", "Completed postgraduate degree program"));
+            entityManager.persist(new Qualification(5L, "DOCTORATE", "Completed doctoral degree program"));
+
         }
     }
 }

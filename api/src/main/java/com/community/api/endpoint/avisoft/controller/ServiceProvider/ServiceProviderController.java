@@ -2,13 +2,13 @@ package com.community.api.endpoint.avisoft.controller.ServiceProvider;
 
 import com.community.api.component.Constant;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
+import com.community.api.services.DistrictService;
+import com.community.api.services.ResponseService;
 import com.community.api.entity.ServiceProviderAddress;
 import com.community.api.entity.ServiceProviderAddressRef;
 import com.community.api.entity.Skill;
-import com.community.api.services.DistrictService;
-import com.community.api.services.ResponseService;
+import com.community.api.services.*;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
-import com.community.api.services.TwilioServiceForServiceProvider;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,19 +16,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.*;
+
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
-import javax.xml.crypto.Data;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -56,6 +48,10 @@ public class ServiceProviderController {
     private CustomerService customerService;
     @Autowired
     private DistrictService districtService;
+    @Autowired
+    private SharedUtilityService sharedUtilityService;
+    @Autowired
+    private SanitizerService sanitizerService;
 
     @Transactional
     @PostMapping("/assign-skill")
@@ -68,13 +64,13 @@ public class ServiceProviderController {
             listOfSkills.add(skill);
             serviceProviderEntity.setSkills(listOfSkills);
             entityManager.merge(serviceProviderEntity);
-            return new ResponseEntity<>(serviceProviderEntity, HttpStatus.OK);
+            return responseService.generateSuccessResponse("Skill assigned to service provider id : "+serviceProviderEntity.getService_provider_id(),serviceProviderEntity, HttpStatus.OK);
         }catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error assigning skill: " + e.getMessage());
         }
     }
-    @PatchMapping("saveServiceProvider")
+    @PatchMapping("save-service-provider")
     public ResponseEntity<?> updateServiceProvider(@RequestParam Long userId, @RequestBody Map<String,Object> serviceProviderDetails) throws Exception {
         try{
         return serviceProviderService.updateServiceProvider(userId,serviceProviderDetails);
@@ -90,10 +86,10 @@ public class ServiceProviderController {
         try{
         ServiceProviderEntity serviceProviderToBeDeleted=entityManager.find(ServiceProviderEntity.class,userId);
         if(serviceProviderToBeDeleted==null)
-            return new ResponseEntity<>("No record found",HttpStatus.NOT_FOUND);
+            return responseService.generateErrorResponse("No record found",HttpStatus.NOT_FOUND);
         else
             entityManager.remove(serviceProviderToBeDeleted);
-        return new ResponseEntity<>("Service Provider Deleted",HttpStatus.OK);
+        return responseService.generateSuccessResponse("Service Provider Deleted",null,HttpStatus.OK);
     }
         catch (Exception e) {
             exceptionHandling.handleException(e);
@@ -104,6 +100,11 @@ public class ServiceProviderController {
     public ResponseEntity<?>deleteServiceProvider(@RequestBody Map<String,Object>passwordDetails,@RequestParam long userId)
     {
         try {
+            if(!sharedUtilityService.validateInputMap(passwordDetails).equals(SharedUtilityService.ValidationResult.SUCCESS))
+            {
+                return ResponseService.generateErrorResponse("Invalid Request Body",HttpStatus.UNPROCESSABLE_ENTITY);
+            }
+            passwordDetails=sanitizerService.sanitizeInputMap(passwordDetails);
             String password = (String) passwordDetails.get("password");
            // String newPassword = (String) passwordDetails.get("newPassword");
             ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, userId);
@@ -115,7 +116,7 @@ public class ServiceProviderController {
                 return responseService.generateSuccessResponse("Password created",serviceProvider,HttpStatus.OK);
             } else {
                 if (password == null /*|| newPassword == null*/)
-                    new ResponseEntity<>("Empty password entered", HttpStatus.BAD_REQUEST);
+                    return responseService.generateErrorResponse("Empty password entered", HttpStatus.BAD_REQUEST);
                 /*if (passwordEncoder.matches(password, serviceProvider.getPassword())) {
                     serviceProvider.setPassword(passwordEncoder.encode(newPassword));*/
                 if(!passwordEncoder.matches(password,serviceProvider.getPassword())) {
@@ -132,7 +133,7 @@ public class ServiceProviderController {
                 return responseService.generateErrorResponse("Error changing/updating password: " + e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
             }
     }
-    @GetMapping("getServiceProivider")
+    @GetMapping("get-service-provider")
     public ResponseEntity<?> getServiceProviderById(@RequestParam Long userId) throws Exception {
         try {
             ServiceProviderEntity serviceProviderEntity = serviceProviderService.getServiceProviderById(userId);
@@ -147,17 +148,17 @@ public class ServiceProviderController {
     }
 
     @Transactional
-    @PostMapping("/addAddress")
+    @PostMapping("/add-address")
     public ResponseEntity<?> addAddress(@RequestParam long serviceProviderId,@RequestBody ServiceProviderAddress serviceProviderAddress) throws Exception {
         try{
             if(serviceProviderAddress==null)
             {
-                return new ResponseEntity<>("Incomplete Details",HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Incomplete Details",HttpStatus.BAD_REQUEST);
             }
             ServiceProviderEntity existingServiceProvider=entityManager.find(ServiceProviderEntity.class,serviceProviderId);
             if(existingServiceProvider==null)
             {
-                return new ResponseEntity<>("Service Provider Not found",HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Service Provider Not found",HttpStatus.BAD_REQUEST);
             }
             List<ServiceProviderAddress>addresses=existingServiceProvider.getSpAddresses();
             serviceProviderAddress.setState(districtService.findStateById(Integer.parseInt(serviceProviderAddress.getState())));
@@ -167,21 +168,71 @@ public class ServiceProviderController {
             serviceProviderAddress.setServiceProviderEntity(existingServiceProvider);
             entityManager.persist(serviceProviderAddress);
             entityManager.merge(existingServiceProvider);
-            return new ResponseEntity<>(serviceProviderAddress,HttpStatus.OK);
+            return responseService.generateSuccessResponse("Address added successfully",serviceProviderAddress,HttpStatus.OK);
         }catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error adding address " + e.getMessage());
         }
     }
-    @GetMapping("/getAddressNames")
+
+    @GetMapping("/get-address-names")
     public ResponseEntity<?> getAddressTypes()
     {
         try{
         TypedQuery<ServiceProviderAddressRef> query = entityManager.createQuery(Constant.jpql, ServiceProviderAddressRef.class);
-        return new ResponseEntity<>(query.getResultList(),HttpStatus.OK);
+        return responseService.generateSuccessResponse("List of addresses : ",query.getResultList(),HttpStatus.OK);
     }catch (Exception e) {
             exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some issue in fetching addressNames " + e.getMessage());
+            return responseService.generateErrorResponse("Some issue in fetching addressNames " + e.getMessage(),HttpStatus.BAD_REQUEST);
+        }
+    }
+
+
+    @Transactional
+
+
+
+
+
+
+    @GetMapping("/get-all-service-providers")
+    public ResponseEntity<?> getAllServiceProviders(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit)
+    {
+        try {
+            // Calculate the start position for pagination
+            int startPosition = page * limit;
+            // Create the query
+            TypedQuery<ServiceProviderEntity> query = entityManager.createQuery(Constant.GET_ALL_SERVICE_PROVIDERS, ServiceProviderEntity.class);
+            // Apply pagination
+            query.setFirstResult(startPosition);
+            query.setMaxResults(limit);
+            List<ServiceProviderEntity> results = query.getResultList();
+            return ResponseService.generateSuccessResponse("List of service providers: ", results, HttpStatus.OK);
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseService.generateErrorResponse("Some issue in fetching service providers: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @Transactional
+    @GetMapping("/get-all-details/{serviceProviderId}")
+    public ResponseEntity<?> getAllDetails(@PathVariable Long serviceProviderId)
+    {
+        try
+        {
+            ServiceProviderEntity serviceProviderEntity= entityManager.find(ServiceProviderEntity.class,serviceProviderId);
+            if(serviceProviderEntity==null)
+            {
+                return ResponseService.generateErrorResponse("Service provider does not found",HttpStatus.NOT_FOUND);
+            }
+
+            return ResponseService.generateSuccessResponse("Service Provider details retrieved successfully",serviceProviderEntity,HttpStatus.OK);
+        }
+        catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseService.generateErrorResponse("Some issue in fetching service provider details " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 }

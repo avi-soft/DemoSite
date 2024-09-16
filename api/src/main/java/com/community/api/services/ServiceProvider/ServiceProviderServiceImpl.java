@@ -70,6 +70,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     private ServiceProviderLanguageService serviceProviderLanguageService;
     @Autowired
     private  RateLimiterService rateLimiterService;
+    @Autowired
+    private SharedUtilityService sharedUtilityService;
 
     @Value("${twilio.phoneNumber}")
     private String twilioPhoneNumber;
@@ -220,7 +222,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         return entityManager.find(ServiceProviderEntity.class, userId);
     }
     @Transactional
-    public ResponseEntity<String> sendOtpToMobile(String mobileNumber,String countryCode) {
+    public ResponseEntity<?> sendOtpToMobile(String mobileNumber,String countryCode) {
 
         if (mobileNumber == null || mobileNumber.isEmpty()) {
             throw new IllegalArgumentException("Mobile number cannot be null or empty");
@@ -259,22 +261,22 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             }
 
 
-            return ResponseEntity.ok("OTP has been sent successfully " + otp);
+            return responseService.generateSuccessResponse("OTP has been sent successfully !!!" ,otp,HttpStatus.OK);
 
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized access: Please check your API key");
+                return responseService.generateErrorResponse("Unauthorized access: Please check your API key",HttpStatus.UNAUTHORIZED);
             } else {
                 exceptionHandling.handleHttpClientErrorException(e);
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Internal server error occurred");
+                return responseService.generateErrorResponse("Internal server error occurred",HttpStatus.INTERNAL_SERVER_ERROR);
             }
         } catch (ApiException e) {
             exceptionHandling.handleApiException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error sending OTP: " + e.getMessage());
+            return responseService.generateErrorResponse("Error sending OTP: " + e.getMessage(),HttpStatus.BAD_REQUEST);
         }
         catch (Exception e) {
             exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error sending OTP: " + e.getMessage());
+            return responseService.generateErrorResponse("Error sending OTP: " + e.getMessage(),HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -339,22 +341,23 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     //mechanism to check password
     public ResponseEntity<?> validateServiceProvider(ServiceProviderEntity serviceProvider, String password, HttpServletRequest request,HttpSession session) {
         if (serviceProvider == null) {
-            return new ResponseEntity<>("No Records Found", HttpStatus.NOT_FOUND);
+            return responseService.generateErrorResponse("No Records Found", HttpStatus.NOT_FOUND);
         }
         if (passwordEncoder.matches(password,serviceProvider.getPassword())) {
             String ipAddress = request.getRemoteAddr();
             String userAgent = request.getHeader("User-Agent");
             String tokenKey = "authTokenServiceProvider_" + serviceProvider.getMobileNumber();
             String existingToken = (String) session.getAttribute(tokenKey);
+            Map<String,Object> serviceProviderResponse= sharedUtilityService.serviceProviderDetailsMap(serviceProvider);
             if(existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
-                Map<String, Object> responseBody = createAuthResponse(existingToken, serviceProvider).getBody();
+                Map<String, Object> responseBody = createAuthResponse(existingToken, serviceProviderResponse).getBody();
 
                 return ResponseEntity.ok(responseBody);
             } else {
                 String newToken = jwtUtil.generateToken(serviceProvider.getService_provider_id(), serviceProvider.getRole(), ipAddress, userAgent);
                 session.setAttribute(tokenKey, newToken);
 
-                Map<String, Object> responseBody = createAuthResponse(newToken, serviceProvider).getBody();
+                Map<String, Object> responseBody = createAuthResponse(newToken, serviceProviderResponse).getBody();
             return ResponseEntity.ok(responseBody);
 
         } }else {
@@ -364,6 +367,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     public ResponseEntity<?> loginWithPassword(@RequestBody Map<String, Object> serviceProviderDetails,HttpServletRequest request,HttpSession session) {
         try {
             String mobileNumber = (String) serviceProviderDetails.get("mobileNumber");
+            if(mobileNumber.startsWith("0"))
+                mobileNumber=mobileNumber.substring(1);
             String username = (String) serviceProviderDetails.get("username");
             String password = (String) serviceProviderDetails.get("password");
             String countryCode = (String) serviceProviderDetails.getOrDefault("countryCode", Constant.COUNTRY_CODE);
@@ -498,6 +503,11 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 mobileNumber= mobileNumber.substring(1);
             ServiceProviderEntity existingServiceProvider = findServiceProviderByPhone(mobileNumber, countryCode);
 
+            if(existingServiceProvider == null){
+                return responseService.generateErrorResponse("Invalid Data Provided ",HttpStatus.UNAUTHORIZED);
+
+            }
+
             String storedOtp =  existingServiceProvider.getOtp();
             String ipAddress = request.getRemoteAddr();
             String userAgent = request.getHeader("User-Agent");
@@ -505,24 +515,28 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
 
             if (otpEntered == null || otpEntered.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("OTP cannot be empty");
+                return responseService.generateErrorResponse("OTP cannot be empty",HttpStatus.BAD_REQUEST);
             }
             if (otpEntered.equals(storedOtp)) {
                 existingServiceProvider.setOtp(null);
                 entityManager.merge(existingServiceProvider);
 
                 String existingToken = (String) session.getAttribute(tokenKey);
-
+                Map<String,Object> serviceProviderResponse= sharedUtilityService.serviceProviderDetailsMap(existingServiceProvider);
                 if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
-                    Map<String, Object> responseBody = createAuthResponse(existingToken, existingServiceProvider).getBody();
+                                        Map<String, Object> responseBody = createAuthResponse(existingToken, serviceProviderResponse).getBody();
 
                     return ResponseEntity.ok(responseBody);
                 } else {
                     String newToken = jwtUtil.generateToken(existingServiceProvider.getService_provider_id(), role, ipAddress, userAgent);
                     session.setAttribute(tokenKey, newToken);
 
-                    Map<String, Object> responseBody = createAuthResponse(newToken, existingServiceProvider).getBody();
-
+                    Map<String, Object> responseBody = createAuthResponse(newToken, serviceProviderResponse).getBody();
+                    if(existingServiceProvider.getSignedUp()==0) {
+                        existingServiceProvider.setSignedUp(1);
+                        entityManager.merge(existingServiceProvider);
+                        responseBody.put("message", "User has been signed up");
+                    }
                     return ResponseEntity.ok(responseBody);
                 }
             } else {
@@ -536,7 +550,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         }
     }
 
-    private ResponseEntity<Map<String, Object>> createAuthResponse(String token, ServiceProviderEntity serviceProviderEntity) {
+    private ResponseEntity<Map<String, Object>> createAuthResponse(String token, Map<String,Object> serviceProviderEntity) {
         Map<String, Object> responseBody = new HashMap<>();
 
         Map<String, Object> data = new HashMap<>();
@@ -599,12 +613,12 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         try{
             if(serviceProviderAddress==null)
             {
-                return new ResponseEntity<>("Incomplete Details",HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Incomplete Details",HttpStatus.BAD_REQUEST);
             }
             ServiceProviderEntity existingServiceProvider=entityManager.find(ServiceProviderEntity.class,serviceProviderId);
             if(existingServiceProvider==null)
             {
-                return new ResponseEntity<>("Service Provider Not found",HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Service Provider Not found",HttpStatus.BAD_REQUEST);
             }
             List<ServiceProviderAddress>addresses=existingServiceProvider.getSpAddresses();
             serviceProviderAddress.setState(districtService.findStateById(Integer.parseInt(serviceProviderAddress.getState())));
@@ -616,10 +630,10 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             entityManager.persist(serviceProviderAddress);
 
             entityManager.merge(existingServiceProvider);
-            return new ResponseEntity<>(serviceProviderAddress,HttpStatus.OK);
+            return responseService.generateSuccessResponse("Address added successfully",serviceProviderAddress,HttpStatus.OK);
         }catch (Exception e) {
             exceptionHandling.handleException(e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error adding address " + e.getMessage());
+            return responseService.generateErrorResponse("Error adding address",HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

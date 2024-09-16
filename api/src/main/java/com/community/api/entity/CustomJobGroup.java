@@ -1,5 +1,6 @@
 package com.community.api.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -10,17 +11,18 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name="custom_notifying_authority")
+@Table(name="custom_job_group")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CustomNotifyingAuthority {
+public class CustomJobGroup {
 
     @Id
-    @Column(name="notifying_authority_id")
-    protected Long notifying_authority_id;
+    @Column(name="job_group_id")
+    @JsonProperty("job_group_id")
+    protected Long jobGroupId;
 
-    @Column(name="notifying_authority")
-    protected String notifying_authority;
-
+    @Column(name="job_group")
+    @JsonProperty("job_group")
+    protected Character jobGroup;
 }
