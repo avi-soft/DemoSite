@@ -25,8 +25,11 @@ public class ProductService {
     @PersistenceContext
     private EntityManager entityManager;
 
-    @Autowired
     private Validator validator; // Autowire Validator bean if needed
+    public ProductService(Validator validator)
+    {
+        this.validator= validator;
+    }
 
     public void saveCustomProduct(Date goLiveDate, Integer priorityLevel, Long productId, CustomProductState customProductStateId) {
 

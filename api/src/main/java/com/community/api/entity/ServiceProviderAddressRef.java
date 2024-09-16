@@ -10,10 +10,10 @@ import javax.persistence.*;
 @Entity
 @Table(name = "custom_service_provider_address_ref")
 @NoArgsConstructor
+@AllArgsConstructor
 @Getter
 @Setter
 public class ServiceProviderAddressRef {
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Id
     @Column(name = "address_type_id")
     private int address_type_Id;

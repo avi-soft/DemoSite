@@ -17,7 +17,6 @@ import javax.persistence.*;
 public class Skill
 {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE)
     @Column(name = "skill_id")
     private int skill_id;
     @Column(name = "skill_Name")

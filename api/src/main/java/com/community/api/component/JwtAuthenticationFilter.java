@@ -1,19 +1,28 @@
 package com.community.api.component;
+import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
+import com.community.api.entity.CustomCustomer;
+import com.community.api.entity.ServiceProviderInfra;
 import com.community.api.services.CustomCustomerService;
+import com.community.api.services.exception.ExceptionHandlingImplement;
+import com.community.api.services.RoleService;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
+import org.apache.solr.client.solrj.io.stream.SolrStream;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import javax.persistence.EntityManager;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -31,17 +40,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String BEARER_PREFIX = "Bearer ";
     private static final int BEARER_PREFIX_LENGTH = BEARER_PREFIX.length();
 
-    @Value("${api.key}")
-    private String apiKey;
+
+
+    private String apiKey="IaJGL98yHnKjnlhKshiWiy1IhZ+uFsKnktaqFX3Dvfg=";
+
 
     @Autowired
     private JwtUtil jwtUtil;
     @Autowired
     private CustomCustomerService customCustomerService;
-
+    @Autowired
+    private RoleService roleService;
     @Autowired
     private CustomerService CustomerService;
 
+
+    @Autowired
+    private ExceptionHandlingImplement exceptionHandling;
+
+    @Autowired
+    private EntityManager entityManager;
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws IOException, ServletException {
@@ -68,17 +86,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
+    } catch (ExpiredJwtException e) {
+        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "JWT token is expired");
+        exceptionHandling.handleException(e);
+        logger.error("ExpiredJwtException caught: {}", e.getMessage());
+    } catch (MalformedJwtException e) {
+        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JWT token");
+        exceptionHandling.handleException(e);
+        logger.error("MalformedJwtException caught: {}", e.getMessage());
+    } catch (Exception e) {
+        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+        exceptionHandling.handleException(e);
 
-        } catch (ExpiredJwtException e) {
-            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "JWT token is expired");
-            logger.error("ExpiredJwtException caught: {}", e.getMessage());
-        } catch (MalformedJwtException e) {
-            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JWT token");
-            logger.error("MalformedJwtException caught: {}", e.getMessage());
-        } catch (Exception e) {
-            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
-            logger.error("Exception caught: {}", e.getMessage());
-        }
+        logger.error("Exception caught: {}", e.getMessage());
+    }
 
     }
 
@@ -90,12 +111,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 "/api/v1/categoryCustom/getProductsByCategoryId",
                 "/api/v1/categoryCustom/getAllCategories"
         );
+
         boolean isBypassed = bypassUris.stream().anyMatch(path::equals);
+        logger.info(isBypassed + " isBypassed");
         return isBypassed;
     }
 
     private boolean validateApiKey(HttpServletRequest request) {
         String requestApiKey = request.getHeader("x-api-key");
+        logger.info(apiKey + " apiKey", requestApiKey + "requestApiKey");
         return apiKey.equals(requestApiKey);
     }
 
@@ -104,7 +128,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 || requestURI.startsWith("/api/v1/otp")
                 || requestURI.startsWith("/api/v1/test")
                 || requestURI.startsWith("/api/v1/swagger-ui.html")
-                || requestURI.startsWith("/v3/api-docs")
+                || requestURI.startsWith("/api/v1/swagger-resources")
+                || requestURI.startsWith("/api/v1/v2/api-docs")
                 || requestURI.startsWith("/api/v1/images")
                 || requestURI.startsWith("/api/v1/webjars");
     }
@@ -129,25 +154,40 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             respondWithUnauthorized(response, "Invalid details in token");
             return true;
         }
-        String  ipAdress =request.getRemoteAddr();
-        String User_Agent =   request.getHeader("User-Agent");
+        String ipAdress = request.getRemoteAddr();
+        String User_Agent = request.getHeader("User-Agent");
 
         if (!jwtUtil.validateToken(jwt, ipAdress, User_Agent)) {
             respondWithUnauthorized(response, "Invalid JWT token");
             return true;
         }
-
+        Customer customCustomer = null;
+        ServiceProviderEntity serviceProvider = null;
         if (id != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            Customer customCustomer = CustomerService.readCustomerById(id);
-            if (customCustomer != null && jwtUtil.validateToken(jwt,  ipAdress, User_Agent)) {
-                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                        customCustomer.getId(), null, new ArrayList<>());
-                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authentication);
-                return false;
-            } else {
-                respondWithUnauthorized(response, "Invalid data provided for this customer");
-                return true;
+            if (roleService.findRoleName(jwtUtil.extractRoleId(jwt)).equals(Constant.roleUser)) {
+                customCustomer = CustomerService.readCustomerById(id);
+                if (customCustomer != null && jwtUtil.validateToken(jwt, ipAdress, User_Agent)) {
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            customCustomer.getId(), null, new ArrayList<>());
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    return false;
+                } else {
+                    respondWithUnauthorized(response, "Invalid data provided for this customer");
+                    return true;
+                }
+            } else if (roleService.findRoleName(jwtUtil.extractRoleId(jwt)).equals(Constant.roleServiceProvider)) {
+              serviceProvider=entityManager.find(ServiceProviderEntity.class,id);
+                if (serviceProvider != null && jwtUtil.validateToken(jwt, ipAdress, User_Agent)) {
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            serviceProvider.getService_provider_id(), null, new ArrayList<>());
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    return false;
+                } else {
+                    respondWithUnauthorized(response, "Invalid data provided for this customer");
+                    return true;
+                }
             }
         }
         return false;

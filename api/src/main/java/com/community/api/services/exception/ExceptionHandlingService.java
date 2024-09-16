@@ -6,7 +6,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.client.HttpClientErrorException;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class ExceptionHandlingService implements ExceptionHandlingImplement {
@@ -66,5 +71,4 @@ public class ExceptionHandlingService implements ExceptionHandlingImplement {
         }
 
     }
-
 }

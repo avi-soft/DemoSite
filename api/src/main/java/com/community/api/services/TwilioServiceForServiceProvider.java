@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 @Service
@@ -34,12 +36,13 @@ public class TwilioServiceForServiceProvider {
 
     @Autowired
     private ServiceProviderServiceImpl serviceProviderService;  // Service to manage ServiceProviderEntity
-
+    @Autowired
+    private ResponseService responseService;
     @Autowired
     private EntityManager entityManager;
 
     @Transactional
-    public ResponseEntity<String> sendOtpToMobile(String mobileNumber, String countryCode) {
+    public ResponseEntity<?> sendOtpToMobile(String mobileNumber, String countryCode) {
 
         if (mobileNumber == null || mobileNumber.isEmpty()) {
             return ResponseEntity.badRequest().body("Mobile number cannot be null or empty");
@@ -67,8 +70,11 @@ public class TwilioServiceForServiceProvider {
                 existingServiceProvider.setOtp(otp);
                 entityManager.merge(existingServiceProvider);
             }
-
-            return ResponseEntity.ok("OTP has been sent successfully : "+otp);
+            Map<String,Object> details=new HashMap<>();
+            // details.put("message",ApiConstants.OTP_SENT_SUCCESSFULLY);
+            details.put("status",ApiConstants.STATUS_SUCCESS);
+            details.put("otp",otp);
+            return responseService.generateSuccessResponse(ApiConstants.OTP_SENT_SUCCESSFULLY,details,HttpStatus.OK);
 
         } catch (ApiException e) {
             exceptionHandling.handleApiException(e);
