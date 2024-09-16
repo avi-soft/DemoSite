@@ -67,12 +67,23 @@ public class CustomCustomer extends CustomerImpl {
     @Column(name = "secondary_email")
     private String secondaryEmail;
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "customCustomer", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<Document>documentList;
+    @OneToMany(mappedBy = "custom_customer", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
+    private List<Document> documents;
+
+    @ManyToMany
+    @JoinTable(
+            name = "customer_saved_forms", // The name of the join table
+            joinColumns = @JoinColumn(name = "customer_id"), // Foreign key for ServiceProvider
+            inverseJoinColumns = @JoinColumn(name = "product_id")) // Foreign key for Skill
+    private List<CustomProduct>savedForms;
 
     @JsonIgnore
     @Nullable
     @OneToMany(mappedBy = "custom_customer", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Qualification>qualificationList;
+
+    @Nullable
+    @OneToMany(mappedBy = "custom_customer", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<QualificationDetails> qualificationDetailsList;
+
 }

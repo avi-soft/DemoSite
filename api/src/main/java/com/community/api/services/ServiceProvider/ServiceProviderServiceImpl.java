@@ -364,8 +364,10 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     public ResponseEntity<?> loginWithPassword(@RequestBody Map<String, Object> serviceProviderDetails,HttpServletRequest request,HttpSession session) {
         try {
             String mobileNumber = (String) serviceProviderDetails.get("mobileNumber");
-            if(mobileNumber.startsWith("0"))
-                mobileNumber=mobileNumber.substring(1);
+            if(mobileNumber!=null) {
+                if (mobileNumber.startsWith("0"))
+                    mobileNumber = mobileNumber.substring(1);
+            }
             String username = (String) serviceProviderDetails.get("username");
             String password = (String) serviceProviderDetails.get("password");
             String countryCode = (String) serviceProviderDetails.getOrDefault("countryCode", Constant.COUNTRY_CODE);

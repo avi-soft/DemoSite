@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -39,7 +40,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
     private static final int BEARER_PREFIX_LENGTH = BEARER_PREFIX.length();
-    private String apiKey="IaJGL98yHnKjnlhKshiWiy1IhZ+uFsKnktaqFX3Dvfg=\n";
+    private static final Pattern UNSECURED_URI_PATTERN = Pattern.compile(
+            "^/api/v1/(account|otp|test|files/avisoftdocument/[^/]+/[^/]+|files/[^/]+|avisoftdocument/[^/]+|swagger-ui.html|swagger-resources|v2/api-docs|images|webjars).*"
+    );
+    private String apiKey="IaJGL98yHnKjnlhKshiWiy1IhZ+uFsKnktaqFX3Dvfg=";
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -66,7 +70,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
 
             String requestURI = request.getRequestURI();
-            if (isUnsecuredUri(requestURI)) {
+            if (isUnsecuredUri(requestURI) || bypassimages(requestURI)) {
                 chain.doFilter(request, response);
                 return;
             }
@@ -82,40 +86,54 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
-    } catch (ExpiredJwtException e) {
-        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "JWT token is expired");
-        exceptionHandling.handleException(e);
-        logger.error("ExpiredJwtException caught: {}", e.getMessage());
-    } catch (MalformedJwtException e) {
-        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JWT token");
-        exceptionHandling.handleException(e);
-        logger.error("MalformedJwtException caught: {}", e.getMessage());
-    } catch (Exception e) {
-        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
-        exceptionHandling.handleException(e);
+        } catch (ExpiredJwtException e) {
+            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "JWT token is expired");
+            exceptionHandling.handleException(e);
+            logger.error("ExpiredJwtException caught: {}", e.getMessage());
+        } catch (MalformedJwtException e) {
+            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JWT token");
+            exceptionHandling.handleException(e);
+            logger.error("MalformedJwtException caught: {}", e.getMessage());
+        } catch (Exception e) {
+            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+            exceptionHandling.handleException(e);
 
-        logger.error("Exception caught: {}", e.getMessage());
+            logger.error("Exception caught: {}", e.getMessage());
+        }
+
     }
+
+    private boolean bypassimages(String requestURI) {
+        return UNSECURED_URI_PATTERN.matcher(requestURI).matches();
 
     }
 
     private boolean isApiKeyRequiredUri(HttpServletRequest request) {
-        String requestURI = request.getRequestURI();
+     /*   String requestURI = request.getRequestURI();
         String path = requestURI.split("\\?")[0].trim();
 
         List<String> bypassUris = Arrays.asList(
-                "/api/v1/categoryCustom/getProductsByCategoryId",
-                "/api/v1/categoryCustom/getAllCategories"
+                "/api/v1/category-custom/get-products-by-category-id/**",
+                "/api/v1/category-custom/get-all-categories"
         );
 
         boolean isBypassed = bypassUris.stream().anyMatch(path::equals);
-        logger.info(isBypassed + " isBypassed");
+        return isBypassed;*/
+
+        String requestURI = request.getRequestURI();
+        String path = requestURI.split("\\?")[0].trim();
+
+        List<Pattern> bypassPatterns = Arrays.asList(
+                Pattern.compile("^/api/v1/category-custom/get-products-by-category-id/\\d+$"),
+                Pattern.compile("^/api/v1/category-custom/get-all-categories$")
+        );
+
+        boolean isBypassed = bypassPatterns.stream().anyMatch(pattern -> pattern.matcher(path).matches());
         return isBypassed;
     }
 
     private boolean validateApiKey(HttpServletRequest request) {
         String requestApiKey = request.getHeader("x-api-key");
-        logger.info(apiKey + " apiKey", requestApiKey + "requestApiKey");
         return apiKey.equals(requestApiKey);
     }
 
@@ -123,6 +141,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return requestURI.startsWith("/api/v1/account")
                 || requestURI.startsWith("/api/v1/otp")
                 || requestURI.startsWith("/api/v1/test")
+                || requestURI.startsWith("/api/v1/files/avisoftdocument/**")
+                || requestURI.startsWith("/api/v1/files/**")
+                || requestURI.startsWith("/api/v1/avisoftdocument/**")
                 || requestURI.startsWith("/api/v1/swagger-ui.html")
                 || requestURI.startsWith("/api/v1/swagger-resources")
                 || requestURI.startsWith("/api/v1/v2/api-docs")
@@ -173,7 +194,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     return true;
                 }
             } else if (roleService.findRoleName(jwtUtil.extractRoleId(jwt)).equals(Constant.roleServiceProvider)) {
-              serviceProvider=entityManager.find(ServiceProviderEntity.class,id);
+                serviceProvider=entityManager.find(ServiceProviderEntity.class,id);
                 if (serviceProvider != null && jwtUtil.validateToken(jwt, ipAdress, User_Agent)) {
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                             serviceProvider.getService_provider_id(), null, new ArrayList<>());

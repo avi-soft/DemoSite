@@ -22,23 +22,46 @@ import java.util.UUID;
 @Component
 public class JwtUtil {
 
-    @Autowired
     private ExceptionHandlingImplement exceptionHandling;
-    @Autowired
     private RoleService roleService;
-    @Value("${jwt.secret.key}")
     private String secretKeyString;
-
     private Key secretKey;
-   @Autowired
-   private EntityManager entityManager;
-    @Autowired
+    private EntityManager entityManager;
     private TokenBlacklist tokenBlacklist;
-
-    @Autowired
     private CustomerService customerService;
 
-    /*@PostConstruct
+    @Value("${jwt.secret.key}")
+    public void setSecretKeyString(String secretKeyString) {
+        this.secretKeyString = secretKeyString;
+    }
+
+    @Autowired
+    public void setExceptionHandling(ExceptionHandlingImplement exceptionHandling) {
+        this.exceptionHandling = exceptionHandling;
+    }
+
+    @Autowired
+    public void setRoleService(RoleService roleService) {
+        this.roleService = roleService;
+    }
+
+    @Autowired
+    public void setEntityManager(EntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
+
+    @Autowired
+    public void setTokenBlacklist(TokenBlacklist tokenBlacklist) {
+        this.tokenBlacklist = tokenBlacklist;
+    }
+
+    @Autowired
+    public void setCustomerService(CustomerService customerService) {
+        this.customerService = customerService;
+    }
+
+/*
+    @PostConstruct
     public void init() {
 
         try {
@@ -49,7 +72,8 @@ public class JwtUtil {
             throw new RuntimeException("Error generating JWT token", e);
         }
 
-    }*/
+    }
+*/
 
     @PostConstruct
     public void init() {
@@ -107,9 +131,9 @@ public class JwtUtil {
                     .getBody();
 
             String tokenId = claims.getId();
-            if (tokenBlacklist.isTokenBlacklisted(tokenId)) {
+            /*if (tokenBlacklist.isTokenBlacklisted(tokenId)) {
                 return false;
-            }
+            }*/
             int role=extractRoleId(token);
             Customer existingCustomer=null;
             ServiceProviderEntity existingServiceProvider=null;

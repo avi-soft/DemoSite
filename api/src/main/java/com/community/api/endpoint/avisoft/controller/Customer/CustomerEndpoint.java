@@ -1,33 +1,22 @@
 package com.community.api.endpoint.avisoft.controller.Customer;
-
-
 import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
-
-import com.community.api.dto.AddCategoryDto;
-
-import com.community.api.dto.CustomProductWrapper;
-import com.community.api.dto.DocumentDTO;
 import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.AddressDTO;
+import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.CustomCustomer;
-import com.community.api.entity.CustomProduct;
 import com.community.api.services.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.exception.ExceptionHandlingService;
-
-import com.community.api.services.exception.FileSizeExceededException;
-import com.community.api.services.exception.InvalidFileTypeException;
 import com.community.api.utils.Document;
-
 import com.community.api.utils.DocumentType;
-
-import org.broadleafcommerce.common.persistence.Status;
-import org.broadleafcommerce.core.catalog.domain.Category;
+import com.community.api.utils.ServiceProviderDocument;
+import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.broadleafcommerce.profile.core.domain.Address;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.domain.CustomerAddress;
+import org.broadleafcommerce.profile.core.domain.CustomerImpl;
 import org.broadleafcommerce.profile.core.service.AddressService;
 import org.broadleafcommerce.profile.core.service.CustomerAddressService;
 import org.broadleafcommerce.profile.core.service.CustomerService;
@@ -38,15 +27,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.io.File;
-import java.io.InputStream;
 import java.lang.reflect.Field;
-import java.math.BigInteger;
 import java.util.*;
 
 @RestController
@@ -63,12 +50,13 @@ public class CustomerEndpoint {
     private CustomerService customerService;  //@TODO- do this task asap
     private ExceptionHandlingImplement exceptionHandling;
     private EntityManager em;
-    private TwilioService twilioService;
     private CustomCustomerService customCustomerService;
     private AddressService addressService;
     private CustomerAddressService customerAddressService;
     private JwtUtil jwtUtil;
 
+    @Autowired
+    private static SharedUtilityService sharedUtilityServiceApi;
 
     @Autowired
     private ExceptionHandlingService exceptionHandlingService;
@@ -113,14 +101,11 @@ public class CustomerEndpoint {
     }
 
     @Autowired
-    public void setTwilioService(TwilioService twilioService) {
-        this.twilioService = twilioService;
-    }
-
-    @Autowired
     public void setCustomCustomerService(CustomCustomerService customCustomerService) {
         this.customCustomerService = customCustomerService;
     }
+    @Autowired
+    private  SharedUtilityService sharedUtilityService;
 
     @Autowired
     public void setAddressService(AddressService addressService) {
@@ -199,7 +184,8 @@ public class CustomerEndpoint {
             }
             customerDetails.setId(customerId);
             customerDetails.setMobileNumber(customCustomer.getMobileNumber());
-            customerDetails.setQualificationList(customCustomer.getQualificationList());
+            customerDetails.setQualificationDetailsList(customCustomer.getQualificationDetailsList());
+
             customerDetails.setCountryCode(customCustomer.getCountryCode());
             Customer customer = customerService.readCustomerById(customerId);
             //using reflections
@@ -229,45 +215,56 @@ public class CustomerEndpoint {
     }
 
     @Transactional
-    @PostMapping("/upload-documents")
-        public ResponseEntity<?> updateCustomer(
+    @RequestMapping(value = "/get-customer-details/{customerId}", method = RequestMethod.GET)
+    public ResponseEntity<?> getUserDetails(@PathVariable Long customerId) {
+        try {
+            CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
+            if (customCustomer == null) {
+                return responseService.generateErrorResponse("Customer not found", HttpStatus.NOT_FOUND);
+            }
+            CustomerImpl customer = em.find(CustomerImpl.class, customerId);  // Assuming you retrieve the base Customer entity
+            Map<String, Object> customerDetails = sharedUtilityService.breakReferenceForCustomer(customer);
+            customerDetails.put("qualificationDetails",customCustomer.getQualificationDetailsList());
+            customerDetails.put("documents",customCustomer.getDocuments());
+            return responseService.generateSuccessResponse("User details retrieved successfully", customerDetails, HttpStatus.OK);
+
+
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return responseService.generateErrorResponse("Error retrieving user details", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Transactional
+    @PostMapping("/upload-document")
+    public ResponseEntity<?> updateDocument(
             @RequestParam Long customerId,
             @RequestPart(value = "Aadhaar Card", required = false) MultipartFile aadharCard,
             @RequestPart(value = "PAN Card", required = false) MultipartFile panCard,
             @RequestPart(value = "Passport Size Photo", required = false) MultipartFile photo) {
         try {
-        if (customerService == null) {
-            return responseService.generateErrorResponse("Customer service is not initialized.",HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
-        if (customCustomer == null) {
-            return responseService.generateErrorResponse("No data found for this customerId",HttpStatus.NOT_FOUND);
-
-        }
-        Map<String, Object> responseData = new HashMap<>();
-        Map<String, MultipartFile> files = new HashMap<>();
-        if (aadharCard != null) {
-            if (files.containsKey("Aadhar Card")) {
-                return responseService.generateErrorResponse("Only one aadhar card image is allowed", HttpStatus.BAD_REQUEST);
+            if (customerService == null) {
+                return responseService.generateErrorResponse("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
-            files.put("Aadhar Card", aadharCard);
-        }
-        if (panCard != null) {
-            if (files.containsKey("PAN Card")) {
-                return responseService.generateErrorResponse("Only one pan card image is allowed", HttpStatus.BAD_REQUEST);
-            }
-            files.put("PAN Card", panCard);
-        }
-        if (photo != null) {
-            if (files.containsKey("Photo")) {
-                return responseService.generateErrorResponse("Only one photo is allowed", HttpStatus.BAD_REQUEST);
-            }
-            files.put("Photo", photo);
-        }
 
+            CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
+            if (customCustomer == null) {
+                return responseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
+            }
 
-        try{
+            Map<String, Object> responseData = new HashMap<>();
+            Map<String, MultipartFile> files = new HashMap<>();
+
+            if (aadharCard != null) {
+                files.put("Aadhar Card", aadharCard);
+            }
+            if (panCard != null) {
+                files.put("PAN Card", panCard);
+            }
+            if (photo != null) {
+                files.put("Passport Size Photo", photo);
+            }
+
             for (Map.Entry<String, MultipartFile> entry : files.entrySet()) {
                 String documentType = entry.getKey();
                 MultipartFile file = entry.getValue();
@@ -275,94 +272,279 @@ public class CustomerEndpoint {
                 ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(file, documentType, customerId, "customer");
                 Map<String, Object> responseBody = savedResponse.getBody();
 
-                if (savedResponse.getStatusCode() == HttpStatus.OK) {
-                    responseData.put(documentType, responseBody.get("data"));
-                } else {
+                if (savedResponse.getStatusCode() != HttpStatus.OK) {
                     return responseService.generateErrorResponse("Error uploading " + documentType, HttpStatus.INTERNAL_SERVER_ERROR);
                 }
+
+                System.out.println(documentType.trim() + " documentType.trim()");
+                // Find or create DocumentType
+                DocumentType documentTypeObj = em.createQuery(
+                                "SELECT dt FROM DocumentType dt WHERE dt.document_type_name = :documentTypeName", DocumentType.class)
+                        .setParameter("documentTypeName", documentType.trim())
+                        .getResultStream()
+                        .findFirst()
+                        .orElseGet(null);
+
+                String fileName = file.getOriginalFilename();
+                Document doc = new Document();
+                doc.setName(fileName);
+                String filePath = "avisoft"
+                        + File.separator
+                        + "customer"
+                        + File.separator
+                        + customerId
+                        + File.separator
+                        + documentType
+                        + File.separator
+                        + fileName;
+                doc.setFilePath(filePath);
+//                doc.setData(file.getBytes());
+                doc.setCustom_customer(customCustomer);
+                doc.setDocumentType(documentTypeObj);
+                em.persist(doc);
+
+                responseData.put(documentType, responseBody.get("data"));
             }
+
+            return responseService.generateSuccessResponse("Documents uploaded successfully", responseData, HttpStatus.OK);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Error updating in documents", HttpStatus.INTERNAL_SERVER_ERROR);
-
+            return responseService.generateErrorResponse("Error updating documents", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-            return responseService.generateSuccessResponse("Documents uploaded successfully", responseData, HttpStatus.OK);
-    } catch (Exception e) {
-        exceptionHandling.handleException(e);
-        return responseService.generateErrorResponse("Error updating", HttpStatus.INTERNAL_SERVER_ERROR);
-
     }
 
-    }
 
-   /* @PostMapping("/upload-documents")
-    public ResponseEntity<?> uploadBasicDocuments(@RequestBody Map<String, Object> request, @RequestPart("files") MultipartFile[] files) {
+    @Transactional
+    @PostMapping("/upload-documents")
+    public ResponseEntity<?> updateDocuments(
+            @RequestParam Long customerId,
+            @RequestParam Map<String, MultipartFile> files,
+            @RequestHeader(value = "Authorization") String authHeader) {
         try {
 
-            Long customerId = (Long) request.get("customerId");
-            Integer role = (Integer) request.get("role");
-
-            if (role == null) {
-                return responseService.generateErrorResponse(ApiConstants.ROLE_EMPTY, HttpStatus.BAD_REQUEST);
-            }
-            if (customerId == null) {
-                return responseService.generateErrorResponse("Customer Id can not be empty", HttpStatus.BAD_REQUEST);
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return responseService.generateErrorResponse("Authorization header is missing or invalid.", HttpStatus.UNAUTHORIZED);
             }
 
-            CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
-            if (customCustomer == null) {
-                return responseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
-            }
-            List<DocumentType> allDocumentTypes = documentStorageService.getAllDocumentTypes();
+            String jwtToken = authHeader.substring(7);
+            Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
+            Long tokenUserId = jwtTokenUtil.extractId(jwtToken);
+            String role = roleService.getRoleByRoleId(roleId).getRole_name();
 
-            if (files != null && files.length > 0) {
-                for (MultipartFile file : files) {
-                    String documentTypeName = documentStorageService.getDocumentTypeFromMultipartFile(file, allDocumentTypes);
-                    System.out.println(documentTypeName + " documentTypeName");
-                    DocumentType documentType = em.createQuery("SELECT dt FROM DocumentType dt WHERE dt.document_type_name = :typeName", DocumentType.class)
-                            .setParameter("typeName", documentTypeName)
+            if (!customerId.equals(tokenUserId)) {
+                return responseService.generateErrorResponse("Unauthorized request.", HttpStatus.UNAUTHORIZED);
+            }
+
+            if(files.size()==0){
+                return ResponseService.generateErrorResponse("Invalid request.", HttpStatus.BAD_REQUEST);
+
+            }
+
+
+            if (roleService.findRoleName(roleId).equals(Constant.roleUser)) {
+                CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
+                if (customCustomer == null) {
+                    return responseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
+                }
+
+                Map<String, Object> responseData = new HashMap<>();
+                List<String> deletedDocumentMessages = new ArrayList<>();
+
+
+                for (Map.Entry<String, MultipartFile> entry : files.entrySet()) {
+                    Integer fileNameId = Integer.parseInt(entry.getKey());
+                    MultipartFile file = entry.getValue();
+
+                    if (!DocumentStorageService.isValidFileType(file)) {
+                        return ResponseEntity.badRequest().body(Map.of(
+                                "status", ApiConstants.STATUS_ERROR,
+                                "status_code", HttpStatus.BAD_REQUEST.value(),
+                                "message", "Invalid file type: "
+                        ));
+                    }
+
+                    DocumentType documentTypeObj = em.createQuery(
+                                    "SELECT dt FROM DocumentType dt WHERE dt.document_type_id = :documentTypeId", DocumentType.class)
+                            .setParameter("documentTypeId", fileNameId)
                             .getResultStream()
                             .findFirst()
                             .orElse(null);
-                    if (documentType == null) {
-                        return responseService.generateErrorResponse("Document type not found: " + documentTypeName, HttpStatus.BAD_REQUEST);
-                    }
-                    String Role = "";
-                    if(role==5){
-                         Role = "CUSTOMER";
-                    }else if(role==4){
-                         Role = "SERVICE_PROVIDER";
-                    }else{
-                        Role = "Admin";
+
+                    if (documentTypeObj == null) {
+                        return responseService.generateErrorResponse("Unknown document type for file: " + fileNameId, HttpStatus.BAD_REQUEST);
                     }
 
-                    String fileName = file.getOriginalFilename();
-                    try (InputStream fileInputStream = file.getInputStream()) {
-                        documentStorageService.saveDocument(customerId.toString(), documentTypeName, fileName, fileInputStream, Role);
-                        Document doc = new Document();
-                        doc.setName(fileName);
-                        doc.setFilePath(DocumentStorageService.BASE_DIRECTORY + File.separator   + Role + File.separator + customerId + File.separator + documentTypeName + File.separator + fileName);
-                        doc.setData(file.getBytes());
-                        doc.setCustomCustomer(customCustomer);
-                        doc.setDocumentType(documentType);
-                        em.persist(doc);
-                    } catch (Exception e) {
-                        exceptionHandling.handleException(e);
-                        return responseService.generateErrorResponse("Error processing file: " + fileName, HttpStatus.INTERNAL_SERVER_ERROR);
+                    Document existingDocument = em.createQuery(
+                                    "SELECT d FROM Document d WHERE d.custom_customer = :customCustomer AND d.documentType = :documentType", Document.class)
+                            .setParameter("customCustomer", customCustomer)
+                            .setParameter("documentType", documentTypeObj)
+                            .getResultStream()
+                            .findFirst()
+                            .orElse(null);
+
+                    System.out.println(file.getContentType() + " file");
+                    if ((file.isEmpty() || file ==null) && existingDocument!=null) {
+                        if (existingDocument != null) {
+                            String filePath = existingDocument.getFilePath();
+                            System.out.println(filePath + " filePath");
+                            if (filePath != null) {
+                                File filesobj = new File(filePath);
+                                if (filesobj.exists()) {
+                                    filesobj.delete();
+                                }
+                            }
+
+                            existingDocument.setDocumentType(null);
+                            existingDocument.setFilePath(null);
+                            existingDocument.setName(null);
+
+
+                            deletedDocumentMessages.add("File for document type '" + documentTypeObj.getDocument_type_name() + "' has been deleted.");
+                        }
+                        continue;
                     }
+
+                    // If the file is not empty and a document already exists, update the document
+                    if (existingDocument != null && (!file.isEmpty() || file !=null)) {
+                        String filePath = existingDocument.getFilePath();
+                        if (filePath != null) {
+                            File oldFile = new File(filePath);
+                            String oldFileName = oldFile.getName();
+                            String newFileName = file.getOriginalFilename();
+
+                            if (!newFileName.equals(oldFileName)) {
+                                oldFile.delete();
+                                documentStorageService.updateOrCreateDocument(existingDocument, file, documentTypeObj, customerId, role);
+                            }
+                        }
+                    } else {
+                        // If the file is not empty create the document
+                        if(!file.isEmpty() || file !=null){
+                            documentStorageService.createDocument(file, documentTypeObj, customCustomer, customerId, role);
+                        }
+                    }
+
+                    ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(file, documentTypeObj.getDocument_type_name(), customerId, role);
+                    Map<String, Object> responseBody = savedResponse.getBody();
+                    if (!deletedDocumentMessages.isEmpty()) {
+                        responseData.put("deletedMessages", deletedDocumentMessages);
+                    } else if (!file.isEmpty() || file !=null && savedResponse.getStatusCode() != HttpStatus.OK ) {
+                        String status = (String) responseBody.get("status");
+                        HttpStatus httpStatus = HttpStatus.valueOf((Integer) responseBody.get("status_code"));
+                        return responseService.generateErrorResponse((String) responseBody.get("message"), httpStatus);
+                    }
+
+                    responseData.put(documentTypeObj.getDocument_type_name(), responseBody.get("data"));
                 }
-            } else {
-                return responseService.generateErrorResponse("No files provided for upload", HttpStatus.BAD_REQUEST);
+
+            }else{
+                ServiceProviderEntity serviceProviderEntity = em.find(ServiceProviderEntity.class, customerId);
+                if (serviceProviderEntity == null) {
+                    return responseService.generateErrorResponse("No data found for this serviceProvider", HttpStatus.NOT_FOUND);
+                }
+
+                Map<String, Object> responseData = new HashMap<>();
+                List<String> deletedDocumentMessages = new ArrayList<>();
+
+                // Handle file uploads and deletions
+                for (Map.Entry<String, MultipartFile> entry : files.entrySet()) {
+                    Integer fileNameId = Integer.parseInt(entry.getKey());
+                    MultipartFile file = entry.getValue();
+
+
+                    if (!DocumentStorageService.isValidFileType(file)) {
+                        return ResponseEntity.badRequest().body(Map.of(
+                                "status", ApiConstants.STATUS_ERROR,
+                                "status_code", HttpStatus.BAD_REQUEST.value(),
+                                "message", "Invalid file type: "
+                        ));
+                    }
+
+                    DocumentType documentTypeObj = em.createQuery(
+                                    "SELECT dt FROM DocumentType dt WHERE dt.document_type_id = :documentTypeId", DocumentType.class)
+                            .setParameter("documentTypeId", fileNameId)
+                            .getResultStream()
+                            .findFirst()
+                            .orElse(null);
+
+                    if (documentTypeObj == null) {
+                        return responseService.generateErrorResponse("Unknown document type for file: " + fileNameId, HttpStatus.BAD_REQUEST);
+                    }
+
+                    ServiceProviderDocument existingDocument = em.createQuery(
+                                    "SELECT d FROM ServiceProviderDocument d WHERE d.serviceProviderEntity = :serviceProviderEntity AND d.documentType = :documentType", ServiceProviderDocument.class)
+                            .setParameter("serviceProviderEntity", serviceProviderEntity)
+                            .setParameter("documentType", documentTypeObj)
+                            .getResultStream()
+                            .findFirst()
+                            .orElse(null);
+
+                    if ((file.isEmpty() || file ==null) && existingDocument!=null) {
+                        if (existingDocument != null) {
+
+                            String filePath = existingDocument.getFilePath();
+                            if (filePath != null) {
+                                File filesobj = new File(filePath);
+                                if (filesobj.exists()) {
+                                    filesobj.delete();
+                                }
+                            }
+                            existingDocument.setDocumentType(null);
+                            existingDocument.setName(null);
+                            existingDocument.setFilePath(null);
+                            em.persist(existingDocument);
+
+                            deletedDocumentMessages.add("File for document type '" + documentTypeObj.getDocument_type_name() + "' has been deleted.");
+                        }
+                        continue;
+                    }
+
+                    // If the file is not empty and a document already exists, update the document
+                    if (existingDocument != null && (!file.isEmpty() || file !=null)) {
+                        String filePath = existingDocument.getFilePath();
+                        if (filePath != null) {
+                            File oldFile = new File(filePath);
+                            String oldFileName = oldFile.getName();
+                            String newFileName = file.getOriginalFilename();
+
+                            if (!newFileName.equals(oldFileName)) {
+                                oldFile.delete();
+                                documentStorageService.updateOrCreateServiceProvider(existingDocument, file, documentTypeObj, customerId, role);
+                            }
+                        }
+                    } else {
+                        // If the file is not empty create the document
+                        if(!file.isEmpty() || file !=null){
+                            documentStorageService.createDocumentServiceProvider(file, documentTypeObj, serviceProviderEntity, customerId, role);
+                        }
+                    }
+
+                    ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(file, documentTypeObj.getDocument_type_name(), customerId, role);
+                    Map<String, Object> responseBody = savedResponse.getBody();
+                    if (!deletedDocumentMessages.isEmpty()) {
+                        responseData.put("deletedMessages", deletedDocumentMessages);
+                    } else if (!file.isEmpty() || file !=null && savedResponse.getStatusCode() != HttpStatus.OK ) {
+                        String status = (String) responseBody.get("status");
+                        HttpStatus httpStatus = HttpStatus.valueOf((Integer) responseBody.get("status_code"));
+                        return responseService.generateErrorResponse((String) responseBody.get("message"), httpStatus);
+                    }
+
+                    responseData.put(documentTypeObj.getDocument_type_name(), responseBody.get("data"));
+                }
+                return responseService.generateSuccessResponse("Documents updated successfully", responseData, HttpStatus.OK);
             }
 
-            return responseService.generateSuccessResponse("Documents uploaded successfully", null, HttpStatus.OK);
+
+            return responseService.generateSuccessResponse("Invalid request", null, HttpStatus.BAD_REQUEST);
 
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Error updating user details", HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("Error updating documents: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-*/
+
+
+
 
     @Transactional
     @RequestMapping(value = "update-username", method = RequestMethod.POST)
@@ -583,6 +765,7 @@ public class CustomerEndpoint {
     public AddressDTO makeAddressDTO(CustomerAddress customerAddress)
     {
         AddressDTO addressDTO=new AddressDTO();
+        addressDTO.setAddressId(customerAddress.getAddress().getId());
         addressDTO.setAddress(customerAddress.getAddress().getAddressLine1());
         addressDTO.setPinCode(customerAddress.getAddress().getPostalCode());
         addressDTO.setState(customerAddress.getAddress().getStateProvinceRegion());
@@ -593,12 +776,10 @@ public class CustomerEndpoint {
         addressDTO.setPhoneNumber(customCustomer.getMobileNumber());
         return addressDTO;
     }
-    public static ResponseEntity<?> createAuthResponse(String token, Customer customer ) {
-        OtpEndpoint.ApiResponse authResponse = new OtpEndpoint.ApiResponse(token, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
-        return responseService.generateSuccessResponse("Token details : ", authResponse, HttpStatus.OK);
+    public  ResponseEntity<?> createAuthResponse(String token, Customer customer ) {
+        OtpEndpoint.ApiResponse authResponse = new OtpEndpoint.ApiResponse(token, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(), "User has been logged in");
+        return ResponseService.generateSuccessResponse("Token details : ", authResponse, HttpStatus.OK);
     }
-
-
 
     @PostMapping("/logout")
     public ResponseEntity<String> logout(@RequestBody Map<String, String> request) {
@@ -615,144 +796,89 @@ public class CustomerEndpoint {
         }
     }
 
-//    @GetMapping(value = "/savedForms/getProductsByUserId")
-//    public ResponseEntity<?> getSavedFormsByUserId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
-//        try {
-//            if (catalogService == null) {
-//                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
-//            }
-//
-//            Long categoryId = Long.parseLong(id);
-//            if(categoryId <= 0){
-//                return new ResponseEntity<>("CATEGORYCANNOTBELESSTHANOREQAULZERO", HttpStatus.INTERNAL_SERVER_ERROR);
-//            }
-//
-//            Category category = this.catalogService.findCategoryById(categoryId);
-//
-//            if (category == null) {
-//                return new ResponseEntity<>("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
-//            } else if (((Status) category).getArchived() == 'Y') {
-//                return new ResponseEntity<>("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
-//            }
-//
-//            List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
-//            List<CustomProductWrapper> products = new ArrayList<>();
-//
-//            for (BigInteger productId : productIdList) {
-//                CustomProduct customProduct = entityManager.find(CustomProduct.class, productId.longValue());
-//
-//                if(customProduct != null && (((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
-//                    CustomProductWrapper wrapper = new CustomProductWrapper();
-//                    wrapper.wrapDetails(customProduct);
-//                    products.add(wrapper);
-//                }
-//            }
-//
-//            AddCategoryDto categoryDao = new AddCategoryDto();
-//            categoryDao.setCategoryId(category.getId());
-//            categoryDao.setCategoryName(category.getName());
-//            categoryDao.setProducts(products);
-//            categoryDao.setTotalProducts(Long.valueOf(products.size()));
-//
-//            return ResponseEntity.status(HttpStatus.OK).body(categoryDao);
-//
-//        } catch (Exception exception) {
-//            exceptionHandlingService.handleException(exception);
-//            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
-//    }
-//    @GetMapping(value = "/recommendations/getProductsByUserId")
-//    public ResponseEntity<?> getRecommendationsBYUserId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
-//        try {
-//            if (catalogService == null) {
-//                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
-//            }
-//
-//            Long categoryId = Long.parseLong(id);
-//            if(categoryId <= 0){
-//                return new ResponseEntity<>("CATEGORYCANNOTBELESSTHANOREQAULZERO", HttpStatus.INTERNAL_SERVER_ERROR);
-//            }
-//
-//            Category category = this.catalogService.findCategoryById(categoryId);
-//
-//            if (category == null) {
-//                return new ResponseEntity<>("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
-//            } else if (((Status) category).getArchived() == 'Y') {
-//                return new ResponseEntity<>("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
-//            }
-//
-//            List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
-//            List<CustomProductWrapper> products = new ArrayList<>();
-//
-//            for (BigInteger productId : productIdList) {
-//                CustomProduct customProduct = entityManager.find(CustomProduct.class, productId.longValue());
-//
-//                if(customProduct != null && (((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
-//                    CustomProductWrapper wrapper = new CustomProductWrapper();
-//                    wrapper.wrapDetails(customProduct);
-//                    products.add(wrapper);
-//                }
-//            }
-//
-//            AddCategoryDto categoryDao = new AddCategoryDto();
-//            categoryDao.setCategoryId(category.getId());
-//            categoryDao.setCategoryName(category.getName());
-//            categoryDao.setProducts(products);
-//            categoryDao.setTotalProducts(Long.valueOf(products.size()));
-//
-//            return ResponseEntity.status(HttpStatus.OK).body(categoryDao);
-//
-//        } catch (Exception exception) {
-//            exceptionHandlingService.handleException(exception);
-//            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
-//    }
-//
-//    @GetMapping(value = "/filledForms/getProductsByUserId")
-//    public ResponseEntity<?> getFilledFormsByUserId(HttpServletRequest request,@RequestParam(value = "id") String id) throws Exception{
-//        try {
-//            if (catalogService == null) {
-//                return new ResponseEntity<>("catalogService is null", HttpStatus.INTERNAL_SERVER_ERROR);
-//            }
-//
-//            Long categoryId = Long.parseLong(id);
-//            if(categoryId <= 0){
-//                return new ResponseEntity<>("CATEGORYCANNOTBELESSTHANOREQAULZERO", HttpStatus.INTERNAL_SERVER_ERROR);
-//            }
-//
-//            Category category = this.catalogService.findCategoryById(categoryId);
-//
-//            if (category == null) {
-//                return new ResponseEntity<>("Category not Found", HttpStatus.INTERNAL_SERVER_ERROR);
-//            } else if (((Status) category).getArchived() == 'Y') {
-//                return new ResponseEntity<>("Category is Archived", HttpStatus.INTERNAL_SERVER_ERROR);
-//            }
-//
-//            List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
-//            List<CustomProductWrapper> products = new ArrayList<>();
-//
-//            for (BigInteger productId : productIdList) {
-//                CustomProduct customProduct = entityManager.find(CustomProduct.class, productId.longValue());
-//
-//                if(customProduct != null && (((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
-//                    CustomProductWrapper wrapper = new CustomProductWrapper();
-//                    wrapper.wrapDetails(customProduct);
-//                    products.add(wrapper);
-//                }
-//            }
-//
-//            AddCategoryDto categoryDao = new AddCategoryDto();
-//            categoryDao.setCategoryId(category.getId());
-//            categoryDao.setCategoryName(category.getName());
-//            categoryDao.setProducts(products);
-//            categoryDao.setTotalProducts(Long.valueOf(products.size()));
-//
-//            return ResponseEntity.status(HttpStatus.OK).body(categoryDao);
-//
-//        } catch (Exception exception) {
-//            exceptionHandlingService.handleException(exception);
-//            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
-//    }
+
+    @GetMapping(value = "/forms/show-saved-forms")
+    public ResponseEntity<?> getSavedForms(HttpServletRequest request,@RequestParam long  customer_id) throws Exception{
+        try {
+            CustomCustomer customer=entityManager.find(CustomCustomer.class,customer_id);
+            if(customer==null)
+                ResponseService.generateErrorResponse("Customer with this id not found",HttpStatus.NOT_FOUND);
+            if(customer.getSavedForms().isEmpty())
+                ResponseService.generateErrorResponse("Saved form list is empty",HttpStatus.NOT_FOUND);
+            List<Map<String,Object>>listOfSavedProducts=new ArrayList<>();
+            for(Product product:customer.getSavedForms())
+            {
+                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product,null));
+            }
+            return ResponseService.generateSuccessResponse("Forms saved : ",listOfSavedProducts,HttpStatus.OK);
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping(value = "/forms/show-filled-forms")
+    public ResponseEntity<?> getFilledFormsByUserId(HttpServletRequest request,@RequestParam long customer_id) throws Exception{
+        try {
+            CustomCustomer customer=entityManager.find(CustomCustomer.class,customer_id);
+            if(customer==null)
+                ResponseService.generateErrorResponse("Customer with this id not found",HttpStatus.NOT_FOUND);
+            if(customer.getSavedForms().isEmpty())
+                ResponseService.generateErrorResponse("Saved form list is empty",HttpStatus.NOT_FOUND);
+            List<Map<String,Object>>listOfSavedProducts=new ArrayList<>();
+            for(Product product:customer.getSavedForms())
+            {
+                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product,null));
+            }
+            return ResponseService.generateSuccessResponse("Forms saved : ",listOfSavedProducts,HttpStatus.OK);
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @GetMapping(value = "/forms/show-recommended-forms")
+    public ResponseEntity<?> getRecommendedFormsByUserId(HttpServletRequest request,@RequestParam long customer_id) throws Exception{
+        try {
+            CustomCustomer customer=entityManager.find(CustomCustomer.class,customer_id);
+            if(customer==null)
+                ResponseService.generateErrorResponse("Customer with this id not found",HttpStatus.NOT_FOUND);
+            if(customer.getSavedForms().isEmpty())
+                ResponseService.generateErrorResponse("Saved form list is empty",HttpStatus.NOT_FOUND);
+            List<Map<String,Object>>listOfSavedProducts=new ArrayList<>();
+            for(Product product:customer.getSavedForms())
+            {
+                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product,null));
+            }
+            return ResponseService.generateSuccessResponse("Forms saved : ",listOfSavedProducts,HttpStatus.OK);
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @GetMapping("/get-all-customers")
+    public ResponseEntity<?> getAllCustomers(
+            @RequestParam(defaultValue = "0") int offset,
+            @RequestParam(defaultValue = "10") int limit)
+    {
+        try {
+            // Calculate the start position for pagination
+            int startPosition = offset * limit;
+            // Create the query
+            TypedQuery<CustomCustomer> query = entityManager.createQuery(Constant.GET_ALL_CUSTOMERS, CustomCustomer.class);
+            // Apply pagination
+            query.setFirstResult(startPosition);
+            query.setMaxResults(limit);
+            List<Map> results = new ArrayList<>();
+            for(CustomCustomer customer:query.getResultList())
+            {
+                Customer customerToadd=customerService.readCustomerById(customer.getId());
+                results.add(sharedUtilityService.breakReferenceForCustomer(customerToadd));
+            }
+            return ResponseService.generateSuccessResponse("List of customers : ", results, HttpStatus.OK);
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseService.generateErrorResponse("Some issue in customers: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
 
 }
