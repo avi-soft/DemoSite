@@ -164,7 +164,7 @@
             <artifactId>broadleaf-profile</artifactId>
         </dependency>
 
-        <dependency>
+        <!--<dependency>
             <groupId>org.liquibase</groupId>
 
             <artifactId>liquibase-core</artifactId>
@@ -175,7 +175,7 @@
                     <artifactId>snakeyaml</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
+        </dependency>-->
 
         <dependency>
 

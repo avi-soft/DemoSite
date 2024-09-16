@@ -140,7 +140,6 @@ public class ProductController extends CatalogEndpoint {
 
             Product product = catalogService.createProduct(ProductType.PRODUCT);
 
-
             product.setMetaTitle(addProductDto.getMetaTitle()); // Also adding the same metaTitle in the sku.name as this will generate the auto-url.
             product.setDisplayTemplate(addProductDto.getMetaTitle());
             product.setMetaDescription(addProductDto.getMetaDescription());
@@ -161,7 +160,7 @@ public class ProductController extends CatalogEndpoint {
             sku.setDescription(addProductDto.getMetaDescription());
             sku.setActiveEndDate(addProductDto.getActiveEndDate());
             sku.setDefaultProduct(product);
-            catalogService.saveSku(sku);
+//            catalogService.saveSku(sku); // this was creating duplicate entries in the db.
 
             CustomJobGroup customJobGroup = productService.validateCustomJobGroup(addProductDto.getJobGroup());
             if(customJobGroup == null) {
@@ -202,7 +201,7 @@ public class ProductController extends CatalogEndpoint {
     }
 
 
-    /*@Transactional
+    @Transactional
    @PutMapping("/update/{productId}")
     public ResponseEntity<?> updateProduct(HttpServletRequest request, @RequestBody AddProductDto addProductDto, @PathVariable Long productId, @RequestHeader(value = "Authorization") String authHeader) {
 
@@ -216,35 +215,13 @@ public class ProductController extends CatalogEndpoint {
                 return ResponseService.generateErrorResponse(Constant.CATALOG_SERVICE_NOT_INITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-
+            CustomProduct customProduct = entityManager.find(CustomProduct, productId);
+            if(customProduct == null) {
+                return ResponseService.generateErrorResponse(Constant.PRODUCTNOTFOUND, HttpStatus.NOT_FOUND);
+            }
 
             // Validations and checks.
-            if (addProductDto.getQuantity() != null) {
-                if (addProductDto.getQuantity() <= 0) {
-                    return ResponseService.generateErrorResponse("QUANTITY CANNOT BE EMPTY <= 0", HttpStatus.BAD_REQUEST);
-                }
-                customProduct.getDefaultSku().setQuantityAvailable(addProductDto.getQuantity());
-            }
-
-            if (addProductDto.getPriorityLevel() != null) {
-                customProduct.setPriorityLevel(addProductDto.getPriorityLevel());
-            }
-
-            if (addProductDto.getMetaTitle() != null && !addProductDto.getMetaTitle().trim().isEmpty()) {
-                addProductDto.setMetaTitle(addProductDto.getMetaTitle().trim());
-                customProduct.setMetaTitle(addProductDto.getMetaTitle());
-                customProduct.getDefaultSku().setName(addProductDto.getMetaTitle());
-            }
-
-            if(addProductDto.getDisplayTemplate() != null && !addProductDto.getDisplayTemplate().trim().isEmpty()) {
-                customProduct.setDisplayTemplate(addProductDto.getDisplayTemplate().trim());
-            }
-
-            if (addProductDto.getMetaDescription() != null && !addProductDto.getMetaDescription().trim().isEmpty()) {
-                addProductDto.setMetaDescription(addProductDto.getMetaDescription().trim());
-                customProduct.setMetaDescription(addProductDto.getMetaDescription());
-                customProduct.getDefaultSku().setDescription(addProductDto.getMetaDescription());
-            }
+            productService.updateProductValidation(addProductDto, customProduct);
 
             // Validation of getActiveEndDate and getGoLiveDate.
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); // Set active start date to current date and time in "yyyy-MM-dd HH:mm:ss" format
@@ -253,193 +230,17 @@ public class ProductController extends CatalogEndpoint {
             customProduct.setModifiedDate(currentDate);
 
             // MODULAR
-            ResponseEntity<?> validateAndSetActiveEndDateAndGoLiveDateFields = productService.validateAndSetActiveEndDateAndGoLiveDateFields(addProductDto, customProduct);
-            if(!validateAndSetActiveEndDateAndGoLiveDateFields.getStatusCode().equals(HttpStatus.OK)){
-                return validateAndSetActiveEndDateAndGoLiveDateFields;
-            }
-            *//*if (addProductDto.getActiveEndDate() != null && addProductDto.getGoLiveDate() != null) {
+            productService.validateAndSetActiveEndDateAndGoLiveDateFields(addProductDto, customProduct);
 
-                dateFormat.parse(dateFormat.format(addProductDto.getActiveEndDate()));
-                dateFormat.parse(dateFormat.format(addProductDto.getGoLiveDate()));
+            productService.validateAndSetExamDateFromAndExamDateToFields(addProductDto, customProduct);
+            productService.validateExamDateFromAndExamDateTo(addProductDto, customProduct);
 
-                if (!addProductDto.getActiveEndDate().after(customProduct.getActiveStartDate())) {
-                    return ResponseService.generateErrorResponse("ACTIVE END DATE CANNOT BE BEFORE OR EQUAL OF ACTIVE START DATE", HttpStatus.BAD_REQUEST);
-                } else if (!addProductDto.getActiveEndDate().after(addProductDto.getGoLiveDate()) || !addProductDto.getGoLiveDate().after(customProduct.getActiveStartDate())) {
-                    return ResponseService.generateErrorResponse("GO LIVE DATE CANNOT BE BEFORE OR EQUAL OF GO LIVE DATE AND BEFORE OR EQUAL OF ACTIVE START DATE", HttpStatus.BAD_REQUEST);
-                } else if (addProductDto.getExamDateFrom() != null) {
-                    dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
-
-                    if (!addProductDto.getActiveEndDate().before(addProductDto.getExamDateFrom())) {
-                        return ResponseService.generateErrorResponse("ACTIVE END DATE CANNOT BE AFTER OR EQUAL OF EXAM DATE FROM DATE", HttpStatus.BAD_REQUEST);
-                    }
-                } else {
-                    if (!addProductDto.getActiveEndDate().before(customProduct.getExamDateFrom())) {
-                        return ResponseService.generateErrorResponse("ACTIVE END DATE CANNOT BE AFTER OR EQUAL OF EXAM DATE FROM DATE", HttpStatus.BAD_REQUEST);
-                    }
-                }
-                customProduct.getDefaultSku().setActiveEndDate(addProductDto.getActiveEndDate());
-                customProduct.setGoLiveDate(addProductDto.getGoLiveDate());
-
-            } else if (addProductDto.getActiveEndDate() != null) {
-
-                dateFormat.parse(dateFormat.format(addProductDto.getActiveEndDate()));
-
-                if (!addProductDto.getActiveEndDate().after(customProduct.getActiveStartDate())) {
-                    return ResponseService.generateErrorResponse("ACTIVE END DATE CANNOT BE BEFORE OR EQUAL OF ACTIVE START DATE", HttpStatus.BAD_REQUEST);
-                } else if (!addProductDto.getActiveEndDate().after(customProduct.getGoLiveDate())) {
-                    return ResponseService.generateErrorResponse("ACTIVE END DATE CANNOT BE BEFORE OR EQUAL OF GO LIVE DATE", HttpStatus.BAD_REQUEST);
-                } else if (addProductDto.getExamDateFrom() != null) {
-
-                    dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
-                    if (!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate())) {
-                        return ResponseService.generateErrorResponse("EXAM DATE FROM MUST BE AFTER ACTIVE END DATE", HttpStatus.BAD_REQUEST);
-                    }
-                } else {
-                    if (!customProduct.getExamDateFrom().after(addProductDto.getActiveEndDate())) {
-                        return ResponseService.generateErrorResponse("EXAM DATE FROM MUST BE AFTER ACTIVE END DATE", HttpStatus.BAD_REQUEST);
-                    }
-                }
-
-                customProduct.getDefaultSku().setActiveEndDate(addProductDto.getActiveEndDate());
-            } else if (addProductDto.getGoLiveDate() != null) {
-
-                dateFormat.parse(dateFormat.format(addProductDto.getGoLiveDate()));
-
-                if (!addProductDto.getGoLiveDate().after(customProduct.getActiveStartDate())) {
-                    return ResponseService.generateErrorResponse("GO LIVE DATE CANNOT BE BEFORE OR EQUAL OF ACTIVE START DATE", HttpStatus.BAD_REQUEST);
-                } else if (!customProduct.getActiveEndDate().after(addProductDto.getGoLiveDate())) {
-                    return ResponseService.generateErrorResponse("GO LIVE DATE CANNOT BE AFTER AND EQUAL OF EXPIRY DATE", HttpStatus.BAD_REQUEST);
-                }
-                customProduct.setGoLiveDate(addProductDto.getGoLiveDate());
-            }*//*
-
-            CustomJobGroup jobGroup;
-            if (addProductDto.getJobGroup() != null) {
-
-                jobGroup = jobGroupService.getJobGroupById(addProductDto.getJobGroup());
-                if (jobGroup == null) {
-                    return ResponseService.generateErrorResponse("NO JOB GROUP EXISTS WITH THIS JOB GROUP ID", HttpStatus.NOT_FOUND);
-                }
-                customProduct.setJobGroup(jobGroup);
-            }
-
-            // MODULAR
-            ResponseEntity<?> validateAndSetExamDateFromAndExamDateToFields = productService.validateAndSetExamDateFromAndExamDateToFields(addProductDto, customProduct);
-            if(!validateAndSetExamDateFromAndExamDateToFields.getStatusCode().equals(HttpStatus.OK)){
-                return validateAndSetExamDateFromAndExamDateToFields;
-            }
-            *//*if (addProductDto.getExamDateFrom() != null && addProductDto.getExamDateTo() != null) {
-
-                // Validation on date for being wrong types. -> these needs to be changed or we have to add exception.
-                dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
-                dateFormat.parse(dateFormat.format(addProductDto.getExamDateTo()));
-
-                if (addProductDto.getExamDateTo().before(addProductDto.getExamDateFrom())) {
-                    return ResponseService.generateErrorResponse(TENTATIVEEXAMDATETOAFTEREXAMDATEFROM, HttpStatus.BAD_REQUEST);
-                }
-
-                if (addProductDto.getActiveEndDate() != null) {
-                    if (!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate()) || !addProductDto.getExamDateTo().after(addProductDto.getActiveEndDate())) {
-                        return ResponseService.generateErrorResponse(TENTATIVEDATEAFTERACTIVEENDDATE, HttpStatus.BAD_REQUEST);
-                    }
-
-                } else {
-                    if (!addProductDto.getExamDateFrom().after(customProduct.getActiveEndDate()) || !addProductDto.getExamDateTo().after(customProduct.getActiveEndDate())) {
-                        return ResponseService.generateErrorResponse(TENTATIVEDATEAFTERACTIVEENDDATE, HttpStatus.BAD_REQUEST);
-                    }
-                }
-                customProduct.setExamDateFrom(addProductDto.getExamDateFrom());
-                customProduct.setExamDateTo(addProductDto.getExamDateTo());
-
-            } else if (addProductDto.getExamDateFrom() != null) {
-
-                dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
-                if (customProduct.getExamDateTo().before(addProductDto.getExamDateFrom())) {
-                    return ResponseService.generateErrorResponse(TENTATIVEEXAMDATETOAFTEREXAMDATEFROM, HttpStatus.BAD_REQUEST);
-                }
-
-                if (addProductDto.getActiveEndDate() == null) {
-                    if (!addProductDto.getExamDateFrom().after(customProduct.getActiveEndDate())) {
-                        return ResponseService.generateErrorResponse(TENTATIVEEXAMDATEAFTERACTIVEENDDATE, HttpStatus.BAD_REQUEST);
-                    }
-                } else {
-                    if (!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate())) {
-                        return ResponseService.generateErrorResponse(TENTATIVEEXAMDATEAFTERACTIVEENDDATE, HttpStatus.BAD_REQUEST);
-                    }
-                }
-                customProduct.setExamDateFrom(addProductDto.getExamDateFrom());
-
-            } else if (addProductDto.getExamDateTo() != null) {
-
-                dateFormat.parse(dateFormat.format(addProductDto.getExamDateTo()));
-                if (addProductDto.getExamDateTo().before(customProduct.getExamDateFrom())) {
-                    return ResponseService.generateErrorResponse(TENTATIVEEXAMDATETOAFTEREXAMDATEFROM, HttpStatus.BAD_REQUEST);
-                }
-                if (addProductDto.getActiveEndDate() == null) {
-                    if (!addProductDto.getExamDateTo().after(customProduct.getActiveEndDate())) {
-                        return ResponseService.generateErrorResponse(TENTATIVEEXAMDATEAFTERACTIVEENDDATE, HttpStatus.BAD_REQUEST);
-                    }
-                } else {
-                    if (!addProductDto.getExamDateTo().after(addProductDto.getActiveEndDate())) {
-                        return ResponseService.generateErrorResponse("TENTATIVE EXAMINATION DATA MUST BE AFTER ACTIVE END DATE", HttpStatus.BAD_REQUEST);
-                    }
-                }
-                customProduct.setExamDateTo(addProductDto.getExamDateTo());
-
-            }*//*
-
-            if (addProductDto.getPlatformFee() != null) {
-                if (addProductDto.getPlatformFee() <= 0) {
-                    return ResponseService.generateErrorResponse("PLATFORM FEE CANNOT BE LESS THAN OR EQUAL TO ZERO", HttpStatus.BAD_REQUEST);
-                }
-                customProduct.setPlatformFee(addProductDto.getPlatformFee());
-            }
-
-            if (addProductDto.getApplicationScope() != null) {
-                CustomApplicationScope applicationScope = applicationScopeService.getApplicationScopeById(addProductDto.getApplicationScope());
-                if (applicationScope == null) {
-                    return ResponseService.generateErrorResponse("NO APPLICATION SCOPE EXISTS WITH THIS ID", HttpStatus.NOT_FOUND);
-                } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE)) {
-                    if (customProduct.getNotifyingAuthority() == null && addProductDto.getNotifyingAuthority() == null) {
-                        return ResponseService.generateErrorResponse("NOTIFYING AUTHORITY CANNOT BE NULL IF APPLICATION SCOPE IS: " + Constant.APPLICATION_SCOPE_STATE, HttpStatus.BAD_REQUEST);
-                    } else if (addProductDto.getNotifyingAuthority() != null && !addProductDto.getNotifyingAuthority().trim().isEmpty()) {
-                        addProductDto.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
-                        customProduct.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
-                        customProduct.setCustomApplicationScope(applicationScope);
-                    }
-                }
-            }
 
             if (addProductDto.getAdvertiserUrl() != null && !addProductDto.getAdvertiserUrl().trim().isEmpty()) {
                 addProductDto.setAdvertiserUrl(addProductDto.getAdvertiserUrl().trim());
                 customProduct.setAdvertiserUrl(addProductDto.getAdvertiserUrl());
             }
 
-            if (addProductDto.getProductState() != null) {
-
-                if(customProduct.getUserId().equals(userId)) {
-                    return ResponseService.generateErrorResponse("SERVICE PROVIDER WHO CREATED THE PRODUCT CANNOT CHANGE ITS STATE", HttpStatus.NOT_FOUND);
-                }
-                CustomProductState customProductState = productStateService.getProductStateById(addProductDto.getProductState());
-                if (customProductState == null) {
-                    return ResponseService.generateErrorResponse("NO PRODUCT STATE EXIST WITH THIS ID", HttpStatus.NOT_FOUND);
-                }
-
-                if (role.equals(Constant.SERVICE_PROVIDER) && customProduct.getProductState().getProductState().equals(Constant.PRODUCT_STATE_NEW) && customProductState.getProductState().equals(Constant.PRODUCT_STATE_APPROVED)) {
-                    List<Privileges> privileges = privilegeService.getServiceProviderPrivilege(userId);
-                    for (Privileges privilege : privileges) {
-                        if (privilege.getPrivilege_name().equals(Constant.PRIVILEGE_APPROVE_PRODUCT)) {
-                            customProduct.setProductState(customProductState);
-                            break;
-                        }
-                    }
-                } else if (customProduct.getProductState().getProductState().equals(Constant.PRODUCT_STATE_APPROVED) && customProductState.getProductState().equals(Constant.PRODUCT_STATE_APPROVED)) {
-                    return ResponseService.generateErrorResponse("ALREADY IN APPROVED STATE", HttpStatus.BAD_REQUEST);
-                } else if (role.equals(Constant.SERVICE_PROVIDER)) {
-                    return ResponseService.generateErrorResponse("SERVICE PROVIDER CAN ONLY MODIFY PRODUCT STATE FROM NEW TO APPROVE", HttpStatus.FORBIDDEN);
-                }
-                customProduct.setProductState(customProductState);
-            }
             customProduct.setModifiedDate(new Date());
             customProduct.setModifierRole(roleService.getRoleByRoleId(roleId));
             customProduct.setModifierUserId(userId);
@@ -452,7 +253,7 @@ public class ProductController extends CatalogEndpoint {
             if(!validateAndSetReserveCategoryFields.getStatusCode().equals(HttpStatus.OK)){
                 return validateAndSetReserveCategoryFields;
             }
-            *//*if (addProductDto.getReservedCategory() != null) {
+            if (addProductDto.getReservedCategory() != null) {
                 List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(productId);
                 boolean reserveCategoryFound = false;
                 for (ReserveCategoryDto reserveCategoryDto : reserveCategoryDtoList) {
@@ -543,7 +344,7 @@ public class ProductController extends CatalogEndpoint {
                     productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getFee(), addProductDto.getPost(), customProduct, reserveCategoryService.getReserveCategoryById(addProductDto.getReservedCategory()));
 
                 }
-            }*//*
+            }
 
             List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(productId);
 
@@ -560,7 +361,6 @@ public class ProductController extends CatalogEndpoint {
         }
 
     }
-*/
     @GetMapping("/get-product-by-id/{productId}")
     public ResponseEntity<?> retrieveProductById(HttpServletRequest request, @PathVariable("productId") String productIdPath) {
 

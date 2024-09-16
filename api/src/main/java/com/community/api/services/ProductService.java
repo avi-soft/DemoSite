@@ -3,6 +3,7 @@ package com.community.api.services;
 import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
 import com.community.api.dto.AddProductDto;
+import com.community.api.dto.AddReserveCategoryDto;
 import com.community.api.dto.CustomProductWrapper;
 import com.community.api.dto.ReserveCategoryDto;
 import com.community.api.entity.*;
@@ -170,224 +171,6 @@ public class ProductService {
         }
     }
 
-    public ResponseEntity<?> validateAndSetActiveEndDateAndGoLiveDateFields(AddProductDto addProductDto, CustomProduct customProduct) {
-        try {
-            if (addProductDto.getActiveEndDate() != null) {
-                Date activeEndDate = dateFormat.parse(dateFormat.format(addProductDto.getActiveEndDate()));
-                Date goLiveDate = addProductDto.getGoLiveDate() != null ? dateFormat.parse(dateFormat.format(addProductDto.getGoLiveDate())) : null;
-
-                if (!activeEndDate.after(customProduct.getActiveStartDate())) {
-                    return ResponseService.generateErrorResponse("ACTIVE END DATE CANNOT BE BEFORE OR EQUAL OF ACTIVE START DATE", HttpStatus.BAD_REQUEST);
-                }
-                if (goLiveDate != null && (!activeEndDate.after(goLiveDate) || !goLiveDate.after(customProduct.getActiveStartDate()))) {
-                    return ResponseService.generateErrorResponse("GO LIVE DATE CANNOT BE BEFORE OR EQUAL OF GO LIVE DATE AND BEFORE OR EQUAL OF ACTIVE START DATE", HttpStatus.BAD_REQUEST);
-                }
-                if (addProductDto.getExamDateFrom() != null) {
-                    Date examDateFrom = dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
-                    if (!activeEndDate.before(examDateFrom)) {
-                        return ResponseService.generateErrorResponse("ACTIVE END DATE CANNOT BE AFTER OR EQUAL OF EXAM DATE FROM DATE", HttpStatus.BAD_REQUEST);
-                    }
-                } else if (!activeEndDate.before(customProduct.getExamDateFrom())) {
-                    return ResponseService.generateErrorResponse("ACTIVE END DATE CANNOT BE AFTER OR EQUAL OF EXAM DATE FROM DATE", HttpStatus.BAD_REQUEST);
-                }
-                customProduct.getDefaultSku().setActiveEndDate(activeEndDate);
-                customProduct.setGoLiveDate(goLiveDate);
-            } else if (addProductDto.getGoLiveDate() != null) {
-                Date goLiveDate = dateFormat.parse(dateFormat.format(addProductDto.getGoLiveDate()));
-                if (!goLiveDate.after(customProduct.getActiveStartDate())) {
-                    return ResponseService.generateErrorResponse("GO LIVE DATE CANNOT BE BEFORE OR EQUAL OF ACTIVE START DATE", HttpStatus.BAD_REQUEST);
-                }
-                if (!customProduct.getActiveEndDate().after(goLiveDate)) {
-                    return ResponseService.generateErrorResponse("GO LIVE DATE CANNOT BE AFTER AND EQUAL OF EXPIRY DATE", HttpStatus.BAD_REQUEST);
-                }
-                customProduct.setGoLiveDate(goLiveDate);
-                return ResponseService.generateSuccessResponse("GO LIVE DATE AND ACTIVE END DATE ARE VALIDATED PROPERLY", "VALIDATED", HttpStatus.OK);
-            }
-            return ResponseService.generateSuccessResponse("GO LIVE DATE AND ACTIVE END DATE ARE VALIDATED PROPERLY", "EMPTY GO LIVE DATE AND ACTIVE END DATE", HttpStatus.OK);
-        } catch (ParseException parseException) {
-            return ResponseService.generateErrorResponse("DATE PARSE EXCEPTION: " + parseException.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (Exception exception) {
-            return ResponseService.generateErrorResponse("SOME EXCEPTION OCCURRED: " + exception.getMessage(), HttpStatus.BAD_REQUEST);
-        }
-    }
-
-    public ResponseEntity<?> validateAndSetExamDateFromAndExamDateToFields(AddProductDto addProductDto, CustomProduct customProduct) {
-        try {
-            if (addProductDto.getExamDateFrom() != null && addProductDto.getExamDateTo() != null) {
-
-                // Validation on date for being wrong types. -> these needs to be changed or we have to add exception.
-                dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
-                dateFormat.parse(dateFormat.format(addProductDto.getExamDateTo()));
-
-                if (addProductDto.getExamDateTo().before(addProductDto.getExamDateFrom())) {
-                    return ResponseService.generateErrorResponse(TENTATIVEEXAMDATETOAFTEREXAMDATEFROM, HttpStatus.BAD_REQUEST);
-                }
-
-                if (addProductDto.getActiveEndDate() != null) {
-                    if (!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate()) || !addProductDto.getExamDateTo().after(addProductDto.getActiveEndDate())) {
-                        return ResponseService.generateErrorResponse(TENTATIVEDATEAFTERACTIVEENDDATE, HttpStatus.BAD_REQUEST);
-                    }
-
-                } else {
-                    if (!addProductDto.getExamDateFrom().after(customProduct.getActiveEndDate()) || !addProductDto.getExamDateTo().after(customProduct.getActiveEndDate())) {
-                        return ResponseService.generateErrorResponse(TENTATIVEDATEAFTERACTIVEENDDATE, HttpStatus.BAD_REQUEST);
-                    }
-                }
-                customProduct.setExamDateFrom(addProductDto.getExamDateFrom());
-                customProduct.setExamDateTo(addProductDto.getExamDateTo());
-                return ResponseService.generateSuccessResponse("EXAM DATE FROM AND EXAM DATE TO ARE VALIDATED SUCCESSFULLY", "VALIDATED", HttpStatus.OK);
-
-            } else if (addProductDto.getExamDateFrom() != null) {
-
-                dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
-                if (customProduct.getExamDateTo().before(addProductDto.getExamDateFrom())) {
-                    return ResponseService.generateErrorResponse(TENTATIVEEXAMDATETOAFTEREXAMDATEFROM, HttpStatus.BAD_REQUEST);
-                }
-
-                if (addProductDto.getActiveEndDate() == null) {
-                    if (!addProductDto.getExamDateFrom().after(customProduct.getActiveEndDate())) {
-                        return ResponseService.generateErrorResponse(TENTATIVEEXAMDATEAFTERACTIVEENDDATE, HttpStatus.BAD_REQUEST);
-                    }
-                } else {
-                    if (!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate())) {
-                        return ResponseService.generateErrorResponse(TENTATIVEEXAMDATEAFTERACTIVEENDDATE, HttpStatus.BAD_REQUEST);
-                    }
-                }
-                customProduct.setExamDateFrom(addProductDto.getExamDateFrom());
-                return ResponseService.generateSuccessResponse("EXAM DATE FROM IS VALIDATED SUCCESSFULLY", "VALIDATED", HttpStatus.OK);
-
-            } else if (addProductDto.getExamDateTo() != null) {
-
-                dateFormat.parse(dateFormat.format(addProductDto.getExamDateTo()));
-                if (addProductDto.getExamDateTo().before(customProduct.getExamDateFrom())) {
-                    return ResponseService.generateErrorResponse(TENTATIVEEXAMDATETOAFTEREXAMDATEFROM, HttpStatus.BAD_REQUEST);
-                }
-                if (addProductDto.getActiveEndDate() == null) {
-                    if (!addProductDto.getExamDateTo().after(customProduct.getActiveEndDate())) {
-                        return ResponseService.generateErrorResponse(TENTATIVEEXAMDATEAFTERACTIVEENDDATE, HttpStatus.BAD_REQUEST);
-                    }
-                } else {
-                    if (!addProductDto.getExamDateTo().after(addProductDto.getActiveEndDate())) {
-                        return ResponseService.generateErrorResponse("TENTATIVE EXAMINATION DATA MUST BE AFTER ACTIVE END DATE", HttpStatus.BAD_REQUEST);
-                    }
-                }
-                customProduct.setExamDateTo(addProductDto.getExamDateTo());
-                return ResponseService.generateSuccessResponse("EXAM DATE TO IS VALIDATED SUCCESSFULLY", "VALIDATED", HttpStatus.OK);
-
-            }
-            return ResponseService.generateSuccessResponse("EXAM DATE FROM AND EXAM DATE TO ARE VALIDATED SUCCESSFULLY", "EMPTY EXAM DATE FROM AND EMPTY EXAM DATE TO", HttpStatus.OK);
-
-        } catch (ParseException parseException) {
-            return ResponseService.generateErrorResponse("DATE PARSE EXCEPTION: " + parseException.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (Exception exception) {
-            return ResponseService.generateErrorResponse("SOME EXCEPTION OCCURRED: " + exception.getMessage(), HttpStatus.BAD_REQUEST);
-        }
-    }
-
-/*    public ResponseEntity<?> validateAndSetReserveCategoryFields(AddProductDto addProductDto, CustomProduct customProduct) {
-        try {
-            if (addProductDto.getReservedCategory() != null) {
-                List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(customProduct.getId());
-                boolean reserveCategoryFound = false;
-                for (ReserveCategoryDto reserveCategoryDto : reserveCategoryDtoList) {
-                    if (reserveCategoryDto.getReserveCategoryId().equals(addProductDto.getReservedCategory())) {
-                        reserveCategoryFound = true;
-                        break;
-                    }
-                }
-
-                if (reserveCategoryFound) {
-                    if (addProductDto.getBornAfter() == null && addProductDto.getBornBefore() == null && addProductDto.getFee() == null && addProductDto.getPost() == null) {
-                        return ResponseService.generateErrorResponse("NOTHING TO UPDATE IN RESERVE CATEGORY DATA", HttpStatus.BAD_REQUEST);
-                    }
-
-                    CustomProductReserveCategoryBornBeforeAfterRef customProductReserveCategoryBornBeforeAfterRef = productReserveCategoryBornBeforeAfterRefService.getCustomProductReserveCategoryBornBeforeAfterRefByProductIdAndReserveCategoryId(customProduct.getId(), addProductDto.getReservedCategory());
-                    CustomProductReserveCategoryFeePostRef customProductReserveCategoryFeePostRef = productReserveCategoryFeePostRefService.getCustomProductReserveCategoryFeePostRefByProductIdAndReserveCategoryId(customProduct.getId(), addProductDto.getReservedCategory());
-
-                    if (addProductDto.getBornAfter() != null && addProductDto.getBornBefore() != null) {
-                        dateFormat.parse(dateFormat.format(addProductDto.getBornAfter()));
-                        dateFormat.parse(dateFormat.format(addProductDto.getBornAfter()));
-
-                        if (!addProductDto.getBornBefore().before(new Date()) || !addProductDto.getBornAfter().before(new Date())) {
-                            return ResponseService.generateErrorResponse("BORN BEFORE DATE AND BORN AFTER DATE MUST BE OF PAST", HttpStatus.BAD_REQUEST);
-                        } else if (!addProductDto.getBornAfter().before(addProductDto.getBornBefore())) {
-                            return ResponseService.generateErrorResponse("BORN AFTER DATE MUST BE PAST OF BORN BEFORE DATE", HttpStatus.BAD_REQUEST);
-                        }
-                        customProductReserveCategoryBornBeforeAfterRef.setBornBefore(addProductDto.getBornBefore());
-                        customProductReserveCategoryBornBeforeAfterRef.setBornAfter(addProductDto.getBornAfter());
-                    } else if (addProductDto.getBornAfter() != null) {
-
-                        dateFormat.parse(dateFormat.format(addProductDto.getBornAfter()));
-                        if (!addProductDto.getBornAfter().before(new Date())) {
-                            return ResponseService.generateErrorResponse("BORN AFTER DATE MUST BE OF PAST", HttpStatus.BAD_REQUEST);
-                        } else if (!addProductDto.getBornAfter().before(customProductReserveCategoryBornBeforeAfterRef.getBornBefore())) {
-                            return ResponseService.generateErrorResponse("BORN AFTER DATE MUST BE PAST OF BORN BEFORE DATE", HttpStatus.BAD_REQUEST);
-                        }
-
-                        customProductReserveCategoryBornBeforeAfterRef.setBornAfter(addProductDto.getBornAfter());
-                    } else if (addProductDto.getBornBefore() != null) {
-
-                        dateFormat.parse(dateFormat.format(addProductDto.getBornBefore()));
-                        if (!addProductDto.getBornBefore().before(new Date())) {
-                            return ResponseService.generateErrorResponse("BORN BEFORE DATE MUST BE OF PAST", HttpStatus.BAD_REQUEST);
-                        } else if (!customProductReserveCategoryBornBeforeAfterRef.getBornAfter().before(addProductDto.getBornBefore())) {
-                            return ResponseService.generateErrorResponse("BORN AFTER DATE MUST BE PAST OF BORN BEFORE DATE", HttpStatus.BAD_REQUEST);
-                        }
-
-                        customProductReserveCategoryBornBeforeAfterRef.setBornAfter(addProductDto.getBornAfter());
-                    }
-                    entityManager.persist(customProductReserveCategoryBornBeforeAfterRef);
-
-                    if (addProductDto.getFee() != null) {
-                        if (addProductDto.getFee() <= 0) {
-                            return ResponseService.generateErrorResponse(FEELESSTHANOREQUALZERO, HttpStatus.BAD_REQUEST);
-                        }
-                        customProductReserveCategoryFeePostRef.setFee(addProductDto.getFee());
-                    }
-                    if (addProductDto.getPost() != null) {
-                        if (addProductDto.getPost() <= 0) {
-                            return ResponseService.generateErrorResponse(POSTLESSTHANORZERO, HttpStatus.BAD_REQUEST);
-                        }
-                        customProductReserveCategoryFeePostRef.setPost(addProductDto.getPost());
-                    }
-                    entityManager.persist(customProductReserveCategoryFeePostRef);
-                    return ResponseService.generateSuccessResponse("RESERVED CATEGORY VALIDATED SUCCESSFULLY", "VALIDATED", HttpStatus.OK);
-                } else {
-                    if (addProductDto.getFee() == null || addProductDto.getBornAfter() == null || addProductDto.getBornBefore() == null) {
-                        return ResponseService.generateErrorResponse("FEE, POST, BORN BEFORE AND BORN AFTER ARE MANDATORY FOR NEW RESERVE CATEGORY DATA", HttpStatus.BAD_REQUEST);
-                    }
-                    if (addProductDto.getFee() <= 0) {
-                        return ResponseService.generateErrorResponse(FEELESSTHANOREQUALZERO, HttpStatus.BAD_REQUEST);
-                    }
-                    if (addProductDto.getPost() == null) {
-                        addProductDto.setPost(Constant.DEFAULT_QUANTITY);
-                    } else if (addProductDto.getPost() <= 0) {
-                        return ResponseService.generateErrorResponse(POSTLESSTHANORZERO, HttpStatus.BAD_REQUEST);
-                    }
-
-                    dateFormat.parse(dateFormat.format(addProductDto.getBornAfter()));
-                    dateFormat.parse(dateFormat.format(addProductDto.getBornBefore()));
-                    if (!addProductDto.getBornBefore().before(new Date()) || !addProductDto.getBornAfter().before(new Date())) {
-                        return ResponseService.generateErrorResponse("BORN BEFORE DATE AND BORN AFTER DATE MUST BE OF PAST", HttpStatus.BAD_REQUEST);
-                    } else if (!addProductDto.getBornAfter().before(addProductDto.getBornBefore())) {
-                        return ResponseService.generateErrorResponse("BORN AFTER DATE MUST BE PAST OF BORN BEFORE DATE", HttpStatus.BAD_REQUEST);
-                    }
-
-                    productReserveCategoryBornBeforeAfterRefService.saveBornBeforeAndBornAfter(addProductDto.getBornBefore(), addProductDto.getBornAfter(), customProduct, reserveCategoryService.getReserveCategoryById(addProductDto.getReservedCategory()));
-                    productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getFee(), addProductDto.getPost(), customProduct, reserveCategoryService.getReserveCategoryById(addProductDto.getReservedCategory()));
-
-                    return ResponseService.generateSuccessResponse("RESERVED CATEGORY VALIDATED SUCCESSFULLY", "VALIDATED", HttpStatus.OK);
-                }
-            } else {
-                return ResponseService.generateSuccessResponse("RESERVE CATEGORY VALIDATED SUCCESSFULLY", "EMPTY RESERVE CATEGORY", HttpStatus.OK);
-            }
-        } catch (ParseException parseException) {
-            return ResponseService.generateErrorResponse("DATE PARSE EXCEPTION: " + parseException.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (Exception exception) {
-            return ResponseService.generateErrorResponse("SOME EXCEPTION OCCURRED: " + exception.getMessage(), HttpStatus.BAD_REQUEST);
-        }
-    }*/
-
     public List<CustomProduct> filterProducts(List<Long> states, List<Long> categories, List<Long> reserveCategories, String title, Double fee, Integer post, Date startRange, Date endRange) {
 
         /*String jpql = "SELECT DISTINCT p FROM CustomProduct p "
@@ -483,10 +266,6 @@ public class ProductService {
             jpql.append("AND r.post > :post ");
         }
 
-
-
-
-
         // Create the query with the final JPQL string
         TypedQuery<CustomProduct> query = entityManager.createQuery(jpql.toString(), CustomProduct.class);
 
@@ -513,6 +292,7 @@ public class ProductService {
         // Execute and return the result
         return query.getResultList();
     }
+
     public boolean addProductAccessAuthorisation(String authHeader) throws Exception {
         try {
             String jwtToken = authHeader.substring(7);
@@ -542,6 +322,7 @@ public class ProductService {
             throw new Exception("ERRORS WHILE VALIDATING AUTHORIZATION: " + exception.getMessage() + "\n");
         }
     }
+
     public Category validateCategory(Long categoryId) throws Exception {
         try {
             if (categoryId <= 0) throw new IllegalArgumentException("CATEGORY ID CANNOT BE <= 0");
@@ -552,6 +333,7 @@ public class ProductService {
             throw new Exception("ERRORS WHILE VALIDATING CATEGORY: " + exception.getMessage() + "\n");
         }
     }
+
     public boolean addProductDtoValidation(AddProductDto addProductDto) throws Exception {
         try {
             if (addProductDto.getQuantity() != null) {
@@ -613,8 +395,13 @@ public class ProductService {
                 throw new IllegalArgumentException(TENTATIVEEXAMDATETOAFTEREXAMDATEFROM);
             }
 
-            if(addProductDto.getJobGroup() <= 0) {
-                throw new IllegalArgumentException("JOB GROUP CANNOT BE <= 0");
+            if(addProductDto.getJobGroup() == null || addProductDto.getJobGroup() <= 0) {
+                throw new IllegalArgumentException("JOB GROUP CANNOT BE NULL OR <= 0");
+            }
+
+            CustomJobGroup jobGroup = jobGroupService.getJobGroupById(addProductDto.getJobGroup());
+            if(jobGroup == null) {
+                throw new NoSuchElementException("JOB GROUP NOT FOUND");
             }
 
             if (addProductDto.getAdvertiserUrl() == null || addProductDto.getAdvertiserUrl().trim().isEmpty()) {
@@ -696,6 +483,7 @@ public class ProductService {
             throw new Exception("SOME EXCEPTION WHILE VALIDATING AUTHORIZATION: " + exception.getMessage() + "\n");
         }
     }
+
     public boolean validateReserveCategory(AddProductDto addProductDto) throws Exception {
         try{
             Set<Long> reserveCategoryId = new HashSet<>();
@@ -794,7 +582,6 @@ public class ProductService {
                         return true;
                     }
                 }
-
             }
 
             return false;
@@ -803,4 +590,433 @@ public class ProductService {
             throw new Exception("ERRORS WHILE VALIDATING AUTHORIZATION: " + exception.getMessage() + "\n");
         }
     }
+
+    public boolean updateProductValidation(AddProductDto addProductDto, CustomProduct customProduct) throws Exception {
+        try{
+            if (addProductDto.getQuantity() != null) {
+                if (addProductDto.getQuantity() <= 0) {
+                    throw new IllegalArgumentException("QUANTITY CANNOT BE EMPTY <= 0");
+                }
+                customProduct.getDefaultSku().setQuantityAvailable(addProductDto.getQuantity());
+            }
+
+            if (addProductDto.getPriorityLevel() != null) {
+                customProduct.setPriorityLevel(addProductDto.getPriorityLevel());
+            }
+
+            if (addProductDto.getMetaTitle() != null && !addProductDto.getMetaTitle().trim().isEmpty()) {
+                addProductDto.setMetaTitle(addProductDto.getMetaTitle().trim());
+                customProduct.setMetaTitle(addProductDto.getMetaTitle());
+                customProduct.getDefaultSku().setName(addProductDto.getMetaTitle());
+            }
+
+            if(addProductDto.getDisplayTemplate() != null && !addProductDto.getDisplayTemplate().trim().isEmpty()) {
+                customProduct.setDisplayTemplate(addProductDto.getDisplayTemplate().trim());
+            }
+
+            if (addProductDto.getMetaDescription() != null && !addProductDto.getMetaDescription().trim().isEmpty()) {
+                addProductDto.setMetaDescription(addProductDto.getMetaDescription().trim());
+                customProduct.setMetaDescription(addProductDto.getMetaDescription());
+                customProduct.getDefaultSku().setDescription(addProductDto.getMetaDescription());
+            }
+
+            CustomJobGroup jobGroup;
+            if (addProductDto.getJobGroup() != null) {
+
+                jobGroup = jobGroupService.getJobGroupById(addProductDto.getJobGroup());
+                if (jobGroup == null) {
+                    throw new IllegalArgumentException("NO JOB GROUP EXISTS WITH THIS JOB GROUP ID");
+                }
+                customProduct.setJobGroup(jobGroup);
+            }
+
+            if (addProductDto.getPlatformFee() != null) {
+                if (addProductDto.getPlatformFee() <= 0) {
+                    throw new IllegalArgumentException("PLATFORM FEE CANNOT BE LESS THAN OR EQUAL TO ZERO");
+                }
+                customProduct.setPlatformFee(addProductDto.getPlatformFee());
+            }
+
+            if (addProductDto.getApplicationScope() != null) {
+                CustomApplicationScope applicationScope = applicationScopeService.getApplicationScopeById(addProductDto.getApplicationScope());
+                if (applicationScope == null) {
+                    throw new IllegalArgumentException("NO APPLICATION SCOPE EXISTS WITH THIS ID");
+                } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE)) {
+                    if (customProduct.getNotifyingAuthority() == null && addProductDto.getNotifyingAuthority() == null) {
+                        throw new IllegalArgumentException("NOTIFYING AUTHORITY CANNOT BE NULL IF APPLICATION SCOPE IS: " + Constant.APPLICATION_SCOPE_STATE);
+                    } else if (addProductDto.getNotifyingAuthority() != null && !addProductDto.getNotifyingAuthority().trim().isEmpty()) {
+                        addProductDto.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
+                        customProduct.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
+                        customProduct.setCustomApplicationScope(applicationScope);
+                    }
+                }
+            }
+
+            return true;
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            throw new Exception("ERRORS WHILE VALIDATING AUTHORIZATION: " + exception.getMessage() + "\n");
+        }
+    }
+
+    public Boolean validateAndSetActiveEndDateAndGoLiveDateFields(AddProductDto addProductDto, CustomProduct customProduct) throws Exception {
+        try {
+            if (addProductDto.getActiveEndDate() != null && addProductDto.getGoLiveDate() != null) {
+
+                dateFormat.parse(dateFormat.format(addProductDto.getActiveEndDate()));
+                dateFormat.parse(dateFormat.format(addProductDto.getGoLiveDate()));
+
+                if (!addProductDto.getActiveEndDate().after(customProduct.getActiveStartDate())) {
+                    throw new IllegalArgumentException("ACTIVE END DATE CANNOT BE BEFORE OR EQUAL OF ACTIVE START DATE");
+                } else if (!addProductDto.getActiveEndDate().after(addProductDto.getGoLiveDate()) || !addProductDto.getGoLiveDate().after(customProduct.getActiveStartDate())) {
+                    throw new IllegalArgumentException("GO LIVE DATE CANNOT BE BEFORE OR EQUAL OF GO LIVE DATE AND BEFORE OR EQUAL OF ACTIVE START DATE");
+                } else if (addProductDto.getExamDateFrom() != null) {
+                    dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
+
+                    if (!addProductDto.getActiveEndDate().before(addProductDto.getExamDateFrom())) {
+                        throw new IllegalArgumentException("ACTIVE END DATE CANNOT BE AFTER OR EQUAL OF EXAM DATE FROM DATE");
+                    }
+                } else {
+                    if (!addProductDto.getActiveEndDate().before(customProduct.getExamDateFrom())) {
+                        throw new IllegalArgumentException("ACTIVE END DATE CANNOT BE AFTER OR EQUAL OF EXAM DATE FROM DATE");
+                    }
+                }
+                customProduct.getDefaultSku().setActiveEndDate(addProductDto.getActiveEndDate());
+                customProduct.setGoLiveDate(addProductDto.getGoLiveDate());
+
+            } else if (addProductDto.getActiveEndDate() != null) {
+
+                dateFormat.parse(dateFormat.format(addProductDto.getActiveEndDate()));
+
+                if (!addProductDto.getActiveEndDate().after(customProduct.getActiveStartDate())) {
+                    throw new IllegalArgumentException("ACTIVE END DATE CANNOT BE BEFORE OR EQUAL OF ACTIVE START DATE");
+                } else if (!addProductDto.getActiveEndDate().after(customProduct.getGoLiveDate())) {
+                    throw new IllegalArgumentException("ACTIVE END DATE CANNOT BE BEFORE OR EQUAL OF GO LIVE DATE");
+                } else if (addProductDto.getExamDateFrom() != null) {
+
+                    dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
+                    if (!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate())) {
+                        throw new IllegalArgumentException("EXAM DATE FROM MUST BE AFTER ACTIVE END DATE");
+                    }
+                } else {
+                    if (!customProduct.getExamDateFrom().after(addProductDto.getActiveEndDate())) {
+                        throw new IllegalArgumentException("EXAM DATE FROM MUST BE AFTER ACTIVE END DATE");
+                    }
+                }
+
+                customProduct.getDefaultSku().setActiveEndDate(addProductDto.getActiveEndDate());
+            } else if (addProductDto.getGoLiveDate() != null) {
+
+                dateFormat.parse(dateFormat.format(addProductDto.getGoLiveDate()));
+
+                if (!addProductDto.getGoLiveDate().after(customProduct.getActiveStartDate())) {
+                    throw new IllegalArgumentException("GO LIVE DATE CANNOT BE BEFORE OR EQUAL OF ACTIVE START DATE");
+                } else if (!customProduct.getActiveEndDate().after(addProductDto.getGoLiveDate())) {
+                    throw new IllegalArgumentException("GO LIVE DATE CANNOT BE AFTER AND EQUAL OF EXPIRY DATE");
+                }
+                customProduct.setGoLiveDate(addProductDto.getGoLiveDate());
+            }
+
+            return true;
+        } catch (ParseException parseException) {
+            exceptionHandlingService.handleException(parseException);
+            throw new Exception("PARSE EXCEPTION CAUGHT WHILE VALIDATING ADD PRODUCT DTO: " + parseException.getMessage() + "\n");
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            throw new Exception("SOME EXCEPTION OCCURRED: " + exception.getMessage());
+        }
+    }
+
+    public Boolean validateAndSetExamDateFromAndExamDateToFields(AddProductDto addProductDto, CustomProduct customProduct) throws Exception {
+        try {
+            if (addProductDto.getExamDateFrom() != null && addProductDto.getExamDateTo() != null) {
+
+                // Validation on date for being wrong types. -> these needs to be changed or we have to add exception.
+                dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
+                dateFormat.parse(dateFormat.format(addProductDto.getExamDateTo()));
+
+                if (addProductDto.getExamDateTo().before(addProductDto.getExamDateFrom())) {
+                    throw new IllegalArgumentException(TENTATIVEEXAMDATETOAFTEREXAMDATEFROM);
+                }
+
+                if (addProductDto.getActiveEndDate() != null) {
+                    if (!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate()) || !addProductDto.getExamDateTo().after(addProductDto.getActiveEndDate())) {
+                        throw new IllegalArgumentException(TENTATIVEDATEAFTERACTIVEENDDATE);
+                    }
+
+                } else {
+                    if (!addProductDto.getExamDateFrom().after(customProduct.getActiveEndDate()) || !addProductDto.getExamDateTo().after(customProduct.getActiveEndDate())) {
+                        throw new IllegalArgumentException(TENTATIVEDATEAFTERACTIVEENDDATE);
+                    }
+                }
+                customProduct.setExamDateFrom(addProductDto.getExamDateFrom());
+                customProduct.setExamDateTo(addProductDto.getExamDateTo());
+
+            } else if (addProductDto.getExamDateFrom() != null) {
+
+                dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
+                if (customProduct.getExamDateTo().before(addProductDto.getExamDateFrom())) {
+                    throw new IllegalArgumentException(TENTATIVEEXAMDATETOAFTEREXAMDATEFROM);
+                }
+
+                if (addProductDto.getActiveEndDate() == null) {
+                    if (!addProductDto.getExamDateFrom().after(customProduct.getActiveEndDate())) {
+                        throw new IllegalArgumentException(TENTATIVEEXAMDATEAFTERACTIVEENDDATE);
+                    }
+                } else {
+                    if (!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate())) {
+                        throw new IllegalArgumentException(TENTATIVEEXAMDATEAFTERACTIVEENDDATE);
+                    }
+                }
+                customProduct.setExamDateFrom(addProductDto.getExamDateFrom());
+
+            } else if (addProductDto.getExamDateTo() != null) {
+
+                dateFormat.parse(dateFormat.format(addProductDto.getExamDateTo()));
+                if (addProductDto.getExamDateTo().before(customProduct.getExamDateFrom())) {
+                    throw new IllegalArgumentException(TENTATIVEEXAMDATETOAFTEREXAMDATEFROM);
+                }
+                if (addProductDto.getActiveEndDate() == null) {
+                    if (!addProductDto.getExamDateTo().after(customProduct.getActiveEndDate())) {
+                        throw new IllegalArgumentException(TENTATIVEEXAMDATEAFTERACTIVEENDDATE);
+                    }
+                } else {
+                    if (!addProductDto.getExamDateTo().after(addProductDto.getActiveEndDate())) {
+                        throw new IllegalArgumentException("TENTATIVE EXAMINATION DATA MUST BE AFTER ACTIVE END DATE");
+                    }
+                }
+                customProduct.setExamDateTo(addProductDto.getExamDateTo());
+            }
+            return true;
+
+        } catch (ParseException parseException) {
+            exceptionHandlingService.handleException(parseException);
+            throw new Exception("PARSE EXCEPTION CAUGHT WHILE VALIDATING ADD PRODUCT DTO: " + parseException.getMessage() + "\n");
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            throw new Exception("SOME EXCEPTION OCCURRED: " + exception.getMessage());
+        }
+    }
+
+    public boolean validateExamDateFromAndExamDateTo(AddProductDto addProductDto, CustomProduct customProduct) throws Exception {
+        try{
+            if (addProductDto.getExamDateFrom() != null && addProductDto.getExamDateTo() != null) {
+
+                // Validation on date for being wrong types. -> these needs to be changed or we have to add exception.
+                dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
+                dateFormat.parse(dateFormat.format(addProductDto.getExamDateTo()));
+
+                if (addProductDto.getExamDateTo().before(addProductDto.getExamDateFrom())) {
+                    throw new IllegalArgumentException(TENTATIVEEXAMDATETOAFTEREXAMDATEFROM);
+                }
+
+                if (addProductDto.getActiveEndDate() != null) {
+                    if (!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate()) || !addProductDto.getExamDateTo().after(addProductDto.getActiveEndDate())) {
+                        throw new IllegalArgumentException(TENTATIVEDATEAFTERACTIVEENDDATE);
+                    }
+
+                } else {
+                    if (!addProductDto.getExamDateFrom().after(customProduct.getActiveEndDate()) || !addProductDto.getExamDateTo().after(customProduct.getActiveEndDate())) {
+                        throw new IllegalArgumentException(TENTATIVEDATEAFTERACTIVEENDDATE);
+                    }
+                }
+                customProduct.setExamDateFrom(addProductDto.getExamDateFrom());
+                customProduct.setExamDateTo(addProductDto.getExamDateTo());
+
+            } else if (addProductDto.getExamDateFrom() != null) {
+
+                dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
+                if (customProduct.getExamDateTo().before(addProductDto.getExamDateFrom())) {
+                    throw new IllegalArgumentException(TENTATIVEEXAMDATETOAFTEREXAMDATEFROM);
+                }
+
+                if (addProductDto.getActiveEndDate() == null) {
+                    if (!addProductDto.getExamDateFrom().after(customProduct.getActiveEndDate())) {
+                        throw new IllegalArgumentException(TENTATIVEEXAMDATEAFTERACTIVEENDDATE);
+                    }
+                } else {
+                    if (!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate())) {
+                        throw new IllegalArgumentException(TENTATIVEEXAMDATEAFTERACTIVEENDDATE);
+                    }
+                }
+                customProduct.setExamDateFrom(addProductDto.getExamDateFrom());
+
+            } else if (addProductDto.getExamDateTo() != null) {
+
+                dateFormat.parse(dateFormat.format(addProductDto.getExamDateTo()));
+                if (addProductDto.getExamDateTo().before(customProduct.getExamDateFrom())) {
+                    throw new IllegalArgumentException(TENTATIVEEXAMDATETOAFTEREXAMDATEFROM);
+                }
+                if (addProductDto.getActiveEndDate() == null) {
+                    if (!addProductDto.getExamDateTo().after(customProduct.getActiveEndDate())) {
+                        throw new IllegalArgumentException(TENTATIVEEXAMDATEAFTERACTIVEENDDATE);
+                    }
+                } else {
+                    if (!addProductDto.getExamDateTo().after(addProductDto.getActiveEndDate())) {
+                        throw new IllegalArgumentException("TENTATIVE EXAMINATION DATA MUST BE AFTER ACTIVE END DATE");
+                    }
+                }
+                customProduct.setExamDateTo(addProductDto.getExamDateTo());
+
+            }
+            return true;
+        } catch (ParseException parseException) {
+            exceptionHandlingService.handleException(parseException);
+            throw new Exception("PARSE EXCEPTION CAUGHT WHILE VALIDATING ADD PRODUCT DTO: " + parseException.getMessage() + "\n");
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            throw new Exception("SOME EXCEPTION OCCURRED: " + exception.getMessage());
+        }
+    }
+
+    public boolean validateProductState(AddProductDto addProductDto, CustomProduct customProduct, String authHeader) throws Exception {
+        try{
+            if (addProductDto.getProductState() != null) {
+
+                String jwtToken = authHeader.substring(7);
+                Long userId = jwtTokenUtil.extractId(jwtToken);
+
+                Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
+                String role = roleService.findRoleName(roleId);
+
+                if(customProduct.getUserId().equals(userId)) {
+                    throw new IllegalArgumentException("SERVICE PROVIDER WHO CREATED THE PRODUCT CANNOT CHANGE ITS STATE");
+                }
+
+                CustomProductState customProductState = productStateService.getProductStateById(addProductDto.getProductState());
+                if (customProductState == null) {
+                    throw new IllegalArgumentException("NO PRODUCT STATE EXIST WITH THIS ID");
+                }
+
+                if(!customProduct.getProductState().getProductState().equals(Constant.PRODUCT_STATE_REJECTED) && !customProduct.getProductState().getProductState().equals(Constant.PRODUCT_STATE_APPROVED)) {
+                    throw new IllegalArgumentException("PRODUCT STATE ONLY MODIFIABLE TO APPROVED OR REJECTED STATE");
+                }
+
+                if(customProduct.getProductState().getProductState().equals(Constant.PRODUCT_STATE_NEW) || customProduct.getProductState().getProductState().equals(Constant.PRODUCT_STATE_MODIFIED)) {
+                    if (role.equals(Constant.SERVICE_PROVIDER)) {
+                        List<Privileges> privileges = privilegeService.getServiceProviderPrivilege(userId);
+                        for (Privileges privilege : privileges) {
+                            if ( (privilege.getPrivilege_name().equals(Constant.PRIVILEGE_APPROVE_PRODUCT) && customProduct.getProductState().getProductState().equals(Constant.PRODUCT_STATE_APPROVED)) || (privilege.getPrivilege_name().equals(Constant.PRIVILEGE_REJECT_PRODUCT) && customProduct.getProductState().getProductState().equals(Constant.PRODUCT_STATE_REJECTED))) {
+                                customProduct.setProductState(customProductState);
+                                break;
+                            }
+                        }
+                    }else if(role.equals(Constant.ADMIN) || role.equals(Constant.SUPER_ADMIN)) {
+                        customProduct.setProductState(customProductState);
+                    }
+                }else{
+                    throw new IllegalArgumentException("PRODUCT STATE IS NOT MODIFIABLE");
+                }
+
+                customProduct.setProductState(customProductState);
+            }
+            return true;
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            throw new Exception("SOME EXCEPTION OCCURRED: " + exception.getMessage());
+        }
+    }
+
+    public Boolean validateAndSetReserveCategoryFields(AddProductDto addProductDto, CustomProduct customProduct) {
+    try {
+        if (addProductDto.getReservedCategory() != null) {
+            boolean reserveCategoryFound = false;
+            for (ReserveCategoryDto reserveCategoryDto : reserveCategoryDtoList) {
+                if (reserveCategoryDto.getReserveCategoryId().equals(addProductDto.getReservedCategory())) {
+                    reserveCategoryFound = true;
+                    break;
+                }
+            }
+
+            if (reserveCategoryFound) {
+                if (addProductDto.getBornAfter() == null && addProductDto.getBornBefore() == null && addProductDto.getFee() == null && addProductDto.getPost() == null) {
+                    return ResponseService.generateErrorResponse("NOTHING TO UPDATE IN RESERVE CATEGORY DATA", HttpStatus.BAD_REQUEST);
+                }
+
+                CustomProductReserveCategoryBornBeforeAfterRef customProductReserveCategoryBornBeforeAfterRef = productReserveCategoryBornBeforeAfterRefService.getCustomProductReserveCategoryBornBeforeAfterRefByProductIdAndReserveCategoryId(customProduct.getId(), addProductDto.getReservedCategory());
+                CustomProductReserveCategoryFeePostRef customProductReserveCategoryFeePostRef = productReserveCategoryFeePostRefService.getCustomProductReserveCategoryFeePostRefByProductIdAndReserveCategoryId(customProduct.getId(), addProductDto.getReservedCategory());
+
+                if (addProductDto.getBornAfter() != null && addProductDto.getBornBefore() != null) {
+                    dateFormat.parse(dateFormat.format(addProductDto.getBornAfter()));
+                    dateFormat.parse(dateFormat.format(addProductDto.getBornAfter()));
+
+                    if (!addProductDto.getBornBefore().before(new Date()) || !addProductDto.getBornAfter().before(new Date())) {
+                        return ResponseService.generateErrorResponse("BORN BEFORE DATE AND BORN AFTER DATE MUST BE OF PAST", HttpStatus.BAD_REQUEST);
+                    } else if (!addProductDto.getBornAfter().before(addProductDto.getBornBefore())) {
+                        return ResponseService.generateErrorResponse("BORN AFTER DATE MUST BE PAST OF BORN BEFORE DATE", HttpStatus.BAD_REQUEST);
+                    }
+                    customProductReserveCategoryBornBeforeAfterRef.setBornBefore(addProductDto.getBornBefore());
+                    customProductReserveCategoryBornBeforeAfterRef.setBornAfter(addProductDto.getBornAfter());
+                } else if (addProductDto.getBornAfter() != null) {
+
+                    dateFormat.parse(dateFormat.format(addProductDto.getBornAfter()));
+                    if (!addProductDto.getBornAfter().before(new Date())) {
+                        return ResponseService.generateErrorResponse("BORN AFTER DATE MUST BE OF PAST", HttpStatus.BAD_REQUEST);
+                    } else if (!addProductDto.getBornAfter().before(customProductReserveCategoryBornBeforeAfterRef.getBornBefore())) {
+                        return ResponseService.generateErrorResponse("BORN AFTER DATE MUST BE PAST OF BORN BEFORE DATE", HttpStatus.BAD_REQUEST);
+                    }
+
+                    customProductReserveCategoryBornBeforeAfterRef.setBornAfter(addProductDto.getBornAfter());
+                } else if (addProductDto.getBornBefore() != null) {
+
+                    dateFormat.parse(dateFormat.format(addProductDto.getBornBefore()));
+                    if (!addProductDto.getBornBefore().before(new Date())) {
+                        return ResponseService.generateErrorResponse("BORN BEFORE DATE MUST BE OF PAST", HttpStatus.BAD_REQUEST);
+                    } else if (!customProductReserveCategoryBornBeforeAfterRef.getBornAfter().before(addProductDto.getBornBefore())) {
+                        return ResponseService.generateErrorResponse("BORN AFTER DATE MUST BE PAST OF BORN BEFORE DATE", HttpStatus.BAD_REQUEST);
+                    }
+
+                    customProductReserveCategoryBornBeforeAfterRef.setBornAfter(addProductDto.getBornAfter());
+                }
+                entityManager.persist(customProductReserveCategoryBornBeforeAfterRef);
+
+                if (addProductDto.getFee() != null) {
+                    if (addProductDto.getFee() <= 0) {
+                        return ResponseService.generateErrorResponse(FEELESSTHANOREQUALZERO, HttpStatus.BAD_REQUEST);
+                    }
+                    customProductReserveCategoryFeePostRef.setFee(addProductDto.getFee());
+                }
+                if (addProductDto.getPost() != null) {
+                    if (addProductDto.getPost() <= 0) {
+                        return ResponseService.generateErrorResponse(POSTLESSTHANORZERO, HttpStatus.BAD_REQUEST);
+                    }
+                    customProductReserveCategoryFeePostRef.setPost(addProductDto.getPost());
+                }
+                entityManager.persist(customProductReserveCategoryFeePostRef);
+                return ResponseService.generateSuccessResponse("RESERVED CATEGORY VALIDATED SUCCESSFULLY", "VALIDATED", HttpStatus.OK);
+            } else {
+                if (addProductDto.getFee() == null || addProductDto.getBornAfter() == null || addProductDto.getBornBefore() == null) {
+                    return ResponseService.generateErrorResponse("FEE, POST, BORN BEFORE AND BORN AFTER ARE MANDATORY FOR NEW RESERVE CATEGORY DATA", HttpStatus.BAD_REQUEST);
+                }
+                if (addProductDto.getFee() <= 0) {
+                    return ResponseService.generateErrorResponse(FEELESSTHANOREQUALZERO, HttpStatus.BAD_REQUEST);
+                }
+                if (addProductDto.getPost() == null) {
+                    addProductDto.setPost(Constant.DEFAULT_QUANTITY);
+                } else if (addProductDto.getPost() <= 0) {
+                    return ResponseService.generateErrorResponse(POSTLESSTHANORZERO, HttpStatus.BAD_REQUEST);
+                }
+
+                dateFormat.parse(dateFormat.format(addProductDto.getBornAfter()));
+                dateFormat.parse(dateFormat.format(addProductDto.getBornBefore()));
+                if (!addProductDto.getBornBefore().before(new Date()) || !addProductDto.getBornAfter().before(new Date())) {
+                    return ResponseService.generateErrorResponse("BORN BEFORE DATE AND BORN AFTER DATE MUST BE OF PAST", HttpStatus.BAD_REQUEST);
+                } else if (!addProductDto.getBornAfter().before(addProductDto.getBornBefore())) {
+                    return ResponseService.generateErrorResponse("BORN AFTER DATE MUST BE PAST OF BORN BEFORE DATE", HttpStatus.BAD_REQUEST);
+                }
+
+                productReserveCategoryBornBeforeAfterRefService.saveBornBeforeAndBornAfter(addProductDto.getBornBefore(), addProductDto.getBornAfter(), customProduct, reserveCategoryService.getReserveCategoryById(addProductDto.getReservedCategory()));
+                productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getFee(), addProductDto.getPost(), customProduct, reserveCategoryService.getReserveCategoryById(addProductDto.getReservedCategory()));
+
+                return ResponseService.generateSuccessResponse("RESERVED CATEGORY VALIDATED SUCCESSFULLY", "VALIDATED", HttpStatus.OK);
+            }
+        } else {
+            return ResponseService.generateSuccessResponse("RESERVE CATEGORY VALIDATED SUCCESSFULLY", "EMPTY RESERVE CATEGORY", HttpStatus.OK);
+        }
+    } catch (ParseException parseException) {
+        return ResponseService.generateErrorResponse("DATE PARSE EXCEPTION: " + parseException.getMessage(), HttpStatus.BAD_REQUEST);
+    } catch (Exception exception) {
+        return ResponseService.generateErrorResponse("SOME EXCEPTION OCCURRED: " + exception.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+}
 }
