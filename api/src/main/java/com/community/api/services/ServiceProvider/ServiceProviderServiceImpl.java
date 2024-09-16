@@ -70,6 +70,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     private ServiceProviderLanguageService serviceProviderLanguageService;
     @Autowired
     private  RateLimiterService rateLimiterService;
+    @Autowired
+    private SharedUtilityService sharedUtilityService;
 
     @Value("${twilio.phoneNumber}")
     private String twilioPhoneNumber;
@@ -346,15 +348,16 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             String userAgent = request.getHeader("User-Agent");
             String tokenKey = "authTokenServiceProvider_" + serviceProvider.getMobileNumber();
             String existingToken = (String) session.getAttribute(tokenKey);
+            Map<String,Object> serviceProviderResponse= sharedUtilityService.serviceProviderDetailsMap(serviceProvider);
             if(existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
-                Map<String, Object> responseBody = createAuthResponse(existingToken, serviceProvider).getBody();
+                Map<String, Object> responseBody = createAuthResponse(existingToken, serviceProviderResponse).getBody();
 
                 return ResponseEntity.ok(responseBody);
             } else {
                 String newToken = jwtUtil.generateToken(serviceProvider.getService_provider_id(), serviceProvider.getRole(), ipAddress, userAgent);
                 session.setAttribute(tokenKey, newToken);
 
-                Map<String, Object> responseBody = createAuthResponse(newToken, serviceProvider).getBody();
+                Map<String, Object> responseBody = createAuthResponse(newToken, serviceProviderResponse).getBody();
             return ResponseEntity.ok(responseBody);
 
         } }else {
@@ -519,16 +522,16 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 entityManager.merge(existingServiceProvider);
 
                 String existingToken = (String) session.getAttribute(tokenKey);
-
+                Map<String,Object> serviceProviderResponse= sharedUtilityService.serviceProviderDetailsMap(existingServiceProvider);
                 if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
-                    Map<String, Object> responseBody = createAuthResponse(existingToken, existingServiceProvider).getBody();
+                                        Map<String, Object> responseBody = createAuthResponse(existingToken, serviceProviderResponse).getBody();
 
                     return ResponseEntity.ok(responseBody);
                 } else {
                     String newToken = jwtUtil.generateToken(existingServiceProvider.getService_provider_id(), role, ipAddress, userAgent);
                     session.setAttribute(tokenKey, newToken);
 
-                    Map<String, Object> responseBody = createAuthResponse(newToken, existingServiceProvider).getBody();
+                    Map<String, Object> responseBody = createAuthResponse(newToken, serviceProviderResponse).getBody();
                     if(existingServiceProvider.getSignedUp()==0) {
                         existingServiceProvider.setSignedUp(1);
                         entityManager.merge(existingServiceProvider);
@@ -547,7 +550,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         }
     }
 
-    private ResponseEntity<Map<String, Object>> createAuthResponse(String token, ServiceProviderEntity serviceProviderEntity) {
+    private ResponseEntity<Map<String, Object>> createAuthResponse(String token, Map<String,Object> serviceProviderEntity) {
         Map<String, Object> responseBody = new HashMap<>();
 
         Map<String, Object> data = new HashMap<>();
