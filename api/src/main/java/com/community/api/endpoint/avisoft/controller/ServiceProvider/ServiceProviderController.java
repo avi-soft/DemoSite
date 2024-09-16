@@ -227,6 +227,7 @@ public class ServiceProviderController {
             {
                 return ResponseService.generateErrorResponse("Service provider does not found",HttpStatus.NOT_FOUND);
             }
+
             return ResponseService.generateSuccessResponse("Service Provider details retrieved successfully",serviceProviderEntity,HttpStatus.OK);
         }
         catch (Exception e) {

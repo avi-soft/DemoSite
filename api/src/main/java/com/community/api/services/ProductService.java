@@ -26,6 +26,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.sql.Timestamp;
 import java.util.HashMap;
@@ -615,6 +616,16 @@ public class ProductService {
     public boolean validateReserveCategory(AddProductDto addProductDto) throws Exception {
         try{
             Set<Long> reserveCategoryId = new HashSet<>();
+
+            Date currentDate = new Date(); // Current date for comparison
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(currentDate);
+
+            calendar.add(Calendar.YEAR, -105);
+            Date minBornAfterDate = calendar.getTime();
+            calendar.add(Calendar.YEAR, 100);
+            Date maxBornBeforeDate = calendar.getTime();
+
             for(int reserveCategoryIndex=0; reserveCategoryIndex<addProductDto.getReservedCategory().size(); reserveCategoryIndex++){
                 if(addProductDto.getReservedCategory().get(reserveCategoryIndex).getReserveCategory() == null ||  addProductDto.getReservedCategory().get(reserveCategoryIndex).getReserveCategory() <= 0){
                     throw new IllegalArgumentException("RESERVE CATEGORY ID CANNOT BE NULL OR <= 0");
@@ -648,6 +659,14 @@ public class ProductService {
                     throw new IllegalArgumentException("BORN BEFORE DATE AND BORN AFTER DATE MUST BE OF PAST");
                 } else if (!addProductDto.getReservedCategory().get(reserveCategoryIndex).getBornAfter().before(addProductDto.getReservedCategory().get(reserveCategoryIndex).getBornBefore())) {
                     throw new IllegalArgumentException("BORN AFTER DATE MUST BE PAST OF BORN BEFORE DATE");
+                }
+
+                // Ensure dates are within the allowed range
+                if (addProductDto.getReservedCategory().get(reserveCategoryIndex).getBornAfter().before(minBornAfterDate)) {
+                    throw new IllegalArgumentException("BORN AFTER DATE CANNOT BE MORE THAN 105 YEARS IN THE PAST");
+                }
+                if (addProductDto.getReservedCategory().get(reserveCategoryIndex).getBornBefore().after(maxBornBeforeDate)) {
+                    throw new IllegalArgumentException("BORN BEFORE DATE MUST BE AT LEAST 5 YEARS IN THE PAST");
                 }
             }
 

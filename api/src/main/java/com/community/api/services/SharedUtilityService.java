@@ -2,6 +2,7 @@ package com.community.api.services;
 
 import com.community.api.component.Constant;
 import com.community.api.endpoint.customer.AddressDTO;
+import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.CustomProduct;
 import com.community.api.entity.CustomerAddressDTO;
@@ -179,6 +180,53 @@ public class SharedUtilityService {
             return ValidationResult.SUCCESS;
 
         }
+
+    public Map<String,Object> serviceProviderDetailsMap(ServiceProviderEntity serviceProvider)
+    {
+        Map<String,Object>serviceProviderDetails=new HashMap<>();
+        serviceProviderDetails.put("id", serviceProvider.getService_provider_id());
+        serviceProviderDetails.put("user_name", serviceProvider.getUser_name());
+        serviceProviderDetails.put("first_name", serviceProvider.getFirst_name());
+        serviceProviderDetails.put("last_name", serviceProvider.getLast_name());
+        serviceProviderDetails.put("country_code", serviceProvider.getCountry_code());
+        serviceProviderDetails.put("father_name", serviceProvider.getFather_name());
+        serviceProviderDetails.put("date_of_birth", serviceProvider.getDate_of_birth());
+        serviceProviderDetails.put("aadhaar_number", serviceProvider.getAadhaar_number());
+        serviceProviderDetails.put("pan_number", serviceProvider.getPan_number());
+        serviceProviderDetails.put("mobileNumber", serviceProvider.getMobileNumber());
+        serviceProviderDetails.put("otp", serviceProvider.getOtp());
+        serviceProviderDetails.put("secondary_mobile_number", serviceProvider.getSecondary_mobile_number());
+        serviceProviderDetails.put("role", serviceProvider.getRole());
+        serviceProviderDetails.put("whatsapp_number", serviceProvider.getWhatsapp_number());
+        serviceProviderDetails.put("primary_email", serviceProvider.getPrimary_email());
+        serviceProviderDetails.put("secondary_email", serviceProvider.getSecondary_email());
+        serviceProviderDetails.put("password", serviceProvider.getPassword());
+        serviceProviderDetails.put("is_running_business_unit", serviceProvider.getIs_running_business_unit());
+        serviceProviderDetails.put("business_name", serviceProvider.getBusiness_name());
+        serviceProviderDetails.put("business_location", serviceProvider.getBusiness_location());
+        serviceProviderDetails.put("business_email", serviceProvider.getBusiness_email());
+        serviceProviderDetails.put("number_of_employees", serviceProvider.getNumber_of_employees());
+        serviceProviderDetails.put("has_technical_knowledge", serviceProvider.getHas_technical_knowledge());
+        serviceProviderDetails.put("work_experience_in_months", serviceProvider.getWork_experience_in_months());
+        serviceProviderDetails.put("highest_qualification", serviceProvider.getHighest_qualification());
+        serviceProviderDetails.put("name_of_institute", serviceProvider.getName_of_institute());
+        serviceProviderDetails.put("year_of_passing", serviceProvider.getYear_of_passing());
+        serviceProviderDetails.put("board_or_university", serviceProvider.getBoard_or_university());
+        serviceProviderDetails.put("total_marks", serviceProvider.getTotal_marks());
+        serviceProviderDetails.put("marks_obtained", serviceProvider.getMarks_obtained());
+        serviceProviderDetails.put("cgpa", serviceProvider.getCgpa());
+        serviceProviderDetails.put("latitude", serviceProvider.getLatitude());
+        serviceProviderDetails.put("longitude", serviceProvider.getLongitude());
+        serviceProviderDetails.put("rank", serviceProvider.getRank());
+        serviceProviderDetails.put("signedUp", serviceProvider.getSignedUp());
+        serviceProviderDetails.put("skills", serviceProvider.getSkills());
+        serviceProviderDetails.put("infra", serviceProvider.getInfra());
+        serviceProviderDetails.put("languages", serviceProvider.getLanguages());
+        serviceProviderDetails.put("privileges", serviceProvider.getPrivileges());
+        serviceProviderDetails.put("spAddresses", serviceProvider.getSpAddresses());
+        return serviceProviderDetails;
+    }
+
 
 
 }
