@@ -4,6 +4,7 @@ package com.community.api.endpoint.serviceProvider;
 import com.community.api.entity.*;
 import com.community.api.utils.Document;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
@@ -151,9 +152,15 @@ public class ServiceProviderEntity  {
             inverseJoinColumns = @JoinColumn(name = "language_id")) // Foreign key for Skill
     private List<ServiceProviderLanguage> languages;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "service_provider", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
     private List<ServiceProviderTest> serviceProviderTests;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "serviceProvider", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ResizedImage> resizedImages;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "serviceProvider", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
+    private List<Document> documents;
 }
