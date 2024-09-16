@@ -1,12 +1,14 @@
 package com.community.api.services;
 
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
+import com.community.api.entity.*;
 import com.community.api.entity.Image;
-import com.community.api.entity.ServiceProviderTest;
-import com.community.api.entity.SignatureImage;
-import com.community.api.entity.TypingText;
+import com.community.api.services.exception.CustomerDoesNotExistsException;
 import com.community.api.services.exception.EntityDoesNotExistsException;
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,10 +17,14 @@ import javax.imageio.ImageIO;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import java.awt.*;
+import java.util.Arrays;
+import java.util.List;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.Random;
 
 @Service
@@ -26,6 +32,8 @@ public class ServiceProviderTestService {
 
     @Autowired
     private EntityManager entityManager;
+    @Autowired
+    private DocumentStorageService documentStorageService;
     private static final long MAX_IMAGE_SIZE_MB = 2L * 1024 * 1024;   //(2MB)
 
     public ServiceProviderTestService(EntityManager entityManager) {
@@ -40,49 +48,231 @@ public class ServiceProviderTestService {
             throw new EntityDoesNotExistsException("Service Provider not found");
         }
         Image randomImage = getRandomImage();
+        if(randomImage==null )
+        {
+            throw new IllegalArgumentException("There is no any random image present. Add a image to be selected randomly.");
+        }
         String randomText= getRandomTypingText();
-        SignatureImage randomSignatureImage = getRandomSignatureImage();
+        if(randomText==null)
+        {
+            throw new IllegalArgumentException("There is no any random typing text present. Add a typing text to be selected randomly.");
+        }
 
         ServiceProviderTest test = new ServiceProviderTest();
         test.setService_provider(serviceProvider);
         test.setDownloaded_image(randomImage);
         test.setTyping_test_text(randomText);
-        test.setDownloaded_signature_image(randomSignatureImage);
         entityManager.persist(test);
+        serviceProvider.getServiceProviderTests().add(test);
+        entityManager.merge(serviceProvider);
         return test;
     }
 
     @Transactional
-    public ServiceProviderTest uploadResizedImage(Long testId, MultipartFile resizedFile) throws Exception {
-        ServiceProviderTest test = entityManager.find(ServiceProviderTest.class, testId);
-        if (test == null) {
-            throw new EntityNotFoundException();
+    public ServiceProviderTest uploadResizedImage(Long serviceProviderId, Long testId, MultipartFile resizedFile) throws Exception {
+        // Retrieve the service provider entity
+        ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
+        if (serviceProvider == null) {
+            throw new EntityDoesNotExistsException("Service Provider not found");
         }
 
-        // Validate the image size
+        // Find the specific test for the service provider
+        ServiceProviderTest test = null;
+        List<ServiceProviderTest> serviceProviderTestList = serviceProvider.getServiceProviderTests();
+        for (ServiceProviderTest serviceProviderTest : serviceProviderTestList) {
+            if (testId.equals(serviceProviderTest.getTest_id())) {
+                test = serviceProviderTest;
+                break;
+            }
+        }
+        if (test == null) {
+            throw new EntityNotFoundException("Test not found with id: " + testId);
+        }
         if (resizedFile.getSize() > MAX_IMAGE_SIZE_MB) {
             test.setIs_image_test_passed(false);
             entityManager.merge(test);
             throw new IllegalArgumentException("Image size exceeds 2 MB");
         }
-        byte[] resizedImageData;
-        try (InputStream inputStream = resizedFile.getInputStream()) {
-            resizedImageData = inputStream.readAllBytes();
-        }
-        test.setResized_image_data(resizedImageData);
-        entityManager.merge(test);
-        // Validate the resized image
-        boolean isImageValid = validateResizedImage(test);
-        if (isImageValid) {
-            test.setIs_image_test_passed(true); // Set the image test to false if validation fails
-        }
-        else {
-            test.setIs_image_test_passed(false);
-            throw new Exception();
+
+        // Validate the image size using saveDocuments method logic
+        ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(resizedFile, "RESIZED_IMAGES", serviceProviderId, "SERVICE_PROVIDER");
+        Map<String, Object> responseBody = savedResponse.getBody();
+
+        if (savedResponse.getStatusCode() != HttpStatus.OK) {
+            throw new Exception("Error uploading resized image: " + responseBody.get("message"));
         }
 
-        // Persist the changes
+        // If successful, update the ServiceProviderTest with the image details
+        String fileName = resizedFile.getOriginalFilename();
+        ResizedImage resizedImage = test.getResized_image();
+        if (resizedImage == null) {
+            resizedImage = new ResizedImage();
+            resizedImage = entityManager.merge(resizedImage); // Persist the new Image entity
+            test.setResized_image(resizedImage);
+        }
+
+        String basePath = "api/avisoftdocument/service_provider/" + serviceProviderId + "/Resized Images";
+
+        // Ensure the directory exists, and create it if it doesn't
+        File baseDir = new File(basePath);
+        if (!baseDir.exists()) {
+            baseDir.mkdirs(); // Create the directory structure if it doesn't exist
+        }
+
+        // Full file path for the signature image
+        String fullFilePath = basePath + File.separator + fileName;
+
+        // Set file metadata in the ResizedImage object
+        resizedImage.setFile_name(fileName);
+        resizedImage.setFile_type(resizedFile.getContentType());
+        resizedImage.setFile_path(fullFilePath);
+        resizedImage.setImage_data(resizedFile.getBytes());
+        resizedImage.setServiceProvider(serviceProvider);
+
+        try {
+            File destFile = new File(fullFilePath);
+            FileUtils.writeByteArrayToFile(destFile, resizedFile.getBytes());
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Failed to save the file", e);
+        }
+
+        // Set the image data and validate the resized image
+        test.setResized_image_data(resizedFile.getBytes());
+        entityManager.merge(test);
+        boolean isImageValid = validateResizedImage(test);
+        if (isImageValid) {
+            test.setIs_image_test_passed(true);
+        } else {
+            test.setIs_image_test_passed(false);
+            throw new IllegalArgumentException("Uploaded image is different from expected image");
+        }
         return test;
+    }
+
+    @Transactional
+    public ServiceProviderTest submitTypedText(Long serviceProviderId,Long testId, String typedText) throws Exception {
+        ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
+        if(serviceProvider==null)
+        {
+            throw new EntityDoesNotExistsException("Service Provider not found");
+        }
+        ServiceProviderTest test =null;
+        List<ServiceProviderTest> serviceProviderTestList = serviceProvider.getServiceProviderTests();
+        for(ServiceProviderTest serviceProviderTest: serviceProviderTestList)
+        {
+            if(testId==serviceProviderTest.getTest_id())
+            {
+                test=serviceProviderTest;
+                break;
+            }
+        }
+        if (test == null) {
+            throw new EntityNotFoundException();
+        }
+
+        boolean isPassed = validateTypedText(test.getTyping_test_text(), typedText);
+        test.setSubmitted_text(typedText);
+        if(isPassed==true) {
+            test.setIs_typing_test_passed(true);
+        }
+        else
+        {
+            test.setIs_typing_test_passed(false);
+            throw new IllegalArgumentException("Typed text mismatch");
+        }
+        // Persist the changes
+        return entityManager.merge(test);
+    }
+
+    @Transactional
+    public ServiceProviderTest uploadSignatureImage(Long serviceProviderId, Long testId, MultipartFile signatureFile) throws Exception {
+        // Retrieve the service provider entity
+        ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
+        if (serviceProvider == null) {
+            throw new EntityDoesNotExistsException("Service Provider not found");
+        }
+
+        // Find the specific test for the service provider
+        ServiceProviderTest test = null;
+        List<ServiceProviderTest> serviceProviderTestList = serviceProvider.getServiceProviderTests();
+        for (ServiceProviderTest serviceProviderTest : serviceProviderTestList) {
+            if (testId.equals(serviceProviderTest.getTest_id())) {
+                test = serviceProviderTest;
+                break;
+            }
+        }
+        if (test == null) {
+            throw new EntityNotFoundException("Service Provider Test not found");
+        }
+
+        if (signatureFile.getSize() > MAX_IMAGE_SIZE_MB) {
+           throw new IllegalArgumentException("Signature image size exceeds 2 MB");
+        }
+
+        // Check the MIME type of the file
+        if(!documentStorageService.isValidFileType(signatureFile))
+        {
+            throw new IllegalArgumentException("Invalid file type. Only images are allowed.");
+        }
+        // Use the saveDocuments method to validate and store the signature image
+        ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(signatureFile, "Signature Image", serviceProviderId, "SERVICE_PROVIDER");
+        Map<String, Object> responseBody = savedResponse.getBody();
+
+        if (savedResponse.getStatusCode() != HttpStatus.OK) {
+            throw new Exception("Error uploading signature image: " + responseBody.get("message"));
+        }
+
+        // If successful, update the ServiceProviderTest with the image details
+        String fileName = signatureFile.getOriginalFilename();
+        SignatureImage signatureImage = test.getSignature_image();
+        if (signatureImage == null) {
+            signatureImage = new SignatureImage();
+            signatureImage = entityManager.merge(signatureImage); // Persist the new Image entity
+            test.setSignature_image(signatureImage);
+        }
+
+        // Define the correct base path for storing the signature image in the api/avisoftdocument directory
+        String basePath = "api/avisoftdocument/service_provider/" + serviceProviderId + "/Signature Image";
+
+        // Ensure the directory exists, and create it if it doesn't
+        File baseDir = new File(basePath);
+        if (!baseDir.exists()) {
+            baseDir.mkdirs(); // Create the directory structure if it doesn't exist
+        }
+
+        // Full file path for the signature image
+        String fullFilePath = basePath + File.separator + fileName;
+
+        // Set the file details in the signatureImage entity
+        signatureImage.setFile_name(fileName);
+        signatureImage.setFile_type(signatureFile.getContentType());
+        signatureImage.setFile_path(fullFilePath);
+        signatureImage.setImage_data(signatureFile.getBytes());
+        signatureImage.setServiceProvider(serviceProvider);
+
+        // Save the file to the specified path
+        try {
+            File destFile = new File(fullFilePath);
+            FileUtils.writeByteArrayToFile(destFile, signatureFile.getBytes());
+        } catch (IOException e) {
+            throw new Exception("Failed to save the file", e);
+        }
+
+        // Merge and persist changes
+        entityManager.merge(test);
+
+        return test;
+    }
+
+    @Transactional
+    public List<ServiceProviderTest> getServiceProviderTestByServiceProviderId(Long serviceProviderId) throws   EntityDoesNotExistsException {
+        ServiceProviderEntity serviceProvider= entityManager.find(ServiceProviderEntity.class,serviceProviderId);
+        if(serviceProvider==null)
+        {
+            throw new EntityDoesNotExistsException("Service Provider not found");
+        }
+        List<ServiceProviderTest> serviceProviderTests = serviceProvider.getServiceProviderTests();
+        return serviceProviderTests;
     }
 
 private boolean validateResizedImage(ServiceProviderTest test) throws IOException {
@@ -126,34 +316,6 @@ private boolean validateResizedImage(ServiceProviderTest test) throws IOExceptio
                 .setMaxResults(1)
                 .getSingleResult();
         return typingText.getText();
-    }
-
-    private SignatureImage getRandomSignatureImage() {
-        // Fetch the count of available signature images in the database
-        long count = (long) entityManager.createQuery("SELECT COUNT(s) FROM SignatureImage s").getSingleResult();
-        if (count == 0) {
-            throw new EntityNotFoundException("No signature images available");
-        }
-        // Get a random index within the range of available signature images
-        int randomIndex = new Random().nextInt((int) count);
-        return (SignatureImage) entityManager.createQuery("SELECT s FROM SignatureImage s")
-                .setFirstResult(randomIndex)
-                .setMaxResults(1)
-                .getSingleResult();
-    }
-
-    @Transactional
-    public ServiceProviderTest submitTypedText(Long testId, String typedText) throws EntityNotFoundException{
-        ServiceProviderTest test = entityManager.find(ServiceProviderTest.class, testId);
-        if (test == null) {
-            throw new EntityNotFoundException();
-        }
-
-        boolean isPassed = validateTypedText(test.getTyping_test_text(), typedText);
-        test.setSubmitted_text(typedText);
-        test.setIs_typing_test_passed(isPassed);
-        // Persist the changes
-        return entityManager.merge(test);
     }
 
     private boolean validateTypedText(String originalText, String typedText) {
@@ -209,55 +371,6 @@ private boolean validateResizedImage(ServiceProviderTest test) throws IOExceptio
         int g2 = (rgb2 >> 8) & 0xff;
         int b2 = rgb2 & 0xff;
         return Math.abs(r1 - r2) + Math.abs(g1 - g2) + Math.abs(b1 - b2);
-    }
-
-    @Transactional
-    public ServiceProviderTest uploadSignatureImage(Long testId, MultipartFile signatureFile) throws Exception {
-        ServiceProviderTest test = entityManager.find(ServiceProviderTest.class, testId);
-        if (test == null) {
-            throw new EntityNotFoundException();
-        }
-
-        // Validate the image size
-        if (signatureFile.getSize() > MAX_IMAGE_SIZE_MB) {
-           test.setIs_signature_test_passed(false);
-            entityManager.merge(test);
-            throw new IllegalArgumentException("Signature image size exceeds 2 MB");
-        }
-        byte[] resizedSignatureData;
-        try (InputStream inputStream = signatureFile.getInputStream()) {
-            resizedSignatureData = inputStream.readAllBytes();
-        }
-        test.setResized_signature_image_data(resizedSignatureData);
-        entityManager.merge(test);
-        // Validate the resized image
-        boolean isImageValid = compareSignatures(signatureFile,testId);
-        if (isImageValid) {
-            test.setIs_signature_test_passed(true); // Set the image test to false if validation fails
-        }
-        else {
-            test.setIs_signature_test_passed(false);
-            throw new Exception();
-        }
-
-        // Persist the changes
-        return test;
-    }
-    public boolean compareSignatures(MultipartFile uploadedFile, Long serviceProviderId) throws IOException {
-        ServiceProviderTest test = entityManager.find(ServiceProviderTest.class,serviceProviderId);
-        if(test ==null)
-        {
-            throw new EntityNotFoundException("Service Provider not found");
-        }
-        byte[] uploadedImageData = uploadedFile.getBytes();
-        byte[] downloadedImageData = test.getDownloaded_signature_image().getSignature_image_data();
-
-        boolean isSignatureMatched = SignatureImageService.compareSignatures(uploadedImageData, downloadedImageData);
-
-        test.setIs_signature_test_passed(isSignatureMatched);
-        entityManager.persist(test);
-
-        return isSignatureMatched;
     }
 }
 

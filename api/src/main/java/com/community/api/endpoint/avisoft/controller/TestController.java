@@ -99,4 +99,11 @@ public class TestController {
 
         }
     }
+
+    @PostMapping("/add/typing-text")
+    public String addTypingText(@RequestParam String userId) {
+        documentStorageService.saveAllTypingTexts();
+        return "Typing texts inserted successfully";
+    }
+
 }

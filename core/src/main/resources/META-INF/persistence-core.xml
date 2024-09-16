@@ -86,6 +86,7 @@
         <class>com.community.api.entity.Image</class>
         <class>com.community.api.entity.SignatureImage</class>
         <class>com.community.api.entity.TypingText</class>
+        <class>com.community.api.entity.ResizedImage</class>
         <class>com.community.api.utils.ServiceProviderDocument</class>
         <exclude-unlisted-classes/>
     </persistence-unit>

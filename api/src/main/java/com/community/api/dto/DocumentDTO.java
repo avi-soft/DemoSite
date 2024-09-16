@@ -13,5 +13,4 @@ import org.springframework.web.multipart.MultipartFile;
 public class DocumentDTO {
     private MultipartFile file;
     private DocumentType documentType;
-
 }

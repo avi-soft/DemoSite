@@ -2,6 +2,7 @@ package com.community.api.services;
 import com.community.api.component.Constant;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.CustomCustomer;
+import com.community.api.entity.TypingText;
 import com.community.api.services.exception.ExceptionHandlingService;
 import com.community.api.utils.Document;
 import com.community.api.utils.DocumentType;
@@ -140,14 +141,17 @@ public class DocumentStorageService {
 
 
     public static boolean isValidFileType(MultipartFile file) {
-        String[] allowedFileTypes = {"application/pdf", "image/jpeg", "image/png"};
+        String[] allowedFileTypes = {"application/pdf", "image/jpeg", "image/png", "image/jpg"};
         String contentType = file.getContentType();
-
-        System.out.println("MIME type: " + contentType);
 
         boolean isContentTypeValid = Arrays.asList(allowedFileTypes).contains(contentType);
 
         String fileName = file.getOriginalFilename();
+
+        System.out.println(fileName + " filename");
+
+        System.out.println(contentType + " contentType");
+
         boolean isExtensionValid = fileName != null && (fileName.endsWith(".pdf") || fileName.endsWith(".jpeg") || fileName.endsWith(".jpg") || fileName.endsWith(".png"));
 
         return isContentTypeValid && isExtensionValid;
@@ -278,4 +282,23 @@ public class DocumentStorageService {
                 .orElse(null);
     }
 
+    @Transactional
+    public void saveAllTypingTexts() {
+        TypingText[] typingTexts = {
+                new TypingText(1L, "The sun sets over the horizon, painting the sky with vibrant hues of orange and pink. Birds fly home, and the world quietly transitions into the peaceful calm of evening."),
+                new TypingText(2L, "A gentle breeze rustles the leaves, carrying the sweet scent of blooming flowers through the air. The world feels alive and at peace."),
+                new TypingText(3L, "The mountain stood tall, its peak covered in snow, contrasting sharply with the clear blue sky above. Nature's beauty was on full display."),
+                new TypingText(4L, "Waves crash against the shore, their rhythmic motion soothing to the soul. The ocean stretches endlessly, its mysteries hidden beneath the surface."),
+                new TypingText(5L, "In the heart of the forest, sunlight filters through the canopy, casting dappled shadows on the ground. A sense of tranquility fills the air.")
+        };
+
+        for (TypingText text : typingTexts) {
+            saveTypingText(text);
+        }
+    }
+
+    @Transactional
+    public void saveTypingText(TypingText typingText) {
+        entityManager.persist(typingText);
+    }
 }

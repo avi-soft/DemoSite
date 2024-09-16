@@ -16,7 +16,9 @@ public class Image {
     private Long id;
 
     @Lob
+    @Basic(fetch = FetchType.EAGER)
     @Column(name = "image_data")
+    @JsonIgnore
     private byte[] image_data;
 
     @Column(name = "file_name")
@@ -25,5 +27,6 @@ public class Image {
     @Column(name = "file_type")
     private String file_type;
 
-
+    @Column(name="file_path")
+    private String file_path;
 }

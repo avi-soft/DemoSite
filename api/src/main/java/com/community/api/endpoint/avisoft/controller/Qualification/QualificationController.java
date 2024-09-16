@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
+import javax.transaction.Transactional;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,49 +41,28 @@ public class QualificationController {
     public ResponseEntity<?> getAllQualifications() {
         TypedQuery<Qualification> query = entityManager.createQuery(FIND_ALL_QUALIFICATIONS_QUERY, Qualification.class);
         List<Qualification> qualifications = query.getResultList();
+        if(qualifications.isEmpty())
+        {
+            return responseService.generateResponse(HttpStatus.OK,"Qualification List is Empty", qualifications);
+        }
         return responseService.generateResponse(HttpStatus.OK,"Qualification List Retrieved Successfully", qualifications);
     }
 
+
     @PostMapping("/add")
     public ResponseEntity<?> addQualification(@RequestBody Qualification qualification) throws Exception {
-       Qualification addedQualification = qualificationService.addQualification(qualification);
-       return responseService.generateResponse(HttpStatus.CREATED,"Qualification added successfully", addedQualification);
-    }
-
-    @ExceptionHandler( {RuntimeException.class,Exception.class
-    })
-    public ResponseEntity<?> handleException(Exception e) {
-        HttpStatus status;
-        String message;
-
-        if (e instanceof RuntimeException) {
-            status = HttpStatus.OK;
-            message = "Qualification list is empty";
-        }
-        else if(e instanceof Exception)
+        try
         {
-            status = HttpStatus.BAD_REQUEST;
-            message = "qualification name cannot be empty";
+            Qualification addedQualification = qualificationService.addQualification(qualification);
+            return responseService.generateResponse(HttpStatus.CREATED,"Qualification added successfully", addedQualification);
         }
-        else{
-            status = HttpStatus.BAD_REQUEST;
-            message = "Some error occurred";
+        catch (IllegalArgumentException e) {
+            return responseService.generateErrorResponse(e.getMessage(),HttpStatus.BAD_REQUEST);
         }
-        exceptionHandling.handleException(e);
-        return responseService.generateErrorResponse(message + ": " + e.getMessage(), status);
-    }
-
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String,Object>>handlesValidationErrors(MethodArgumentNotValidException exception) {
-        HttpStatus status;
-        List<String> errors = exception.getBindingResult().getFieldErrors()
-                .stream().map(FieldError::getDefaultMessage).collect(Collectors.toList());
-        Map<String,Object>responseData=new HashMap<>();
-        responseData.put("message",errors);
-        status= HttpStatus.BAD_REQUEST;
-        responseData.put("status_code",400);
-        responseData.put("status",status);
-        return ResponseEntity.status(status).body(responseData);
+        catch (Exception e)
+        {
+            return ResponseService.generateErrorResponse("Something went wrong",HttpStatus.BAD_REQUEST);
+        }
     }
 }
 
