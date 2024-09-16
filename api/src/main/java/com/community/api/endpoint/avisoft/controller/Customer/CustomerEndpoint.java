@@ -394,9 +394,9 @@ public class CustomerEndpoint {
                                 }
                             }
 
-                            existingDocument.setDocumentType(null);
-                            existingDocument.setFilePath(null);
-                            existingDocument.setName(null);
+                               existingDocument.setDocumentType(null);
+                               existingDocument.setFilePath(null);
+                               existingDocument.setName(null);
 
 
                             deletedDocumentMessages.add("File for document type '" + documentTypeObj.getDocument_type_name() + "' has been deleted.");
@@ -490,9 +490,9 @@ public class CustomerEndpoint {
                                 }
                             }
                             existingDocument.setDocumentType(null);
-                            existingDocument.setName(null);
-                            existingDocument.setFilePath(null);
-                            em.persist(existingDocument);
+                        existingDocument.setName(null);
+                        existingDocument.setFilePath(null);
+                        em.persist(existingDocument);
 
                             deletedDocumentMessages.add("File for document type '" + documentTypeObj.getDocument_type_name() + "' has been deleted.");
                         }
@@ -797,20 +797,20 @@ public class CustomerEndpoint {
     }
 
 
-    @GetMapping(value = "/forms/show-saved-forms")
+   @GetMapping(value = "/forms/show-saved-forms")
     public ResponseEntity<?> getSavedForms(HttpServletRequest request,@RequestParam long  customer_id) throws Exception{
-        try {
-            CustomCustomer customer=entityManager.find(CustomCustomer.class,customer_id);
-            if(customer==null)
-                ResponseService.generateErrorResponse("Customer with this id not found",HttpStatus.NOT_FOUND);
-            if(customer.getSavedForms().isEmpty())
-                ResponseService.generateErrorResponse("Saved form list is empty",HttpStatus.NOT_FOUND);
-            List<Map<String,Object>>listOfSavedProducts=new ArrayList<>();
-            for(Product product:customer.getSavedForms())
-            {
-                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product,null));
-            }
-            return ResponseService.generateSuccessResponse("Forms saved : ",listOfSavedProducts,HttpStatus.OK);
+       try {
+          CustomCustomer customer=entityManager.find(CustomCustomer.class,customer_id);
+          if(customer==null)
+              ResponseService.generateErrorResponse("Customer with this id not found",HttpStatus.NOT_FOUND);
+          if(customer.getSavedForms().isEmpty())
+              ResponseService.generateErrorResponse("Saved form list is empty",HttpStatus.NOT_FOUND);
+          List<Map<String,Object>>listOfSavedProducts=new ArrayList<>();
+          for(Product product:customer.getSavedForms())
+          {
+              listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product,null));
+          }
+          return ResponseService.generateSuccessResponse("Forms saved : ",listOfSavedProducts,HttpStatus.OK);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);

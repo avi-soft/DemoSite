@@ -4,9 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
 import javax.validation.constraints.*;
-import java.time.Year;
 
 @Data
 @NoArgsConstructor
@@ -22,7 +20,7 @@ public class UpdateQualificationDto
 
 //    @Min(value = 1900, message = "Year of passing should not be before 1900")
 //    @Max(value = 9999, message = "Year of passing should be a valid 4-digit year")
-    private Integer year_of_passing;
+    private Long year_of_passing;
 
     @Pattern(regexp = "^(?!\\s*$).+", message = "Board or University cannot be blank")
     @Pattern(regexp = "^[^\\d]*$", message = "Board or University cannot contain numeric values")
@@ -35,17 +33,17 @@ public class UpdateQualificationDto
     private String subject_stream;
 
     @Pattern(regexp = "^(?!\\s*$).+", message = "Grade or percentage value cannot be blank")
-    @Pattern(regexp = "\\d+\\.?\\d*|[A-F]|[a-f]", message = "Grade or percentage value must be either a number or a valid grade")
+    @Pattern(regexp = "^(100|[1-9]?[0-9](\\\\.\\\\d*)?)$|^[A-Za-z]+$", message = "Grade or percentage value must be either a number  (up to 100) or a valid grade")
     @Size(max = 10, message = "Grade or percentage value should not exceed 10 characters")
     private String grade_or_percentage_value;
 
     @Min(value = 1, message = "Total marks must be greater than zero")
-    private Integer total_marks;
+    private Long total_marks;
 
     @Min(value = 0, message = "Marks obtained cannot be negative")
-    private Integer marks_obtained;
+    private Long marks_obtained;
 
-    private Long examination_id;
+    private Long qualification_id;
 
     @AssertTrue(message = "Total marks cannot be less than marks obtained")
     private boolean isMarksTotalValid() {

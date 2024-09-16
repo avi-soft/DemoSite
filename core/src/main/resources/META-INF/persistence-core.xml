@@ -30,7 +30,7 @@
         <class>com.community.api.entity.Skill</class>
         <class>com.community.api.utils.Document</class>
         <class>com.community.api.utils.DocumentType</class>
-        <class>com.community.api.entity.Qualification</class>
+        <class>com.community.api.entity.QualificationDetails</class>
         <class>com.community.api.endpoint.serviceProvider.ServiceProviderEntity</class>
         <class>com.community.api.endpoint.serviceProvider.ServiceProviderStatus</class>
         <class>com.community.api.entity.CustomOtp</class>
@@ -69,11 +69,11 @@
         <class>com.community.api.entity.Skill</class>
         <class>com.community.api.utils.Document</class>
         <class>com.community.api.utils.DocumentType</class>
-        <class>com.community.api.entity.Qualification</class>
+        <class>com.community.api.entity.QualificationDetails</class>
         <class>com.community.api.endpoint.serviceProvider.ServiceProviderEntity</class>
         <class>com.community.api.endpoint.serviceProvider.ServiceProviderStatus</class>
         <class>com.community.api.entity.CustomOtp</class>
-        <class>com.community.api.entity.Examination</class>
+        <class>com.community.api.entity.Qualification</class>
         <class>com.community.api.entity.StateCode</class>
         <class>com.community.api.entity.ServiceProviderAddress</class>
         <class>com.community.api.entity.ServiceProviderAddressRef</class>
@@ -86,9 +86,8 @@
         <class>com.community.api.entity.Image</class>
         <class>com.community.api.entity.SignatureImage</class>
         <class>com.community.api.entity.TypingText</class>
+        <class>com.community.api.entity.ResizedImage</class>
         <class>com.community.api.utils.ServiceProviderDocument</class>
-        <class>com.community.api.entity.QualificationDetails</class>
-
         <exclude-unlisted-classes/>
     </persistence-unit>
 

@@ -29,6 +29,7 @@ public class EmailService {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(fromEmail);
         message.setTo(to);
+        // @Todo :- need to set subject dynamically
         message.setSubject("Your Application Form is About to Expire");
         message.setText(messageBody);
         mailSender.send(message);

@@ -20,10 +20,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.util.ArrayList;
@@ -270,6 +268,30 @@ public class CartEndPoint extends BaseEndpoint {
             return responseService.generateErrorResponse("Error deleting", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    @Transactional
+    @RequestMapping(value ="place-order/{customerId}",method = RequestMethod.POST)
+    public ResponseEntity<?>placeOrder(@PathVariable long customerId,@RequestParam long orderId) {
+        try {
+            Customer customer = customerService.readCustomerById(customerId);
+            if (customer == null)
+                ResponseService.generateErrorResponse("Customer not found", HttpStatus.NOT_FOUND);
+            Order order = orderService.findOrderById(orderId);
+            if (order == null)
+                ResponseService.generateErrorResponse("Cart items not found", HttpStatus.NOT_FOUND);
+            Order cart = orderService.findCartForCustomer(customer);
+            if (cart.getId() == orderId) {
+                OrderStatus orderStatus = OrderStatus.SUBMITTED;
+                cart.setStatus(orderStatus);
+                entityManager.merge(cart);
+                return ResponseService.generateSuccessResponse("Order Placed", cart.getId(), HttpStatus.OK);
+            }
+            return ResponseService.generateErrorResponse("Error placing order", HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseService.generateErrorResponse("Error placing order", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     private boolean isAnyServiceNull() {
         return customerService == null || orderService == null|| catalogService == null;
     }

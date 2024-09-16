@@ -60,7 +60,6 @@ public class JwtUtil {
         this.customerService = customerService;
     }
 
-/*
     @PostConstruct
     public void init() {
 
@@ -73,12 +72,11 @@ public class JwtUtil {
         }
 
     }
-*/
 
-    @PostConstruct
+   /* @PostConstruct
     public void init() {
         this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-    }
+    }*/
 
     public String generateToken(Long id, Integer role, String ipAddress, String userAgent) {
         try {

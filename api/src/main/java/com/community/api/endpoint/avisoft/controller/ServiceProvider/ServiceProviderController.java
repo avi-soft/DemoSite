@@ -2,10 +2,8 @@ package com.community.api.endpoint.avisoft.controller.ServiceProvider;
 
 import com.community.api.component.Constant;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
-import com.community.api.entity.*;
 import com.community.api.services.DistrictService;
 import com.community.api.services.ResponseService;
-import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.ServiceProviderAddress;
 import com.community.api.entity.ServiceProviderAddressRef;
 import com.community.api.entity.Skill;
@@ -13,7 +11,6 @@ import com.community.api.services.*;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.broadleafcommerce.profile.core.service.CustomerService;
-import org.ehcache.spi.service.ServiceProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -76,8 +73,8 @@ public class ServiceProviderController {
     @PatchMapping("save-service-provider")
     public ResponseEntity<?> updateServiceProvider(@RequestParam Long userId, @RequestBody Map<String,Object> serviceProviderDetails) throws Exception {
         try{
-            return serviceProviderService.updateServiceProvider(userId,serviceProviderDetails);
-        }catch (Exception e) {
+        return serviceProviderService.updateServiceProvider(userId,serviceProviderDetails);
+    }catch (Exception e) {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Some error updating: " + e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -87,13 +84,13 @@ public class ServiceProviderController {
     public ResponseEntity<?>deleteServiceProvider(@RequestParam Long userId)
     {
         try{
-            ServiceProviderEntity serviceProviderToBeDeleted=entityManager.find(ServiceProviderEntity.class,userId);
-            if(serviceProviderToBeDeleted==null)
-                return responseService.generateErrorResponse("No record found",HttpStatus.NOT_FOUND);
-            else
-                entityManager.remove(serviceProviderToBeDeleted);
-            return responseService.generateSuccessResponse("Service Provider Deleted",null,HttpStatus.OK);
-        }
+        ServiceProviderEntity serviceProviderToBeDeleted=entityManager.find(ServiceProviderEntity.class,userId);
+        if(serviceProviderToBeDeleted==null)
+            return responseService.generateErrorResponse("No record found",HttpStatus.NOT_FOUND);
+        else
+            entityManager.remove(serviceProviderToBeDeleted);
+        return responseService.generateSuccessResponse("Service Provider Deleted",null,HttpStatus.OK);
+    }
         catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error deleting: " + e.getMessage());
@@ -109,7 +106,7 @@ public class ServiceProviderController {
             }
             passwordDetails=sanitizerService.sanitizeInputMap(passwordDetails);
             String password = (String) passwordDetails.get("password");
-            // String newPassword = (String) passwordDetails.get("newPassword");
+           // String newPassword = (String) passwordDetails.get("newPassword");
             ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, userId);
             if (serviceProvider == null)
                 return responseService.generateErrorResponse("No records found", HttpStatus.NOT_FOUND);
@@ -122,20 +119,19 @@ public class ServiceProviderController {
                     return responseService.generateErrorResponse("Empty password entered", HttpStatus.BAD_REQUEST);
                 /*if (passwordEncoder.matches(password, serviceProvider.getPassword())) {
                     serviceProvider.setPassword(passwordEncoder.encode(newPassword));*/
-                if(!passwordEncoder.matches(password, serviceProvider.getPassword())) {
+                if(!passwordEncoder.matches(password,serviceProvider.getPassword())) {
                     serviceProvider.setPassword(passwordEncoder.encode(password));
                     entityManager.merge(serviceProvider);
                     return responseService.generateSuccessResponse("New Password Set",serviceProvider, HttpStatus.OK);
                 }
-                else
-                return responseService.generateErrorResponse("Old Password and new Password cannot be same",HttpStatus.BAD_REQUEST);
-            }/*else
+                    return responseService.generateErrorResponse("Old Password and new Password cannot be same",HttpStatus.BAD_REQUEST);
+                 }/*else
                     return new ResponseEntity<>("Password do not match", HttpStatus.BAD_REQUEST);*/
-        }
+            }
         catch (Exception e) {
-            exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Error changing/updating password: " + e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+                exceptionHandling.handleException(e);
+                return responseService.generateErrorResponse("Error changing/updating password: " + e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+            }
     }
     @GetMapping("get-service-provider")
     public ResponseEntity<?> getServiceProviderById(@RequestParam Long userId) throws Exception {
@@ -183,9 +179,9 @@ public class ServiceProviderController {
     public ResponseEntity<?> getAddressTypes()
     {
         try{
-            TypedQuery<ServiceProviderAddressRef> query = entityManager.createQuery(Constant.jpql, ServiceProviderAddressRef.class);
-            return responseService.generateSuccessResponse("List of addresses : ",query.getResultList(),HttpStatus.OK);
-        }catch (Exception e) {
+        TypedQuery<ServiceProviderAddressRef> query = entityManager.createQuery(Constant.jpql, ServiceProviderAddressRef.class);
+        return responseService.generateSuccessResponse("List of addresses : ",query.getResultList(),HttpStatus.OK);
+    }catch (Exception e) {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Some issue in fetching addressNames " + e.getMessage(),HttpStatus.BAD_REQUEST);
         }
@@ -220,6 +216,7 @@ public class ServiceProviderController {
         }
     }
 
+    @Transactional
     @GetMapping("/get-all-details/{serviceProviderId}")
     public ResponseEntity<?> getAllDetails(@PathVariable Long serviceProviderId)
     {
@@ -230,6 +227,7 @@ public class ServiceProviderController {
             {
                 return ResponseService.generateErrorResponse("Service provider does not found",HttpStatus.NOT_FOUND);
             }
+
             return ResponseService.generateSuccessResponse("Service Provider details retrieved successfully",serviceProviderEntity,HttpStatus.OK);
         }
         catch (Exception e) {
@@ -237,5 +235,4 @@ public class ServiceProviderController {
             return ResponseService.generateErrorResponse("Some issue in fetching service provider details " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
-
 }

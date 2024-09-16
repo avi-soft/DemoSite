@@ -228,7 +228,7 @@ public class AccountEndPoint {
                 responseService.generateErrorResponse(ApiConstants.ROLE_EMPTY, HttpStatus.BAD_REQUEST);
 
             }
-            return   responseService.generateErrorResponse("Role not specified", HttpStatus.BAD_REQUEST);
+         return   responseService.generateErrorResponse("Role not specified", HttpStatus.BAD_REQUEST);
 
         } catch (Exception e) {
             exceptionHandling.handleException(e);
@@ -388,7 +388,7 @@ public class AccountEndPoint {
 
                             String token = jwtUtil.generateToken(existingCustomer.getId(), role, ipAddress, userAgent);
                             session.setAttribute(tokenKey, token);
-                            OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(token, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
+                          OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(token, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
                             return ResponseEntity.ok(response);
                         }
 

@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.profile.core.domain.CustomerImpl;
 
 import javax.persistence.*;
@@ -48,7 +49,6 @@ public class CustomCustomer extends CustomerImpl {
     @Size(min = 12, max = 12)
     private String adharNumber;
 
-
     @Column(name = "category")
     private String category; //@TODO -make it int for using in cart
 
@@ -58,7 +58,6 @@ public class CustomCustomer extends CustomerImpl {
     @OneToOne(cascade = CascadeType.ALL)
     private Document domicile;
 
-
     @Column(name = "secondary_mobile_number")
     private String secondaryMobileNumber;
 
@@ -67,9 +66,7 @@ public class CustomCustomer extends CustomerImpl {
     @Column(name = "secondary_email")
     private String secondaryEmail;
 
-    @OneToMany(mappedBy = "custom_customer", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
-    private List<Document> documents;
-
+    @Nullable
     @ManyToMany
     @JoinTable(
             name = "customer_saved_forms", // The name of the join table
@@ -77,13 +74,10 @@ public class CustomCustomer extends CustomerImpl {
             inverseJoinColumns = @JoinColumn(name = "product_id")) // Foreign key for Skill
     private List<CustomProduct>savedForms;
 
-    @JsonIgnore
-    @Nullable
-    @OneToMany(mappedBy = "custom_customer", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<Qualification>qualificationList;
-
     @Nullable
     @OneToMany(mappedBy = "custom_customer", cascade = CascadeType.ALL, orphanRemoval = true)
     List<QualificationDetails> qualificationDetailsList;
 
+    @OneToMany(mappedBy = "custom_customer", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
+    private List<Document> documents;
 }

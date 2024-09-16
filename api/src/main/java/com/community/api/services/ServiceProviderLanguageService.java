@@ -27,9 +27,18 @@ public class ServiceProviderLanguageService {
     private ExceptionHandlingImplement exceptionHandling;
     @Autowired
     private ResponseService responseService;
+    @Autowired
+    private SharedUtilityService sharedUtilityService;
+    @Autowired
+    private SanitizerService sanitizerService;
     @Transactional
     public ResponseEntity<?> addLanguage(@RequestBody Map<String,Object> language) {
         try{
+            if(!sharedUtilityService.validateInputMap(language).equals(SharedUtilityService.ValidationResult.SUCCESS))
+            {
+                return ResponseService.generateErrorResponse("Invalid Request Body",HttpStatus.UNPROCESSABLE_ENTITY);
+            }
+            language=sanitizerService.sanitizeInputMap(language);
             String languageName=(String)language.get("language_name");
             if(languageName==null||languageName.isEmpty())
                 return responseService.generateErrorResponse("Error saving language : Language Name required", HttpStatus.BAD_REQUEST);

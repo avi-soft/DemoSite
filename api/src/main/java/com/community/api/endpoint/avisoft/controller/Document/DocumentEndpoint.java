@@ -45,7 +45,7 @@ public class DocumentEndpoint {
     private FileService fileService;
 
     @Autowired
-    private DocumentStorageService documentStorageService;
+   private DocumentStorageService documentStorageService;
 
     @Autowired
     private RoleService roleService;

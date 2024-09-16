@@ -21,7 +21,7 @@ public class QualificationDetails {
     @Column(name = "institution_name", nullable = false)
     private String institution_name;
 
-    //    @Min(value = 1900, message = "Year of passing should not be before 1900")
+//    @Min(value = 1900, message = "Year of passing should not be before 1900")
 //    @Max(value = 9999, message = "Year of passing should be a valid 4-digit year")
     @Column(name = "year_of_passing", nullable = false)
     private Long year_of_passing;
@@ -38,9 +38,8 @@ public class QualificationDetails {
     @Column(name = "subject_stream", nullable = false)
     private String subject_stream;
 
-
     @NotBlank(message = "Grade or percentage value is required")
-    @Pattern(regexp = "\\d+\\.?\\d*|[A-Z]|[a-z]", message = "Grade or percentage value must be either a number or a valid grade")
+    @Pattern(regexp = "^(100|[1-9]?[0-9](\\\\.\\\\d*)?)$|^[A-Za-z]+$", message = "Grade or percentage value must be either a number  (up to 100) or a valid grade")
     @Size(max = 10, message = "Grade or percentage value should not exceed 10 characters")
     @Column(name = "grade_or_percentage_value", nullable = false)
     private String grade_or_percentage_value;
@@ -61,7 +60,7 @@ public class QualificationDetails {
         return total_marks >= marks_obtained;
     }
 
-    //    @AssertTrue(message = "Year of passing must be less than or equal to the current year")
+//    @AssertTrue(message = "Year of passing must be less than or equal to the current year")
 //    private boolean isYearOfPassingValid() {
 //        return year_of_passing <= Year.now().getValue();
 //    }

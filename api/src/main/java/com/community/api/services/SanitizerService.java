@@ -61,4 +61,4 @@ public class SanitizerService {
                 XSS_PATTERN.matcher(value).matches() ||
                 COMMAND_INJECTION_PATTERN.matcher(value).matches();
     }
-}
+    }
