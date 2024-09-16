@@ -194,7 +194,6 @@ public class SharedUtilityService {
         serviceProviderDetails.put("aadhaar_number", serviceProvider.getAadhaar_number());
         serviceProviderDetails.put("pan_number", serviceProvider.getPan_number());
         serviceProviderDetails.put("mobileNumber", serviceProvider.getMobileNumber());
-        serviceProviderDetails.put("otp", serviceProvider.getOtp());
         serviceProviderDetails.put("secondary_mobile_number", serviceProvider.getSecondary_mobile_number());
         serviceProviderDetails.put("role", serviceProvider.getRole());
         serviceProviderDetails.put("whatsapp_number", serviceProvider.getWhatsapp_number());
@@ -219,11 +218,11 @@ public class SharedUtilityService {
         serviceProviderDetails.put("longitude", serviceProvider.getLongitude());
         serviceProviderDetails.put("rank", serviceProvider.getRank());
         serviceProviderDetails.put("signedUp", serviceProvider.getSignedUp());
-        serviceProviderDetails.put("skills", serviceProvider.getSkills());
-        serviceProviderDetails.put("infra", serviceProvider.getInfra());
-        serviceProviderDetails.put("languages", serviceProvider.getLanguages());
-        serviceProviderDetails.put("privileges", serviceProvider.getPrivileges());
-        serviceProviderDetails.put("spAddresses", serviceProvider.getSpAddresses());
+       /* serviceProviderDetails.put("skills", serviceProvider.getSkills());*/
+       /* serviceProviderDetails.put("infra", serviceProvider.getInfra());
+        serviceProviderDetails.put("languages", serviceProvider.getLanguages());*/
+/*        serviceProviderDetails.put("privileges", serviceProvider.getPrivileges());
+        serviceProviderDetails.put("spAddresses", serviceProvider.getSpAddresses());*/
         return serviceProviderDetails;
     }
 
