@@ -38,9 +38,20 @@ public class QualificationService {
             if(qualification.getQualification_description()==null || qualification.getQualification_description().isEmpty()) {
                 throw new IllegalArgumentException("Qualification description cannot be empty");
             }
+            if (!qualification.getQualification_name().matches("^[a-zA-Z ]+$")) {
+                throw new IllegalArgumentException("Qualification name cannot contain numeric values or special characters");
+            }
+            if (!(qualification.getQualification_description() instanceof String)) {
+                throw new IllegalArgumentException("Qualification description must be a string");
+            }
+            String description = qualification.getQualification_description();
+            if (description.isEmpty()) {
+                throw new IllegalArgumentException("Qualification description cannot be empty");
+            }
+
             List<Qualification> qualifications = qualificationService.getAllQualifications();
             for (Qualification existingQualification : qualifications) {
-                if (existingQualification.getQualification_name().equals(qualification.getQualification_name())) {
+                if (existingQualification.getQualification_name().equalsIgnoreCase(qualification.getQualification_name())) {
                     throw new IllegalArgumentException("Qualification with the same name already exists");
                 }
             }
