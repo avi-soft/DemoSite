@@ -10,11 +10,7 @@ import com.community.api.dto.CustomProductWrapper;
 import com.community.api.entity.CustomApplicationScope;
 import com.community.api.entity.CustomJobGroup;
 import com.community.api.entity.CustomProduct;
-import com.community.api.entity.CustomProductReserveCategoryBornBeforeAfterRef;
-import com.community.api.entity.CustomProductReserveCategoryFeePostRef;
 import com.community.api.entity.CustomProductState;
-import com.community.api.entity.CustomReserveCategory;
-import com.community.api.entity.Privileges;
 
 import com.community.api.entity.Role;
 import com.community.api.services.ResponseService;
@@ -61,10 +57,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static com.community.api.component.Constant.*;
 
