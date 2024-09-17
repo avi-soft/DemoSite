@@ -74,7 +74,6 @@ public class ProductController extends CatalogEndpoint {
 
     public static final String TENTATIVEDATEAFTERACTIVEENDDATE = "BOTH TENTATIVE EXAMINATION DATA MUST BE AFTER ACTIVE END DATE";
     public static final String TENTATIVEEXAMDATETOAFTEREXAMDATEFROM = "TENTATIVE EXAM DATE TO MUST BE EITHER EQUAL OR BEFORE OF TENTATIVE EXAM DATE FROM";
-    public static final String FEELESSTHANOREQUALZERO = "FEE CANNOT BE LESS THAN OR EQUAL TO ZERO";
     public static final String TENTATIVEEXAMDATEAFTERACTIVEENDDATE = "TENTATIVE EXAMINATION DATE MUST BE AFTER ACTIVE END DATE";
     public static final String POSTLESSTHANORZERO = "NUMBER OF POST CANNOT BE LESS THAN OR EQUAL TO ZERO";
     public static final String PRODUCTNOTFOUND = "PRODUCT NOT FOUND";
@@ -85,7 +84,6 @@ public class ProductController extends CatalogEndpoint {
     private final JwtUtil jwtTokenUtil;
     private final ProductService productService;
     private final RoleService roleService;
-    private final PrivilegeService privilegeService;
     private final JobGroupService jobGroupService;
     private final ProductStateService productStateService;
     private final ApplicationScopeService applicationScopeService;
@@ -95,13 +93,12 @@ public class ProductController extends CatalogEndpoint {
     private final ReserveCategoryDtoService reserveCategoryDtoService;
 
     @Autowired
-    public ProductController(ExceptionHandlingService exceptionHandlingService, EntityManager entityManager, JwtUtil jwtTokenUtil, ProductService productService, RoleService roleService, PrivilegeService privilegeService, JobGroupService jobGroupService, ProductStateService productStateService, ApplicationScopeService applicationScopeService, ProductReserveCategoryBornBeforeAfterRefService productReserveCategoryBornBeforeAfterRefService, ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService, ReserveCategoryService reserveCategoryService, ReserveCategoryDtoService reserveCategoryDtoService) {
+    public ProductController(ExceptionHandlingService exceptionHandlingService, EntityManager entityManager, JwtUtil jwtTokenUtil, ProductService productService, RoleService roleService, JobGroupService jobGroupService, ProductStateService productStateService, ApplicationScopeService applicationScopeService, ProductReserveCategoryBornBeforeAfterRefService productReserveCategoryBornBeforeAfterRefService, ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService, ReserveCategoryService reserveCategoryService, ReserveCategoryDtoService reserveCategoryDtoService) {
         this.exceptionHandlingService = exceptionHandlingService;
         this.entityManager = entityManager;
         this.jwtTokenUtil = jwtTokenUtil;
         this.productService = productService;
         this.roleService = roleService;
-        this.privilegeService = privilegeService;
         this.jobGroupService = jobGroupService;
         this.productStateService = productStateService;
         this.applicationScopeService = applicationScopeService;
