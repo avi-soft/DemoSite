@@ -32,11 +32,11 @@ public class QualificationService {
     public Qualification addQualification(@RequestBody Qualification qualification) {
             Qualification qualificationToBeSaved =new Qualification();
             long id = findCount() + 1;
-            if (qualification.getQualification_name() == null || qualification.getQualification_name().isEmpty()) {
-                throw new IllegalArgumentException("Qualification name cannot be empty");
+            if (qualification.getQualification_name() == null || qualification.getQualification_name().trim().isEmpty()) {
+                throw new IllegalArgumentException("Qualification name cannot be empty or consist only of whitespace");
             }
-            if(qualification.getQualification_description()==null || qualification.getQualification_description().isEmpty()) {
-                throw new IllegalArgumentException("Qualification description cannot be empty");
+            if (qualification.getQualification_description() == null || qualification.getQualification_description().trim().isEmpty()) {
+            throw new IllegalArgumentException("Qualification description cannot be empty or consist only of whitespace");
             }
             if (!qualification.getQualification_name().matches("^[a-zA-Z ]+$")) {
                 throw new IllegalArgumentException("Qualification name cannot contain numeric values or special characters");
