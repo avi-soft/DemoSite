@@ -89,4 +89,5 @@ public class CustomCustomer extends CustomerImpl {
             joinColumns = @JoinColumn(name = "customer_id"),
             inverseJoinColumns = @JoinColumn(name = "product_id"))
         private List<CustomProduct> cartRecoveryLog;
+    private String token;
 }

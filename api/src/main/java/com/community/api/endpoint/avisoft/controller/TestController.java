@@ -99,4 +99,28 @@ public class TestController {
 
         }
     }
+
+    @PostMapping("/alter/column")
+    @Transactional
+    public String altercolumn(@RequestParam String userId) {
+        String sql = "ALTER TABLE CUSTOM_CUSTOMER ADD COLUMN token VARCHAR";
+        String sql1 = "ALTER TABLE service_provider ADD COLUMN token VARCHAR";
+        try {
+            entityManager.createNativeQuery(sql).executeUpdate();
+            entityManager.createNativeQuery(sql1).executeUpdate();
+            return "Column 'role' added to Document table successfully";
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Error occurred while altering the Document table";
+
+        }
+    }
+
+
+    @PostMapping("/add/typing-text")
+    public String addTypingText(@RequestParam String userId) {
+        documentStorageService.saveAllTypingTexts();
+        return "Typing texts inserted successfully";
+    }
+
 }

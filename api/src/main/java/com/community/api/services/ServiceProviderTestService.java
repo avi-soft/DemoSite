@@ -17,6 +17,7 @@ import javax.imageio.ImageIO;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import java.awt.*;
+import java.util.Arrays;
 import java.util.List;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -206,6 +207,12 @@ public class ServiceProviderTestService {
 
         if (signatureFile.getSize() > MAX_IMAGE_SIZE_MB) {
            throw new IllegalArgumentException("Signature image size exceeds 2 MB");
+        }
+
+        // Check the MIME type of the file
+        if(!documentStorageService.isValidFileType(signatureFile))
+        {
+            throw new IllegalArgumentException("Invalid file type. Only images are allowed.");
         }
         // Use the saveDocuments method to validate and store the signature image
         ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(signatureFile, "Signature Image", serviceProviderId, "SERVICE_PROVIDER");

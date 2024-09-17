@@ -2,10 +2,8 @@ package com.community.api.endpoint.avisoft.controller.ServiceProvider;
 
 import com.community.api.component.Constant;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
-import com.community.api.entity.*;
 import com.community.api.services.DistrictService;
 import com.community.api.services.ResponseService;
-import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.ServiceProviderAddress;
 import com.community.api.entity.ServiceProviderAddressRef;
 import com.community.api.entity.Skill;
@@ -13,7 +11,6 @@ import com.community.api.services.*;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.broadleafcommerce.profile.core.service.CustomerService;
-import org.ehcache.spi.service.ServiceProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -219,6 +216,7 @@ public class ServiceProviderController {
         }
     }
 
+    @Transactional
     @GetMapping("/get-all-details/{serviceProviderId}")
     public ResponseEntity<?> getAllDetails(@PathVariable Long serviceProviderId)
     {
@@ -229,6 +227,7 @@ public class ServiceProviderController {
             {
                 return ResponseService.generateErrorResponse("Service provider does not found",HttpStatus.NOT_FOUND);
             }
+
             return ResponseService.generateSuccessResponse("Service Provider details retrieved successfully",serviceProviderEntity,HttpStatus.OK);
         }
         catch (Exception e) {
@@ -236,5 +235,4 @@ public class ServiceProviderController {
             return ResponseService.generateErrorResponse("Some issue in fetching service provider details " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
-
 }

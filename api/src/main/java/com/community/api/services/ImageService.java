@@ -9,6 +9,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 import java.io.File;
+import java.util.Arrays;
 import java.util.Iterator;
 
 import javax.persistence.EntityManager;
@@ -19,7 +20,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ByteArrayInputStream;
 import java.security.MessageDigest;
+import java.util.List;
+
 import org.apache.commons.codec.binary.Hex;
+
+import static com.community.api.services.DocumentStorageService.isValidFileType;
 
 @Service
 public class ImageService {
@@ -30,10 +35,16 @@ public class ImageService {
         this.entityManager = entityManager;
     }
 
+
     @Transactional
     public Image saveImage(MultipartFile file) throws Exception {
         // Define the directory where you want to store the images
         String uploadDir = "api/avisoftdocument/Random Images";
+
+        if(!isValidFileType(file))
+        {
+            throw new IllegalArgumentException("Invalid file type. Only images are allowed.");
+        }
 
         // Create the directory if it doesn't exist
         File directory = new File(uploadDir);
@@ -63,4 +74,5 @@ public class ImageService {
         entityManager.persist(image);
         return image;
     }
+
 }

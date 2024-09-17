@@ -72,7 +72,6 @@
         </dependency>
 
 
-
         <!-- this dependency is added for calling rest api of broadleaf such as for schemas or any wrapper implementation-->
         <dependency>
             <groupId>com.broadleafcommerce</groupId>
@@ -109,10 +108,10 @@
             <artifactId>jjwt-jackson</artifactId>
             <version>0.11.5</version>
         </dependency>
-       <!-- <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-cache</artifactId>
-        </dependency>-->
+        <!-- <dependency>
+             <groupId>org.springframework.boot</groupId>
+             <artifactId>spring-boot-starter-cache</artifactId>
+         </dependency>-->
 
         <dependency>
             <groupId>io.springfox</groupId>
@@ -130,7 +129,7 @@
             </exclusions>
         </dependency>
 
-      <dependency>
+        <dependency>
             <groupId>io.springfox</groupId>
             <artifactId>springfox-swagger-ui</artifactId>
             <version>2.7.0</version>
@@ -164,8 +163,10 @@
             <groupId>org.broadleafcommerce</groupId>
             <artifactId>broadleaf-profile</artifactId>
         </dependency>
-
  <!--<dependency>
+
+
+>>>>>>> 24da2bbec3fa759b219b6bd77128fa932b0a563b
             <groupId>org.liquibase</groupId>
 
             <artifactId>liquibase-core</artifactId>
