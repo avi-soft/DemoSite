@@ -2,20 +2,20 @@ package com.community.api.component;
 
 public class Constant {
 
+    public static final long MAX_FILE_SIZE = 2 * 1024 * 1024;
     public static String COUNTRY_CODE = "+91";
     public static String PHONE_QUERY = "SELECT c FROM CustomCustomer c WHERE c.mobileNumber = :mobileNumber AND c.countryCode = :countryCode";
     public static String PHONE_QUERY_OTP = "SELECT c FROM CustomCustomer c WHERE c.mobileNumber = :mobileNumber AND c.countryCode = :countryCode AND c.otp=:otp";
     public static String ID_QUERY = "SELECT c FROM CustomCustomer c WHERE c.customer_id = :customer_id";
-    public static final String FIND_ALL_QUALIFICATIONS_QUERY = "SELECT q FROM Qualification q";
     public static final String FIND_ALL_EXAMINATIONS_QUERY = "SELECT q FROM Examination q";
-    public static final String FIND_EXAMINATION_BY_NAME_QUERY = "SELECT e FROM Examination e WHERE e.examinationName = :examinationName";
+    public static final String FIND_ALL_QUALIFICATIONS_QUERY = "SELECT q FROM Qualification q";
     public static String PHONE_QUERY_SERVICE_PROVIDER = "SELECT c FROM ServiceProviderEntity c WHERE c.mobileNumber = :mobileNumber AND c.country_code = :country_code";
     public static String USERNAME_QUERY_SERVICE_PROVIDER = "SELECT c FROM ServiceProviderEntity c WHERE c.user_name = :username";
     public static final String ADMIN = "ADMIN";
     public static final String SUPER_ADMIN = "SUPER_ADMIN";
     public static final String SERVICE_PROVIDER = "SERVICE_PROVIDER";
     public static final String USER = "USER";
-    public static final int INITIAL_STATUS=1;
+    public static final int INITIAL_STATUS = 1;
     public static String STATE_CODE_QUERY = "SELECT s FROM StateCode s WHERE s.state_name = :state_name";
     public static final String SP_USERNAME_QUERY = "SELECT s FROM ServiceProviderEntity s WHERE s.user_name LIKE :username";
     public static final String SP_EMAIL_QUERY = "SELECT s FROM ServiceProviderEntity s WHERE s.primary_email LIKE :email";
@@ -41,9 +41,51 @@ public class Constant {
     public static String GET_COUNT_OF_STATUS="Select COUNT(*) from ServiceProviderStatus";
     public static String GET_ALL_STATUS="Select s from ServiceProviderStatus s";
     public static String GET_ALL_ROLES="Select r from Role r";
-    public static String SOME_EXCEPTION_OCCURRED = "Some Exception Occurred";
-    public static String NUMBER_FORMAT_EXCEPTION = "Number Format Exception";
-    public static String CATALOG_SERVICE_NOT_INITIALIZED = "Catalog Service Not Initialized";
+    public static String SOME_EXCEPTION_OCCURRED = "Some exception occurred";
+    public static String NUMBER_FORMAT_EXCEPTION = "Number format exception";
+    public static String CATALOG_SERVICE_NOT_INITIALIZED = "Catalog service not initialized";
     public static String GET_STATES_LIST="Select s from StateCode s";
+    public static String GET_QUALIFICATIONS_COUNT = "SELECT COUNT(*) FROM Qualification";
 
+    public static String GET_ORDER_ITEM_PRODUCT="Select p.product_id from custom_order_item_product p where p.order_item_id =:orderItemId";
+    public static String CANNOT_ADD_MORE_THAN_ONE_FORM="You can only add one of this form. Please choose a different form if you need more";
+    public static String GET_ALL_APPLICATION_SCOPE = "SELECT * FROM custom_application_scope";
+    public static String GET_ALL_STATES = "SELECT * FROM state_codes";
+    public static String GET_ALL_RESERVED_CATEGORY = "SELECT * FROM custom_reserve_category";
+    public static String GET_COUNT_OF_JOB_ROLE = "SELECT COUNT(c) FROM CustomJobGroup c";
+    public static String GET_ALL_JOB_GROUP = "SELECT s FROM CustomJobGroup s";
+    public static String GET_APPLICATION_SCOPE_BY_ID = "SELECT c FROM CustomApplicationScope c WHERE c.applicationScopeId = :applicationScopeId";
+    public static Integer DEFAULT_QUANTITY = 100000;
+    public static Integer DEFAULT_PRIORITY_LEVEL = 3;
+    public static String GET_JOB_GROUP_BY_ID = "SELECT c FROM CustomJobGroup c WHERE c.jobGroupId = :jobGroupId";
+    public static String GET_ALL_PRODUCT_STATE = "SELECT c FROM CustomProductState c";
+    public static String GET_PRODUCT_STATE_BY_ID = "SELECT c FROM CustomProductState c WHERE c.productStateId = :productStateId";
+    public static String GET_PRODUCT_STATE_BY_NAME = "SELECT c FROM CustomProductState c WHERE c.productState = :productStateName";
+    public static String PRODUCT_STATE_NEW = "NEW";
+    public static String PRODUCT_STATE_LIVE = "LIVE";
+    public static String PRODUCT_STATE_APPROVED = "APPROVED";
+    public static String PRODUCT_STATE_EXPIRED = "EXPIRED";
+    public static String PRODUCT_STATE_END = "END";
+    public static String PRODUCT_STATE_REJECTED = "REJECTED";
+    /*public static String GET_STATES_LIST="SELECT s FROM StateCode s";*/
+    public static String SERVICE_PROVIDER_PRIVILEGE = "SELECT privilege_id FROM service_provider_privileges WHERE service_provider_id = :serviceProviderId";
+    public static String GET_ROLE_BY_ROLE_ID = "SELECT r FROM Role r WHERE r.role_id = :roleId";
+    public static String PRIVILEGE_ADD_PRODUCT = "ADD_PRODUCT";
+    public static String PRIVILEGE_ADD_DOCUMENT_TYPE = "ADD_DOCUMENT_TYPE";
+    public static String GET_PRODUCT_RESERVECATEGORY_BORNBEFORE_BORNAFTER = "SELECT c FROM CustomProductReserveCategoryBornBeforeAfterRef c WHERE c.customProduct = :customProduct";
+    public static String GET_PRODUCT_RESERVECATEGORY_FEE_POST = "SELECT c FROM CustomProductReserveCategoryFeePostRef c WHERE c.customProduct = :customProduct";
+    public static String ADD_PRODUCT_RESERVECATEOGRY_BORNBEFORE_BORNAFTER = "INSERT INTO custom_product_reserve_category_born_before_after_reference (product_id, reserve_category_id, born_before, born_after) VALUES (:productId, :reserveCategoryId, :bornBefore, :bornAfter)";
+    public static String ADD_PRODUCT_RESERVECATEOGRY_FEE_POST = "INSERT INTO custom_product_reserve_category_fee_post_reference (product_id, reserve_category_id, fee, post) VALUES (:productId, :reserveCategoryId, :fee, :post)";
+    public static String GET_RESERVED_CATEGORY_BY_ID = "SELECT c FROM CustomReserveCategory c WHERE c.reserveCategoryId = :reserveCategoryId";
+    public static String APPLICATION_SCOPE_STATE = "STATE";
+    public static String PRIVILEGE_UPDATE_PRODUCT = "UPDATE_PRODUCT";
+    public static String APPLICATION_SCOPE_CENTER = "CENTER";
+    public static String PRIVILEGE_APPROVE_PRODUCT = "APPROVE_PRODUCT";
+    public static final String PRODUCTNOTFOUND = "Product not Found";
+    public static final String CATEGORYNOTFOUND = "Category not Found";
+    public static final String PRODUCTTITLENOTGIVEN = "Product MetaTitle not Given";
+    public static final int MAX_REQUEST_SIZE=100;
+    public static  final int MAX_NESTED_KEY_SIZE=100;
+    public static final String GET_ALL_SERVICE_PROVIDERS="Select s from ServiceProviderEntity s";
+    public static final String GET_ALL_CUSTOMERS="Select c from CustomCustomer c";
 }

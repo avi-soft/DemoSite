@@ -2,8 +2,11 @@ package com.community.api.endpoint.serviceProvider;
 
 
 import com.community.api.entity.*;
+import com.community.api.utils.ServiceProviderDocument;
 import com.community.api.utils.Document;
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.micrometer.core.lang.Nullable;
@@ -27,6 +30,7 @@ import java.util.Set;
 @NoArgsConstructor
 @Getter
 @Setter
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class ServiceProviderEntity  {
 
     @Id
@@ -48,8 +52,8 @@ public class ServiceProviderEntity  {
 
     @Size(min = 10, max = 10)
     private String pan_number;
-    @OneToOne(cascade = CascadeType.ALL)
-    private Document personal_photo;
+   /* @OneToOne(cascade = CascadeType.ALL)
+    private Document personal_photo;*/
     @Size(min = 9, max = 13)
     private String mobileNumber;
     private String otp;
@@ -76,23 +80,25 @@ public class ServiceProviderEntity  {
     private Integer number_of_employees;
 
 //    @Lob
+//    @Basic(fetch = FetchType.LAZY)
 //    @Column(name = "businessPhoto", columnDefinition="BLOB")
 //    @OneToOne(cascade = CascadeType.ALL)
 //    @JoinColumn(name = "business_photo_id")
-    @OneToOne(cascade = CascadeType.ALL)
-    private Document business_photo;
+   /* @OneToOne(cascade = CascadeType.ALL)
+    private Document business_photo;*/
 
     private Boolean isCFormAvailable;
 
     private String registration_number;
 
 //    @Lob
+//    @Basic(fetch = FetchType.LAZY)
 //    @Column(name = "cFormPhoto", columnDefinition="BLOB")
 //    @OneToOne(cascade = CascadeType.ALL)
 //    @JoinColumn(name = "c_form_photo_id")
 
-    @OneToOne(cascade = CascadeType.ALL)
-    private Document cFormPhoto;
+  /*  @OneToOne(cascade = CascadeType.ALL)
+    private Document cFormPhoto;*/
 
    /*@OneToMany(cascade = CascadeType.ALL,orphanRemoval = true)
     private List<Equipment> equipment;*/
@@ -109,7 +115,9 @@ public class ServiceProviderEntity  {
     private String total_marks;
     private String marks_obtained;
     private String cgpa;
-    private boolean isCgpa;
+    private double latitude,longitude;
+    private int rank;
+    private int signedUp=0;
 
     @ManyToMany
     @JoinTable(
@@ -117,7 +125,7 @@ public class ServiceProviderEntity  {
             joinColumns = @JoinColumn(name = "service_provider_id"), // Foreign key for ServiceProvider
             inverseJoinColumns = @JoinColumn(name = "skill_id")) // Foreign key for Skill
     private List<Skill> skills;
-    @JsonBackReference
+
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "service_provider_id")
     private List<ServiceProviderAddress> spAddresses;
@@ -144,4 +152,16 @@ public class ServiceProviderEntity  {
             joinColumns = @JoinColumn(name = "service_provider_id"), // Foreign key for ServiceProvider
             inverseJoinColumns = @JoinColumn(name = "language_id")) // Foreign key for Skill
     private List<ServiceProviderLanguage> languages;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "service_provider", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
+    private List<ServiceProviderTest> serviceProviderTests;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "serviceProvider", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ResizedImage> resizedImages;
+
+
+/*    @OneToMany(mappedBy = "ServiceProviderDocument", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
+    private List<ServiceProviderDocument> documents;*/
 }

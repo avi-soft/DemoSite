@@ -1,6 +1,7 @@
 package com.community.api.dto;
 
 import com.broadleafcommerce.rest.api.exception.BroadleafWebServicesException;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -11,6 +12,7 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 
 import com.broadleafcommerce.rest.api.wrapper.ProductWrapper;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.broadleafcommerce.common.exception.ServiceException;
@@ -27,44 +29,58 @@ import org.broadleafcommerce.core.search.service.SearchService;
 @NoArgsConstructor
 public class CustomCategoryWrapper extends BaseWrapper implements APIWrapper<Category> {
 
+    @JsonProperty("id")
     protected Long id;
-
+    @JsonProperty("name")
     protected String name;
-
+    @JsonProperty("description")
     protected String description;
-
+    @JsonProperty("long_description")
     protected String longDescription;
-
+    @JsonProperty("active")
     protected Boolean active;
-
+    @JsonProperty("url")
     protected String url;
-
+    @JsonProperty("url_key")
     protected String urlKey;
-
+    @JsonProperty("active_start_date")
     protected Date activeStartDate;
-
+    @JsonProperty("active_end_date")
     protected Date activeEndDate;
-
-    protected List<ProductWrapper> products;
-
+    @JsonProperty("archived")
     protected Character archived;
-
+    @JsonProperty("display_template")
     protected String displayTemplate;
+    @JsonProperty("total_products")
+    Integer totalProducts;
 
-    public void wrapDetails(Category category, HttpServletRequest request) {
+    @JsonProperty("products")
+    List<CustomProductWrapper> products;
+
+    public void wrapDetailsCategory(Category category, List<CustomProductWrapper> products, HttpServletRequest request) {
+
         this.id = category.getId();
         this.name = category.getName();
         this.description = category.getDescription();
+        this.longDescription = category.getLongDescription();
+        this.active = category.isActive();
         this.displayTemplate = category.getDisplayTemplate();
         this.activeStartDate = category.getActiveStartDate();
         this.activeEndDate = category.getActiveEndDate();
         this.url = category.getUrl();
         this.urlKey = category.getUrlKey();
+        this.archived = ((Status) category).getArchived();
+        this.products = products;
+        if (products == null) {
+            this.totalProducts = 0;
+        } else {
+            this.totalProducts = products.size();
+        }
 
-        Integer productLimit = (Integer)request.getAttribute("productLimit");
-        Integer productOffset = (Integer)request.getAttribute("productOffset");
-        Integer subcategoryLimit = (Integer)request.getAttribute("subcategoryLimit");
-        Integer subcategoryOffset = (Integer)request.getAttribute("subcategoryOffset");
+        Integer productLimit = (Integer) request.getAttribute("productLimit");
+        Integer productOffset = (Integer) request.getAttribute("productOffset");
+        Integer subcategoryLimit = (Integer) request.getAttribute("subcategoryLimit");
+        Integer subcategoryOffset = (Integer) request.getAttribute("subcategoryOffset");
         if (productLimit != null && productOffset == null) {
             productOffset = 1;
         }
@@ -76,32 +92,16 @@ public class CustomCategoryWrapper extends BaseWrapper implements APIWrapper<Cat
             searchCriteria.setPageSize(productLimit);
             searchCriteria.setFilterCriteria(new HashMap());
 
-            try {
-                SearchResult result = searchService.findExplicitSearchResultsByCategory(category, searchCriteria);
-                List<Product> productList = result.getProducts();
-                if (productList != null && !productList.isEmpty()) {
-                    if (this.products == null) {
-                        this.products = new ArrayList();
-                    }
-
-                    Iterator var11 = productList.iterator();
-
-                    while(var11.hasNext()) {
-                        Product p = (Product)var11.next();
-                        ProductWrapper productSummaryWrapper = (ProductWrapper)this.context.getBean(ProductWrapper.class.getName());
-                        productSummaryWrapper.wrapSummary(p, request);
-                        this.products.add(productSummaryWrapper);
-                    }
-                }
-            } catch (ServiceException var14) {
-                ServiceException e = var14;
-                throw BroadleafWebServicesException.build(500, (Locale)null, (Map)null, e);
-            }
         }
 
         if (category instanceof Status) {
-            this.archived = ((Status)category).getArchived();
+            this.archived = ((Status) category).getArchived();
         }
+
+    }
+
+    @Override
+    public void wrapDetails(Category category, HttpServletRequest httpServletRequest) {
 
     }
 
@@ -115,6 +115,6 @@ public class CustomCategoryWrapper extends BaseWrapper implements APIWrapper<Cat
     }
 
     protected SearchService getSearchService() {
-        return (SearchService)this.context.getBean("blSearchService");
+        return (SearchService) this.context.getBean("blSearchService");
     }
 }

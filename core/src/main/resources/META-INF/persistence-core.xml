@@ -30,7 +30,7 @@
         <class>com.community.api.entity.Skill</class>
         <class>com.community.api.utils.Document</class>
         <class>com.community.api.utils.DocumentType</class>
-        <class>com.community.api.entity.Qualification</class>
+        <class>com.community.api.entity.QualificationDetails</class>
         <class>com.community.api.endpoint.serviceProvider.ServiceProviderEntity</class>
         <class>com.community.api.endpoint.serviceProvider.ServiceProviderStatus</class>
         <class>com.community.api.entity.CustomOtp</class>
@@ -43,10 +43,11 @@
 
         <class>com.community.api.entity.CustomProduct</class>
         <class>com.community.api.entity.CustomProductState</class>
-        <class>com.community.api.entity.CustomNotifyingAuthority</class>
+        <class>com.community.api.entity.CustomApplicationScope</class>
         <class>com.community.api.entity.CustomReserveCategory</class>
-        <class>com.community.api.entity.ProductReserveCategoryFeePostRef</class>
-        <class>com.community.api.entity.ProductReserveCategoryBornBeforeAfterRef</class>
+        <class>com.community.api.entity.CustomProductReserveCategoryFeePostRef</class>
+        <class>com.community.api.entity.CustomProductReserveCategoryBornBeforeAfterRef</class>
+        <class>com.community.api.entity.CustomJobGroup</class>
 
         <exclude-unlisted-classes/>
     </persistence-unit>
@@ -68,11 +69,11 @@
         <class>com.community.api.entity.Skill</class>
         <class>com.community.api.utils.Document</class>
         <class>com.community.api.utils.DocumentType</class>
-        <class>com.community.api.entity.Qualification</class>
+        <class>com.community.api.entity.QualificationDetails</class>
         <class>com.community.api.endpoint.serviceProvider.ServiceProviderEntity</class>
         <class>com.community.api.endpoint.serviceProvider.ServiceProviderStatus</class>
         <class>com.community.api.entity.CustomOtp</class>
-        <class>com.community.api.entity.Examination</class>
+        <class>com.community.api.entity.Qualification</class>
         <class>com.community.api.entity.StateCode</class>
         <class>com.community.api.entity.ServiceProviderAddress</class>
         <class>com.community.api.entity.ServiceProviderAddressRef</class>
@@ -81,6 +82,12 @@
         <class>com.community.api.entity.Districts</class>
         <class>com.community.api.entity.ServiceProviderInfra</class>
         <class>com.community.api.entity.ServiceProviderLanguage</class>
+        <class>com.community.api.entity.ServiceProviderTest</class>
+        <class>com.community.api.entity.Image</class>
+        <class>com.community.api.entity.SignatureImage</class>
+        <class>com.community.api.entity.TypingText</class>
+        <class>com.community.api.entity.ResizedImage</class>
+        <class>com.community.api.utils.ServiceProviderDocument</class>
         <exclude-unlisted-classes/>
     </persistence-unit>
 

@@ -1,6 +1,7 @@
 package com.community.api.endpoint.avisoft.controller.Admin;
 
 import com.community.api.entity.ServiceProviderInfra;
+import com.community.api.services.ResponseService;
 import com.community.api.services.ServiceProviderInfraService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,24 +19,25 @@ public class ServiceProviderInfraController {
     private ExceptionHandlingImplement exceptionHandling;
     @Autowired
     private ServiceProviderInfraService serviceProviderInfraService;
-
+    @Autowired
+    private ResponseService responseService;
     @PostMapping("add-infra")
     public ResponseEntity<?> addInfra(@RequestBody ServiceProviderInfra serviceProviderInfra) {
         try {
             return serviceProviderInfraService.addInfra(serviceProviderInfra);
         } catch (Exception exception) {
             exceptionHandling.handleException(exception);
-            return new ResponseEntity<>("Error adding infra to list", HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("Error adding infra to list", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
     @GetMapping("fetch-infras")
     public ResponseEntity<?> fetchInfra() {
         try {
-            return new ResponseEntity<>(serviceProviderInfraService.findAllInfraList(), HttpStatus.OK);
+            return responseService.generateSuccessResponse("List fetched successfully",serviceProviderInfraService.findAllInfraList(), HttpStatus.OK);
         } catch (Exception exception) {
             exceptionHandling.handleException(exception);
-            return new ResponseEntity<>("Error adding infra to list", HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("Error adding infra to list", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

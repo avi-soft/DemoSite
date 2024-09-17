@@ -1,5 +1,6 @@
 package com.community.api.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,9 +19,11 @@ public class CustomProductState {
 
     @Id
     @Column(name = "product_state_id")
+    @JsonProperty("product_state_id")
     Long productStateId;
 
     @Column(name = "product_state")
+    @JsonProperty("product_state")
     String productState;
 
 }

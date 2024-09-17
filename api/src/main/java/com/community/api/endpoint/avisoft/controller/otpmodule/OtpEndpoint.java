@@ -40,6 +40,9 @@ public class OtpEndpoint {
     private ExceptionHandlingImplement exceptionHandling;
 
     @Autowired
+    private SharedUtilityService sharedUtilityService;
+
+    @Autowired
     private TwilioService twilioService;
 
     @Autowired
@@ -177,15 +180,14 @@ public class OtpEndpoint {
                     em.persist(existingCustomer);
 
                     String existingToken = (String) session.getAttribute(tokenKey);
-
                     if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
-                        ApiResponse response = new ApiResponse(existingToken, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
+                        ApiResponse response = new ApiResponse(existingToken,sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
                         return ResponseEntity.ok(response);
 
                     } else {
                         String newToken = jwtUtil.generateToken(existingCustomer.getId(), role, ipAddress, userAgent);
                         session.setAttribute(tokenKey, newToken);
-                        ApiResponse response = new ApiResponse(newToken, customer, HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
+                        ApiResponse response = new ApiResponse(newToken,sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
                         return ResponseEntity.ok(response);
 
                     }
@@ -293,8 +295,8 @@ public class OtpEndpoint {
         private String token;
 
 
-        public ApiResponse(String token, Customer customer, int statusCodeValue, String statusCode, String message) {
-            this.data = new Data(customer);
+        public ApiResponse(String token, Map<String,Object>customerDetails, int statusCodeValue, String statusCode, String message) {
+            this.data = new Data(customerDetails);
             this.status_code = statusCodeValue;
             this.status = statusCode;
             this.message = message;
@@ -322,13 +324,13 @@ public class OtpEndpoint {
         }
 
         public  class Data {
-            private Customer userDetails;
+            private Map<String,Object> userDetails;
 
-            public Data(Customer customer) {
-                this.userDetails = customer;
+            public Data(Map<String,Object>customerDetails) {
+                this.userDetails = customerDetails;
             }
 
-            public Customer getUserDetails() {
+            public Map<String,Object> getUserDetails() {
                 return userDetails;
             }
         }

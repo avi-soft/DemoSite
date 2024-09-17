@@ -39,7 +39,7 @@ public class ServiceProviderStatusService {
     public ResponseEntity<?> addStatus(ServiceProviderStatus serviceProviderStatus) {
         try {
             if(serviceProviderStatus.getStatus_name()==null||serviceProviderStatus.getDescription()==null)
-                return new ResponseEntity<>("Empty status name or description",HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("Empty status name or description",HttpStatus.BAD_REQUEST);
             int count=(int)sharedUtilityService.findCount(Constant.GET_COUNT_OF_STATUS);
             serviceProviderStatus.setStatus_id(++count);
             serviceProviderStatus.setCreated_at(sharedUtilityService.getCurrentTimestamp());
