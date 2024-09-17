@@ -156,4 +156,8 @@ public class ServiceProviderEntity  {
 
     @OneToMany(mappedBy = "serviceProvider", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ResizedImage> resizedImages;
+
+    private String token;
+
+
 }

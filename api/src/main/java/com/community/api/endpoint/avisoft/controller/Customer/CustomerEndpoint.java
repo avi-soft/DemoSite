@@ -276,7 +276,6 @@ public class CustomerEndpoint {
                     return responseService.generateErrorResponse("Error uploading " + documentType, HttpStatus.INTERNAL_SERVER_ERROR);
                 }
 
-                System.out.println(documentType.trim() + " documentType.trim()");
                 // Find or create DocumentType
                 DocumentType documentTypeObj = em.createQuery(
                                 "SELECT dt FROM DocumentType dt WHERE dt.document_type_name = :documentTypeName", DocumentType.class)
@@ -382,11 +381,9 @@ public class CustomerEndpoint {
                             .findFirst()
                             .orElse(null);
 
-                    System.out.println(file.getContentType() + " file");
                     if ((file.isEmpty() || file ==null) && existingDocument!=null) {
                         if (existingDocument != null) {
                             String filePath = existingDocument.getFilePath();
-                            System.out.println(filePath + " filePath");
                             if (filePath != null) {
                                 File filesobj = new File(filePath);
                                 if (filesobj.exists()) {

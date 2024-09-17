@@ -5,6 +5,7 @@ import com.community.api.entity.CustomCustomer;
 import com.community.api.services.RoleService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
@@ -30,7 +31,7 @@ public class JwtUtil {
     private TokenBlacklist tokenBlacklist;
     private CustomerService customerService;
 
-    @Value("${jwt.secret.key}")
+    @Value("${security.jwt.secret-key}")
     public void setSecretKeyString(String secretKeyString) {
         this.secretKeyString = secretKeyString;
     }
@@ -60,7 +61,7 @@ public class JwtUtil {
         this.customerService = customerService;
     }
 
-    @PostConstruct
+   @PostConstruct
     public void init() {
 
         try {
@@ -90,12 +91,25 @@ public class JwtUtil {
                     .claim("ipAddress", ipAddress)
                     .setIssuedAt(new Date())
                     .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
-                    .signWith(secretKey, SignatureAlgorithm.HS256)
+                    .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                     .compact();
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             throw new RuntimeException("Error generating JWT token", e);
         }
+    }
+
+    private Key getSignInKey() {
+
+        try {
+            byte[] secretKeyBytes = DatatypeConverter.parseBase64Binary(secretKeyString);
+            this.secretKey = Keys.hmacShaKeyFor(secretKeyBytes);
+            return this.secretKey;
+        }  catch (Exception e) {
+            exceptionHandling.handleException(e);
+            throw new RuntimeException("Error generating JWT token", e);
+        }
+
     }
 
     public Long extractId(String token) {
@@ -121,13 +135,15 @@ public class JwtUtil {
     public Boolean validateToken(String token, String ipAddress, String userAgent) {
 
         try {
+            if (isTokenExpired(token)) {
+                return false;
+            }
             Long id = extractId(token);
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
-
             String tokenId = claims.getId();
             /*if (tokenBlacklist.isTokenBlacklisted(tokenId)) {
                 return false;
@@ -135,24 +151,23 @@ public class JwtUtil {
             int role=extractRoleId(token);
             Customer existingCustomer=null;
             ServiceProviderEntity existingServiceProvider=null;
+            System.out.println(role + " role");
             if(roleService.findRoleName(role).equals(Constant.roleUser)){
                 existingCustomer = customerService.readCustomerById(id);
                 if (existingCustomer == null) {
                     return false;
                 }
             }
-
             else if(roleService.findRoleName(role).equals(Constant.roleServiceProvider)) {
                 existingServiceProvider = entityManager.find(ServiceProviderEntity.class, id);
                 if(existingServiceProvider==null)
                     return false;
             }
-            if (isTokenExpired(token)) {
-                return false;
-            }
 
             String storedIpAddress = claims.get("ipAddress", String.class);
 
+
+            System.out.println(ipAddress + " ipAddress " + storedIpAddress + " ipAddress ");
 
             return ipAddress.trim().equals(storedIpAddress != null ? storedIpAddress.trim() : "");
         } catch (ExpiredJwtException e) {

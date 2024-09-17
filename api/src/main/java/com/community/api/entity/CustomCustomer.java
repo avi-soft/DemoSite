@@ -80,4 +80,6 @@ public class CustomCustomer extends CustomerImpl {
 
     @OneToMany(mappedBy = "custom_customer", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
     private List<Document> documents;
+
+    private String token;
 }

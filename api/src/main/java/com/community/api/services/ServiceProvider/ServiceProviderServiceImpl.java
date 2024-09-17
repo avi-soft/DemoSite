@@ -345,7 +345,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             String ipAddress = request.getRemoteAddr();
             String userAgent = request.getHeader("User-Agent");
             String tokenKey = "authTokenServiceProvider_" + serviceProvider.getMobileNumber();
-            String existingToken = (String) session.getAttribute(tokenKey);
+            String existingToken = serviceProvider.getToken();
             if(existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
                 Map<String, Object> responseBody = createAuthResponse(existingToken, serviceProvider).getBody();
 
@@ -353,7 +353,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             } else {
                 String newToken = jwtUtil.generateToken(serviceProvider.getService_provider_id(), serviceProvider.getRole(), ipAddress, userAgent);
                 session.setAttribute(tokenKey, newToken);
-
+                serviceProvider.setToken(newToken);
+                entityManager.persist(serviceProvider);
                 Map<String, Object> responseBody = createAuthResponse(newToken, serviceProvider).getBody();
             return ResponseEntity.ok(responseBody);
 
@@ -518,7 +519,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 existingServiceProvider.setOtp(null);
                 entityManager.merge(existingServiceProvider);
 
-                String existingToken = (String) session.getAttribute(tokenKey);
+                String existingToken = existingServiceProvider.getToken();
 
                 if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
                     Map<String, Object> responseBody = createAuthResponse(existingToken, existingServiceProvider).getBody();
@@ -527,7 +528,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 } else {
                     String newToken = jwtUtil.generateToken(existingServiceProvider.getService_provider_id(), role, ipAddress, userAgent);
                     session.setAttribute(tokenKey, newToken);
-
+                    existingServiceProvider.setToken(newToken);
+                    entityManager.persist(existingServiceProvider);
                     Map<String, Object> responseBody = createAuthResponse(newToken, existingServiceProvider).getBody();
                     if(existingServiceProvider.getSignedUp()==0) {
                         existingServiceProvider.setSignedUp(1);
