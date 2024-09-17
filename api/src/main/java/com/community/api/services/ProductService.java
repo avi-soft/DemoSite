@@ -252,7 +252,7 @@ public class ProductService {
             jpql.append("AND r.post > :post ");
         }
 
-        if(startRange != null && endRange != null) {
+        if (startRange != null && endRange != null) {
             jpql.append("AND s.activeStartDate BETWEEN :startRange AND :endRange ");
         }
 
@@ -278,7 +278,7 @@ public class ProductService {
         if (post != null) {
             query.setParameter("post", post);
         }
-        if(startRange != null && endRange != null) {
+        if (startRange != null && endRange != null) {
             query.setParameter("startRange", startRange);
             query.setParameter("endRange", endRange);
         }
@@ -922,7 +922,7 @@ public class ProductService {
     }
 
     public boolean deleteOldReserveCategoryMapping(CustomProduct customProduct) throws Exception {
-        try{
+        try {
             productReserveCategoryFeePostRefService.removeProductReserveCategoryFeeAndPostByProductId(customProduct);
             productReserveCategoryBornBeforeAfterRefService.removeProductReserveCategoryBornBeforeAfterByProductId(customProduct);
             return true;

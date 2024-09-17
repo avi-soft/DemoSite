@@ -126,7 +126,7 @@ public class ProductController extends CatalogEndpoint {
             }
 
             Category category = productService.validateCategory(categoryId);
-            if(category == null){
+            if (category == null) {
                 ResponseService.generateErrorResponse("CATEGORY NOT FOUND", HttpStatus.NOT_FOUND);
             }
 
@@ -157,12 +157,12 @@ public class ProductController extends CatalogEndpoint {
 //            catalogService.saveSku(sku); // this was creating duplicate entries in the db.
 
             CustomJobGroup customJobGroup = productService.validateCustomJobGroup(addProductDto.getJobGroup());
-            if(customJobGroup == null) {
+            if (customJobGroup == null) {
                 ResponseService.generateErrorResponse("CUSTOM JOB GROUP NOT FOUND", HttpStatus.NOT_FOUND);
             }
 
             CustomProductState customProductState = productStateService.getProductStateByName(PRODUCT_STATE_NEW);
-            if(customProductState == null) {
+            if (customProductState == null) {
                 ResponseService.generateErrorResponse("CUSTOM PRODUCT STATE NOT FOUND", HttpStatus.NOT_FOUND);
             }
 
@@ -196,7 +196,7 @@ public class ProductController extends CatalogEndpoint {
 
 
     @Transactional
-   @PutMapping("/update/{productId}")
+    @PutMapping("/update/{productId}")
     public ResponseEntity<?> updateProduct(HttpServletRequest request, @RequestBody AddProductDto addProductDto, @PathVariable Long productId, @RequestHeader(value = "Authorization") String authHeader) {
 
         try {
@@ -210,7 +210,7 @@ public class ProductController extends CatalogEndpoint {
             }
 
             CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
-            if(customProduct == null) {
+            if (customProduct == null) {
                 return ResponseService.generateErrorResponse(Constant.PRODUCTNOTFOUND, HttpStatus.NOT_FOUND);
             }
 
@@ -260,6 +260,7 @@ public class ProductController extends CatalogEndpoint {
         }
 
     }
+
     @GetMapping("/get-product-by-id/{productId}")
     public ResponseEntity<?> retrieveProductById(HttpServletRequest request, @PathVariable("productId") String productIdPath) {
 
@@ -481,8 +482,7 @@ public class ProductController extends CatalogEndpoint {
             @RequestParam(value = "title", required = false) String title,
             @RequestParam(value = "fee", required = false) Double fee,
             @RequestParam(value = "post", required = false) Integer post,
-            @RequestParam(value = "reserve_categories", required = false) List<Long> reserveCategories)
-    {
+            @RequestParam(value = "reserve_categories", required = false) List<Long> reserveCategories) {
 
         try {
             // Call the service to get filtered products
