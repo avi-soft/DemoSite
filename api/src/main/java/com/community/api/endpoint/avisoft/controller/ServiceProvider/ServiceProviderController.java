@@ -107,6 +107,7 @@ public class ServiceProviderController {
             String password = (String) passwordDetails.get("password");
             passwordDetails=sanitizerService.sanitizeInputMap(passwordDetails);
 
+
            // String newPassword = (String) passwordDetails.get("newPassword");
             ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, userId);
             if (serviceProvider == null)
