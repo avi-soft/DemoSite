@@ -60,7 +60,7 @@ public class JwtUtil {
         this.customerService = customerService;
     }
 
-    @PostConstruct
+    /*@PostConstruct
     public void init() {
 
         try {
@@ -71,12 +71,12 @@ public class JwtUtil {
             throw new RuntimeException("Error generating JWT token", e);
         }
 
-    }
+    }*/
 
-   /* @PostConstruct
+   @PostConstruct
     public void init() {
         this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-    }*/
+    }
 
     public String generateToken(Long id, Integer role, String ipAddress, String userAgent) {
         try {

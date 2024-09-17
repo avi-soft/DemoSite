@@ -108,10 +108,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     }
 
-    private boolean bypassimages(String requestURI) {
-        return UNSECURED_URI_PATTERN.matcher(requestURI).matches();
 
-    }
 
     private boolean isApiKeyRequiredUri(HttpServletRequest request) {
      /*   String requestURI = request.getRequestURI();

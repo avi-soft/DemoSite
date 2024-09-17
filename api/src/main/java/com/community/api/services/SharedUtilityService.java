@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
+import javax.transaction.Transactional;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.time.ZonedDateTime;
@@ -76,7 +77,7 @@ public class SharedUtilityService {
         productDetails.put("long_description", product.getDefaultSku().getLongDescription());
         productDetails.put("active_start_date", product.getDefaultSku().getActiveStartDate());//@TODO-Fee is dependent on category
         productDetails.put("fee",productReserveCategoryFeePostRefService.getCustomProductReserveCategoryFeePostRefByProductIdAndReserveCategoryId(product.getId(),1L).getFee());//this is dummy data
-        productDetails.put("category_id",product.getCategory().getId());
+        productDetails.put("category_id",product.getDefaultCategory().getId());
         productDetails.put("active_end_date", product.getDefaultSku().getActiveEndDate());
         return productDetails;
     }
@@ -180,7 +181,7 @@ public class SharedUtilityService {
             return ValidationResult.SUCCESS;
 
         }
-
+    @Transactional
     public Map<String,Object> serviceProviderDetailsMap(ServiceProviderEntity serviceProvider)
     {
         Map<String,Object>serviceProviderDetails=new HashMap<>();
