@@ -1,6 +1,8 @@
 package com.community.api.endpoint.avisoft.controller.cart;
 import com.broadleafcommerce.rest.api.endpoint.BaseEndpoint;
 import com.community.api.component.Constant;
+import com.community.api.entity.CustomCustomer;
+import com.community.api.entity.CustomProduct;
 import com.community.api.services.CartService;
 import com.community.api.services.ProductReserveCategoryFeePostRefService;
 import com.community.api.services.ResponseService;
@@ -24,10 +26,8 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/cart",
@@ -92,31 +92,50 @@ public class CartEndPoint extends BaseEndpoint {
     }
 
 
+    @Transactional
     @RequestMapping(value = "empty", method = RequestMethod.DELETE)
-    public ResponseEntity<?> emptyTheCart(@RequestParam Long customer_id) {
+    public ResponseEntity<?> emptyTheCart(@RequestParam Long customer_id) { //@TODO-empty cart should remove each item one by one
         try {
             if (isAnyServiceNull()) {
-                return responseService.generateErrorResponse("One or more Serivces not initialized",HttpStatus.INTERNAL_SERVER_ERROR);
+                return ResponseService.generateErrorResponse("One or more Serivces not initialized",HttpStatus.INTERNAL_SERVER_ERROR);
             }
             Customer customer = customerService.readCustomerById(customer_id);//finding the customer to get cart associated with it
             Order cart = null;
             if (customer == null) {
-                return responseService.generateErrorResponse("Customer not found for this Id",HttpStatus.NOT_FOUND);
+                return ResponseService.generateErrorResponse("Customer not found for this Id",HttpStatus.NOT_FOUND);
             } else {
+                CustomCustomer customCustomer=entityManager.find(CustomCustomer.class,customer.getId());
                 cart = this.orderService.findCartForCustomer(customer);
+                System.out.println(cart.getId());
                 if (cart == null) {
-                    return responseService.generateErrorResponse("Cart Not Found",HttpStatus.NOT_FOUND);
+                    return ResponseService.generateErrorResponse("Cart Not Found", HttpStatus.NOT_FOUND);
                 }
                 if (cart.getStatus().equals(OrderStatus.IN_PROCESS)) {//ensuring its cart and not an order
-                    orderService.deleteOrder(cart);
-                    return responseService.generateSuccessResponse("Cart is empty now",null,HttpStatus.OK);
+                    List<OrderItem> items = cart.getOrderItems();
+                    Iterator<OrderItem> iterator = items.iterator();
+
+                    while (iterator.hasNext()) {
+                        OrderItem item = iterator.next();
+                        iterator.remove();
+                        Product product=findProductFromItemAttribute(item);
+                        CustomProduct customProduct=entityManager.find(CustomProduct.class,product.getId());
+                        if(customCustomer!=null && customProduct!=null)
+                        {
+                            if(!customCustomer.getCartRecoveryLog().contains(customProduct))
+                                customCustomer.getCartRecoveryLog().add(customProduct);
+                        }
+                        entityManager.remove(item);
+                    }
+                    entityManager.merge(cart);
+                    entityManager.merge(customCustomer);
+                    return ResponseService.generateSuccessResponse("Cart is empty now",null,HttpStatus.OK);
                 }
                 else
-                    return responseService.generateErrorResponse("Error removing all items from cart",HttpStatus.INTERNAL_SERVER_ERROR);
+                    return ResponseService.generateErrorResponse("Error removing all items from cart",HttpStatus.INTERNAL_SERVER_ERROR);
             }
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Error removing all items from cart : "+e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseService.generateErrorResponse("Error removing all items from cart : "+e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -125,12 +144,12 @@ public class CartEndPoint extends BaseEndpoint {
     public ResponseEntity<?> addToCart(@RequestParam long customerId, @RequestParam long productId) {
         try {
             if (isAnyServiceNull()) {
-                return responseService.generateErrorResponse("One or more Services not initialized", HttpStatus.INTERNAL_SERVER_ERROR);
+                return ResponseService.generateErrorResponse("One or more Services not initialized", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             Customer customer = customerService.readCustomerById(customerId);
             if (customer == null) {
-                return responseService.generateErrorResponse("Customer not found for this Id", HttpStatus.NOT_FOUND);
+                return ResponseService.generateErrorResponse("Customer not found for this Id", HttpStatus.NOT_FOUND);
             }
             Order cart = orderService.findCartForCustomer(customer);
             if (cart == null) {
@@ -138,7 +157,7 @@ public class CartEndPoint extends BaseEndpoint {
             }
             Product product = catalogService.findProductById(productId);
             if (product == null) {
-                return responseService.generateErrorResponse("Product not found", HttpStatus.NOT_FOUND);
+                return ResponseService.generateErrorResponse("Product not found", HttpStatus.NOT_FOUND);
             }
             OrderItemRequest orderItemRequest = new OrderItemRequest();
             orderItemRequest.setProduct(product);
@@ -157,7 +176,7 @@ public class CartEndPoint extends BaseEndpoint {
             {
                 if(Long.parseLong(existingOrderItem.getOrderItemAttributes().get("productId").getValue())==productId) {
                     flag=true;
-                    return responseService.generateErrorResponse(Constant.CANNOT_ADD_MORE_THAN_ONE_FORM,HttpStatus.UNPROCESSABLE_ENTITY);
+                    return ResponseService.generateErrorResponse(Constant.CANNOT_ADD_MORE_THAN_ONE_FORM,HttpStatus.UNPROCESSABLE_ENTITY);
                 }
             }
             if(!flag)
@@ -165,9 +184,9 @@ public class CartEndPoint extends BaseEndpoint {
             cart.setOrderItems(items);
             responseBody.put("order_id",cart.getId());
             responseBody.put("added_product_id",orderItem.getOrderItemAttributes().get("productId").getValue());
-            return responseService.generateSuccessResponse("Cart updated",responseBody, HttpStatus.OK);
+            return ResponseService.generateSuccessResponse("Cart updated",responseBody, HttpStatus.OK);
         } catch (Exception e) {
-            return responseService.generateErrorResponse("Error adding item to cart : "+e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseService.generateErrorResponse("Error adding item to cart : "+e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -175,21 +194,21 @@ public class CartEndPoint extends BaseEndpoint {
         public ResponseEntity<?> retrieveCartItemsCount(@RequestParam long customerId, @RequestParam Long orderId) {
         try {
             if (isAnyServiceNull()) {
-                return responseService.generateErrorResponse("One or more Serivces not initialized",HttpStatus.INTERNAL_SERVER_ERROR);
+                return ResponseService.generateErrorResponse("One or more Serivces not initialized",HttpStatus.INTERNAL_SERVER_ERROR);
             }
             Customer customer = customerService.readCustomerById(customerId);
             Map<String,Object>responseBody=new HashMap<>();
             if (customer != null) {
                 if (orderService.findOrderById(orderId) != null) {
                     responseBody.put("number_of_items",orderService.findOrderById(orderId).getOrderItems().size());
-                    return responseService.generateSuccessResponse("Items in cart :",responseBody, HttpStatus.OK);
+                    return ResponseService.generateSuccessResponse("Items in cart :",responseBody, HttpStatus.OK);
                 } else
-                    return responseService.generateErrorResponse("No items found", HttpStatus.NOT_FOUND);
+                    return ResponseService.generateErrorResponse("No items found", HttpStatus.NOT_FOUND);
             } else
-                return responseService.generateErrorResponse("Customer not found", HttpStatus.NOT_FOUND);
+                return ResponseService.generateErrorResponse("Customer not found", HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Error retrieving cart", HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseService.generateErrorResponse("Error retrieving cart", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     @JsonBackReference
@@ -198,15 +217,15 @@ public class CartEndPoint extends BaseEndpoint {
         try {
             Double subTotal=0.0;
             if (isAnyServiceNull()) {
-                return responseService.generateErrorResponse("One or more Serivces not initialized", HttpStatus.INTERNAL_SERVER_ERROR);
+                return ResponseService.generateErrorResponse("One or more Serivces not initialized", HttpStatus.INTERNAL_SERVER_ERROR);
             }
             Customer customer = customerService.readCustomerById(customerId);
             if (customer == null) {
-                return responseService.generateErrorResponse("customer does not exist", HttpStatus.NOT_FOUND);
+                return ResponseService.generateErrorResponse("customer does not exist", HttpStatus.NOT_FOUND);
             }
             Order cart = orderService.findOrderById(orderId);
             if(cart==null)
-                return responseService.generateErrorResponse("Cart not found",HttpStatus.NOT_FOUND);
+                return ResponseService.generateErrorResponse("Cart not found",HttpStatus.NOT_FOUND);
             List<Product>listOfProducts=new ArrayList<>();
             List<OrderItem>orderItemList=cart.getOrderItems();
             if(orderItemList!=null&&(!orderItemList.isEmpty()))
@@ -214,8 +233,7 @@ public class CartEndPoint extends BaseEndpoint {
                 Map<String,Object>response=new HashMap<>();
                 List<Map<String,Object>>products=new ArrayList<>();
                 for(OrderItem orderItem:orderItemList) {
-                  Long productId=Long.parseLong(orderItem.getOrderItemAttributes().get("productId").getValue());
-                    Product product = catalogService.findProductById(productId);
+                    Product product=findProductFromItemAttribute(orderItem);
                     if (product != null) {
                         Map<String,Object>productDetails=sharedUtilityService.createProductResponseMap(product,orderItem);
                         products.add(productDetails);
@@ -225,13 +243,13 @@ public class CartEndPoint extends BaseEndpoint {
                 response.put("cart_id",cart.getId());
                 response.put("products",products.toArray());
                 response.put("sub_total",subTotal);
-                return responseService.generateSuccessResponse("Cart items",response,HttpStatus.OK);
+                return ResponseService.generateSuccessResponse("Cart items",response,HttpStatus.OK);
             }
             else
-                return responseService.generateErrorResponse("No items in cart",HttpStatus.NOT_FOUND);
+                return ResponseService.generateErrorResponse("No items in cart",HttpStatus.NOT_FOUND);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Error retrieving cart Items", HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseService.generateErrorResponse("Error retrieving cart Items", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -243,35 +261,37 @@ public class CartEndPoint extends BaseEndpoint {
             @RequestParam Long orderItemId) {
         try {
             if (isAnyServiceNull()) {
-                return responseService.generateErrorResponse("One or more Serivces not initialized",HttpStatus.INTERNAL_SERVER_ERROR);
+                return ResponseService.generateErrorResponse("One or more Services not initialized",HttpStatus.INTERNAL_SERVER_ERROR);
             }
             Customer customer = customerService.readCustomerById(customerId);
             if (customer == null) {
-                return responseService.generateErrorResponse("Invalid request: Customer does not exist", HttpStatus.INTERNAL_SERVER_ERROR);
+                return ResponseService.generateErrorResponse("Invalid request: Customer does not exist", HttpStatus.INTERNAL_SERVER_ERROR);
             }
-
+            CustomCustomer customCustomer=entityManager.find(CustomCustomer.class,customer.getId());
             Order cart = orderService.findOrderById(orderId);
             if (cart == null || cart.getOrderItems() == null) {
-                return responseService.generateErrorResponse("Cart Empty", HttpStatus.NOT_FOUND);
+                return ResponseService.generateErrorResponse("Cart Empty", HttpStatus.NOT_FOUND);
             }
 
             boolean itemRemoved = cartService.removeItemFromCart(cart, orderItemId);
             /*OrderItem orderItem=entityManager.find(OrderItem.class,orderItemId);*/
 
             if (itemRemoved) {
-                return responseService.generateSuccessResponse("Item Removed",null, HttpStatus.OK);
+                return ResponseService.generateSuccessResponse("Item Removed",null, HttpStatus.OK);
             } else {
-                return responseService.generateErrorResponse("Error removing item from cart: item not present in cart", HttpStatus.NOT_FOUND);
+                return ResponseService.generateErrorResponse("Error removing item from cart: item not present in cart", HttpStatus.NOT_FOUND);
             }
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Error deleting", HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseService.generateErrorResponse("Error deleting", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     @Transactional
     @RequestMapping(value ="place-order/{customerId}",method = RequestMethod.POST)
     public ResponseEntity<?>placeOrder(@PathVariable long customerId,@RequestParam long orderId) {
         try {
+            Map<String,Object>responseMap=new HashMap<>();
+            List<Order>individualOrders=new ArrayList<>();
             Customer customer = customerService.readCustomerById(customerId);
             if (customer == null)
                 ResponseService.generateErrorResponse("Customer not found", HttpStatus.NOT_FOUND);
@@ -279,9 +299,39 @@ public class CartEndPoint extends BaseEndpoint {
             if (order == null)
                 ResponseService.generateErrorResponse("Cart items not found", HttpStatus.NOT_FOUND);
             Order cart = orderService.findCartForCustomer(customer);
-            if (cart.getId() == orderId) {
-                OrderStatus orderStatus = OrderStatus.SUBMITTED;
-                cart.setStatus(orderStatus);
+            if(cart==null)
+                ResponseService.generateErrorResponse("Cart not found",HttpStatus.NOT_FOUND);
+            if (cart!=null &&cart.getId() == orderId) {
+                for (OrderItem orderItem : cart.getOrderItems())
+                {
+                    Product product=findProductFromItemAttribute(orderItem);
+                    Order individualOrder=orderService.createNamedOrderForCustomer(orderItem.getName(),customer);
+                    individualOrder.setCustomer(customer);
+                    if(customer!=null)
+                        individualOrder.setEmailAddress(customer.getEmailAddress());
+                    individualOrder.setStatus(new OrderStatus("ORDER_PLACED","order placed"));
+                    OrderItemRequest orderItemRequest = new OrderItemRequest();
+                    orderItemRequest.setProduct(product);
+                    orderItemRequest.setOrder(individualOrder);
+                    orderItemRequest.setQuantity(1);
+                    orderItemRequest.setCategory(product.getCategory());
+                    orderItemRequest.setItemName(product.getName());
+                    Map<String,String> atrtributes=orderItemRequest.getItemAttributes();
+                    atrtributes.put("productId",product.getId().toString());
+                    orderItemRequest.setItemAttributes(atrtributes);
+                    OrderItem orderItemForIndividualOrder = orderItemService.createOrderItem(orderItemRequest);
+                    individualOrder.addOrderItem(orderItemForIndividualOrder);
+                    entityManager.persist(individualOrder);
+                    individualOrders.add(individualOrder);
+                }
+                responseMap.put("Orders",individualOrders);
+                List<OrderItem> items = cart.getOrderItems();
+                Iterator<OrderItem> iterator = items.iterator();
+                while (iterator.hasNext()) {
+                    OrderItem item = iterator.next();
+                    iterator.remove();
+                    entityManager.remove(item);
+                }
                 entityManager.merge(cart);
                 return ResponseService.generateSuccessResponse("Order Placed", cart.getId(), HttpStatus.OK);
             }
@@ -291,9 +341,30 @@ public class CartEndPoint extends BaseEndpoint {
             return ResponseService.generateErrorResponse("Error placing order", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    @RequestMapping(value ="cart-recovery-log/{customerId}",method = RequestMethod.GET)
+    public ResponseEntity<?>getCartRecoveryLog(@PathVariable long customerId)
+    {
+        CustomCustomer customCustomer=entityManager.find(CustomCustomer.class,customerId);
+        if(customCustomer==null)
+            return ResponseService.generateErrorResponse("Cannot find customer for this id",HttpStatus.NOT_FOUND);
+        List<Map<String,Object>>productList=new ArrayList<>();
+        for(Product product:customCustomer.getCartRecoveryLog())
+        {
+            productList.add(sharedUtilityService.createProductResponseMap(product,null));
+        }
+        return ResponseService.generateSuccessResponse("Cart Recovery Log : ",productList,HttpStatus.OK);
+    }
 
     private boolean isAnyServiceNull() {
         return customerService == null || orderService == null|| catalogService == null;
+    }
+    public Product findProductFromItemAttribute(OrderItem orderItem)
+    {
+        Long productId=Long.parseLong(orderItem.getOrderItemAttributes().get("productId").getValue());
+        System.out.println(productId);
+        Product product=catalogService.findProductById(productId);
+        System.out.println(product.getName());
+        return product;
     }
 
 }

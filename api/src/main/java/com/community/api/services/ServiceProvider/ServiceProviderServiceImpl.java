@@ -347,8 +347,11 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             String ipAddress = request.getRemoteAddr();
             String userAgent = request.getHeader("User-Agent");
             String tokenKey = "authTokenServiceProvider_" + serviceProvider.getMobileNumber();
-            String existingToken = (String) session.getAttribute(tokenKey);
+
+            String existingToken = serviceProvider.getToken();
+
             Map<String,Object> serviceProviderResponse= sharedUtilityService.serviceProviderDetailsMap(serviceProvider);
+
             if(existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
                 Map<String, Object> responseBody = createAuthResponse(existingToken, serviceProviderResponse).getBody();
 
@@ -357,7 +360,11 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 String newToken = jwtUtil.generateToken(serviceProvider.getService_provider_id(), serviceProvider.getRole(), ipAddress, userAgent);
                 session.setAttribute(tokenKey, newToken);
 
+                serviceProvider.setToken(newToken);
+                entityManager.persist(serviceProvider);
+
                 Map<String, Object> responseBody = createAuthResponse(newToken, serviceProviderResponse).getBody();
+
             return ResponseEntity.ok(responseBody);
 
         } }else {
@@ -367,8 +374,10 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     public ResponseEntity<?> loginWithPassword(@RequestBody Map<String, Object> serviceProviderDetails,HttpServletRequest request,HttpSession session) {
         try {
             String mobileNumber = (String) serviceProviderDetails.get("mobileNumber");
-            if(mobileNumber.startsWith("0"))
-                mobileNumber=mobileNumber.substring(1);
+            if(mobileNumber!=null) {
+                if (mobileNumber.startsWith("0"))
+                    mobileNumber = mobileNumber.substring(1);
+            }
             String username = (String) serviceProviderDetails.get("username");
             String password = (String) serviceProviderDetails.get("password");
             String countryCode = (String) serviceProviderDetails.getOrDefault("countryCode", Constant.COUNTRY_CODE);
@@ -521,8 +530,12 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 existingServiceProvider.setOtp(null);
                 entityManager.merge(existingServiceProvider);
 
-                String existingToken = (String) session.getAttribute(tokenKey);
+
+                String existingToken = existingServiceProvider.getToken();
+
+
                 Map<String,Object> serviceProviderResponse= sharedUtilityService.serviceProviderDetailsMap(existingServiceProvider);
+
                 if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
                                         Map<String, Object> responseBody = createAuthResponse(existingToken, serviceProviderResponse).getBody();
 
@@ -531,7 +544,11 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                     String newToken = jwtUtil.generateToken(existingServiceProvider.getService_provider_id(), role, ipAddress, userAgent);
                     session.setAttribute(tokenKey, newToken);
 
+                    existingServiceProvider.setToken(newToken);
+                    entityManager.persist(existingServiceProvider);
+
                     Map<String, Object> responseBody = createAuthResponse(newToken, serviceProviderResponse).getBody();
+
                     if(existingServiceProvider.getSignedUp()==0) {
                         existingServiceProvider.setSignedUp(1);
                         entityManager.merge(existingServiceProvider);
