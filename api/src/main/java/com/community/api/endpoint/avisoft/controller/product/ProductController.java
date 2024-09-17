@@ -487,7 +487,8 @@ public class ProductController extends CatalogEndpoint {
             @RequestParam(value = "title", required = false) String title,
             @RequestParam(value = "fee", required = false) Double fee,
             @RequestParam(value = "post", required = false) Integer post,
-            @RequestParam(value = "reserve_categories", required = false) List<Long> reserveCategories) {
+            @RequestParam(value = "reserve_categories", required = false) List<Long> reserveCategories)
+    {
 
         try {
             // Call the service to get filtered products

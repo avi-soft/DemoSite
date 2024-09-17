@@ -12,6 +12,7 @@ import org.broadleafcommerce.common.persistence.Status;
 import org.broadleafcommerce.core.catalog.domain.Category;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.catalog.domain.ProductImpl;
+import org.broadleafcommerce.core.catalog.domain.SkuImpl;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -215,6 +216,7 @@ public class ProductService {
         // Initialize the JPQL query
         StringBuilder jpql = new StringBuilder("SELECT DISTINCT p FROM CustomProduct p ")
                 .append("JOIN CustomProductReserveCategoryFeePostRef r ON r.customProduct = p ")
+                .append("JOIN SkuImpl s ON s.defaultProduct = p ")
                 .append("WHERE 1=1 "); // Use this to simplify appending conditions
 
         // List to hold query parameters
@@ -256,6 +258,10 @@ public class ProductService {
             jpql.append("AND r.post > :post ");
         }
 
+        if(startRange != null && endRange != null) {
+            jpql.append("AND s.activeStartDate BETWEEN :startRange AND :endRange ");
+        }
+
         // Create the query with the final JPQL string
         TypedQuery<CustomProduct> query = entityManager.createQuery(jpql.toString(), CustomProduct.class);
 
@@ -278,7 +284,13 @@ public class ProductService {
         if (post != null) {
             query.setParameter("post", post);
         }
+        if(startRange != null && endRange != null) {
+            query.setParameter("startRange", startRange);
+            query.setParameter("endRange", endRange);
+        }
 
+        System.out.println(startRange);
+        System.out.println(endRange);
         // Execute and return the result
         return query.getResultList();
     }
