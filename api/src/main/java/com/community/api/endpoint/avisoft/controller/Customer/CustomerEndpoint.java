@@ -5,6 +5,7 @@ import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.AddressDTO;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.CustomCustomer;
+import com.community.api.entity.CustomProduct;
 import com.community.api.services.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.exception.ExceptionHandlingService;
@@ -795,10 +796,66 @@ public class CustomerEndpoint {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during logout");
         }
     }
+    @Transactional
+    @PostMapping("/save-form/{customer_id}")
+    public ResponseEntity<?>saveForm(@PathVariable long customer_id,@RequestParam long product_id)
+    {
+        try{
+            CustomCustomer customer=entityManager.find(CustomCustomer.class,customer_id);
+            if(customer==null)
+            {
+                return ResponseService.generateErrorResponse("Customer not found",HttpStatus.NOT_FOUND);
+            }
+            CustomProduct product=entityManager.find(CustomProduct.class,product_id);
+            if(product==null)
+            {
+                return ResponseService.generateErrorResponse(Constant.PRODUCTNOTFOUND,HttpStatus.NOT_FOUND);
+            }
+            List<CustomProduct>savedForms=customer.getSavedForms();
+            if(savedForms.contains(product))
+                return ResponseService.generateErrorResponse("You can save a form only once",HttpStatus.UNPROCESSABLE_ENTITY);
+            savedForms.add(product);
+            customer.setSavedForms(savedForms);
+            entityManager.merge(customer);
+            Map<String,Object>responseBody=new HashMap<>();
+            Map<String,Object>formBody=sharedUtilityService.createProductResponseMap(product,null);
+            return ResponseService.generateSuccessResponse("Form Saved",formBody,HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseService.generateErrorResponse("Error saving Form : "+e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @Transactional
+    @DeleteMapping("/unsave-form/{customer_id}")
+    public ResponseEntity<?>unSaveForm(@PathVariable long customer_id,@RequestParam long product_id)
+    {
+        try{
+            CustomCustomer customer=entityManager.find(CustomCustomer.class,customer_id);
+            if(customer==null)
+            {
+                return ResponseService.generateErrorResponse("Customer not found",HttpStatus.NOT_FOUND);
+            }
+            CustomProduct product=entityManager.find(CustomProduct.class,product_id);
+            if(product==null)
+            {
+                return ResponseService.generateErrorResponse(Constant.PRODUCTNOTFOUND,HttpStatus.NOT_FOUND);
+            }
+            List<CustomProduct>savedForms=customer.getSavedForms();
+            if(savedForms.contains(product))
+                savedForms.remove(product);
+            else
+                return ResponseService.generateErrorResponse("Form not present in saved Form list",HttpStatus.UNPROCESSABLE_ENTITY);
+            customer.setSavedForms(savedForms);
+            entityManager.merge(customer);
+            Map<String,Object>responseBody=new HashMap<>();
+            Map<String,Object>formBody=sharedUtilityService.createProductResponseMap(product,null);
+            return ResponseService.generateSuccessResponse("Form Removed",formBody,HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseService.generateErrorResponse("Error removing Form : "+e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 
-
-   @GetMapping(value = "/forms/show-saved-forms")
-    public ResponseEntity<?> getSavedForms(HttpServletRequest request,@RequestParam long  customer_id) throws Exception{
+   @GetMapping(value = "/forms/show-saved-forms/{customer_id}")
+    public ResponseEntity<?> getSavedForms(HttpServletRequest request,@PathVariable long  customer_id) throws Exception{
        try {
           CustomCustomer customer=entityManager.find(CustomCustomer.class,customer_id);
           if(customer==null)
@@ -817,8 +874,8 @@ public class CustomerEndpoint {
         }
     }
 
-    @GetMapping(value = "/forms/show-filled-forms")
-    public ResponseEntity<?> getFilledFormsByUserId(HttpServletRequest request,@RequestParam long customer_id) throws Exception{
+    @GetMapping(value = "/forms/show-filled-forms/{customer_id}")
+    public ResponseEntity<?> getFilledFormsByUserId(HttpServletRequest request,@PathVariable long customer_id) throws Exception{
         try {
             CustomCustomer customer=entityManager.find(CustomCustomer.class,customer_id);
             if(customer==null)
@@ -836,8 +893,8 @@ public class CustomerEndpoint {
             return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    @GetMapping(value = "/forms/show-recommended-forms")
-    public ResponseEntity<?> getRecommendedFormsByUserId(HttpServletRequest request,@RequestParam long customer_id) throws Exception{
+    @GetMapping(value = "/forms/show-recommended-forms/{customer_id}")
+    public ResponseEntity<?> getRecommendedFormsByUserId(HttpServletRequest request,@PathVariable long customer_id) throws Exception{
         try {
             CustomCustomer customer=entityManager.find(CustomCustomer.class,customer_id);
             if(customer==null)

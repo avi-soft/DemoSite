@@ -104,7 +104,7 @@ public class AccountEndPoint {
             {
                 return ResponseService.generateErrorResponse("Invalid Request Body",HttpStatus.UNPROCESSABLE_ENTITY);
             }
-            loginDetails=sanitizerService.sanitizeInputMap(loginDetails);
+            loginDetails=sanitizerService.sanitizeInputMap(loginDetails);//@TODO-Need to sanitize this too
             String mobileNumber = (String) loginDetails.get("mobileNumber");
             //}
             if (mobileNumber != null) {

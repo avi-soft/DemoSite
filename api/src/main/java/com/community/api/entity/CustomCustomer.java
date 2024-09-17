@@ -13,6 +13,7 @@ import org.broadleafcommerce.profile.core.domain.CustomerImpl;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "CUSTOM_CUSTOMER")
@@ -69,9 +70,9 @@ public class CustomCustomer extends CustomerImpl {
     @Nullable
     @ManyToMany
     @JoinTable(
-            name = "customer_saved_forms", // The name of the join table
-            joinColumns = @JoinColumn(name = "customer_id"), // Foreign key for ServiceProvider
-            inverseJoinColumns = @JoinColumn(name = "product_id")) // Foreign key for Skill
+            name = "customer_saved_forms",
+            joinColumns = @JoinColumn(name = "customer_id"),
+            inverseJoinColumns = @JoinColumn(name = "product_id"))
     private List<CustomProduct>savedForms;
 
     @Nullable
@@ -80,4 +81,12 @@ public class CustomCustomer extends CustomerImpl {
 
     @OneToMany(mappedBy = "custom_customer", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
     private List<Document> documents;
+
+    @Nullable
+    @ManyToMany
+    @JoinTable(
+            name = "cart_recovery_log", // The name of the join table
+            joinColumns = @JoinColumn(name = "customer_id"),
+            inverseJoinColumns = @JoinColumn(name = "product_id"))
+        private List<CustomProduct> cartRecoveryLog;
 }
