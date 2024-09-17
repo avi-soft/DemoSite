@@ -75,7 +75,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(value = { RuntimeException.class })
     public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex, WebRequest request) {
+
         return generateErrorResponse("Runtime exception" , HttpStatus.INTERNAL_SERVER_ERROR,ex.getMessage());
+
     }
 
     public static ResponseEntity<ErrorResponse> generateErrorResponse(String message, HttpStatus status,String trace) {
