@@ -355,6 +355,8 @@ public class CustomerEndpoint {
                     Integer fileNameId = Integer.parseInt(entry.getKey());
                     MultipartFile file = entry.getValue();
 
+                    System.out.println(file.getOriginalFilename() + " file "+ fileNameId);
+
                     if (!DocumentStorageService.isValidFileType(file)) {
                         return ResponseEntity.badRequest().body(Map.of(
                                 "status", ApiConstants.STATUS_ERROR,
@@ -363,7 +365,7 @@ public class CustomerEndpoint {
                         ));
                     }
 
-                    DocumentType documentTypeObj = em.createQuery(
+                     DocumentType documentTypeObj = em.createQuery(
                                     "SELECT dt FROM DocumentType dt WHERE dt.document_type_id = :documentTypeId", DocumentType.class)
                             .setParameter("documentTypeId", fileNameId)
                             .getResultStream()
@@ -382,57 +384,57 @@ public class CustomerEndpoint {
                             .findFirst()
                             .orElse(null);
 
-                    if ((file.isEmpty() || file ==null) && existingDocument!=null) {
-                        if (existingDocument != null) {
-                            String filePath = existingDocument.getFilePath();
-                            if (filePath != null) {
-                                File filesobj = new File(filePath);
-                                if (filesobj.exists()) {
-                                    filesobj.delete();
-                                }
-                            }
+                                           if ((file.isEmpty() || file ==null) && existingDocument!=null) {
+                                                if (existingDocument != null) {
+                                                    String filePath = existingDocument.getFilePath();
+                                                    if (filePath != null) {
+                                                        File filesobj = new File(filePath);
+                                                        if (filesobj.exists()) {
+                                                            filesobj.delete();
+                                                        }
+                                                    }
 
-                               existingDocument.setDocumentType(null);
-                               existingDocument.setFilePath(null);
-                               existingDocument.setName(null);
+                                                       existingDocument.setDocumentType(null);
+                                                       existingDocument.setFilePath(null);
+                                                       existingDocument.setName(null);
 
 
-                            deletedDocumentMessages.add("File for document type '" + documentTypeObj.getDocument_type_name() + "' has been deleted.");
-                        }
-                        continue;
-                    }
+                                                    deletedDocumentMessages.add("File for document type '" + documentTypeObj.getDocument_type_name() + "' has been deleted.");
+                                                }
+                                                continue;
+                                            }
 
-                    // If the file is not empty and a document already exists, update the document
-                    if (existingDocument != null && (!file.isEmpty() || file !=null)) {
-                        String filePath = existingDocument.getFilePath();
-                        if (filePath != null) {
-                            File oldFile = new File(filePath);
-                            String oldFileName = oldFile.getName();
-                            String newFileName = file.getOriginalFilename();
+                                            // If the file is not empty and a document already exists, update the document
+                                            if (existingDocument != null && (!file.isEmpty() || file !=null)) {
+                                                String filePath = existingDocument.getFilePath();
+                                                if (filePath != null) {
+                                                    File oldFile = new File(filePath);
+                                                    String oldFileName = oldFile.getName();
+                                                    String newFileName = file.getOriginalFilename();
 
-                            if (!newFileName.equals(oldFileName)) {
-                                oldFile.delete();
-                                documentStorageService.updateOrCreateDocument(existingDocument, file, documentTypeObj, customerId, role);
-                            }
-                        }
-                    } else {
-                        // If the file is not empty create the document
-                        if(!file.isEmpty() || file !=null){
-                            documentStorageService.createDocument(file, documentTypeObj, customCustomer, customerId, role);
-                        }
-                    }
+                                                    if (!newFileName.equals(oldFileName)) {
+                                                        oldFile.delete();
+                                                        documentStorageService.updateOrCreateDocument(existingDocument, file, documentTypeObj, customerId, role);
+                                                    }
+                                                }
+                                            } else {
+                                                // If the file is not empty create the document
+                                                if(!file.isEmpty() || file !=null){
+                                                    documentStorageService.createDocument(file, documentTypeObj, customCustomer, customerId, role);
+                                                }
+                                            }
 
-                    ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(file, documentTypeObj.getDocument_type_name(), customerId, role);
-                    Map<String, Object> responseBody = savedResponse.getBody();
-                    if (!deletedDocumentMessages.isEmpty()) {
-                        responseData.put("deletedMessages", deletedDocumentMessages);
-                    } else if (!file.isEmpty() || file !=null && savedResponse.getStatusCode() != HttpStatus.OK ) {
-                        String status = (String) responseBody.get("status");
-                        HttpStatus httpStatus = HttpStatus.valueOf((Integer) responseBody.get("status_code"));
-                        return responseService.generateErrorResponse((String) responseBody.get("message"), httpStatus);
-                    }
+                                            ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(file, documentTypeObj.getDocument_type_name(), customerId, role);
+                                            Map<String, Object> responseBody = savedResponse.getBody();
+                                            if (!deletedDocumentMessages.isEmpty()) {
+                                                responseData.put("deletedMessages", deletedDocumentMessages);
+                                            } else if (!file.isEmpty() || file !=null && savedResponse.getStatusCode() != HttpStatus.OK ) {
+                                                String status = (String) responseBody.get("status");
+                                                HttpStatus httpStatus = HttpStatus.valueOf((Integer) responseBody.get("status_code"));
+                                                return responseService.generateErrorResponse((String) responseBody.get("message"), httpStatus);
+                                            }
 
-                    responseData.put(documentTypeObj.getDocument_type_name(), responseBody.get("data"));
+                                            responseData.put(documentTypeObj.getDocument_type_name(), responseBody.get("data"));
                 }
 
             }else{

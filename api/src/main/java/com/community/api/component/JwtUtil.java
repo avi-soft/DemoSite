@@ -151,7 +151,6 @@ public class JwtUtil {
             int role=extractRoleId(token);
             Customer existingCustomer=null;
             ServiceProviderEntity existingServiceProvider=null;
-            System.out.println(role + " role");
             if(roleService.findRoleName(role).equals(Constant.roleUser)){
                 existingCustomer = customerService.readCustomerById(id);
                 if (existingCustomer == null) {
@@ -167,7 +166,6 @@ public class JwtUtil {
             String storedIpAddress = claims.get("ipAddress", String.class);
 
 
-            System.out.println(ipAddress + " ipAddress " + storedIpAddress + " ipAddress ");
 
             return ipAddress.trim().equals(storedIpAddress != null ? storedIpAddress.trim() : "");
         } catch (ExpiredJwtException e) {
