@@ -104,8 +104,8 @@ public class ServiceProviderController {
             {
                 return ResponseService.generateErrorResponse("Invalid Request Body",HttpStatus.UNPROCESSABLE_ENTITY);
             }
-            passwordDetails=sanitizerService.sanitizeInputMap(passwordDetails);
             String password = (String) passwordDetails.get("password");
+            passwordDetails=sanitizerService.sanitizeInputMap(passwordDetails);
            // String newPassword = (String) passwordDetails.get("newPassword");
             ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, userId);
             if (serviceProvider == null)
