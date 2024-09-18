@@ -342,6 +342,8 @@ public class ProductService {
 
             if (addProductDto.getPriorityLevel() == null) {
                 addProductDto.setPriorityLevel(Constant.DEFAULT_PRIORITY_LEVEL);
+            } else if (addProductDto.getPriorityLevel() <= 0 || addProductDto.getPriorityLevel() > 5) {
+                throw new IllegalArgumentException("PRIORITY LEVEL MUST LIE BETWEEN 1-5");
             }
 
             if (addProductDto.getMetaTitle() == null || addProductDto.getMetaTitle().trim().isEmpty()) {
@@ -485,6 +487,10 @@ public class ProductService {
 
     public boolean validateReserveCategory(AddProductDto addProductDto) throws Exception {
         try {
+
+            if (addProductDto.getReservedCategory().isEmpty()) {
+                throw new IllegalArgumentException("RESERVE CATEGORY CANNOT BE EMPTY");
+            }
             Set<Long> reserveCategoryId = new HashSet<>();
 
             Date currentDate = new Date(); // Current date for comparison
@@ -575,6 +581,10 @@ public class ProductService {
             } else if (role.equals(Constant.SERVICE_PROVIDER)) {
 
                 userId = jwtTokenUtil.extractId(jwtToken);
+                if (customProduct.getCreatoRole().getRole_name().equals(role) && customProduct.getUserId().equals(userId)) {
+                    return true;
+                }
+
                 List<Privileges> privileges = privilegeService.getServiceProviderPrivilege(userId);
                 for (Privileges privilege : privileges) {
                     if (privilege.getPrivilege_name().equals(Constant.PRIVILEGE_UPDATE_PRODUCT)) {
@@ -613,6 +623,9 @@ public class ProductService {
                 customProduct.setDisplayTemplate(addProductDto.getDisplayTemplate().trim());
             }
 
+            if ((addProductDto.getPriorityLevel() != null) && (addProductDto.getPriorityLevel() <= 0 || addProductDto.getPriorityLevel() > 5)) {
+                throw new IllegalArgumentException("PRIORITY LEVEL MUST LIE BETWEEN 1-5");
+            }
             if (addProductDto.getMetaDescription() != null && !addProductDto.getMetaDescription().trim().isEmpty()) {
                 addProductDto.setMetaDescription(addProductDto.getMetaDescription().trim());
                 customProduct.setMetaDescription(addProductDto.getMetaDescription());
@@ -641,13 +654,26 @@ public class ProductService {
                 if (applicationScope == null) {
                     throw new IllegalArgumentException("NO APPLICATION SCOPE EXISTS WITH THIS ID");
                 } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE)) {
-                    if (customProduct.getNotifyingAuthority() == null && addProductDto.getNotifyingAuthority() == null) {
-                        throw new IllegalArgumentException("NOTIFYING AUTHORITY CANNOT BE NULL IF APPLICATION SCOPE IS: " + Constant.APPLICATION_SCOPE_STATE);
-                    } else if (addProductDto.getNotifyingAuthority() != null && !addProductDto.getNotifyingAuthority().trim().isEmpty()) {
+                    if (addProductDto.getNotifyingAuthority() == null || addProductDto.getDomicileRequired() == null) {
+                        throw new IllegalArgumentException("NOTIFYING AUTHORITY AND DOMICILE REQUIRED CANNOT BE NULL IF APPLICATION SCOPE IS: " + Constant.APPLICATION_SCOPE_STATE);
+                    } else if (!addProductDto.getNotifyingAuthority().trim().isEmpty()) {
                         addProductDto.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
-                        customProduct.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
+                        customProduct.setNotifyingAuthority(addProductDto.getNotifyingAuthority());
                         customProduct.setCustomApplicationScope(applicationScope);
                     }
+                } else if (applicationScope.getApplicationScope().equals(APPLICATION_SCOPE_CENTER)) {
+                    if (addProductDto.getNotifyingAuthority() != null) {
+                        throw new IllegalArgumentException("NOTIFYING AUTHORITY NOT REQUIRED IN CASE OF CENTER LEVEL APPLICATION SCOPE");
+                    }
+                    if (addProductDto.getDomicileRequired() != null && addProductDto.getDomicileRequired()) {
+                        throw new IllegalArgumentException("DOMICILE IS NOT REQUIRED IN CASE OF CENTER APPLICATION SCOPE");
+                    }
+
+                    addProductDto.setDomicileRequired(false);
+                    addProductDto.setNotifyingAuthority(null);
+                    customProduct.setNotifyingAuthority(addProductDto.getNotifyingAuthority());
+                    customProduct.setDomicileRequired(addProductDto.getDomicileRequired());
+                    customProduct.setCustomApplicationScope(applicationScope);
                 }
             }
 
@@ -892,7 +918,7 @@ public class ProductService {
                     throw new IllegalArgumentException("NO PRODUCT STATE EXIST WITH THIS ID");
                 }
 
-                if ((!customProduct.getProductState().getProductState().equals(Constant.PRODUCT_STATE_NEW) && !customProduct.getProductState().getProductState().equals(Constant.PRODUCT_STATE_MODIFIED)) || (!(productStateService.getProductStateById(addProductDto.getProductState()).getProductState().equals(PRODUCT_STATE_APPROVED) && !(productStateService.getProductStateById(addProductDto.getProductState()).getProductState().equals(PRODUCT_STATE_REJECTED))))) {
+                if ( ( !customProduct.getProductState().getProductState().equals(Constant.PRODUCT_STATE_NEW) && !customProduct.getProductState().getProductState().equals(Constant.PRODUCT_STATE_MODIFIED) ) || ( !customProductState.getProductState().equals(PRODUCT_STATE_APPROVED) && !customProductState.getProductState().equals(PRODUCT_STATE_REJECTED)) ) {
                     throw new IllegalArgumentException("PRODUCT STATE ONLY CHANGE FROM NEW/MODIFIABLE TO APPROVED OR REJECTED STATE");
                 }
 
