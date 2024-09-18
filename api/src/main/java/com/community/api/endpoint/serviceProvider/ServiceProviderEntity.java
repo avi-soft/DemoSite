@@ -162,6 +162,10 @@ public class ServiceProviderEntity  {
     private List<ResizedImage> resizedImages;
 
 
+    private String token;
+
+
 /*    @OneToMany(mappedBy = "ServiceProviderDocument", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
     private List<ServiceProviderDocument> documents;*/
+
 }
