@@ -147,11 +147,7 @@ public class DocumentStorageService {
         boolean isContentTypeValid = Arrays.asList(allowedFileTypes).contains(contentType);
 
         String fileName = file.getOriginalFilename();
-
-        System.out.println(fileName + " filename");
-
-        System.out.println(contentType + " contentType");
-
+        System.out.println(fileName + " isValidFileType1 " );
         boolean isExtensionValid = fileName != null && (fileName.endsWith(".pdf") || fileName.endsWith(".jpeg") || fileName.endsWith(".jpg") || fileName.endsWith(".png"));
 
         return isContentTypeValid && isExtensionValid;

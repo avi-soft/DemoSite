@@ -118,6 +118,10 @@ public class JwtUtil {
             if (token == null || token.isEmpty()) {
                 throw new IllegalArgumentException("Token is required");
             }
+            if (isTokenExpired(token)) {
+
+                throw new RuntimeException("Token is expired");
+            }
             return Jwts.parserBuilder()
                     .setSigningKey(secretKey)
                     .build()
@@ -151,7 +155,6 @@ public class JwtUtil {
             int role=extractRoleId(token);
             Customer existingCustomer=null;
             ServiceProviderEntity existingServiceProvider=null;
-            System.out.println(role + " role");
             if(roleService.findRoleName(role).equals(Constant.roleUser)){
                 existingCustomer = customerService.readCustomerById(id);
                 if (existingCustomer == null) {
@@ -167,7 +170,6 @@ public class JwtUtil {
             String storedIpAddress = claims.get("ipAddress", String.class);
 
 
-            System.out.println(ipAddress + " ipAddress " + storedIpAddress + " ipAddress ");
 
             return ipAddress.trim().equals(storedIpAddress != null ? storedIpAddress.trim() : "");
         } catch (ExpiredJwtException e) {
@@ -220,6 +222,10 @@ public class JwtUtil {
         try {
             if (token == null || token.isEmpty()) {
                 throw new IllegalArgumentException("Token is required");
+            }
+            if (isTokenExpired(token)) {
+
+                throw new RuntimeException("Token is expired");
             }
             return Jwts.parserBuilder()
                     .setSigningKey(secretKey)
