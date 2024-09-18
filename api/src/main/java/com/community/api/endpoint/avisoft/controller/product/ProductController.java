@@ -482,12 +482,13 @@ public class ProductController extends CatalogEndpoint {
 
         try {
             // Call the service to get filtered products
+            System.out.println("C1");
             List<CustomProduct> products = productService.filterProducts(state, categories, reserveCategories, title, fee, post, dateFrom, dateTo);
 
             if (products.isEmpty()) {
                 return ResponseService.generateErrorResponse("NO PRODUCTS FOUND WITH THE GIVEN CRITERIA", HttpStatus.NOT_FOUND);
             }
-
+            System.out.println("C2");
             List<CustomProductWrapper> responses = new ArrayList<>();
             for (CustomProduct customProduct : products) {
 
@@ -500,7 +501,6 @@ public class ProductController extends CatalogEndpoint {
 
                         responses.add(wrapper);
                     }
-
                 }
             }
 
