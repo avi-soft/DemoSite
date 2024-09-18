@@ -131,7 +131,7 @@ public class ProductController extends CatalogEndpoint {
             Product product = catalogService.createProduct(ProductType.PRODUCT);
 
             product.setMetaTitle(addProductDto.getMetaTitle()); // Also adding the same metaTitle in the sku.name as this will generate the auto-url.
-            product.setDisplayTemplate(addProductDto.getMetaTitle());
+            product.setDisplayTemplate(addProductDto.getDisplayTemplate());
             product.setMetaDescription(addProductDto.getMetaDescription());
 
             product.setDefaultCategory(category); // This is Deprecated.
