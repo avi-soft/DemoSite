@@ -109,16 +109,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean isApiKeyRequiredUri(HttpServletRequest request) {
-     /*   String requestURI = request.getRequestURI();
-        String path = requestURI.split("\\?")[0].trim();
-
-        List<String> bypassUris = Arrays.asList(
-                "/api/v1/category-custom/get-products-by-category-id/**",
-                "/api/v1/category-custom/get-all-categories"
-        );
-
-        boolean isBypassed = bypassUris.stream().anyMatch(path::equals);
-        return isBypassed;*/
 
         String requestURI = request.getRequestURI();
         String path = requestURI.split("\\?")[0].trim();

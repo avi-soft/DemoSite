@@ -12,6 +12,7 @@ import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
@@ -136,6 +137,7 @@ public class JwtUtil {
         }
     }
 
+    @Transactional
     public Boolean validateToken(String token, String ipAddress, String userAgent) {
 
         try {
@@ -149,9 +151,9 @@ public class JwtUtil {
                     .parseClaimsJws(token)
                     .getBody();
             String tokenId = claims.getId();
-            /*if (tokenBlacklist.isTokenBlacklisted(tokenId)) {
+            if (tokenBlacklist.isTokenBlacklisted(tokenId)) {
                 return false;
-            }*/
+            }
             int role=extractRoleId(token);
             Customer existingCustomer=null;
             ServiceProviderEntity existingServiceProvider=null;
@@ -174,6 +176,7 @@ public class JwtUtil {
             return ipAddress.trim().equals(storedIpAddress != null ? storedIpAddress.trim() : "");
         } catch (ExpiredJwtException e) {
             exceptionHandling.handleException(e);
+            logoutUser(token);
             return false;
         } catch (MalformedJwtException | IllegalArgumentException e) {
             exceptionHandling.handleException(e);
@@ -197,6 +200,10 @@ public class JwtUtil {
                     .getExpiration();
 
             return expiration.before(new Date());
+        }catch (ExpiredJwtException e) {
+            exceptionHandling.handleException(e);
+            logoutUser(token);
+            return false;
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             throw new RuntimeException("Error checking token expiration", e);
@@ -206,7 +213,7 @@ public class JwtUtil {
     public boolean logoutUser(String token) {
         try {
             if (token == null || token.trim().isEmpty()) {
-                return false; // or handle accordingly, maybe log this case
+                throw new IllegalArgumentException("Token is required");
             }
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
@@ -220,7 +227,6 @@ public class JwtUtil {
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return false;
-
         }
     }
 

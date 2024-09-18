@@ -317,7 +317,6 @@ public class CustomerEndpoint {
     }
 
 
-    @Transactional
     @PostMapping("/upload-documents")
     public ResponseEntity<?> updateDocuments(
             @RequestParam Long customerId,
@@ -350,6 +349,7 @@ public class CustomerEndpoint {
                 }
 
                 Map<String, Object> responseData = new HashMap<>();
+                List<Map<String, Object>> documentResponses = new ArrayList<>();
                 List<String> deletedDocumentMessages = new ArrayList<>();
 
 
@@ -362,6 +362,14 @@ public class CustomerEndpoint {
                                 "status", ApiConstants.STATUS_ERROR,
                                 "status_code", HttpStatus.BAD_REQUEST.value(),
                                 "message", "Invalid file type: " + file.getOriginalFilename()
+                        ));
+                    }
+
+                    if (file.getSize() > Constant.MAX_FILE_SIZE) {
+                        return ResponseEntity.badRequest().body(Map.of(
+                                "status", ApiConstants.STATUS_ERROR,
+                                "status_code", HttpStatus.BAD_REQUEST.value(),
+                                "message", "File size exceeds the maximum allowed size: " + file.getOriginalFilename()
                         ));
                     }
 
@@ -384,7 +392,7 @@ public class CustomerEndpoint {
                             .findFirst()
                             .orElse(null);
 
-/*                    if ((file.isEmpty() || file == null) && existingDocument != null) {
+                    if ((file.isEmpty() || file == null) && existingDocument != null) {
                         if (existingDocument != null) {
                             String filePath = existingDocument.getFilePath();
                             System.out.println(filePath + " filePath");
@@ -423,21 +431,39 @@ public class CustomerEndpoint {
                         if (!file.isEmpty() || file != null) {
                             documentStorageService.createDocument(file, documentTypeObj, customCustomer, customerId, role);
                         }
-                    }*/
+                    }
 
-                  /*  ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(file, documentTypeObj.getDocument_type_name(), customerId, role);
-                    Map<String, Object> responseBody = savedResponse.getBody();*/
-                    /*if (!deletedDocumentMessages.isEmpty()) {
-                        responseData.put("deletedMessages", deletedDocumentMessages);
-                    } else if (!file.isEmpty() || file != null && savedResponse.getStatusCode() != HttpStatus.OK) {
-                        String status = (String) responseBody.get("status");
-                        HttpStatus httpStatus = HttpStatus.valueOf((Integer) responseBody.get("status_code"));
-                        return responseService.generateErrorResponse((String) responseBody.get("message"), httpStatus);
-                    }*/
 
-//                    responseData.put(documentTypeObj.getDocument_type_name(), responseBody.get("data"));
+                    try {
+                        ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(file, documentTypeObj.getDocument_type_name(), customerId, role);
+                        Map<String, Object> responseBody = savedResponse.getBody();
+                        if (!file.isEmpty() || file != null && savedResponse.getStatusCode() != HttpStatus.OK) {
+                            String status = (String) responseBody.get("status");
+                            HttpStatus httpStatus = HttpStatus.valueOf((Integer) responseBody.get("status_code"));
+                            return responseService.generateErrorResponse((String) responseBody.get("message"), httpStatus);
+                        } else {
+                            Map<String, Object> documentResponse = new HashMap<>();
+                            documentResponse.put(documentTypeObj.getDocument_type_name(), responseBody.get("data"));
+                            documentResponses.add(documentResponse);
+                        }
+                    } catch (RuntimeException e) {
+                        exceptionHandling.handleException(e);
+
+                        return responseService.generateErrorResponse("Error updating documents: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+                    } catch (Exception e) {
+                        exceptionHandling.handleException(e);
+                        return responseService.generateErrorResponse("Error updating documents: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+                    }
+
+
                 }
 
+                if (!deletedDocumentMessages.isEmpty()) {
+                    responseData.put("deletedMessages", deletedDocumentMessages);
+                }
+                responseData.put("documents", documentResponses);
+
+                return responseService.generateSuccessResponse("Documents updated successfully", responseData, HttpStatus.OK);
 
             } else {
                 ServiceProviderEntity serviceProviderEntity = em.find(ServiceProviderEntity.class, customerId);
@@ -446,6 +472,7 @@ public class CustomerEndpoint {
                 }
 
                 Map<String, Object> responseData = new HashMap<>();
+                List<Map<String, Object>> documentResponses = new ArrayList<>();
                 List<String> deletedDocumentMessages = new ArrayList<>();
 
                 // Handle file uploads and deletions
@@ -458,7 +485,15 @@ public class CustomerEndpoint {
                         return ResponseEntity.badRequest().body(Map.of(
                                 "status", ApiConstants.STATUS_ERROR,
                                 "status_code", HttpStatus.BAD_REQUEST.value(),
-                                "message", "Invalid file type: "
+                                "message", "Invalid file type: " + file.getOriginalFilename()
+                        ));
+                    }
+
+                    if (file.getSize() > Constant.MAX_FILE_SIZE) {
+                        return ResponseEntity.badRequest().body(Map.of(
+                                "status", ApiConstants.STATUS_ERROR,
+                                "status_code", HttpStatus.BAD_REQUEST.value(),
+                                "message", "File size exceeds the maximum allowed size: " + file.getOriginalFilename()
                         ));
                     }
 
@@ -521,34 +556,42 @@ public class CustomerEndpoint {
                         }
                     }
 
-                    ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(file, documentTypeObj.getDocument_type_name(), customerId, role);
-                    Map<String, Object> responseBody = savedResponse.getBody();
-                    if (!deletedDocumentMessages.isEmpty()) {
-                        responseData.put("deletedMessages", deletedDocumentMessages);
-                    } else if (!file.isEmpty() || file != null && savedResponse.getStatusCode() != HttpStatus.OK) {
-                        String status = (String) responseBody.get("status");
-                        HttpStatus httpStatus = HttpStatus.valueOf((Integer) responseBody.get("status_code"));
-                        return responseService.generateErrorResponse((String) responseBody.get("message"), httpStatus);
+                    try {
+                        ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(file, documentTypeObj.getDocument_type_name(), customerId, role);
+                        Map<String, Object> responseBody = savedResponse.getBody();
+                        if (!deletedDocumentMessages.isEmpty()) {
+                            responseData.put("deletedMessages", deletedDocumentMessages);
+                        } else if (!file.isEmpty() || file != null && savedResponse.getStatusCode() != HttpStatus.OK) {
+                            String status = (String) responseBody.get("status");
+                            HttpStatus httpStatus = HttpStatus.valueOf((Integer) responseBody.get("status_code"));
+                            return responseService.generateErrorResponse((String) responseBody.get("message"), httpStatus);
+                        }
+                        Map<String, Object> documentResponse = new HashMap<>();
+                        documentResponse.put(documentTypeObj.getDocument_type_name(), responseBody.get("data"));
+                        documentResponses.add(documentResponse);
+                    } catch (RuntimeException e) {
+                        exceptionHandling.handleException(e);
+
+                        return responseService.generateErrorResponse("Error updating documents: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+                    } catch (Exception e) {
+                        exceptionHandling.handleException(e);
+                        return responseService.generateErrorResponse("Error updating documents: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
                     }
 
-                    responseData.put(documentTypeObj.getDocument_type_name(), responseBody.get("data"));
+                    responseData.put("documents", documentResponses);
                 }
                 return responseService.generateSuccessResponse("Documents updated successfully", responseData, HttpStatus.OK);
             }
 
 
-//            return responseService.generateSuccessResponse("Invalid request", null, HttpStatus.BAD_REQUEST);
-
-        }catch(RuntimeException e) {
+        } catch (RuntimeException e) {
             exceptionHandling.handleException(e);
 
             return responseService.generateErrorResponse("Error updating documents: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Error updating documents: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return null;
     }
 
 

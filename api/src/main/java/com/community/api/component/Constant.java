@@ -2,7 +2,7 @@ package com.community.api.component;
 
 public class Constant {
 
-    public static final long MAX_FILE_SIZE = 2 * 1024 * 1024;
+    public static final long MAX_FILE_SIZE = 1 * 1024 * 1024;
     public static String COUNTRY_CODE = "+91";
     public static String PHONE_QUERY = "SELECT c FROM CustomCustomer c WHERE c.mobileNumber = :mobileNumber AND c.countryCode = :countryCode";
     public static String PHONE_QUERY_OTP = "SELECT c FROM CustomCustomer c WHERE c.mobileNumber = :mobileNumber AND c.countryCode = :countryCode AND c.otp=:otp";
@@ -73,6 +73,7 @@ public class Constant {
     public static String GET_ROLE_BY_ROLE_ID = "SELECT r FROM Role r WHERE r.role_id = :roleId";
     public static String PRIVILEGE_ADD_PRODUCT = "ADD_PRODUCT";
     public static String PRIVILEGE_ADD_DOCUMENT_TYPE = "ADD_DOCUMENT_TYPE";
+    public static String PRIVILEGE_TICKET = "PRIVILEGE_TICKET";
     public static String GET_PRODUCT_RESERVECATEGORY_BORNBEFORE_BORNAFTER = "SELECT c FROM CustomProductReserveCategoryBornBeforeAfterRef c WHERE c.customProduct = :customProduct";
     public static String GET_PRODUCT_RESERVECATEGORY_FEE_POST = "SELECT c FROM CustomProductReserveCategoryFeePostRef c WHERE c.customProduct = :customProduct";
     public static String ADD_PRODUCT_RESERVECATEOGRY_BORNBEFORE_BORNAFTER = "INSERT INTO custom_product_reserve_category_born_before_after_reference (product_id, reserve_category_id, born_before, born_after) VALUES (:productId, :reserveCategoryId, :bornBefore, :bornAfter)";
