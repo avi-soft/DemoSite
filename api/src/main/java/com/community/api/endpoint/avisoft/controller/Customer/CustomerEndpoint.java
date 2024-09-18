@@ -1,4 +1,5 @@
 package com.community.api.endpoint.avisoft.controller.Customer;
+
 import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
@@ -28,6 +29,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
@@ -38,12 +40,7 @@ import java.lang.reflect.Field;
 import java.util.*;
 
 @RestController
-@RequestMapping(value = "/customer",
-        produces = {
-                MediaType.APPLICATION_JSON_VALUE,
-                MediaType.APPLICATION_XML_VALUE
-        }
-)
+@RequestMapping(value = "/customer", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
 
 public class CustomerEndpoint {
 
@@ -63,10 +60,10 @@ public class CustomerEndpoint {
     private ExceptionHandlingService exceptionHandlingService;
 
     @Autowired
-    private  JwtUtil jwtTokenUtil;
+    private JwtUtil jwtTokenUtil;
 
     @Autowired
-    private  RoleService roleService;
+    private RoleService roleService;
 
 
     @Autowired
@@ -105,8 +102,9 @@ public class CustomerEndpoint {
     public void setCustomCustomerService(CustomCustomerService customCustomerService) {
         this.customCustomerService = customCustomerService;
     }
+
     @Autowired
-    private  SharedUtilityService sharedUtilityService;
+    private SharedUtilityService sharedUtilityService;
 
     @Autowired
     public void setAddressService(AddressService addressService) {
@@ -116,7 +114,7 @@ public class CustomerEndpoint {
     @Autowired
     public void setCustomerAddressService(CustomerAddressService customerAddressService) {
         this.customerAddressService = customerAddressService;
-        this.jwtUtil= jwtUtil;
+        this.jwtUtil = jwtUtil;
     }
 
     @Autowired
@@ -128,14 +126,14 @@ public class CustomerEndpoint {
     public ResponseEntity<?> retrieveCustomerById(@RequestParam Long customerId) {
         try {
             if (customerService == null) {
-                return ResponseService.generateErrorResponse("Customer Service Not Initialized",HttpStatus.INTERNAL_SERVER_ERROR);
+                return ResponseService.generateErrorResponse("Customer Service Not Initialized", HttpStatus.INTERNAL_SERVER_ERROR);
             }
             Customer customer = customerService.readCustomerById(customerId);
             if (customer == null) {
-                return ResponseService.generateErrorResponse("Customer with this ID does not exist" , HttpStatus.NOT_FOUND);
+                return ResponseService.generateErrorResponse("Customer with this ID does not exist", HttpStatus.NOT_FOUND);
 
             } else {
-                return ResponseService.generateSuccessResponse("Customer with this ID is found "+customerId,customer , HttpStatus.OK);
+                return ResponseService.generateSuccessResponse("Customer with this ID is found " + customerId, customer, HttpStatus.OK);
 
             }
         } catch (Exception e) {
@@ -151,16 +149,16 @@ public class CustomerEndpoint {
 
         try {
             if (customerService == null) {
-                return ResponseService.generateErrorResponse("Customer service is not initialized.",HttpStatus.INTERNAL_SERVER_ERROR);
+                return ResponseService.generateErrorResponse("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
             if (customCustomer == null) {
-                return ResponseService.generateErrorResponse("No data found for this customerId",HttpStatus.NOT_FOUND);
+                return ResponseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
 
             }
             if (customerDetails.getMobileNumber() != null) {
-                if (customCustomerService.isValidMobileNumber(customerDetails.getMobileNumber()) == false){
+                if (customCustomerService.isValidMobileNumber(customerDetails.getMobileNumber()) == false) {
                     return ResponseService.generateErrorResponse("Cannot update phoneNumber", HttpStatus.INTERNAL_SERVER_ERROR);
 
                 }
@@ -201,12 +199,12 @@ public class CustomerEndpoint {
                 customer.setFirstName(customerDetails.getFirstName());
                 customer.setLastName(customerDetails.getLastName());
             }
-            if(customerDetails.getEmailAddress()!=null){
+            if (customerDetails.getEmailAddress() != null) {
                 customer.setEmailAddress(customerDetails.getEmailAddress());
             }
 
             em.merge(customCustomer);
-            return ResponseService.generateSuccessResponse("User details updated successfully : ",customer, HttpStatus.OK);
+            return ResponseService.generateSuccessResponse("User details updated successfully : ", sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK);
 
         } catch (Exception e) {
             exceptionHandling.handleException(e);
@@ -225,8 +223,8 @@ public class CustomerEndpoint {
             }
             CustomerImpl customer = em.find(CustomerImpl.class, customerId);  // Assuming you retrieve the base Customer entity
             Map<String, Object> customerDetails = sharedUtilityService.breakReferenceForCustomer(customer);
-            customerDetails.put("qualificationDetails",customCustomer.getQualificationDetailsList());
-            customerDetails.put("documents",customCustomer.getDocuments());
+            customerDetails.put("qualificationDetails", customCustomer.getQualificationDetailsList());
+            customerDetails.put("documents", customCustomer.getDocuments());
             return ResponseService.generateSuccessResponse("User details retrieved successfully", customerDetails, HttpStatus.OK);
 
 
@@ -238,11 +236,7 @@ public class CustomerEndpoint {
 
     @Transactional
     @PostMapping("/upload-document")
-    public ResponseEntity<?> updateDocument(
-            @RequestParam Long customerId,
-            @RequestPart(value = "Aadhaar Card", required = false) MultipartFile aadharCard,
-            @RequestPart(value = "PAN Card", required = false) MultipartFile panCard,
-            @RequestPart(value = "Passport Size Photo", required = false) MultipartFile photo) {
+    public ResponseEntity<?> updateDocument(@RequestParam Long customerId, @RequestPart(value = "Aadhaar Card", required = false) MultipartFile aadharCard, @RequestPart(value = "PAN Card", required = false) MultipartFile panCard, @RequestPart(value = "Passport Size Photo", required = false) MultipartFile photo) {
         try {
             if (customerService == null) {
                 return ResponseService.generateErrorResponse("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -278,25 +272,12 @@ public class CustomerEndpoint {
                 }
 
                 // Find or create DocumentType
-                DocumentType documentTypeObj = em.createQuery(
-                                "SELECT dt FROM DocumentType dt WHERE dt.document_type_name = :documentTypeName", DocumentType.class)
-                        .setParameter("documentTypeName", documentType.trim())
-                        .getResultStream()
-                        .findFirst()
-                        .orElseGet(null);
+                DocumentType documentTypeObj = em.createQuery("SELECT dt FROM DocumentType dt WHERE dt.document_type_name = :documentTypeName", DocumentType.class).setParameter("documentTypeName", documentType.trim()).getResultStream().findFirst().orElseGet(null);
 
                 String fileName = file.getOriginalFilename();
                 Document doc = new Document();
                 doc.setName(fileName);
-                String filePath = "avisoft"
-                        + File.separator
-                        + "customer"
-                        + File.separator
-                        + customerId
-                        + File.separator
-                        + documentType
-                        + File.separator
-                        + fileName;
+                String filePath = "avisoft" + File.separator + "customer" + File.separator + customerId + File.separator + documentType + File.separator + fileName;
                 doc.setFilePath(filePath);
 //                doc.setData(file.getBytes());
                 doc.setCustom_customer(customCustomer);
@@ -316,10 +297,7 @@ public class CustomerEndpoint {
 
     @Transactional
     @PostMapping("/upload-documents")
-    public ResponseEntity<?> updateDocuments(
-            @RequestParam Long customerId,
-            @RequestParam Map<String, MultipartFile> files,
-            @RequestHeader(value = "Authorization") String authHeader) {
+    public ResponseEntity<?> updateDocuments(@RequestParam Long customerId, @RequestParam Map<String, MultipartFile> files, @RequestHeader(value = "Authorization") String authHeader) {
         try {
 
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
@@ -335,7 +313,7 @@ public class CustomerEndpoint {
                 return ResponseService.generateErrorResponse("Unauthorized request.", HttpStatus.UNAUTHORIZED);
             }
 
-            if(files.size()==0){
+            if (files.size() == 0) {
                 return ResponseService.generateErrorResponse("Invalid request.", HttpStatus.BAD_REQUEST);
 
             }
@@ -355,100 +333,76 @@ public class CustomerEndpoint {
                     Integer fileNameId = Integer.parseInt(entry.getKey());
                     MultipartFile file = entry.getValue();
 
-                    System.out.println(file.getOriginalFilename() + " file "+ fileNameId);
+                    System.out.println(file.getOriginalFilename() + " file " + fileNameId);
 
                     if (!DocumentStorageService.isValidFileType(file)) {
-                        return ResponseEntity.badRequest().body(Map.of(
-                                "status", ApiConstants.STATUS_ERROR,
-                                "status_code", HttpStatus.BAD_REQUEST.value(),
-                                "message", "Invalid file type: "
-                        ));
+                        return ResponseEntity.badRequest().body(Map.of("status", ApiConstants.STATUS_ERROR, "status_code", HttpStatus.BAD_REQUEST.value(), "message", "Invalid file type: "));
                     }
 
-                     DocumentType documentTypeObj = em.createQuery(
-                                    "SELECT dt FROM DocumentType dt WHERE dt.document_type_id = :documentTypeId", DocumentType.class)
-                            .setParameter("documentTypeId", fileNameId)
-                            .getResultStream()
-                            .findFirst()
-                            .orElse(null);
 
-                    if (documentTypeObj == null) {
+                    DocumentType documentTypeObj = em.createQuery("SELECT dt FROM DocumentType dt WHERE dt.document_type_id = :documentTypeId", DocumentType.class).setParameter("documentTypeId", fileNameId).getResultStream().findFirst().orElse(null);
+
+                   if (documentTypeObj == null) {
                         return ResponseService.generateErrorResponse("Unknown document type for file: " + fileNameId, HttpStatus.BAD_REQUEST);
                     }
 
-                    Document existingDocument = em.createQuery(
-                                    "SELECT d FROM Document d WHERE d.custom_customer = :customCustomer AND d.documentType = :documentType", Document.class)
-                            .setParameter("customCustomer", customCustomer)
-                            .setParameter("documentType", documentTypeObj)
-                            .getResultStream()
-                            .findFirst()
-                            .orElse(null);
+                    Document existingDocument = em.createQuery("SELECT d FROM Document d WHERE d.custom_customer = :customCustomer AND d.documentType = :documentType", Document.class).setParameter("customCustomer", customCustomer).setParameter("documentType", documentTypeObj).getResultStream().findFirst().orElse(null);
 
-                                           if ((file.isEmpty() || file ==null) && existingDocument!=null) {
-                                                if (existingDocument != null) {
-                                                    String filePath = existingDocument.getFilePath();
-                                                    if (filePath != null) {
-                                                        File filesobj = new File(filePath);
-                                                        if (filesobj.exists()) {
-                                                            filesobj.delete();
-                                                        }
-                                                    }
+                    if ((file.isEmpty() || file == null) && existingDocument != null) {
+                        if (existingDocument != null) {
+                            String filePath = existingDocument.getFilePath();
+                            if (filePath != null) {
+                                File filesobj = new File(filePath);
+                                if (filesobj.exists()) {
+                                    filesobj.delete();
+                                }
+                            }
 
-                                                       existingDocument.setDocumentType(null);
-                                                       existingDocument.setFilePath(null);
-                                                       existingDocument.setName(null);
+                            existingDocument.setDocumentType(null);
+                            existingDocument.setFilePath(null);
+                            existingDocument.setName(null);
 
 
-                                                    deletedDocumentMessages.add("File for document type '" + documentTypeObj.getDocument_type_name() + "' has been deleted.");
-                                                }
-                                                continue;
-                                            }
+                            deletedDocumentMessages.add("File for document type '" + documentTypeObj.getDocument_type_name() + "' has been deleted.");
+                        }
+                        continue;
+                    }
 
-                                            // If the file is not empty and a document already exists, update the document
-                                            if (existingDocument != null && (!file.isEmpty() || file !=null)) {
-                                                String filePath = existingDocument.getFilePath();
-                                                if (filePath != null) {
-                                                    File oldFile = new File(filePath);
-                                                    String oldFileName = oldFile.getName();
-                                                    String newFileName = file.getOriginalFilename();
+                    // If the file is not empty and a document already exists, update the document
+                   if (existingDocument != null && (!file.isEmpty() || file != null)) {
+                        String filePath = existingDocument.getFilePath();
+                        if (filePath != null) {
+                            File oldFile = new File(filePath);
+                            String oldFileName = oldFile.getName();
+                            String newFileName = file.getOriginalFilename();
 
-                                                    if (!newFileName.equals(oldFileName)) {
-                                                        oldFile.delete();
-                                                        documentStorageService.updateOrCreateDocument(existingDocument, file, documentTypeObj, customerId, role);
-                                                    }
-                                                }
-                                            } else {
-                                                // If the file is not empty create the document
-                                                if(!file.isEmpty() || file !=null){
-                                                    documentStorageService.createDocument(file, documentTypeObj, customCustomer, customerId, role);
-                                                }
-                                            }
+                            if (!newFileName.equals(oldFileName)) {
+                                oldFile.delete();
+                                documentStorageService.updateOrCreateDocument(existingDocument, file, documentTypeObj, customerId, role);
+                            }
+                        }
+                    } else {
+                        // If the file is not empty create the document
+                        if (!file.isEmpty() || file != null) {
+                            documentStorageService.createDocument(file, documentTypeObj, customCustomer, customerId, role);
+                        }
+                    }
 
-                                            ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(file, documentTypeObj.getDocument_type_name(), customerId, role);
-                                            Map<String, Object> responseBody = savedResponse.getBody();
-                                            if (!deletedDocumentMessages.isEmpty()) {
-                                                responseData.put("deletedMessages", deletedDocumentMessages);
-                                            } else if (!file.isEmpty() || file !=null && savedResponse.getStatusCode() != HttpStatus.OK ) {
-                                                String status = (String) responseBody.get("status");
-                                                HttpStatus httpStatus = HttpStatus.valueOf((Integer) responseBody.get("status_code"));
-                                                return responseService.generateErrorResponse((String) responseBody.get("message"), httpStatus);
-                                            }
-/*=======
-                    ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(file, documentTypeObj.getDocument_type_name(), customerId, role);
+                   ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(file, documentTypeObj.getDocument_type_name(), customerId, role);
                     Map<String, Object> responseBody = savedResponse.getBody();
                     if (!deletedDocumentMessages.isEmpty()) {
                         responseData.put("deletedMessages", deletedDocumentMessages);
-                    } else if (!file.isEmpty() || file !=null && savedResponse.getStatusCode() != HttpStatus.OK ) {
+                    } else if (!file.isEmpty() || file != null && savedResponse.getStatusCode() != HttpStatus.OK) {
                         String status = (String) responseBody.get("status");
                         HttpStatus httpStatus = HttpStatus.valueOf((Integer) responseBody.get("status_code"));
-                        return ResponseService.generateErrorResponse((String) responseBody.get("message"), httpStatus);
+                        return responseService.generateErrorResponse((String) responseBody.get("message"), httpStatus);
                     }
->>>>>>> 251546c7dc65bb6b5e3df22f325c00643ec8001e*/
 
-                                            responseData.put(documentTypeObj.getDocument_type_name(), responseBody.get("data"));
+
+                    responseData.put(documentTypeObj.getDocument_type_name(), responseBody.get("data"));
                 }
 
-            }else{
+            } else {
                 ServiceProviderEntity serviceProviderEntity = em.find(ServiceProviderEntity.class, customerId);
                 if (serviceProviderEntity == null) {
                     return ResponseService.generateErrorResponse("No data found for this serviceProvider", HttpStatus.NOT_FOUND);
@@ -464,33 +418,18 @@ public class CustomerEndpoint {
 
 
                     if (!DocumentStorageService.isValidFileType(file)) {
-                        return ResponseEntity.badRequest().body(Map.of(
-                                "status", ApiConstants.STATUS_ERROR,
-                                "status_code", HttpStatus.BAD_REQUEST.value(),
-                                "message", "Invalid file type: "
-                        ));
+                        return ResponseEntity.badRequest().body(Map.of("status", ApiConstants.STATUS_ERROR, "status_code", HttpStatus.BAD_REQUEST.value(), "message", "Invalid file type: "));
                     }
 
-                    DocumentType documentTypeObj = em.createQuery(
-                                    "SELECT dt FROM DocumentType dt WHERE dt.document_type_id = :documentTypeId", DocumentType.class)
-                            .setParameter("documentTypeId", fileNameId)
-                            .getResultStream()
-                            .findFirst()
-                            .orElse(null);
+                    DocumentType documentTypeObj = em.createQuery("SELECT dt FROM DocumentType dt WHERE dt.document_type_id = :documentTypeId", DocumentType.class).setParameter("documentTypeId", fileNameId).getResultStream().findFirst().orElse(null);
 
                     if (documentTypeObj == null) {
                         return ResponseService.generateErrorResponse("Unknown document type for file: " + fileNameId, HttpStatus.BAD_REQUEST);
                     }
 
-                    ServiceProviderDocument existingDocument = em.createQuery(
-                                    "SELECT d FROM ServiceProviderDocument d WHERE d.serviceProviderEntity = :serviceProviderEntity AND d.documentType = :documentType", ServiceProviderDocument.class)
-                            .setParameter("serviceProviderEntity", serviceProviderEntity)
-                            .setParameter("documentType", documentTypeObj)
-                            .getResultStream()
-                            .findFirst()
-                            .orElse(null);
+                    ServiceProviderDocument existingDocument = em.createQuery("SELECT d FROM ServiceProviderDocument d WHERE d.serviceProviderEntity = :serviceProviderEntity AND d.documentType = :documentType", ServiceProviderDocument.class).setParameter("serviceProviderEntity", serviceProviderEntity).setParameter("documentType", documentTypeObj).getResultStream().findFirst().orElse(null);
 
-                    if ((file.isEmpty() || file ==null) && existingDocument!=null) {
+                    if ((file.isEmpty() || file == null) && existingDocument != null) {
                         if (existingDocument != null) {
 
                             String filePath = existingDocument.getFilePath();
@@ -501,9 +440,9 @@ public class CustomerEndpoint {
                                 }
                             }
                             existingDocument.setDocumentType(null);
-                        existingDocument.setName(null);
-                        existingDocument.setFilePath(null);
-                        em.persist(existingDocument);
+                            existingDocument.setName(null);
+                            existingDocument.setFilePath(null);
+                            em.persist(existingDocument);
 
                             deletedDocumentMessages.add("File for document type '" + documentTypeObj.getDocument_type_name() + "' has been deleted.");
                         }
@@ -511,7 +450,7 @@ public class CustomerEndpoint {
                     }
 
                     // If the file is not empty and a document already exists, update the document
-                    if (existingDocument != null && (!file.isEmpty() || file !=null)) {
+                    if (existingDocument != null && (!file.isEmpty() || file != null)) {
                         String filePath = existingDocument.getFilePath();
                         if (filePath != null) {
                             File oldFile = new File(filePath);
@@ -525,7 +464,7 @@ public class CustomerEndpoint {
                         }
                     } else {
                         // If the file is not empty create the document
-                        if(!file.isEmpty() || file !=null){
+                        if (!file.isEmpty() || file != null) {
                             documentStorageService.createDocumentServiceProvider(file, documentTypeObj, serviceProviderEntity, customerId, role);
                         }
                     }
@@ -534,7 +473,7 @@ public class CustomerEndpoint {
                     Map<String, Object> responseBody = savedResponse.getBody();
                     if (!deletedDocumentMessages.isEmpty()) {
                         responseData.put("deletedMessages", deletedDocumentMessages);
-                    } else if (!file.isEmpty() || file !=null && savedResponse.getStatusCode() != HttpStatus.OK ) {
+                    } else if (!file.isEmpty() || file != null && savedResponse.getStatusCode() != HttpStatus.OK) {
                         String status = (String) responseBody.get("status");
                         HttpStatus httpStatus = HttpStatus.valueOf((Integer) responseBody.get("status_code"));
                         return ResponseService.generateErrorResponse((String) responseBody.get("message"), httpStatus);
@@ -555,8 +494,6 @@ public class CustomerEndpoint {
     }
 
 
-
-
     @Transactional
     @RequestMapping(value = "update-username", method = RequestMethod.POST)
     public ResponseEntity<?> updateCustomerUsername(@RequestBody Map<String, Object> updates, @RequestParam Long customerId) {
@@ -574,7 +511,7 @@ public class CustomerEndpoint {
             Customer existingCustomerByUsername = null;
             if (username != null) {
                 existingCustomerByUsername = customerService.readCustomerByUsername(username);
-            } else{
+            } else {
                 return ResponseService.generateErrorResponse("username Empty", HttpStatus.BAD_REQUEST);
 
             }
@@ -585,7 +522,7 @@ public class CustomerEndpoint {
             } else {
                 customer.setUsername(username);
                 em.merge(customer);
-                return ResponseService.generateSuccessResponse("User name  updated successfully : ",customer, HttpStatus.OK);
+                return ResponseService.generateSuccessResponse("User name  updated successfully : ",sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK);
 
             }
         } catch (Exception exception) {
@@ -597,18 +534,18 @@ public class CustomerEndpoint {
 
     @Transactional
     @RequestMapping(value = "create-or-update-password", method = RequestMethod.POST)
-    public ResponseEntity<?> updateCustomerPassword(@RequestBody Map<String,Object>details, @RequestParam Long customerId) {
+    public ResponseEntity<?> updateCustomerPassword(@RequestBody Map<String, Object> details, @RequestParam Long customerId) {
         try {
             if (customerService == null) {
-                return ResponseService.generateErrorResponse("Customer service is not initialized.",HttpStatus.INTERNAL_SERVER_ERROR);
+                return ResponseService.generateErrorResponse("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
 
             }
-            String password=(String) details.get("password");
+            String password = (String) details.get("password");
             Customer customer = customerService.readCustomerById(customerId);
             if (customer == null) {
                 return ResponseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
             }
-            if(password!=null) {
+            if (password != null) {
                 if (customer.getPassword() == null || customer.getPassword().isEmpty()) {
                     customer.setPassword(passwordEncoder.encode(password));
                     em.merge(customer);
@@ -627,8 +564,8 @@ public class CustomerEndpoint {
                     return new ResponseEntity<>("The old password you provided is incorrect. Please try again with the correct old password", HttpStatus.BAD_REQUEST);
             }*/
                 }
-                return ResponseService.generateErrorResponse("Old Password and new Password cannot be same",HttpStatus.BAD_REQUEST);
-            }else {
+                return ResponseService.generateErrorResponse("Old Password and new Password cannot be same", HttpStatus.BAD_REQUEST);
+            } else {
                 return ResponseService.generateErrorResponse("Empty Password", HttpStatus.BAD_REQUEST);
             }
         } catch (Exception exception) {
@@ -648,7 +585,7 @@ public class CustomerEndpoint {
             Customer customer = customerService.readCustomerById(customerId);
             if (customer != null) {
                 customerService.deleteCustomer(customerService.readCustomerById(customerId));
-                return ResponseService.generateSuccessResponse("Record Deleted Successfully","", HttpStatus.OK);
+                return ResponseService.generateSuccessResponse("Record Deleted Successfully", "", HttpStatus.OK);
 
             } else {
                 return ResponseService.generateErrorResponse("No Records found for this ID " + customerId, HttpStatus.NOT_FOUND);
@@ -705,7 +642,7 @@ public class CustomerEndpoint {
                     return ResponseService.generateErrorResponse("Error saving address", HttpStatus.INTERNAL_SERVER_ERROR);
                 }
                 addressDTO.setPhoneNumber(customCustomer.getMobileNumber());
-                return ResponseService.generateSuccessResponse("Address added successfully : ",addressDTO, HttpStatus.OK);
+                return ResponseService.generateSuccessResponse("Address added successfully : ", addressDTO, HttpStatus.OK);
 
 
             } else {
@@ -728,54 +665,52 @@ public class CustomerEndpoint {
 
             }
             Customer customer = customerService.readCustomerById(customerId);
-            if(customer!=null){
-                List<CustomerAddress>addressList=customer.getCustomerAddresses();
-                List<AddressDTO>listOfAddresses=new ArrayList<>();
-                for(CustomerAddress customerAddress:addressList)
-                {
-                    AddressDTO addressDTO=makeAddressDTO(customerAddress);
+            if (customer != null) {
+                List<CustomerAddress> addressList = customer.getCustomerAddresses();
+                List<AddressDTO> listOfAddresses = new ArrayList<>();
+                for (CustomerAddress customerAddress : addressList) {
+                    AddressDTO addressDTO = makeAddressDTO(customerAddress);
                     listOfAddresses.add(addressDTO);
                 }
-                return ResponseService.generateSuccessResponse("Addresses details : ",listOfAddresses, HttpStatus.OK);
-            }else{
+                return ResponseService.generateSuccessResponse("Addresses details : ", listOfAddresses, HttpStatus.OK);
+            } else {
                 return ResponseService.generateErrorResponse("No data found for this customerId", HttpStatus.INTERNAL_SERVER_ERROR);
 
             }
 
 
-        }catch (Exception e) {
+        } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error in retreiving Address", HttpStatus.INTERNAL_SERVER_ERROR);
 
         }
     }
+
     @Transactional
     @RequestMapping(value = "address-details", method = RequestMethod.GET)
-    public ResponseEntity<?> retrieveAddressList(@RequestParam Long customerId,@RequestParam Long addressId) {
+    public ResponseEntity<?> retrieveAddressList(@RequestParam Long customerId, @RequestParam Long addressId) {
         try {
             if (customerService == null) {
                 return ResponseService.generateErrorResponse("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
 
             }
             Customer customer = customerService.readCustomerById(customerId);
-            CustomerAddress customerAddress=customerAddressService.readCustomerAddressById(addressId);
-            if(customerAddress==null)
-            {
-                return ResponseService.generateErrorResponse("Address not found",HttpStatus.NOT_FOUND);
-            }
-            else{
+            CustomerAddress customerAddress = customerAddressService.readCustomerAddressById(addressId);
+            if (customerAddress == null) {
+                return ResponseService.generateErrorResponse("Address not found", HttpStatus.NOT_FOUND);
+            } else {
                 return ResponseService.generateSuccessResponse("Address details : ", makeAddressDTO(customerAddress), HttpStatus.OK);
 
             }
-        }catch (Exception e) {
+        } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error saving Address", HttpStatus.INTERNAL_SERVER_ERROR);
 
         }
     }
-    public AddressDTO makeAddressDTO(CustomerAddress customerAddress)
-    {
-        AddressDTO addressDTO=new AddressDTO();
+
+    public AddressDTO makeAddressDTO(CustomerAddress customerAddress) {
+        AddressDTO addressDTO = new AddressDTO();
         addressDTO.setAddressId(customerAddress.getAddress().getId());
         addressDTO.setAddress(customerAddress.getAddress().getAddressLine1());
         addressDTO.setPinCode(customerAddress.getAddress().getPostalCode());
@@ -783,11 +718,12 @@ public class CustomerEndpoint {
         addressDTO.setCity(customerAddress.getAddress().getCity());
         addressDTO.setCustomerId(customerAddress.getCustomer().getId());
         addressDTO.setAddressName(customerAddress.getAddressName());
-        CustomCustomer customCustomer=em.find(CustomCustomer.class,customerAddress.getCustomer().getId());
+        CustomCustomer customCustomer = em.find(CustomCustomer.class, customerAddress.getCustomer().getId());
         addressDTO.setPhoneNumber(customCustomer.getMobileNumber());
         return addressDTO;
     }
-    public  ResponseEntity<?> createAuthResponse(String token, Customer customer ) {
+
+    public ResponseEntity<?> createAuthResponse(String token, Customer customer) {
         OtpEndpoint.ApiResponse authResponse = new OtpEndpoint.ApiResponse(token, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(), "User has been logged in");
         return ResponseService.generateSuccessResponse("Token details : ", authResponse, HttpStatus.OK);
     }
@@ -806,125 +742,118 @@ public class CustomerEndpoint {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during logout");
         }
     }
+
     @Transactional
     @PostMapping("/save-form/{customer_id}")
-    public ResponseEntity<?>saveForm(@PathVariable long customer_id,@RequestParam long product_id)
-    {
-        try{
-            CustomCustomer customer=entityManager.find(CustomCustomer.class,customer_id);
-            if(customer==null)
-            {
-                return ResponseService.generateErrorResponse("Customer not found",HttpStatus.NOT_FOUND);
+    public ResponseEntity<?> saveForm(@PathVariable long customer_id, @RequestParam long product_id) {
+        try {
+            CustomCustomer customer = entityManager.find(CustomCustomer.class, customer_id);
+            if (customer == null) {
+                return ResponseService.generateErrorResponse("Customer not found", HttpStatus.NOT_FOUND);
             }
-            CustomProduct product=entityManager.find(CustomProduct.class,product_id);
-            if(product==null)
-            {
-                return ResponseService.generateErrorResponse(Constant.PRODUCTNOTFOUND,HttpStatus.NOT_FOUND);
+            CustomProduct product = entityManager.find(CustomProduct.class, product_id);
+            if (product == null) {
+                return ResponseService.generateErrorResponse(Constant.PRODUCTNOTFOUND, HttpStatus.NOT_FOUND);
             }
-            List<CustomProduct>savedForms=customer.getSavedForms();
-            if(savedForms.contains(product))
-                return ResponseService.generateErrorResponse("You can save a form only once",HttpStatus.UNPROCESSABLE_ENTITY);
+            List<CustomProduct> savedForms = customer.getSavedForms();
+            if (savedForms.contains(product))
+                return ResponseService.generateErrorResponse("You can save a form only once", HttpStatus.UNPROCESSABLE_ENTITY);
             savedForms.add(product);
             customer.setSavedForms(savedForms);
             entityManager.merge(customer);
-            Map<String,Object>responseBody=new HashMap<>();
-            Map<String,Object>formBody=sharedUtilityService.createProductResponseMap(product,null);
-            return ResponseService.generateSuccessResponse("Form Saved",formBody,HttpStatus.OK);
+            Map<String, Object> responseBody = new HashMap<>();
+            Map<String, Object> formBody = sharedUtilityService.createProductResponseMap(product, null);
+            return ResponseService.generateSuccessResponse("Form Saved", formBody, HttpStatus.OK);
         } catch (Exception e) {
-            return ResponseService.generateErrorResponse("Error saving Form : "+e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseService.generateErrorResponse("Error saving Form : " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
     @Transactional
     @DeleteMapping("/unsave-form/{customer_id}")
-    public ResponseEntity<?>unSaveForm(@PathVariable long customer_id,@RequestParam long product_id)
-    {
-        try{
-            CustomCustomer customer=entityManager.find(CustomCustomer.class,customer_id);
-            if(customer==null)
-            {
-                return ResponseService.generateErrorResponse("Customer not found",HttpStatus.NOT_FOUND);
+    public ResponseEntity<?> unSaveForm(@PathVariable long customer_id, @RequestParam long product_id) {
+        try {
+            CustomCustomer customer = entityManager.find(CustomCustomer.class, customer_id);
+            if (customer == null) {
+                return ResponseService.generateErrorResponse("Customer not found", HttpStatus.NOT_FOUND);
             }
-            CustomProduct product=entityManager.find(CustomProduct.class,product_id);
-            if(product==null)
-            {
-                return ResponseService.generateErrorResponse(Constant.PRODUCTNOTFOUND,HttpStatus.NOT_FOUND);
+            CustomProduct product = entityManager.find(CustomProduct.class, product_id);
+            if (product == null) {
+                return ResponseService.generateErrorResponse(Constant.PRODUCTNOTFOUND, HttpStatus.NOT_FOUND);
             }
-            List<CustomProduct>savedForms=customer.getSavedForms();
-            if(savedForms.contains(product))
-                savedForms.remove(product);
+            List<CustomProduct> savedForms = customer.getSavedForms();
+            if (savedForms.contains(product)) savedForms.remove(product);
             else
-                return ResponseService.generateErrorResponse("Form not present in saved Form list",HttpStatus.UNPROCESSABLE_ENTITY);
+                return ResponseService.generateErrorResponse("Form not present in saved Form list", HttpStatus.UNPROCESSABLE_ENTITY);
             customer.setSavedForms(savedForms);
             entityManager.merge(customer);
-            Map<String,Object>responseBody=new HashMap<>();
-            Map<String,Object>formBody=sharedUtilityService.createProductResponseMap(product,null);
-            return ResponseService.generateSuccessResponse("Form Removed",formBody,HttpStatus.OK);
+            Map<String, Object> responseBody = new HashMap<>();
+            Map<String, Object> formBody = sharedUtilityService.createProductResponseMap(product, null);
+            return ResponseService.generateSuccessResponse("Form Removed", formBody, HttpStatus.OK);
         } catch (Exception e) {
-            return ResponseService.generateErrorResponse("Error removing Form : "+e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseService.generateErrorResponse("Error removing Form : " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
     @GetMapping(value = "/forms/show-saved-forms/{customer_id}")
-    public ResponseEntity<?> getSavedForms(HttpServletRequest request,@PathVariable long  customer_id) throws Exception{
+    public ResponseEntity<?> getSavedForms(HttpServletRequest request, @PathVariable long customer_id) throws Exception {
         try {
-            CustomCustomer customer=entityManager.find(CustomCustomer.class,customer_id);
-            if(customer==null)
-                ResponseService.generateErrorResponse("Customer with this id not found",HttpStatus.NOT_FOUND);
-            if(customer.getSavedForms().isEmpty())
-                ResponseService.generateErrorResponse("Saved form list is empty",HttpStatus.NOT_FOUND);
-            List<Map<String,Object>>listOfSavedProducts=new ArrayList<>();
-            for(Product product:customer.getSavedForms())
-            {
-                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product,null));
+            CustomCustomer customer = entityManager.find(CustomCustomer.class, customer_id);
+            if (customer == null)
+                ResponseService.generateErrorResponse("Customer with this id not found", HttpStatus.NOT_FOUND);
+            if (customer.getSavedForms().isEmpty())
+                ResponseService.generateErrorResponse("Saved form list is empty", HttpStatus.NOT_FOUND);
+            List<Map<String, Object>> listOfSavedProducts = new ArrayList<>();
+            for (Product product : customer.getSavedForms()) {
+                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product, null));
             }
-            return ResponseService.generateSuccessResponse("Forms saved : ",listOfSavedProducts,HttpStatus.OK);
+            return ResponseService.generateSuccessResponse("Forms saved : ", listOfSavedProducts, HttpStatus.OK);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
     @GetMapping(value = "/forms/show-filled-forms/{customer_id}")
-    public ResponseEntity<?> getFilledFormsByUserId(HttpServletRequest request,@PathVariable long customer_id) throws Exception{
+    public ResponseEntity<?> getFilledFormsByUserId(HttpServletRequest request, @PathVariable long customer_id) throws Exception {
         try {
-            CustomCustomer customer=entityManager.find(CustomCustomer.class,customer_id);
-            if(customer==null)
-                ResponseService.generateErrorResponse("Customer with this id not found",HttpStatus.NOT_FOUND);
-            if(customer.getSavedForms().isEmpty())
-                ResponseService.generateErrorResponse("Saved form list is empty",HttpStatus.NOT_FOUND);
-            List<Map<String,Object>>listOfSavedProducts=new ArrayList<>();
-            for(Product product:customer.getSavedForms())
-            {
-                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product,null));
+            CustomCustomer customer = entityManager.find(CustomCustomer.class, customer_id);
+            if (customer == null)
+                ResponseService.generateErrorResponse("Customer with this id not found", HttpStatus.NOT_FOUND);
+            if (customer.getSavedForms().isEmpty())
+                ResponseService.generateErrorResponse("Saved form list is empty", HttpStatus.NOT_FOUND);
+            List<Map<String, Object>> listOfSavedProducts = new ArrayList<>();
+            for (Product product : customer.getSavedForms()) {
+                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product, null));
             }
-            return ResponseService.generateSuccessResponse("Forms saved : ",listOfSavedProducts,HttpStatus.OK);
+            return ResponseService.generateSuccessResponse("Forms saved : ", listOfSavedProducts, HttpStatus.OK);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
     @GetMapping(value = "/forms/show-recommended-forms/{customer_id}")
-    public ResponseEntity<?> getRecommendedFormsByUserId(HttpServletRequest request,@PathVariable long customer_id) throws Exception{
+    public ResponseEntity<?> getRecommendedFormsByUserId(HttpServletRequest request, @PathVariable long customer_id) throws Exception {
         try {
-            CustomCustomer customer=entityManager.find(CustomCustomer.class,customer_id);
-            if(customer==null)
-                ResponseService.generateErrorResponse("Customer with this id not found",HttpStatus.NOT_FOUND);
-            if(customer.getSavedForms().isEmpty())
-                ResponseService.generateErrorResponse("Saved form list is empty",HttpStatus.NOT_FOUND);
-            List<Map<String,Object>>listOfSavedProducts=new ArrayList<>();
-            for(Product product:customer.getSavedForms())
-            {
-                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product,null));
+            CustomCustomer customer = entityManager.find(CustomCustomer.class, customer_id);
+            if (customer == null)
+                ResponseService.generateErrorResponse("Customer with this id not found", HttpStatus.NOT_FOUND);
+            if (customer.getSavedForms().isEmpty())
+                ResponseService.generateErrorResponse("Saved form list is empty", HttpStatus.NOT_FOUND);
+            List<Map<String, Object>> listOfSavedProducts = new ArrayList<>();
+            for (Product product : customer.getSavedForms()) {
+                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product, null));
             }
-            return ResponseService.generateSuccessResponse("Forms saved : ",listOfSavedProducts,HttpStatus.OK);
+            return ResponseService.generateSuccessResponse("Forms saved : ", listOfSavedProducts, HttpStatus.OK);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
     @GetMapping("/get-all-customers")
-    public ResponseEntity<?> getAllCustomers(
-            @RequestParam(defaultValue = "0") int offset,
-            @RequestParam(defaultValue = "10") int limit)
-    {
+    public ResponseEntity<?> getAllCustomers(@RequestParam(defaultValue = "0") int offset, @RequestParam(defaultValue = "10") int limit) {
         try {
             // Calculate the start position for pagination
             int startPosition = offset * limit;
@@ -934,9 +863,8 @@ public class CustomerEndpoint {
             query.setFirstResult(startPosition);
             query.setMaxResults(limit);
             List<Map> results = new ArrayList<>();
-            for(CustomCustomer customer:query.getResultList())
-            {
-                Customer customerToadd=customerService.readCustomerById(customer.getId());
+            for (CustomCustomer customer : query.getResultList()) {
+                Customer customerToadd = customerService.readCustomerById(customer.getId());
                 results.add(sharedUtilityService.breakReferenceForCustomer(customerToadd));
             }
             return ResponseService.generateSuccessResponse("List of customers : ", results, HttpStatus.OK);

@@ -182,6 +182,9 @@ public class JwtUtil {
 
     private boolean isTokenExpired(String token) {
         try {
+            if (token == null || token.trim().isEmpty()) {
+                return false;
+            }
             Date expiration = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
                     .build()
@@ -198,6 +201,9 @@ public class JwtUtil {
 
     public boolean logoutUser(String token) {
         try {
+            if (token == null || token.trim().isEmpty()) {
+                return false; // or handle accordingly, maybe log this case
+            }
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
                     .build()
