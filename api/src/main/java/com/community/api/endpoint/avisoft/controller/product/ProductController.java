@@ -28,7 +28,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
 import com.community.api.services.JobGroupService;
-import com.community.api.services.PrivilegeService;
 import com.community.api.services.ProductService;
 import com.community.api.services.RoleService;
 import com.community.api.services.ReserveCategoryService;
@@ -489,7 +488,7 @@ public class ProductController extends CatalogEndpoint {
                 return ResponseService.generateErrorResponse("NO PRODUCTS FOUND WITH THE GIVEN CRITERIA", HttpStatus.NOT_FOUND);
             }
 
-            List<Map<String, CustomProductWrapper>> responses = new ArrayList<>();
+            List<CustomProductWrapper> responses = new ArrayList<>();
             for (CustomProduct customProduct : products) {
 
                 if (customProduct != null) {
@@ -499,12 +498,7 @@ public class ProductController extends CatalogEndpoint {
                         CustomProductWrapper wrapper = new CustomProductWrapper();
                         wrapper.wrapDetails(customProduct);
 
-                        Map<String, CustomProductWrapper> productDetails = new HashMap<>();
-
-                        productDetails.put("key_" + customProduct.getId(), wrapper);
-                        productDetails.remove("key_" + customProduct.getId(), "reserveCategoryDtoList"); // gives us empty list
-
-                        responses.add(productDetails);
+                        responses.add(wrapper);
                     }
 
                 }
