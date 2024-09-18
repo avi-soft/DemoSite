@@ -235,4 +235,13 @@ public class ServiceProviderController {
             return ResponseService.generateErrorResponse("Some issue in fetching service provider details " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
+    @GetMapping("/filter-service-provider")
+    public ResponseEntity<?> filterServiceProvider(@RequestParam(required = false)String state,
+                                                   @RequestParam(required = false)String district,
+                                                   @RequestParam(required = false)String firstName,
+                                                   @RequestParam(required = false)String lastName,
+                                                   @RequestParam(required = false)String mobileNumber)
+    {
+        return ResponseService.generateSuccessResponse("Service Providers",serviceProviderService.searchServiceProviderBasedOnGivenFields(state,district,firstName,lastName,mobileNumber),HttpStatus.OK);
+    }
 }

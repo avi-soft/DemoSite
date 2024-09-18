@@ -29,6 +29,8 @@ import org.springframework.web.client.HttpClientErrorException;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
@@ -652,5 +654,49 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Error adding address",HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+    public Object searchServiceProviderBasedOnGivenFields(String state,String district,String firstName,String lastName,String mobileNumber)
+    {
+        int count = 0;
+        String[] fields = {state, district, firstName, mobileNumber};
+        System.out.println("hi");
+        for (String field : fields) {
+            if (field != null) {
+                count++;
+            }
+            else
+                break;
+        }
+        System.out.println(count);
+        System.out.println("h1 after loop");
+        String generalizedQuery="SELECT s.*\n" +
+                "FROM service_provider s\n" +
+                "JOIN custom_service_provider_address a ON s.service_provider_id = a.service_provider_id\n"+
+                "WHERE ";
+        Query query;
+        switch (count)
+        {
+            case 1:
+                generalizedQuery=generalizedQuery+"a.state = :state";
+                query = entityManager.createNativeQuery(generalizedQuery, ServiceProviderEntity.class);
+                query.setParameter("state",state);
+                return query.getResultList();
+            case 2:
+                generalizedQuery=generalizedQuery+"a.state = :state AND a.district = :district";
+                query = entityManager.createNativeQuery(generalizedQuery, ServiceProviderEntity.class);
+                query.setParameter("state", state);
+                query.setParameter("district", district);
+                return query.getResultList();
+            case 3:
+                generalizedQuery=generalizedQuery+"a.state = :state AND a.district = :district AND s.first_name =:firstName";
+                query = entityManager.createNativeQuery(generalizedQuery, ServiceProviderEntity.class);
+                query.setParameter("state", state);
+                query.setParameter("district", district);
+                query.setParameter("firstName",firstName);
+                return query.getResultList();
+            default:
+                break;
+        }
+        return null;
     }
 }
