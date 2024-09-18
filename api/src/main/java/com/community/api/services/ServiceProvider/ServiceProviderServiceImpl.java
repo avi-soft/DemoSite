@@ -349,7 +349,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             String tokenKey = "authTokenServiceProvider_" + serviceProvider.getMobileNumber();
             String existingToken = (String) session.getAttribute(tokenKey);
             Map<String,Object> serviceProviderResponse= sharedUtilityService.serviceProviderDetailsMap(serviceProvider);
-            if(existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
+            if(jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
                 Map<String, Object> responseBody = createAuthResponse(existingToken, serviceProviderResponse).getBody();
 
                 return ResponseEntity.ok(responseBody);
@@ -523,7 +523,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
                 String existingToken = (String) session.getAttribute(tokenKey);
                 Map<String,Object> serviceProviderResponse= sharedUtilityService.serviceProviderDetailsMap(existingServiceProvider);
-                if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
+                if (jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
                                         Map<String, Object> responseBody = createAuthResponse(existingToken, serviceProviderResponse).getBody();
 
                     return ResponseEntity.ok(responseBody);
