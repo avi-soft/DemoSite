@@ -456,8 +456,6 @@ public class ProductController extends CatalogEndpoint {
 
                         responses.add(productDetails);
                     }
-
-
                 }
             }
 
@@ -500,7 +498,6 @@ public class ProductController extends CatalogEndpoint {
 
                         responses.add(wrapper);
                     }
-
                 }
             }
 
