@@ -26,16 +26,16 @@ public class JwtUtil {
 
     private ExceptionHandlingImplement exceptionHandling;
     private RoleService roleService;
-    private String secretKeyString;
+//    private String secretKeyString ;
+private String secretKeyString = "DASYWgfhMLL0np41rKFAGminD1zb5DlwDzE1WwnP8es=";
     private Key secretKey;
     private EntityManager entityManager;
     private TokenBlacklist tokenBlacklist;
     private CustomerService customerService;
 
-    @Value("${security.jwt.secret-key}")
-    public void setSecretKeyString(String secretKeyString) {
+/*    public void setSecretKeyString(String secretKeyString) {
         this.secretKeyString = secretKeyString;
-    }
+    }*/
 
     @Autowired
     public void setExceptionHandling(ExceptionHandlingImplement exceptionHandling) {
@@ -63,21 +63,26 @@ public class JwtUtil {
     }
 
 
-   @PostConstruct
-
+    @PostConstruct
     public void init() {
-
         try {
             byte[] secretKeyBytes = DatatypeConverter.parseBase64Binary(secretKeyString);
+
+            System.out.println("Decoded key length (bytes): " + secretKeyBytes.length);
+
+            if (secretKeyBytes.length * 8 < 256) {
+                throw new IllegalArgumentException("Key length is less than 256 bits.");
+            }
+
             this.secretKey = Keys.hmacShaKeyFor(secretKeyBytes);
-        }  catch (Exception e) {
+        } catch (Exception e) {
             exceptionHandling.handleException(e);
             throw new RuntimeException("Error generating JWT token", e);
         }
-
     }
 
-/*   @PostConstruct
+
+   /*@PostConstruct
     public void init() {
         this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
     }*/

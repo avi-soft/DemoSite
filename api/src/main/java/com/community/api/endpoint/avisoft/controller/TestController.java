@@ -4,6 +4,9 @@ import com.community.api.services.CustomCustomerService;
 import com.community.api.services.DocumentStorageService;
 import com.community.api.services.RateLimiterService;
 import io.github.bucket4j.Bucket;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.io.Encoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -61,10 +64,20 @@ public class TestController {
 
     @GetMapping("/generate-key")
     public String generateKey() {
-        Key key = Keys.secretKeyFor(io.jsonwebtoken.SignatureAlgorithm.HS256);
-        String base64Key = Base64.getEncoder().encodeToString(key.getEncoded());
-        System.out.println("Generated Key: " + base64Key);
-        return base64Key;
+
+
+        Key key = Keys.secretKeyFor(SignatureAlgorithm.HS256);  // Generates a 256-bit key
+        String base64Key = Encoders.BASE64.encode(key.getEncoded());  // Convert to Base64 string
+        System.out.println("Base64-encoded key: " + base64Key);
+
+        byte[] decodedKey = Decoders.BASE64.decode(base64Key);
+
+        // Print the length of the decoded key in bytes
+        System.out.println("Decoded key length (bytes): " + decodedKey.length);
+
+        return base64Key + " (Decoded key length: " + decodedKey.length + " bytes)";
+
+
     }
 
     @GetMapping("/api/rate-limit")
