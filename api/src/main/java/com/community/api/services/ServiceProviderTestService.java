@@ -19,6 +19,7 @@ import javax.imageio.ImageIO;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
 import javax.persistence.TypedQuery;
+import javax.servlet.http.HttpServletRequest;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
@@ -38,7 +39,7 @@ public class ServiceProviderTestService {
     @Autowired
     private DocumentStorageService documentStorageService;
     @Autowired
-    private Cloudinary cloudinary;
+    private FileService fileService;
     private static final long MAX_IMAGE_SIZE_MB = 2L * 1024 * 1024;   //(2MB)
 
     public ServiceProviderTestService(EntityManager entityManager) {
@@ -86,7 +87,7 @@ public class ServiceProviderTestService {
     }
 
     @Transactional
-    public ServiceProviderTest uploadResizedImage(Long serviceProviderId, Long testId, MultipartFile resizedFile) throws Exception {
+    public ServiceProviderTest uploadResizedImages(Long serviceProviderId, Long testId, MultipartFile resizedFile, HttpServletRequest request) throws Exception {
         // Retrieve the service provider entity
 
         ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
@@ -115,7 +116,7 @@ public class ServiceProviderTestService {
         }
 
         // Validate the image size using saveDocuments method logic
-        ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(resizedFile, "RESIZED_IMAGES", serviceProviderId, "SERVICE_PROVIDER");
+        ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(resizedFile, "Resized Images", serviceProviderId, "SERVICE_PROVIDER");
         Map<String, Object> responseBody = savedResponse.getBody();
 
         if (savedResponse.getStatusCode() != HttpStatus.OK) {
@@ -131,12 +132,35 @@ public class ServiceProviderTestService {
             test.setResized_image(resizedImage);
         }
 
+        String currentDir = System.getProperty("user.dir");
+
+        String testDirPath = currentDir + "/../test/";
+        String dbPath="avisoftdocument/service_provider/" + serviceProviderId + "/Resized Images";
+
+        // Ensure the directory exists, and create it if it doesn't
+        File baseDir = new File(dbPath);
+        if (!baseDir.exists()) {
+            baseDir.mkdirs(); // Create the directory structure if it doesn't exist
+        }
+
+        // Full file path for the signature image
+        String fullFilePath = dbPath + File.separator + fileName;
+        String fileUrl = fileService.getFileUrl(fullFilePath, request);
+
         // Set file metadata in the ResizedImage object
         resizedImage.setFile_name(fileName);
         resizedImage.setFile_type(resizedFile.getContentType());
-        resizedImage.setFile_path(test.getDownloaded_image().getFile_path());
+        resizedImage.setFile_path(fullFilePath);
+        resizedImage.setFile_url(fileUrl);
         resizedImage.setImage_data(resizedFile.getBytes());
         resizedImage.setServiceProvider(serviceProvider);
+
+        try {
+            File destFile = new File(fullFilePath);
+            FileUtils.writeByteArrayToFile(destFile, resizedFile.getBytes());
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Failed to save the file", e);
+        }
 
         // Set the image data and validate the resized image
         test.setResized_image_data(resizedFile.getBytes());
@@ -188,7 +212,7 @@ public class ServiceProviderTestService {
     }
 
     @Transactional
-    public ServiceProviderTest uploadSignatureImage(Long serviceProviderId, Long testId, MultipartFile signatureFile) throws Exception {
+    public ServiceProviderTest uploadSignatureImage(Long serviceProviderId, Long testId, MultipartFile signatureFile,HttpServletRequest request) throws Exception {
         // Retrieve the service provider entity
         ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
         if (serviceProvider == null) {
@@ -234,24 +258,36 @@ public class ServiceProviderTestService {
             test.setSignature_image(signatureImage);
         }
 
-        // Upload to Cloudinary
-        Map<String, String> params = ObjectUtils.asMap(
-                "public_id", "signatureImage",
-                "folder", "signature Images"
-        );
+        String currentDir = System.getProperty("user.dir");
 
-        Map uploadResult = cloudinary.uploader().upload(signatureFile.getBytes(), params);
+        String testDirPath = currentDir + "/../test/";
+        String dbPath="avisoftdocument/service_provider/" + serviceProviderId + "/Resized Images";
 
-        // Get the URL of the uploaded image
-        String imageUrl = (String) uploadResult.get("secure_url");
+        // Ensure the directory exists, and create it if it doesn't
+        File baseDir = new File(dbPath);
+        if (!baseDir.exists()) {
+            baseDir.mkdirs(); // Create the directory structure if it doesn't exist
+        }
+
+        // Full file path for the signature image
+        String fullFilePath = dbPath + File.separator + fileName;
+        String fileUrl = fileService.getFileUrl(fullFilePath, request);
 
         // Set the file details in the signatureImage entity
         signatureImage.setFile_name(fileName);
         signatureImage.setFile_type(signatureFile.getContentType());
-        signatureImage.setFile_path(imageUrl);
+        signatureImage.setFile_path(fullFilePath);
+        signatureImage.setFile_url(fileUrl);
         signatureImage.setImage_data(signatureFile.getBytes());
         signatureImage.setServiceProvider(serviceProvider);
 
+//         Save the file to the specified path
+        try {
+            File destFile = new File(fullFilePath);
+            FileUtils.writeByteArrayToFile(destFile, signatureFile.getBytes());
+        } catch (IOException e) {
+            throw new Exception("Failed to save the file", e);
+        }
         ServiceProviderTestStatus serviceProviderTestStatus = entityManager.find(ServiceProviderTestStatus.class, 2L);
         serviceProvider.setTestStatus(serviceProviderTestStatus);
         // Merge and persist changes
@@ -277,12 +313,14 @@ public class ServiceProviderTestService {
         );
         query.setParameter("serviceProviderId", serviceProviderId);
 
+
         // Apply pagination
         query.setFirstResult(startPosition);
         query.setMaxResults(limit);
 
         return query.getResultList();
     }
+
 
     private boolean validateResizedImage(ServiceProviderTest test) throws IOException {
         Image downloadedImage = test.getDownloaded_image();
