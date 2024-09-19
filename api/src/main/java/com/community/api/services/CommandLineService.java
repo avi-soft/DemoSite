@@ -5,6 +5,8 @@ import com.community.api.entity.CustomApplicationScope;
 import com.community.api.entity.CustomJobGroup;
 import com.community.api.entity.CustomProductState;
 import com.community.api.entity.CustomReserveCategory;
+import com.community.api.entity.CustomTicketStatus;
+import com.community.api.entity.CustomTicketState;
 import com.community.api.entity.Districts;
 import com.community.api.entity.Qualification;
 import com.community.api.entity.Role;
@@ -61,6 +63,26 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(new CustomReserveCategory(2L, "SC", "Schedule Caste", false));
             entityManager.persist(new CustomReserveCategory(3L, "ST", "Schedule Tribe", false));
             entityManager.persist(new CustomReserveCategory(4L, "OBC", "Other Backward Caste", false));
+        }
+
+        if(entityManager.createQuery("SElECT COUNT(c) FROM CustomTicketState c", Long.class).getSingleResult() == 0) {
+            entityManager.persist(new CustomTicketState(1L, "PRIMARY", "Ticket is not assigned to any service provider"));
+            entityManager.persist(new CustomTicketState(2L, "IN_PROGRESS", "It's under progress"));
+            entityManager.persist(new CustomTicketState(3L, "ON-HOLD", "It's on hold"));
+            entityManager.persist(new CustomTicketState(4L, "REJECTED", "It's rejected"));
+            entityManager.persist(new CustomTicketState(5L, "REVIEW", "It's under review"));
+            entityManager.persist(new CustomTicketState(6L, "EXPIRED", "It's expired"));
+            entityManager.persist(new CustomTicketState(7L, "MISCELLANEOUS", "It's for some additional stages of a product"));
+        }
+
+        if(entityManager.createQuery("SElECT COUNT(c) FROM CustomTicketStatus c", Long.class).getSingleResult() == 0) {
+            entityManager.persist(new CustomTicketStatus(1L, "NOT_REACHABLE", "User is unreachable"));
+            entityManager.persist(new CustomTicketStatus(2L, "VALIDATING_DOCUMENT", "Validating documents"));
+            entityManager.persist(new CustomTicketStatus(3L, "MISSING_DOCUMENT", "Missing documents"));
+            entityManager.persist(new CustomTicketStatus(4L, "USER_NOT_REACHABLE", "User Not reachable"));
+            entityManager.persist(new CustomTicketStatus(5L, "UPLOADING DOCUMENT", "Missing documents"));
+            entityManager.persist(new CustomTicketStatus(6L, "FILLING PERSONAL DETAILS", "Filling personal details"));
+            entityManager.persist(new CustomTicketStatus(7L, "SOME_OTHER_STATUS", "Filling personal details"));
         }
 
         if (entityManager.createQuery("SELECT COUNT(r) FROM Role r", Long.class).getSingleResult() == 0) {
@@ -160,7 +182,6 @@ public class CommandLineService implements CommandLineRunner {
         count = entityManager.createQuery("SELECT COUNT(s) FROM StateCode s", Long.class).getSingleResult();
 
         if (count == 0) {
-
 
             // Insert data into the StateCode table
             entityManager.persist(new StateCode(1, "Andhra Pradesh", "AP"));

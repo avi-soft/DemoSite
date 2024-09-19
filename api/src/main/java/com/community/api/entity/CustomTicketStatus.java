@@ -12,17 +12,21 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "custom_ticket_type")
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class CustomTicketType {
+@AllArgsConstructor
+@Table(name = "custom_ticket_status")
+public class CustomTicketStatus {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "ticket_type_id")
-    private Long ticketTypeId;
+    @Column(name = "ticket_status_id")
+    protected Long ticketStatusId;
 
+    @Column(name = "ticket_status")
+    protected String ticketStatus;
 
+    @Column(name = "ticket_description")
+    protected String ticketDescription;
 
 }
