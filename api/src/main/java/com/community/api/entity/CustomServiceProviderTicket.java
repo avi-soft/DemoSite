@@ -41,7 +41,4 @@ public class CustomServiceProviderTicket {
 
     @Column(name = "ticket_assign_time")*/
 
-
-
-
 }
