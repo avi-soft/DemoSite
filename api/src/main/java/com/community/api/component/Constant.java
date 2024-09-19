@@ -63,6 +63,7 @@ public class Constant {
     public static String GET_PRODUCT_STATE_BY_ID = "SELECT c FROM CustomProductState c WHERE c.productStateId = :productStateId";
     public static String GET_PRODUCT_STATE_BY_NAME = "SELECT c FROM CustomProductState c WHERE c.productState = :productStateName";
     public static String PRODUCT_STATE_NEW = "NEW";
+    public static String PRODUCT_STATE_MODIFIED = "MODIFIED";
     public static String PRODUCT_STATE_LIVE = "LIVE";
     public static String PRODUCT_STATE_APPROVED = "APPROVED";
     public static String PRODUCT_STATE_EXPIRED = "EXPIRED";
@@ -83,6 +84,7 @@ public class Constant {
     public static String PRIVILEGE_UPDATE_PRODUCT = "UPDATE_PRODUCT";
     public static String APPLICATION_SCOPE_CENTER = "CENTER";
     public static String PRIVILEGE_APPROVE_PRODUCT = "APPROVE_PRODUCT";
+    public static String PRIVILEGE_REJECT_PRODUCT = "REJECT_PRODUCT";
     public static final String PRODUCTNOTFOUND = "Product not Found";
     public static final String CATEGORYNOTFOUND = "Category not Found";
     public static final String PRODUCTTITLENOTGIVEN = "Product MetaTitle not Given";

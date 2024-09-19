@@ -5,6 +5,7 @@ import com.community.api.entity.CustomCustomer;
 import com.community.api.services.RoleService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
@@ -14,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
+import javax.transaction.Transactional;
 import javax.xml.bind.DatatypeConverter;
 import java.security.Key;
 import java.util.Date;
@@ -30,7 +32,7 @@ public class JwtUtil {
     private TokenBlacklist tokenBlacklist;
     private CustomerService customerService;
 
-    @Value("${jwt.secret.key}")
+    @Value("${security.jwt.secret-key}")
     public void setSecretKeyString(String secretKeyString) {
         this.secretKeyString = secretKeyString;
     }
@@ -60,7 +62,7 @@ public class JwtUtil {
         this.customerService = customerService;
     }
 
-    @PostConstruct
+   @PostConstruct
     public void init() {
 
         try {
@@ -90,12 +92,25 @@ public class JwtUtil {
                     .claim("ipAddress", ipAddress)
                     .setIssuedAt(new Date())
                     .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 10))
-                    .signWith(secretKey, SignatureAlgorithm.HS256)
+                    .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                     .compact();
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             throw new RuntimeException("Error generating JWT token", e);
         }
+    }
+
+    private Key getSignInKey() {
+
+        try {
+            byte[] secretKeyBytes = DatatypeConverter.parseBase64Binary(secretKeyString);
+            this.secretKey = Keys.hmacShaKeyFor(secretKeyBytes);
+            return this.secretKey;
+        }  catch (Exception e) {
+            exceptionHandling.handleException(e);
+            throw new RuntimeException("Error generating JWT token", e);
+        }
+
     }
 
     public Long extractId(String token) {
@@ -118,16 +133,21 @@ public class JwtUtil {
         }
     }
 
+    @Transactional
     public Boolean validateToken(String token, String ipAddress, String userAgent) {
 
         try {
+
+            if (isTokenExpired(token)) {
+                throw new IllegalArgumentException("Token is expired");
+
+            }
             Long id = extractId(token);
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
-
             String tokenId = claims.getId();
             /*if (tokenBlacklist.isTokenBlacklisted(tokenId)) {
                 return false;
@@ -141,17 +161,14 @@ public class JwtUtil {
                     return false;
                 }
             }
-
             else if(roleService.findRoleName(role).equals(Constant.roleServiceProvider)) {
                 existingServiceProvider = entityManager.find(ServiceProviderEntity.class, id);
                 if(existingServiceProvider==null)
                     return false;
             }
-            if (isTokenExpired(token)) {
-                return false;
-            }
 
             String storedIpAddress = claims.get("ipAddress", String.class);
+
 
 
             return ipAddress.trim().equals(storedIpAddress != null ? storedIpAddress.trim() : "");
@@ -169,6 +186,10 @@ public class JwtUtil {
 
     private boolean isTokenExpired(String token) {
         try {
+            if (token == null || token.trim().isEmpty()) {
+                throw new IllegalArgumentException("Token is required");
+
+            }
             Date expiration = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
                     .build()
@@ -185,6 +206,9 @@ public class JwtUtil {
 
     public boolean logoutUser(String token) {
         try {
+            if (token == null || token.trim().isEmpty()) {
+                return false;
+            }
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
                     .build()
