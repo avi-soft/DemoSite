@@ -157,56 +157,6 @@ public class ProductService {
 
     public List<CustomProduct> filterProducts(List<Long> states, List<Long> categories, List<Long> reserveCategories, String title, Double fee, Integer post, Date startRange, Date endRange) {
 
-        /*String jpql = "SELECT DISTINCT p FROM CustomProduct p "
-                + "JOIN CustomProductReserveCategoryFeePostRef r "
-                + "ON r.customProduct = p "
-                + "WHERE " ;
-
-        TypedQuery<CustomProduct> query = entityManager.createQuery(jpql, CustomProduct.class);
-
-        List<CustomProductState> customProductStates = new ArrayList<>();
-        if (states != null && !states.isEmpty()) {
-            for (Long id : states) {
-                customProductStates.add(productStateService.getProductStateById(id));
-            }
-            jpql += "p.productState IN :states ";
-            query.setParameter("states", customProductStates);
-        }
-        List<Category> categoryList = new ArrayList<>();
-        if (categories != null && !categories.isEmpty()) {
-            for (Long id : categories) {
-                categoryList.add(catalogService.findCategoryById(id));
-            }
-            jpql += "AND p.defaultCategory IN :categories ";
-            query.setParameter("categories", categoryList);
-        }
-        List<CustomReserveCategory> customReserveCategoryList = new ArrayList<>();
-        if (reserveCategories != null && !reserveCategories.isEmpty()) {
-            for (Long id : reserveCategories) {
-                customReserveCategoryList.add(reserveCategoryService.getReserveCategoryById(id));
-            }
-            jpql += "AND r.customReserveCategory IN :reserveCategories";
-            query.setParameter("reserveCategories", customReserveCategoryList);
-        }
-
-        if(title != null) {
-            jpql += "AND p.metaTitle LIKE :title ";
-            query.setParameter("title", "%" + title + "%");
-        }
-
-        if(fee != null) {
-            jpql += "AND r.fee > :fee ";
-            query.setParameter("fee", fee);
-        }
-
-        if(post != null) {
-            jpql += "AND r.post > :post ";
-            query.setParameter("post", post);
-        }
-
-        return query.getResultList();
-*/
-
         // Initialize the JPQL query
         StringBuilder jpql = new StringBuilder("SELECT DISTINCT p FROM CustomProduct p ")
                 .append("JOIN CustomProductReserveCategoryFeePostRef r ON r.customProduct = p ")
@@ -221,14 +171,22 @@ public class ProductService {
         // Conditionally build the query
         if (states != null && !states.isEmpty()) {
             for (Long id : states) {
-                customProductStates.add(productStateService.getProductStateById(id));
+                CustomProductState productState = productStateService.getProductStateById(id);
+                if(productState == null) {
+                    throw new IllegalArgumentException("NO PRODUCT STATE FOUND WITH THIS ID: " + id);
+                }
+                customProductStates.add(productState);
             }
             jpql.append("AND p.productState IN :states ");
         }
 
         if (categories != null && !categories.isEmpty()) {
             for (Long id : categories) {
-                categoryList.add(catalogService.findCategoryById(id));
+                Category category = catalogService.findCategoryById(id);
+                if(category == null) {
+                    throw new IllegalArgumentException("NO CATEGORY FOUND WITH THIS ID: " + id);
+                }
+                categoryList.add(category);
             }
             jpql.append("AND p.defaultCategory IN :categories ");
         }
@@ -283,8 +241,6 @@ public class ProductService {
             query.setParameter("endRange", endRange);
         }
 
-        System.out.println(startRange);
-        System.out.println(endRange);
         // Execute and return the result
         return query.getResultList();
     }
@@ -658,7 +614,7 @@ public class ProductService {
                 CustomApplicationScope applicationScope = applicationScopeService.getApplicationScopeById(addProductDto.getApplicationScope());
                 if (applicationScope == null) {
                     throw new IllegalArgumentException("NO APPLICATION SCOPE EXISTS WITH THIS ID");
-                } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE)) {
+                } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE) && customProduct.getCustomApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE)) {
                     if (addProductDto.getNotifyingAuthority() != null && !addProductDto.getNotifyingAuthority().trim().isEmpty()) {
                         addProductDto.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
                         customProduct.setNotifyingAuthority(addProductDto.getNotifyingAuthority());
@@ -668,6 +624,15 @@ public class ProductService {
                         customProduct.setDomicileRequired(addProductDto.getDomicileRequired());
                         customProduct.setCustomApplicationScope(applicationScope);
                     }
+                } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE) && customProduct.getCustomApplicationScope().getApplicationScope().equals(Constant.APPLICATION_SCOPE_CENTER)) {
+                    if (addProductDto.getNotifyingAuthority() == null || addProductDto.getDomicileRequired() == null || addProductDto.getNotifyingAuthority().trim().isEmpty()) {
+                        throw new IllegalArgumentException("DOMICILE AND NOTIFYING AUTHORITY ARE REQUIRED FIELDS FOR STATE APPLICATION SCOPE");
+                    }
+
+                    addProductDto.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
+                    customProduct.setNotifyingAuthority(addProductDto.getNotifyingAuthority());
+                    customProduct.setDomicileRequired(addProductDto.getDomicileRequired());
+                    customProduct.setCustomApplicationScope(applicationScope);
                 } else if (applicationScope.getApplicationScope().equals(APPLICATION_SCOPE_CENTER)) {
                     if (addProductDto.getNotifyingAuthority() != null) {
                         throw new IllegalArgumentException("NOTIFYING AUTHORITY NOT REQUIRED IN CASE OF CENTER LEVEL APPLICATION SCOPE");
