@@ -51,7 +51,7 @@ public class CommonCacheConfiguration {
     }
 
     @Bean
-    public JCacheRegionConfiguration blProductUrlCache() {
+    public JCacheRegionConfiguration  blProductUrlCache() {
         return new JCacheRegionConfiguration("blProductUrlCache", 3600, 1000);
     }
 
