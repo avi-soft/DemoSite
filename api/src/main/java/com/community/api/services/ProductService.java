@@ -571,7 +571,9 @@ public class ProductService {
             if (customProduct == null || ((Status) customProduct).getArchived() == 'Y') {
                 throw new IllegalArgumentException(PRODUCTNOTFOUND);
             }
-
+            if(!customProduct.getProductState().getProductState().equals(PRODUCT_STATE_MODIFIED) && !customProduct.getProductState().getProductState().equals(PRODUCT_STATE_NEW)) {
+                throw new IllegalArgumentException("PRODUCT CAN ONLY BE MODIFIED IF IT IS IN NEW AND MODIFIED STATE");
+            }
             Long userId = null;
             if (role.equals(Constant.SUPER_ADMIN) || role.equals(Constant.ADMIN)) {
                 return true;
@@ -610,6 +612,9 @@ public class ProductService {
             }
 
             if (addProductDto.getPriorityLevel() != null) {
+                if(addProductDto.getPriorityLevel()<=0 || addProductDto.getPriorityLevel()>5) {
+                    throw new IllegalArgumentException("PRIORITY LEVEL MUST BE BETWEEN 1-5");
+                }
                 customProduct.setPriorityLevel(addProductDto.getPriorityLevel());
             }
 
@@ -654,11 +659,13 @@ public class ProductService {
                 if (applicationScope == null) {
                     throw new IllegalArgumentException("NO APPLICATION SCOPE EXISTS WITH THIS ID");
                 } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE)) {
-                    if (addProductDto.getNotifyingAuthority() == null || addProductDto.getDomicileRequired() == null) {
-                        throw new IllegalArgumentException("NOTIFYING AUTHORITY AND DOMICILE REQUIRED CANNOT BE NULL IF APPLICATION SCOPE IS: " + Constant.APPLICATION_SCOPE_STATE);
-                    } else if (!addProductDto.getNotifyingAuthority().trim().isEmpty()) {
+                    if (addProductDto.getNotifyingAuthority() != null && !addProductDto.getNotifyingAuthority().trim().isEmpty()) {
                         addProductDto.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
                         customProduct.setNotifyingAuthority(addProductDto.getNotifyingAuthority());
+                        customProduct.setCustomApplicationScope(applicationScope);
+                    }
+                    if (addProductDto.getDomicileRequired() != null) {
+                        customProduct.setDomicileRequired(addProductDto.getDomicileRequired());
                         customProduct.setCustomApplicationScope(applicationScope);
                     }
                 } else if (applicationScope.getApplicationScope().equals(APPLICATION_SCOPE_CENTER)) {
