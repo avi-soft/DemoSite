@@ -1,4 +1,6 @@
 package com.community.api.services;
+import com.cloudinary.Cloudinary;
+import com.cloudinary.utils.ObjectUtils;
 import com.community.api.component.Constant;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.CustomCustomer;
@@ -42,6 +44,9 @@ public class DocumentStorageService {
 
     @Autowired
     private EntityManager entityManager;
+
+    @Autowired
+    private Cloudinary cloudinary;
 
     public ResponseEntity<Map<String, Object>> saveDocuments(MultipartFile file, String documentTypeStr, Long customerId, String role) {
         try {
@@ -218,59 +223,74 @@ public class DocumentStorageService {
     }
 
     @Transactional
-    public void updateOrCreateDocument(Document existingDocument, MultipartFile file, DocumentType documentTypeObj, Long customerId, String role) {
-        String newFilePath = "avisoftdocument"
-                + File.separator + role + File.separator + customerId
-                + File.separator + documentTypeObj.getDocument_type_name()
-                + File.separator + file.getOriginalFilename();
+    public void updateOrCreateDocument(Document existingDocument, MultipartFile file, DocumentType documentTypeObj, Long customerId, String role) throws IOException {
+        Map<String, String> params = ObjectUtils.asMap(
+                "public_id", "documents", // You can change the public_id format as you need
+                "folder", "avisoftDocument"
+                    + File.separator + role + File.separator + customerId
+                    + File.separator + documentTypeObj.getDocument_type_name()
+                    + File.separator + file.getOriginalFilename());
 
-        existingDocument.setFilePath(newFilePath);
+        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), params);
+        String imageUrl = (String) uploadResult.get("secure_url");
+        existingDocument.setFilePath(imageUrl);
         existingDocument.setName(file.getOriginalFilename());
         em.merge(existingDocument);
     }
 
     @Transactional
-    public void createDocument(MultipartFile file, DocumentType documentTypeObj, CustomCustomer customCustomer, Long customerId, String role) {
+    public void createDocument(MultipartFile file, DocumentType documentTypeObj, CustomCustomer customCustomer, Long customerId, String role) throws IOException {
         Document newDocument = new Document();
         newDocument.setName(file.getOriginalFilename());
         newDocument.setCustom_customer(customCustomer);
         newDocument.setDocumentType(documentTypeObj);
 
+        Map<String, String> params = ObjectUtils.asMap(
+                "public_id", "documents", // You can change the public_id format as you need
+                "folder", "avisoftdocument"
+                        + File.separator + role + File.separator + customerId
+                        + File.separator + documentTypeObj.getDocument_type_name()
+                        + File.separator + file.getOriginalFilename());
 
-        String newFilePath = "avisoftdocument"
-                + File.separator + role + File.separator + customerId
-                + File.separator + documentTypeObj.getDocument_type_name()
-                + File.separator + file.getOriginalFilename();
+        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), params);
+        String imageUrl = (String) uploadResult.get("secure_url");
 
-
-        newDocument.setFilePath(newFilePath);
+        newDocument.setFilePath(imageUrl);
         em.persist(newDocument);
     }
     @Transactional
-    public void createDocumentServiceProvider(MultipartFile file, DocumentType documentTypeObj, ServiceProviderEntity serviceProviderEntity, Long customerId, String role) {
+    public void createDocumentServiceProvider(MultipartFile file, DocumentType documentTypeObj, ServiceProviderEntity serviceProviderEntity, Long customerId, String role) throws IOException {
         ServiceProviderDocument newDocument = new ServiceProviderDocument();
         newDocument.setName(file.getOriginalFilename());
         newDocument.setServiceProviderEntity(serviceProviderEntity);
         newDocument.setDocumentType(documentTypeObj);
 
+        Map<String, String> params = ObjectUtils.asMap(
+                "public_id", "documents", // You can change the public_id format as you need
+                "folder", "avisoftdocument"
+                        + File.separator + role + File.separator + customerId
+                        + File.separator + documentTypeObj.getDocument_type_name()
+                        + File.separator + file.getOriginalFilename());
 
-        String newFilePath = "avisoftdocument"
-                + File.separator + role + File.separator + customerId
-                + File.separator + documentTypeObj.getDocument_type_name()
-                + File.separator + file.getOriginalFilename();
+        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), params);
+        String imageUrl = (String) uploadResult.get("secure_url");
 
-
-        newDocument.setFilePath(newFilePath);
+        newDocument.setFilePath(imageUrl);
         em.persist(newDocument);
     }
     @Transactional
-    public void updateOrCreateServiceProvider(ServiceProviderDocument existingDocument, MultipartFile file, DocumentType documentTypeObj, Long customerId, String role) {
-        String newFilePath = "avisoftdocument"
-                + File.separator + role + File.separator + customerId
-                + File.separator + documentTypeObj.getDocument_type_name()
-                + File.separator + file.getOriginalFilename();
+    public void updateOrCreateServiceProvider(ServiceProviderDocument existingDocument, MultipartFile file, DocumentType documentTypeObj, Long customerId, String role) throws IOException {
+        Map<String, String> params = ObjectUtils.asMap(
+                "public_id", "documents", // You can change the public_id format as you need
+                "folder",  "avisoftdocument"
+                    + File.separator + role + File.separator + customerId
+                    + File.separator + documentTypeObj.getDocument_type_name()
+                    + File.separator + file.getOriginalFilename());
 
-        existingDocument.setFilePath(newFilePath);
+        Map uploadResult = cloudinary.uploader().upload(file.getBytes(), params);
+        String imageUrl = (String) uploadResult.get("secure_url");
+
+        existingDocument.setFilePath(imageUrl);
         existingDocument.setName(file.getOriginalFilename());
         em.merge(existingDocument);
     }

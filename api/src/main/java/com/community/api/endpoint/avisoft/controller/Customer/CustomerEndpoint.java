@@ -5,6 +5,7 @@ import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.AddressDTO;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.CustomCustomer;
+import com.community.api.entity.Qualification;
 import com.community.api.services.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.exception.ExceptionHandlingService;
@@ -35,6 +36,7 @@ import javax.transaction.Transactional;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/customer",
@@ -224,10 +226,39 @@ public class CustomerEndpoint {
             }
             CustomerImpl customer = em.find(CustomerImpl.class, customerId);  // Assuming you retrieve the base Customer entity
             Map<String, Object> customerDetails = sharedUtilityService.breakReferenceForCustomer(customer);
-            customerDetails.put("qualificationDetails",customCustomer.getQualificationDetailsList());
+
+            // Fetch qualification details and replace qualification_id with qualification_name
+            List<Map<String, Object>> qualificationsWithNames = customCustomer.getQualificationDetailsList().stream()
+                    .map(qualificationDetail -> {
+                        // Create a new map to store qualification information
+                        Map<String, Object> qualificationInfo = new HashMap<>();
+
+                        // Fetch the qualification by qualification_id
+                        Qualification qualification = em.find(Qualification.class, qualificationDetail.getQualification_id());
+
+                        // Populate the map with necessary fields from qualificationDetail
+                        qualificationInfo.put("institution_name", qualificationDetail.getInstitution_name());
+                        qualificationInfo.put("year_of_passing", qualificationDetail.getYear_of_passing());
+                        qualificationInfo.put("board_or_university", qualificationDetail.getBoard_or_university());
+                        qualificationInfo.put("subject_stream", qualificationDetail.getSubject_stream());
+                        qualificationInfo.put("grade_or_percentage_value", qualificationDetail.getGrade_or_percentage_value());
+                        qualificationInfo.put("marks_total", qualificationDetail.getTotal_marks());
+                        qualificationInfo.put("marks_obtained", qualificationDetail.getMarks_obtained());
+
+                        // Replace the qualification_id with qualification_name
+                        if (qualification != null) {
+                            qualificationInfo.put("qualification_name", qualification.getQualification_name());
+                        } else {
+                            qualificationInfo.put("qualification_name", "Unknown Qualification");
+                        }
+
+                        return qualificationInfo;
+                    }).collect(Collectors.toList());
+
+            customerDetails.put("qualificationDetails", qualificationsWithNames);
+
             customerDetails.put("documents",customCustomer.getDocuments());
             return responseService.generateSuccessResponse("User details retrieved successfully", customerDetails, HttpStatus.OK);
-
 
         } catch (Exception e) {
             exceptionHandling.handleException(e);

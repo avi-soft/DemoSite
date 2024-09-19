@@ -41,10 +41,10 @@ public class ServiceProviderTestController {
         {
             return ResponseService.generateErrorResponse(e.getMessage(),HttpStatus.BAD_REQUEST);
         }
-        catch (Exception e)
-        {
-            return ResponseService.generateErrorResponse("Something went wrong",HttpStatus.BAD_REQUEST);
-        }
+//        catch (Exception e)
+//        {
+//            return ResponseService.generateErrorResponse("Something went wrong",HttpStatus.BAD_REQUEST);
+//        }
     }
 
     @PostMapping("/{serviceProviderId}/{testId}/upload-resized-image")
@@ -123,12 +123,23 @@ public class ServiceProviderTestController {
     }
 
     @GetMapping("/{serviceProviderId}/getAll")
-    public ResponseEntity<?> getAllTests(@PathVariable Long serviceProviderId) throws EntityNotFoundException, EntityDoesNotExistsException, CustomerDoesNotExistsException {
-        List<ServiceProviderTest> serviceProviderTests= testService.getServiceProviderTestByServiceProviderId(serviceProviderId);
-        if(serviceProviderTests.isEmpty())
-        {
-            return responseService.generateSuccessResponse("Service provider's test list is empty",serviceProviderTests, HttpStatus.OK);
+    public ResponseEntity<?> getAllTests(
+            @PathVariable Long serviceProviderId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit) throws EntityNotFoundException, EntityDoesNotExistsException {
+
+        try {
+            List<ServiceProviderTest> serviceProviderTests = testService.getServiceProviderTestByServiceProviderId(serviceProviderId, page, limit);
+
+            if (serviceProviderTests.isEmpty()) {
+                return responseService.generateSuccessResponse("Service provider's test list is empty", serviceProviderTests, HttpStatus.OK);
+            }
+
+            return responseService.generateSuccessResponse("List of service provider tests: ", serviceProviderTests, HttpStatus.OK);
+        } catch (EntityDoesNotExistsException e) {
+            return responseService.generateErrorResponse("Service provider not found: " + e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return responseService.generateErrorResponse("Some issue in fetching service provider tests: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
-        return responseService.generateSuccessResponse("All tests are found",serviceProviderTests, HttpStatus.OK);
     }
 }
