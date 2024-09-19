@@ -6,6 +6,7 @@ import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.AddressDTO;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.CustomCustomer;
+import com.community.api.entity.CustomProduct;
 import com.community.api.services.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.exception.ExceptionHandlingService;
@@ -801,7 +802,7 @@ public class CustomerEndpoint {
     }
 
 
-<<<<<<< HEAD
+
     @Transactional
     @PostMapping("/save-form/{customer_id}")
     public ResponseEntity<?>saveForm(@PathVariable long customer_id,@RequestParam long product_id)
@@ -859,9 +860,8 @@ public class CustomerEndpoint {
             return ResponseService.generateErrorResponse("Error removing Form : "+e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-    @GetMapping(value = "/forms/show-saved-forms")
-    public ResponseEntity<?> getSavedForms(HttpServletRequest request, @RequestParam long customer_id) throws Exception {
+    @GetMapping(value = "/forms/show-saved-forms/{customer_id}")
+    public ResponseEntity<?> getSavedForms(HttpServletRequest request,@PathVariable long  customer_id) throws Exception{
 
         try {
             CustomCustomer customer = entityManager.find(CustomCustomer.class, customer_id);
@@ -881,8 +881,8 @@ public class CustomerEndpoint {
     }
 
 
-    @GetMapping(value = "/forms/show-filled-forms")
-    public ResponseEntity<?> getFilledFormsByUserId(HttpServletRequest request, @RequestParam long customer_id) throws Exception {
+    @GetMapping(value = "/forms/show-filled-forms/{customer_id}")
+    public ResponseEntity<?> getFilledFormsByUserId(HttpServletRequest request,@PathVariable long customer_id) throws Exception{
 
         try {
             CustomCustomer customer = entityManager.find(CustomCustomer.class, customer_id);
