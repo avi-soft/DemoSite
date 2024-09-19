@@ -654,11 +654,13 @@ public class ProductService {
                 if (applicationScope == null) {
                     throw new IllegalArgumentException("NO APPLICATION SCOPE EXISTS WITH THIS ID");
                 } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE)) {
-                    if (addProductDto.getNotifyingAuthority() == null || addProductDto.getDomicileRequired() == null) {
-                        throw new IllegalArgumentException("NOTIFYING AUTHORITY AND DOMICILE REQUIRED CANNOT BE NULL IF APPLICATION SCOPE IS: " + Constant.APPLICATION_SCOPE_STATE);
-                    } else if (!addProductDto.getNotifyingAuthority().trim().isEmpty()) {
+                    if (addProductDto.getNotifyingAuthority() != null && !addProductDto.getNotifyingAuthority().trim().isEmpty()) {
                         addProductDto.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
                         customProduct.setNotifyingAuthority(addProductDto.getNotifyingAuthority());
+                        customProduct.setCustomApplicationScope(applicationScope);
+                    }
+                    if (addProductDto.getDomicileRequired() != null) {
+                        customProduct.setDomicileRequired(addProductDto.getDomicileRequired());
                         customProduct.setCustomApplicationScope(applicationScope);
                     }
                 } else if (applicationScope.getApplicationScope().equals(APPLICATION_SCOPE_CENTER)) {
