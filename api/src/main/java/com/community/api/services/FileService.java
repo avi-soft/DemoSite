@@ -18,11 +18,14 @@ public class FileService {
      * @param filePath The relative path to the file.
      * @return The URL to access the file.
      */
+
+    private static String baseURL = "http://192.168.0.181:8080";
     public String getFileUrl(String filePath, HttpServletRequest request) {
         String normalizedFilePath = filePath.replace("\\", "/");
         String encodedFilePath = URLEncoder.encode(normalizedFilePath, StandardCharsets.UTF_8);
-        String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort() + request.getContextPath();
-        return baseUrl + "/files/" + encodedFilePath;
+
+
+        return baseURL + "/"  + normalizedFilePath;
     }
 
 

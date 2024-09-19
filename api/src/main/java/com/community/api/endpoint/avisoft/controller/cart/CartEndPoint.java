@@ -337,19 +337,23 @@ public class CartEndPoint extends BaseEndpoint {
             return ResponseService.generateErrorResponse("Error placing order "+e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-    @RequestMapping(value = "cart-recovery-log/{customerId}", method = RequestMethod.GET)
-    public ResponseEntity<?> getCartRecoveryLog(@PathVariable Long customerId) {
-        if(customerId==null)
-            return ResponseService.generateErrorResponse("Customer Id not specified",HttpStatus.BAD_REQUEST);
-        CustomCustomer customCustomer = entityManager.find(CustomCustomer.class, customerId);
-        if (customCustomer == null)
-            return ResponseService.generateErrorResponse("Cannot find customer for this id", HttpStatus.NOT_FOUND);
-        List<Map<String, Object>> productList = new ArrayList<>();
-        for (Product product : customCustomer.getCartRecoveryLog()) {
-            productList.add(sharedUtilityService.createProductResponseMap(product, null));
-        }
-        return ResponseService.generateSuccessResponse("Cart Recovery Log : ", productList, HttpStatus.OK);
+    @RequestMapping(value ="cart-recovery-log/{customerId}",method = RequestMethod.GET)
+    public ResponseEntity<?>getCartRecoveryLog(@PathVariable long customerId)
+    {
+            try{
+                CustomCustomer customCustomer=entityManager.find(CustomCustomer.class,customerId);
+                if(customCustomer==null)
+                    return ResponseService.generateErrorResponse("Cannot find customer for this id",HttpStatus.NOT_FOUND);
+                List<Map<String,Object>>productList=new ArrayList<>();
+                for(Product product:customCustomer.getCartRecoveryLog())
+                {
+                    productList.add(sharedUtilityService.createProductResponseMap(product,null));
+                }
+                return ResponseService.generateSuccessResponse("Cart Recovery Log : ",productList,HttpStatus.OK);
+            }catch (Exception e) {
+                exceptionHandling.handleException(e);
+                return ResponseService.generateErrorResponse("Error fetching recovery log", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
     }
 
     private boolean isAnyServiceNull() {

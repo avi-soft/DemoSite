@@ -108,10 +108,6 @@
             <artifactId>jjwt-jackson</artifactId>
             <version>0.11.5</version>
         </dependency>
-        <!-- <dependency>
-             <groupId>org.springframework.boot</groupId>
-             <artifactId>spring-boot-starter-cache</artifactId>
-         </dependency>-->
 
         <dependency>
             <groupId>io.springfox</groupId>
@@ -163,8 +159,7 @@
             <groupId>org.broadleafcommerce</groupId>
             <artifactId>broadleaf-profile</artifactId>
         </dependency>
- <!--<dependency>
-
+        <!--<dependency>
             <groupId>org.liquibase</groupId>
 
             <artifactId>liquibase-core</artifactId>
@@ -175,9 +170,9 @@
                     <artifactId>snakeyaml</artifactId>
                 </exclusion>
             </exclusions>
-        </dependency>
+        </dependency>-->
 
-        <dependency>
+<!--       <dependency>
 
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
