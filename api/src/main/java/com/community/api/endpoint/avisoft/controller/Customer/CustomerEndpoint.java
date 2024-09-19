@@ -12,6 +12,7 @@ import com.community.api.services.exception.ExceptionHandlingService;
 import com.community.api.utils.Document;
 import com.community.api.utils.DocumentType;
 import com.community.api.utils.ServiceProviderDocument;
+import io.micrometer.core.lang.Nullable;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.broadleafcommerce.profile.core.domain.Address;
@@ -28,6 +29,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import javax.persistence.Column;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
@@ -189,24 +192,39 @@ public class CustomerEndpoint {
 
             customerDetails.setCountryCode(customCustomer.getCountryCode());
             Customer customer = customerService.readCustomerById(customerId);
+            List<String>errorMessages=new ArrayList<>();
             //using reflections
             for (Field field : CustomCustomer.class.getDeclaredFields()) {
+                Column columnAnnotation = field.getAnnotation(Column.class);
+                boolean isColumnNotNull = (columnAnnotation != null && !columnAnnotation.nullable());
+                // Check if the field has the @Nullable annotation
+                boolean isNullable = field.isAnnotationPresent(Nullable.class);
                 field.setAccessible(true);
                 Object newValue = field.get(customerDetails);
+                if(newValue==null && !isNullable)
+                    errorMessages.add(field.getName()+" cannot be null");
                 if (newValue != null) {
                     field.set(customCustomer, newValue);
                 }
             }
-            if (customerDetails.getFirstName() != null || customerDetails.getLastName() != null) {
+            if(customerDetails.getFirstName()!=null&&customerDetails.getLastName()!=null)
+            {
                 customer.setFirstName(customerDetails.getFirstName());
                 customer.setLastName(customerDetails.getLastName());
+            }
+            else if(customerDetails.getFirstName() == null || customerDetails.getLastName() == null) {
+                if(customerDetails.getFirstName()==null)
+                    errorMessages.add("First Name cannot be null");
+                if(customCustomer.getLastName()==null)
+                    errorMessages.add("Last Name cannot be null");
             }
             if(customerDetails.getEmailAddress()!=null){
                 customer.setEmailAddress(customerDetails.getEmailAddress());
             }
-
+            if(!errorMessages.isEmpty())
+                return ResponseService.generateErrorResponse("List of Failed validations : "+errorMessages.toString(),HttpStatus.BAD_REQUEST);
             em.merge(customCustomer);
-            return ResponseService.generateSuccessResponse("User details updated successfully : ",customer, HttpStatus.OK);
+            return ResponseService.generateSuccessResponse("User details updated successfully : ",sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK);
 
         } catch (Exception e) {
             exceptionHandling.handleException(e);
@@ -930,6 +948,27 @@ public class CustomerEndpoint {
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Some issue in customers: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @Transactional
+    @PostMapping("/set-referrer/{customer_id}/{service_provider_id}")
+    public ResponseEntity<?>setReferrerForCustomer(@PathVariable Long customer_id,@PathVariable Long service_provider_id) {
+        try {
+            CustomCustomer customCustomer = entityManager.find(CustomCustomer.class, customer_id);
+            if (customCustomer == null)
+                return ResponseService.generateErrorResponse("Customer not found", HttpStatus.NOT_FOUND);
+            ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, service_provider_id);
+            if (serviceProvider == null)
+                return ResponseService.generateErrorResponse("Service Provider not found", HttpStatus.NOT_FOUND);
+            if(customCustomer.getReferrerServiceProvider()!=null)
+                return ResponseService.generateErrorResponse("Referrer already set", HttpStatus.NOT_FOUND);
+            customCustomer.setReferrerServiceProvider(serviceProvider);
+            entityManager.merge(customCustomer);
+            return ResponseService.generateSuccessResponse("Referrer Set",sharedUtilityService.serviceProviderDetailsMap(serviceProvider),HttpStatus.OK);
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseService.generateErrorResponse("Error setting customer's referrer " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 

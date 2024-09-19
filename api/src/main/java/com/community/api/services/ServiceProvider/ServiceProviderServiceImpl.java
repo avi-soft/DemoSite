@@ -36,6 +36,8 @@ import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -655,48 +657,47 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             return responseService.generateErrorResponse("Error adding address",HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-    public Object searchServiceProviderBasedOnGivenFields(String state,String district,String firstName,String lastName,String mobileNumber)
-    {
-        int count = 0;
-        String[] fields = {state, district, firstName, mobileNumber};
-        System.out.println("hi");
-        for (String field : fields) {
-            if (field != null) {
-                count++;
-            }
-            else
-                break;
-        }
-        System.out.println(count);
-        System.out.println("h1 after loop");
-        String generalizedQuery="SELECT s.*\n" +
+    public Object searchServiceProviderBasedOnGivenFields(String state,String district,String first_name,String last_name,String mobileNumber) {
+        Map<String, Character> alias = new HashMap<>();
+        alias.put("state", 'a');
+        alias.put("district", 'a');
+        alias.put("first_name", 's');
+        alias.put("last_name", 's');
+        String generalizedQuery = "SELECT s.*\n" +
                 "FROM service_provider s\n" +
-                "JOIN custom_service_provider_address a ON s.service_provider_id = a.service_provider_id\n"+
+                "JOIN custom_service_provider_address a ON s.service_provider_id = a.service_provider_id\n" +
                 "WHERE ";
-        Query query;
-        switch (count)
+        if(mobileNumber!=null)
         {
-            case 1:
-                generalizedQuery=generalizedQuery+"a.state = :state";
-                query = entityManager.createNativeQuery(generalizedQuery, ServiceProviderEntity.class);
-                query.setParameter("state",state);
-                return query.getResultList();
-            case 2:
-                generalizedQuery=generalizedQuery+"a.state = :state AND a.district = :district";
-                query = entityManager.createNativeQuery(generalizedQuery, ServiceProviderEntity.class);
-                query.setParameter("state", state);
-                query.setParameter("district", district);
-                return query.getResultList();
-            case 3:
-                generalizedQuery=generalizedQuery+"a.state = :state AND a.district = :district AND s.first_name =:firstName";
-                query = entityManager.createNativeQuery(generalizedQuery, ServiceProviderEntity.class);
-                query.setParameter("state", state);
-                query.setParameter("district", district);
-                query.setParameter("firstName",firstName);
-                return query.getResultList();
-            default:
-                break;
+            return entityManager.createQuery(Constant.PHONE_QUERY_SERVICE_PROVIDER, ServiceProviderEntity.class)
+                    .setParameter("mobileNumber", mobileNumber)
+                    .setParameter("country_code","+91")
+                    .getResultStream()
+                    .findFirst()
+                    .orElse(null);
         }
-        return null;
+        String[] fieldsNames = {"state", "district", "first_name","last_name"};
+        String[] fields = {state, district, first_name,last_name};
+        for (int i = 0; i < fields.length; i++) {
+            if (fields[i] != null) {
+                generalizedQuery = generalizedQuery + alias.get(fieldsNames[i]) + "." + fieldsNames[i] + " =:" + fieldsNames[i] + " AND ";
+            }
+        }
+        generalizedQuery = generalizedQuery.trim();
+        int lastSpaceIndex = generalizedQuery.lastIndexOf(" ");
+        generalizedQuery = generalizedQuery.substring(0, lastSpaceIndex);
+        Query query;
+        query = entityManager.createNativeQuery(generalizedQuery, ServiceProviderEntity.class);
+        for (int i = 0; i < fields.length; i++) {
+            if (fields[i] != null)
+                query.setParameter(fieldsNames[i], fields[i]);
+        }
+        List<ServiceProviderEntity>listOfSp= query.getResultList();
+        List<Map<String,Object>>response=new ArrayList<>();
+        for(ServiceProviderEntity serviceProvider:listOfSp)
+        {
+           response.add(sharedUtilityService.serviceProviderDetailsMap(serviceProvider));
+        }
+        return response;
     }
 }
