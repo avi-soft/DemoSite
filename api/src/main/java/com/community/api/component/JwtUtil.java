@@ -15,6 +15,7 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
+import javax.transaction.Transactional;
 import javax.xml.bind.DatatypeConverter;
 import java.security.Key;
 import java.util.Date;
@@ -132,11 +133,14 @@ public class JwtUtil {
         }
     }
 
+    @Transactional
     public Boolean validateToken(String token, String ipAddress, String userAgent) {
 
         try {
+
             if (isTokenExpired(token)) {
-                return false;
+                throw new IllegalArgumentException("Token is expired");
+
             }
             Long id = extractId(token);
             Claims claims = Jwts.parserBuilder()
@@ -183,7 +187,8 @@ public class JwtUtil {
     private boolean isTokenExpired(String token) {
         try {
             if (token == null || token.trim().isEmpty()) {
-                return false;
+                throw new IllegalArgumentException("Token is required");
+
             }
             Date expiration = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
@@ -202,7 +207,7 @@ public class JwtUtil {
     public boolean logoutUser(String token) {
         try {
             if (token == null || token.trim().isEmpty()) {
-                return false; // or handle accordingly, maybe log this case
+                return false;
             }
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(secretKey)

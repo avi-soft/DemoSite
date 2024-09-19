@@ -122,7 +122,7 @@ public class ProductController extends CatalogEndpoint {
             }
 
             Category category = productService.validateCategory(categoryId);
-            if (category == null) {
+            if (category == null || ((Status) category).getArchived() != 'Y') {
                 ResponseService.generateErrorResponse("CATEGORY NOT FOUND", HttpStatus.NOT_FOUND);
             }
 
@@ -232,9 +232,6 @@ public class ProductController extends CatalogEndpoint {
             customProduct.setModifierUserId(jwtTokenUtil.extractId(authHeader.substring(7)));
 
             entityManager.persist(customProduct);
-
-            productService.validateReserveCategory(addProductDto);
-            productService.deleteOldReserveCategoryMapping(customProduct);
 
             Product product = catalogService.findProductById(customProduct.getId());
 
