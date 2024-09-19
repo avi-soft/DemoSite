@@ -157,56 +157,6 @@ public class ProductService {
 
     public List<CustomProduct> filterProducts(List<Long> states, List<Long> categories, List<Long> reserveCategories, String title, Double fee, Integer post, Date startRange, Date endRange) {
 
-        /*String jpql = "SELECT DISTINCT p FROM CustomProduct p "
-                + "JOIN CustomProductReserveCategoryFeePostRef r "
-                + "ON r.customProduct = p "
-                + "WHERE " ;
-
-        TypedQuery<CustomProduct> query = entityManager.createQuery(jpql, CustomProduct.class);
-
-        List<CustomProductState> customProductStates = new ArrayList<>();
-        if (states != null && !states.isEmpty()) {
-            for (Long id : states) {
-                customProductStates.add(productStateService.getProductStateById(id));
-            }
-            jpql += "p.productState IN :states ";
-            query.setParameter("states", customProductStates);
-        }
-        List<Category> categoryList = new ArrayList<>();
-        if (categories != null && !categories.isEmpty()) {
-            for (Long id : categories) {
-                categoryList.add(catalogService.findCategoryById(id));
-            }
-            jpql += "AND p.defaultCategory IN :categories ";
-            query.setParameter("categories", categoryList);
-        }
-        List<CustomReserveCategory> customReserveCategoryList = new ArrayList<>();
-        if (reserveCategories != null && !reserveCategories.isEmpty()) {
-            for (Long id : reserveCategories) {
-                customReserveCategoryList.add(reserveCategoryService.getReserveCategoryById(id));
-            }
-            jpql += "AND r.customReserveCategory IN :reserveCategories";
-            query.setParameter("reserveCategories", customReserveCategoryList);
-        }
-
-        if(title != null) {
-            jpql += "AND p.metaTitle LIKE :title ";
-            query.setParameter("title", "%" + title + "%");
-        }
-
-        if(fee != null) {
-            jpql += "AND r.fee > :fee ";
-            query.setParameter("fee", fee);
-        }
-
-        if(post != null) {
-            jpql += "AND r.post > :post ";
-            query.setParameter("post", post);
-        }
-
-        return query.getResultList();
-*/
-
         // Initialize the JPQL query
         StringBuilder jpql = new StringBuilder("SELECT DISTINCT p FROM CustomProduct p ")
                 .append("JOIN CustomProductReserveCategoryFeePostRef r ON r.customProduct = p ")
@@ -221,14 +171,22 @@ public class ProductService {
         // Conditionally build the query
         if (states != null && !states.isEmpty()) {
             for (Long id : states) {
-                customProductStates.add(productStateService.getProductStateById(id));
+                CustomProductState productState = productStateService.getProductStateById(id);
+                if(productState == null) {
+                    throw new IllegalArgumentException("NO PRODUCT STATE FOUND WITH THIS ID: " + id);
+                }
+                customProductStates.add(productState);
             }
             jpql.append("AND p.productState IN :states ");
         }
 
         if (categories != null && !categories.isEmpty()) {
             for (Long id : categories) {
-                categoryList.add(catalogService.findCategoryById(id));
+                Category category = catalogService.findCategoryById(id);
+                if(category == null) {
+                    throw new IllegalArgumentException("NO CATEGORY FOUND WITH THIS ID: " + id);
+                }
+                categoryList.add(category);
             }
             jpql.append("AND p.defaultCategory IN :categories ");
         }
@@ -283,8 +241,6 @@ public class ProductService {
             query.setParameter("endRange", endRange);
         }
 
-        System.out.println(startRange);
-        System.out.println(endRange);
         // Execute and return the result
         return query.getResultList();
     }
@@ -342,6 +298,8 @@ public class ProductService {
 
             if (addProductDto.getPriorityLevel() == null) {
                 addProductDto.setPriorityLevel(Constant.DEFAULT_PRIORITY_LEVEL);
+            } else if (addProductDto.getPriorityLevel() <= 0 || addProductDto.getPriorityLevel() > 5) {
+                throw new IllegalArgumentException("PRIORITY LEVEL MUST LIE BETWEEN 1-5");
             }
 
             if (addProductDto.getMetaTitle() == null || addProductDto.getMetaTitle().trim().isEmpty()) {
@@ -485,6 +443,10 @@ public class ProductService {
 
     public boolean validateReserveCategory(AddProductDto addProductDto) throws Exception {
         try {
+
+            if (addProductDto.getReservedCategory().isEmpty()) {
+                throw new IllegalArgumentException("RESERVE CATEGORY CANNOT BE EMPTY");
+            }
             Set<Long> reserveCategoryId = new HashSet<>();
 
             Date currentDate = new Date(); // Current date for comparison
@@ -565,7 +527,9 @@ public class ProductService {
             if (customProduct == null || ((Status) customProduct).getArchived() == 'Y') {
                 throw new IllegalArgumentException(PRODUCTNOTFOUND);
             }
-
+            if(!customProduct.getProductState().getProductState().equals(PRODUCT_STATE_MODIFIED) && !customProduct.getProductState().getProductState().equals(PRODUCT_STATE_NEW)) {
+                throw new IllegalArgumentException("PRODUCT CAN ONLY BE MODIFIED IF IT IS IN NEW AND MODIFIED STATE");
+            }
             Long userId = null;
             if (role.equals(Constant.SUPER_ADMIN) || role.equals(Constant.ADMIN)) {
                 return true;
@@ -575,6 +539,10 @@ public class ProductService {
             } else if (role.equals(Constant.SERVICE_PROVIDER)) {
 
                 userId = jwtTokenUtil.extractId(jwtToken);
+                if (customProduct.getCreatoRole().getRole_name().equals(role) && customProduct.getUserId().equals(userId)) {
+                    return true;
+                }
+
                 List<Privileges> privileges = privilegeService.getServiceProviderPrivilege(userId);
                 for (Privileges privilege : privileges) {
                     if (privilege.getPrivilege_name().equals(Constant.PRIVILEGE_UPDATE_PRODUCT)) {
@@ -600,6 +568,9 @@ public class ProductService {
             }
 
             if (addProductDto.getPriorityLevel() != null) {
+                if(addProductDto.getPriorityLevel()<=0 || addProductDto.getPriorityLevel()>5) {
+                    throw new IllegalArgumentException("PRIORITY LEVEL MUST BE BETWEEN 1-5");
+                }
                 customProduct.setPriorityLevel(addProductDto.getPriorityLevel());
             }
 
@@ -613,6 +584,9 @@ public class ProductService {
                 customProduct.setDisplayTemplate(addProductDto.getDisplayTemplate().trim());
             }
 
+            if ((addProductDto.getPriorityLevel() != null) && (addProductDto.getPriorityLevel() <= 0 || addProductDto.getPriorityLevel() > 5)) {
+                throw new IllegalArgumentException("PRIORITY LEVEL MUST LIE BETWEEN 1-5");
+            }
             if (addProductDto.getMetaDescription() != null && !addProductDto.getMetaDescription().trim().isEmpty()) {
                 addProductDto.setMetaDescription(addProductDto.getMetaDescription().trim());
                 customProduct.setMetaDescription(addProductDto.getMetaDescription());
@@ -640,14 +614,38 @@ public class ProductService {
                 CustomApplicationScope applicationScope = applicationScopeService.getApplicationScopeById(addProductDto.getApplicationScope());
                 if (applicationScope == null) {
                     throw new IllegalArgumentException("NO APPLICATION SCOPE EXISTS WITH THIS ID");
-                } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE)) {
-                    if (customProduct.getNotifyingAuthority() == null && addProductDto.getNotifyingAuthority() == null) {
-                        throw new IllegalArgumentException("NOTIFYING AUTHORITY CANNOT BE NULL IF APPLICATION SCOPE IS: " + Constant.APPLICATION_SCOPE_STATE);
-                    } else if (addProductDto.getNotifyingAuthority() != null && !addProductDto.getNotifyingAuthority().trim().isEmpty()) {
+                } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE) && customProduct.getCustomApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE)) {
+                    if (addProductDto.getNotifyingAuthority() != null && !addProductDto.getNotifyingAuthority().trim().isEmpty()) {
                         addProductDto.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
-                        customProduct.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
+                        customProduct.setNotifyingAuthority(addProductDto.getNotifyingAuthority());
                         customProduct.setCustomApplicationScope(applicationScope);
                     }
+                    if (addProductDto.getDomicileRequired() != null) {
+                        customProduct.setDomicileRequired(addProductDto.getDomicileRequired());
+                        customProduct.setCustomApplicationScope(applicationScope);
+                    }
+                } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE) && customProduct.getCustomApplicationScope().getApplicationScope().equals(Constant.APPLICATION_SCOPE_CENTER)) {
+                    if (addProductDto.getNotifyingAuthority() == null || addProductDto.getDomicileRequired() == null || addProductDto.getNotifyingAuthority().trim().isEmpty()) {
+                        throw new IllegalArgumentException("DOMICILE AND NOTIFYING AUTHORITY ARE REQUIRED FIELDS FOR STATE APPLICATION SCOPE");
+                    }
+
+                    addProductDto.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
+                    customProduct.setNotifyingAuthority(addProductDto.getNotifyingAuthority());
+                    customProduct.setDomicileRequired(addProductDto.getDomicileRequired());
+                    customProduct.setCustomApplicationScope(applicationScope);
+                } else if (applicationScope.getApplicationScope().equals(APPLICATION_SCOPE_CENTER)) {
+                    if (addProductDto.getNotifyingAuthority() != null) {
+                        throw new IllegalArgumentException("NOTIFYING AUTHORITY NOT REQUIRED IN CASE OF CENTER LEVEL APPLICATION SCOPE");
+                    }
+                    if (addProductDto.getDomicileRequired() != null && addProductDto.getDomicileRequired()) {
+                        throw new IllegalArgumentException("DOMICILE IS NOT REQUIRED IN CASE OF CENTER APPLICATION SCOPE");
+                    }
+
+                    addProductDto.setDomicileRequired(false);
+                    addProductDto.setNotifyingAuthority(null);
+                    customProduct.setNotifyingAuthority(addProductDto.getNotifyingAuthority());
+                    customProduct.setDomicileRequired(addProductDto.getDomicileRequired());
+                    customProduct.setCustomApplicationScope(applicationScope);
                 }
             }
 
@@ -892,7 +890,7 @@ public class ProductService {
                     throw new IllegalArgumentException("NO PRODUCT STATE EXIST WITH THIS ID");
                 }
 
-                if ((!customProduct.getProductState().getProductState().equals(Constant.PRODUCT_STATE_NEW) && !customProduct.getProductState().getProductState().equals(Constant.PRODUCT_STATE_MODIFIED)) || (!(productStateService.getProductStateById(addProductDto.getProductState()).getProductState().equals(PRODUCT_STATE_APPROVED) && !(productStateService.getProductStateById(addProductDto.getProductState()).getProductState().equals(PRODUCT_STATE_REJECTED))))) {
+                if ( ( !customProduct.getProductState().getProductState().equals(Constant.PRODUCT_STATE_NEW) && !customProduct.getProductState().getProductState().equals(Constant.PRODUCT_STATE_MODIFIED) ) || ( !customProductState.getProductState().equals(PRODUCT_STATE_APPROVED) && !customProductState.getProductState().equals(PRODUCT_STATE_REJECTED)) ) {
                     throw new IllegalArgumentException("PRODUCT STATE ONLY CHANGE FROM NEW/MODIFIABLE TO APPROVED OR REJECTED STATE");
                 }
 

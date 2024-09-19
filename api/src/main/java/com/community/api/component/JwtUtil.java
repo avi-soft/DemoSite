@@ -139,10 +139,13 @@ public class JwtUtil {
 
     @Transactional
     public Boolean validateToken(String token, String ipAddress, String userAgent) {
-        if (isTokenExpired(token)) {
-            throw new ExpiredJwtException(null, null, "Token is expired");
-        }
+
         try {
+
+            if (isTokenExpired(token)) {
+                throw new IllegalArgumentException("Token is expired");
+
+            }
 
             Long id = extractId(token);
             Claims claims = Jwts.parserBuilder()
@@ -188,7 +191,8 @@ public class JwtUtil {
     private boolean isTokenExpired(String token) {
         try {
             if (token == null || token.trim().isEmpty()) {
-                return false;
+                throw new IllegalArgumentException("Token is required");
+
             }
             Date expiration = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
@@ -210,7 +214,10 @@ public class JwtUtil {
     public boolean logoutUser(String token) {
         try {
             if (token == null || token.trim().isEmpty()) {
+
                 throw new IllegalArgumentException("Token is required");
+
+
             }
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
