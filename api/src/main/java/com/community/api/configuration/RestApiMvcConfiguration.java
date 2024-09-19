@@ -120,11 +120,8 @@ public class RestApiMvcConfiguration extends BroadleafRestApiMvcConfiguration {
         registry.addResourceHandler("/images/favicon-16x16.png")
                 .addResourceLocations("classpath:/META-INF/resources/webjars/images/favicon-16x16.png");
 
-        registry.addResourceHandler("/files/**")
-                .addResourceLocations("file:./api/avisoftdocument/");
-
-/*        registry.addResourceHandler("/api/v1/images/**")
-                .addResourceLocations("classpath:/images/");*/
+        registry.addResourceHandler("/avisoftdocument/**")
+                .addResourceLocations("file:" + System.getProperty("user.dir") + "/avisoftdocument/");
     }
     
     @EnableSwagger2

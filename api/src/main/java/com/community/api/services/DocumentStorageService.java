@@ -51,11 +51,11 @@ public class DocumentStorageService {
     public ResponseEntity<Map<String, Object>> saveDocuments(MultipartFile file, String documentTypeStr, Long customerId, String role) {
         try {
 
-            if (!isValidFileType(file)) {
+            if (!DocumentStorageService.isValidFileType(file)) {
                 return ResponseEntity.badRequest().body(Map.of(
                         "status", ApiConstants.STATUS_ERROR,
                         "status_code", HttpStatus.BAD_REQUEST.value(),
-                        "message", "Invalid file type: "
+                        "message", "Invalid file type: " + file.getOriginalFilename()
                 ));
             }
 
@@ -109,38 +109,43 @@ public class DocumentStorageService {
      */
     public void saveDocumentOndirctory(String customerId, String documentType, String fileName, InputStream fileInputStream, String role) throws IOException {
 
-        /*File baseDir = new File(BASE_DIRECTORY);
-        if (!baseDir.exists()) {
-            baseDir.mkdirs();
-        }*/
+        try{
+            String currentDir = System.getProperty("user.dir");
 
-        File avisoftDir = new File("avisoftdocument");
-        if (!avisoftDir.exists()) {
-            avisoftDir.mkdirs();
-        }
+            String testDirPath = currentDir + "/../test/";
+//        String testResourcesPath = testDirPath + "src/main/resources/";
 
-        File roleDir = new File(avisoftDir, role);
-        if (!roleDir.exists()) {
-            roleDir.mkdirs();
-        }
-
-        File customerDir = new File(roleDir, customerId);
-        if (!customerDir.exists()) {
-            customerDir.mkdirs();
-        }
-
-        File documentTypeDir = new File(customerDir, documentType);
-        if (!documentTypeDir.exists()) {
-            documentTypeDir.mkdirs();
-        }
-
-        File file = new File(documentTypeDir, fileName);
-        try (FileOutputStream fos = new FileOutputStream(file)) {
-            byte[] buffer = new byte[1024];
-            int bytesRead;
-            while ((bytesRead = fileInputStream.read(buffer)) != -1) {
-                fos.write(buffer, 0, bytesRead);
+            File avisoftDir = new File(testDirPath + "avisoftdocument");
+            if (!avisoftDir.exists()) {
+                avisoftDir.mkdirs();
             }
+
+            File roleDir = new File(avisoftDir, role);
+            if (!roleDir.exists()) {
+                roleDir.mkdirs();
+            }
+
+            File customerDir = new File(roleDir, customerId);
+            if (!customerDir.exists()) {
+                customerDir.mkdirs();
+            }
+
+            File documentTypeDir = new File(customerDir, documentType);
+            if (!documentTypeDir.exists()) {
+                documentTypeDir.mkdirs();
+            }
+
+            File file = new File(documentTypeDir, fileName);
+            try (FileOutputStream fos = new FileOutputStream(file)) {
+                byte[] buffer = new byte[1024];
+                int bytesRead;
+                while ((bytesRead = fileInputStream.read(buffer)) != -1) {
+                    fos.write(buffer, 0, bytesRead);
+                }
+            }
+        }catch(Exception e){
+            exceptionHandlingService.handleException(e);
+            throw new IOException("Error saving document: " + e.getMessage());
         }
     }
 
@@ -152,9 +157,6 @@ public class DocumentStorageService {
         boolean isContentTypeValid = Arrays.asList(allowedFileTypes).contains(contentType);
 
         String fileName = file.getOriginalFilename();
-
-        System.out.println(fileName + " filename"  + isContentTypeValid  +" isContentTypeValid");
-
 
         boolean isExtensionValid = fileName != null && (fileName.endsWith(".pdf") || fileName.endsWith(".jpeg") || fileName.endsWith(".jpg") || fileName.endsWith(".png"));
 
