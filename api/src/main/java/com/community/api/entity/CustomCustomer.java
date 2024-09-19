@@ -71,8 +71,8 @@ public class CustomCustomer extends CustomerImpl {
     private String subcategory;
 
     @Nullable
-    @OneToOne(cascade = CascadeType.ALL)
-    private Document domicile;
+    @Column(name = "domicile")
+    private Boolean domicile=false;
 
     @Nullable
     @Column(name = "secondary_mobile_number")
