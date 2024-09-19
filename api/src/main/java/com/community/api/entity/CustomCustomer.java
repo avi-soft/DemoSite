@@ -112,6 +112,21 @@ public class CustomCustomer extends CustomerImpl {
     @Nullable
     private String token;
 
+    @Column(name = "residential_address")
+    private String residentailAddress;
+
+    @Column(name = "state")
+    private String state;
+
+    @Column(name = "district")
+    private String district;
+
+    @Column(name = "city")
+    private String city;
+
+    @Column(name = "pincode")
+    private String pincode;
+
     @Nullable
     @OneToOne(fetch = FetchType.LAZY)
     @JoinTable(

@@ -106,8 +106,6 @@ public class SharedUtilityService {
         customerDetails.put("receiveEmail", customer.isReceiveEmail());
         customerDetails.put("registered", customer.isRegistered());
         customerDetails.put("deactivated", customer.isDeactivated());
-        customerDetails.put("customerLocale", customer.getCustomerLocale());
-        customerDetails.put("customerPhones", customer.getCustomerPhones());
         customerDetails.put("customerPayments", customer.getCustomerPayments());
         customerDetails.put("taxExemptionCode", customer.getTaxExemptionCode());
         customerDetails.put("unencodedPassword", customer.getUnencodedPassword());
@@ -133,6 +131,11 @@ public class SharedUtilityService {
         customerDetails.put("secondaryMobileNumber", customCustomer.getSecondaryMobileNumber());
         customerDetails.put("whatsappNumber", customCustomer.getWhatsappNumber());
         customerDetails.put("secondaryEmail", customCustomer.getSecondaryEmail());
+        customerDetails.put("state", customCustomer.getState());
+        customerDetails.put("city", customCustomer.getCity());
+        customerDetails.put("district", customCustomer.getDistrict());
+        customerDetails.put("pincode", customCustomer.getPincode());
+        customerDetails.put("residentialAddress",customCustomer.getResidentailAddress());
       /*  customerDetails.put("qualificationDetails",customCustomer.getQualificationDetailsList());
         customerDetails.put("documentList",customCustomer.getDocumentList());
         List<Map<String,Object>>listOfSavedProducts=new ArrayList<>();*/

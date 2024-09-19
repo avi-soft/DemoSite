@@ -71,6 +71,8 @@ public class CustomerEndpoint {
     @Autowired
     private RoleService roleService;
 
+    @Autowired
+    private DistrictService districtService;
 
     @Autowired
     private static ResponseService responseService;
@@ -207,6 +209,20 @@ public class CustomerEndpoint {
                 if (newValue != null) {
                     field.set(customCustomer, newValue);
                 }
+            }
+
+            if(customerDetails.getState()!=null&&customerDetails.getDistrict()!=null&&customerDetails.getPincode()!=null)
+            {
+                customCustomer.setState(districtService.findStateById(Integer.parseInt(customerDetails.getState())));
+                customCustomer.setDistrict(districtService.findDistrictById(Integer.parseInt(customerDetails.getDistrict())));
+                Map<String,Object>addressMap=new HashMap<>();
+                addressMap.put("address",customerDetails.getResidentailAddress());
+                addressMap.put("state",districtService.findStateById(Integer.parseInt(customerDetails.getState())));
+                addressMap.put("city",districtService.findDistrictById(Integer.parseInt(customerDetails.getDistrict())));
+                addressMap.put("district",customerDetails.getDistrict());
+                addressMap.put("pinCode",customerDetails.getPincode());
+                addressMap.put("addressName","Residential Address");
+                addAddress(customerId,addressMap);
             }
             if(customerDetails.getFirstName()!=null&&customerDetails.getLastName()!=null)
             {
