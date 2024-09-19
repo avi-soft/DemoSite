@@ -571,7 +571,9 @@ public class ProductService {
             if (customProduct == null || ((Status) customProduct).getArchived() == 'Y') {
                 throw new IllegalArgumentException(PRODUCTNOTFOUND);
             }
-
+            if(!customProduct.getProductState().getProductState().equals(PRODUCT_STATE_MODIFIED) && !customProduct.getProductState().getProductState().equals(PRODUCT_STATE_NEW)) {
+                throw new IllegalArgumentException("PRODUCT CAN ONLY BE MODIFIED IF IT IS IN NEW AND MODIFIED STATE");
+            }
             Long userId = null;
             if (role.equals(Constant.SUPER_ADMIN) || role.equals(Constant.ADMIN)) {
                 return true;
@@ -610,6 +612,9 @@ public class ProductService {
             }
 
             if (addProductDto.getPriorityLevel() != null) {
+                if(addProductDto.getPriorityLevel()<=0 || addProductDto.getPriorityLevel()>5) {
+                    throw new IllegalArgumentException("PRIORITY LEVEL MUST BE BETWEEN 1-5");
+                }
                 customProduct.setPriorityLevel(addProductDto.getPriorityLevel());
             }
 
