@@ -46,6 +46,22 @@ public class DocumentStorageService {
     public ResponseEntity<Map<String, Object>> saveDocuments(MultipartFile file, String documentTypeStr, Long customerId, String role) {
         try {
 
+            if (!DocumentStorageService.isValidFileType(file)) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", ApiConstants.STATUS_ERROR,
+                        "status_code", HttpStatus.BAD_REQUEST.value(),
+                        "message", "Invalid file type: " + file.getOriginalFilename()
+                ));
+            }
+
+            if (file.getSize() > Constant.MAX_FILE_SIZE) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "status", ApiConstants.STATUS_ERROR,
+                        "status_code", HttpStatus.BAD_REQUEST.value(),
+                        "message", "File size exceeds the maximum allowed size: " + file.getOriginalFilename()
+                ));
+            }
+
             String fileName = file.getOriginalFilename();
             try (InputStream fileInputStream = file.getInputStream()) {
                 this.saveDocumentOndirctory(customerId.toString(), documentTypeStr, fileName, fileInputStream, role);

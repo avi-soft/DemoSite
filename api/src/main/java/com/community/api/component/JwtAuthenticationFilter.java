@@ -87,8 +87,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
     } catch (ExpiredJwtException e) {
-        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "JWT token is expired");
-        exceptionHandling.handleException(e);
+        handleException(response, HttpServletResponse.SC_UNAUTHORIZED, "JWT token is expired");
         logger.error("ExpiredJwtException caught: {}", e.getMessage());
     } catch (MalformedJwtException e) {
         handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JWT token");
@@ -164,8 +163,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String ipAdress = request.getRemoteAddr();
         String User_Agent = request.getHeader("User-Agent");
 
-        if (!jwtUtil.validateToken(jwt, ipAdress, User_Agent)) {
-            respondWithUnauthorized(response, "Invalid JWT token");
+        try {
+            if (!jwtUtil.validateToken(jwt, ipAdress, User_Agent)) {
+                respondWithUnauthorized(response, "Invalid JWT token");
+                return true;
+            }
+        } catch (ExpiredJwtException e) {
+            jwtUtil.logoutUser(jwt);
+            respondWithUnauthorized(response, "Token is expired");
             return true;
         }
         Customer customCustomer = null;

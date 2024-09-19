@@ -119,9 +119,9 @@ public class JwtUtil {
             if (token == null || token.isEmpty()) {
                 throw new IllegalArgumentException("Token is required");
             }
-            if (isTokenExpired(token)) {
 
-                throw new RuntimeException("Token is expired");
+            if (isTokenExpired(token)) {
+                throw new ExpiredJwtException(null, null, "Token is expired");
             }
             return Jwts.parserBuilder()
                     .setSigningKey(secretKey)
@@ -130,7 +130,7 @@ public class JwtUtil {
                     .getBody()
                     .get("id", Long.class);
         } catch (ExpiredJwtException e) {
-            throw new RuntimeException("JWT token is expired", e);
+            throw e;
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             throw new RuntimeException("Invalid JWT token", e);
@@ -139,11 +139,11 @@ public class JwtUtil {
 
     @Transactional
     public Boolean validateToken(String token, String ipAddress, String userAgent) {
-
+        if (isTokenExpired(token)) {
+            throw new ExpiredJwtException(null, null, "Token is expired");
+        }
         try {
-            if (isTokenExpired(token)) {
-                return false;
-            }
+
             Long id = extractId(token);
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
@@ -172,10 +172,8 @@ public class JwtUtil {
             String storedIpAddress = claims.get("ipAddress", String.class);
 
 
-
             return ipAddress.trim().equals(storedIpAddress != null ? storedIpAddress.trim() : "");
         } catch (ExpiredJwtException e) {
-            exceptionHandling.handleException(e);
             logoutUser(token);
             return false;
         } catch (MalformedJwtException | IllegalArgumentException e) {
@@ -201,7 +199,6 @@ public class JwtUtil {
 
             return expiration.before(new Date());
         }catch (ExpiredJwtException e) {
-            exceptionHandling.handleException(e);
             logoutUser(token);
             return false;
         } catch (Exception e) {
@@ -222,7 +219,10 @@ public class JwtUtil {
                     .getBody();
 
             String uniqueTokenId = claims.getId();
-            tokenBlacklist.blacklistToken(uniqueTokenId);
+            tokenBlacklist.blacklistToken(token);
+            return true;
+        }catch (ExpiredJwtException e) {
+            tokenBlacklist.blacklistToken(token);
             return true;
         } catch (Exception e) {
             exceptionHandling.handleException(e);
@@ -237,7 +237,8 @@ public class JwtUtil {
             }
             if (isTokenExpired(token)) {
 
-                throw new RuntimeException("Token is expired");
+                throw new ExpiredJwtException(null, null, "Token is expired");
+
             }
             return Jwts.parserBuilder()
                     .setSigningKey(secretKey)
