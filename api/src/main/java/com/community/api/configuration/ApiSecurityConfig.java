@@ -68,7 +68,10 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
                 antMatcher("/api/**/jhawtcode/**"),
                 antMatcher("/api/**/swagger-ui.html"),
                 antMatcher("/api/**/swagger-resources/**"),
-                antMatcher("/api/**/v2/api-docs")
+                antMatcher("/api/**/v2/api-docs"),
+                antMatcher("/api/**/v2/api-docs"),
+                antMatcher("/api/**/avisoftdocument/**"),
+                antMatcher("/api/**/files/**")
         );
     }
     
@@ -81,7 +84,7 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
                 .authorizeRequests()
-                .antMatchers("/swagger-ui.html/**","/v2/api-docs",  "/webjars/**","/images/**","/swagger-resources/**","/avisoftdocument/**","/files/**").permitAll()
+                .antMatchers("/swagger-ui.html/**","/v2/api-docs",  "/webjars/**","/images/**","/swagger-resources/**","/avisoftdocument/**","/files/**","/api/avisoftdocument/**").permitAll()
                 .antMatchers("/otp/**","/swagger-resources/**", "/account/**", "/test/**","/category-custom/get-products-by-category-id/**","/category-custom/get-all-categories").permitAll()
                 .anyRequest().authenticated()
                 .and()
@@ -115,6 +118,8 @@ public class ApiSecurityConfig extends WebSecurityConfigurerAdapter {
     public Filter apiCustomerStateFilter() {
         return new RestApiCustomerStateFilter();
     }
+
+
 
 
 

@@ -344,15 +344,20 @@ public class CartEndPoint extends BaseEndpoint {
     @RequestMapping(value ="cart-recovery-log/{customerId}",method = RequestMethod.GET)
     public ResponseEntity<?>getCartRecoveryLog(@PathVariable long customerId)
     {
-        CustomCustomer customCustomer=entityManager.find(CustomCustomer.class,customerId);
-        if(customCustomer==null)
-            return ResponseService.generateErrorResponse("Cannot find customer for this id",HttpStatus.NOT_FOUND);
-        List<Map<String,Object>>productList=new ArrayList<>();
-        for(Product product:customCustomer.getCartRecoveryLog())
-        {
-            productList.add(sharedUtilityService.createProductResponseMap(product,null));
-        }
-        return ResponseService.generateSuccessResponse("Cart Recovery Log : ",productList,HttpStatus.OK);
+            try{
+                CustomCustomer customCustomer=entityManager.find(CustomCustomer.class,customerId);
+                if(customCustomer==null)
+                    return ResponseService.generateErrorResponse("Cannot find customer for this id",HttpStatus.NOT_FOUND);
+                List<Map<String,Object>>productList=new ArrayList<>();
+                for(Product product:customCustomer.getCartRecoveryLog())
+                {
+                    productList.add(sharedUtilityService.createProductResponseMap(product,null));
+                }
+                return ResponseService.generateSuccessResponse("Cart Recovery Log : ",productList,HttpStatus.OK);
+            }catch (Exception e) {
+                exceptionHandling.handleException(e);
+                return ResponseService.generateErrorResponse("Error placing order", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
     }
 
     private boolean isAnyServiceNull() {

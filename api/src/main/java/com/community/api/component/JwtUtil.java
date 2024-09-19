@@ -12,6 +12,7 @@ import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
@@ -118,6 +119,10 @@ public class JwtUtil {
             if (token == null || token.isEmpty()) {
                 throw new IllegalArgumentException("Token is required");
             }
+
+            if (isTokenExpired(token)) {
+                throw new ExpiredJwtException(null, null, "Token is expired");
+            }
             return Jwts.parserBuilder()
                     .setSigningKey(secretKey)
                     .build()
@@ -125,19 +130,23 @@ public class JwtUtil {
                     .getBody()
                     .get("id", Long.class);
         } catch (ExpiredJwtException e) {
-            throw new RuntimeException("JWT token is expired", e);
+            throw e;
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             throw new RuntimeException("Invalid JWT token", e);
         }
     }
 
+    @Transactional
     public Boolean validateToken(String token, String ipAddress, String userAgent) {
 
         try {
+
             if (isTokenExpired(token)) {
-                return false;
+                throw new IllegalArgumentException("Token is expired");
+
             }
+
             Long id = extractId(token);
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
@@ -145,13 +154,12 @@ public class JwtUtil {
                     .parseClaimsJws(token)
                     .getBody();
             String tokenId = claims.getId();
-            /*if (tokenBlacklist.isTokenBlacklisted(tokenId)) {
+            if (tokenBlacklist.isTokenBlacklisted(tokenId)) {
                 return false;
-            }*/
+            }
             int role=extractRoleId(token);
             Customer existingCustomer=null;
             ServiceProviderEntity existingServiceProvider=null;
-            System.out.println(role + " role");
             if(roleService.findRoleName(role).equals(Constant.roleUser)){
                 existingCustomer = customerService.readCustomerById(id);
                 if (existingCustomer == null) {
@@ -167,11 +175,9 @@ public class JwtUtil {
             String storedIpAddress = claims.get("ipAddress", String.class);
 
 
-            System.out.println(ipAddress + " ipAddress " + storedIpAddress + " ipAddress ");
-
             return ipAddress.trim().equals(storedIpAddress != null ? storedIpAddress.trim() : "");
         } catch (ExpiredJwtException e) {
-            exceptionHandling.handleException(e);
+            logoutUser(token);
             return false;
         } catch (MalformedJwtException | IllegalArgumentException e) {
             exceptionHandling.handleException(e);
@@ -184,6 +190,10 @@ public class JwtUtil {
 
     private boolean isTokenExpired(String token) {
         try {
+            if (token == null || token.trim().isEmpty()) {
+                throw new IllegalArgumentException("Token is required");
+
+            }
             Date expiration = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
                     .build()
@@ -192,6 +202,9 @@ public class JwtUtil {
                     .getExpiration();
 
             return expiration.before(new Date());
+        }catch (ExpiredJwtException e) {
+            logoutUser(token);
+            return false;
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             throw new RuntimeException("Error checking token expiration", e);
@@ -200,6 +213,12 @@ public class JwtUtil {
 
     public boolean logoutUser(String token) {
         try {
+            if (token == null || token.trim().isEmpty()) {
+
+                throw new IllegalArgumentException("Token is required");
+
+
+            }
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
                     .build()
@@ -207,12 +226,14 @@ public class JwtUtil {
                     .getBody();
 
             String uniqueTokenId = claims.getId();
-            tokenBlacklist.blacklistToken(uniqueTokenId);
+            tokenBlacklist.blacklistToken(token);
+            return true;
+        }catch (ExpiredJwtException e) {
+            tokenBlacklist.blacklistToken(token);
             return true;
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return false;
-
         }
     }
 
@@ -220,6 +241,11 @@ public class JwtUtil {
         try {
             if (token == null || token.isEmpty()) {
                 throw new IllegalArgumentException("Token is required");
+            }
+            if (isTokenExpired(token)) {
+
+                throw new ExpiredJwtException(null, null, "Token is expired");
+
             }
             return Jwts.parserBuilder()
                     .setSigningKey(secretKey)
