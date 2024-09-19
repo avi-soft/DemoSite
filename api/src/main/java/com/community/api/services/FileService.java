@@ -24,7 +24,6 @@ public class FileService {
         String normalizedFilePath = filePath.replace("\\", "/");
         String encodedFilePath = URLEncoder.encode(normalizedFilePath, StandardCharsets.UTF_8);
 
-
         return baseURL + "/"  + normalizedFilePath;
     }
 
