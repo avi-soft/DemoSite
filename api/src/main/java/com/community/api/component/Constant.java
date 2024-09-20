@@ -77,7 +77,6 @@ public class Constant {
     public static String GET_ROLE_BY_ROLE_ID = "SELECT r FROM Role r WHERE r.role_id = :roleId";
     public static String PRIVILEGE_ADD_PRODUCT = "ADD_PRODUCT";
     public static String PRIVILEGE_ADD_DOCUMENT_TYPE = "ADD_DOCUMENT_TYPE";
-    public static String PRIVILEGE_SERVICE_PROVIDER_VIEW_TEST_LIST="PRIVILEGE_SERVICE_PROVIDER_VIEW_TEST_LIST";
     public static String PRIVILEGE_TICKET = "PRIVILEGE_TICKET";
     public static String GET_PRODUCT_RESERVECATEGORY_BORNBEFORE_BORNAFTER = "SELECT c FROM CustomProductReserveCategoryBornBeforeAfterRef c WHERE c.customProduct = :customProduct";
     public static String GET_PRODUCT_RESERVECATEGORY_FEE_POST = "SELECT c FROM CustomProductReserveCategoryFeePostRef c WHERE c.customProduct = :customProduct";
@@ -96,5 +95,12 @@ public class Constant {
     public static  final int MAX_NESTED_KEY_SIZE=100;
     public static final String GET_ALL_SERVICE_PROVIDERS="Select s from ServiceProviderEntity s";
     public static final String GET_ALL_CUSTOMERS="Select c from CustomCustomer c";
+
+    public static final String GET_ALL_TICKET_STATE = "SELECT c FROM CustomTicketState c";
+    public static final String GET_TICKET_STATE_BY_TICKET_STATE_ID = "SELECT c FROM CustomTicketState c WHERE c.ticketStateId = :ticketStateId";
+    public static final String GET_ALL_TICKET_TYPE = "SELECT c FROM CustomTicketType c";
+    public static final String GET_TICKET_TYPE_BY_TICKET_TYPE_ID = "SELECT c FROM CustomTicketType c WHERE c.ticketTypeId = :ticketTypeId";
+    public static final String GET_ALL_TICKET_STATUS = "SELECT c FROM CustomTicketStatus c";
+    public static final String GET_TICKET_STATE_BY_TICKET_STATUS_ID = "SELECT c FROM CustomTicketStatus c WHERE c.ticketStatusId = :ticketStatusId";
     public static final String GET_SP_REFERRED_CANDIDATES="Select s.customer_id from customer_referrer s Where s.service_provider_id =:service_provider_id";
 }

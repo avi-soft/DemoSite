@@ -48,6 +48,10 @@
         <class>com.community.api.entity.CustomProductReserveCategoryFeePostRef</class>
         <class>com.community.api.entity.CustomProductReserveCategoryBornBeforeAfterRef</class>
         <class>com.community.api.entity.CustomJobGroup</class>
+        <class>com.community.api.entity.CustomTicketState</class>
+        <class>com.community.api.entity.CustomTicketStatus</class>
+        <class>com.community.api.entity.CustomTicketType</class>
+        <class>com.community.api.entity.CustomServiceProviderTicket</class>
 
         <exclude-unlisted-classes/>
     </persistence-unit>
