@@ -23,11 +23,15 @@ import org.springframework.web.client.HttpClientErrorException;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -697,4 +701,48 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         }
     }
 
+
+    public Object searchServiceProviderBasedOnGivenFields(String state,String district,String first_name,String last_name,String mobileNumber) {
+        Map<String, Character> alias = new HashMap<>();
+        alias.put("state", 'a');
+        alias.put("district", 'a');
+        alias.put("first_name", 's');
+        alias.put("last_name", 's');
+        String generalizedQuery = "SELECT s.*\n" +
+                "FROM service_provider s\n" +
+                "JOIN custom_service_provider_address a ON s.service_provider_id = a.service_provider_id\n" +
+                "WHERE ";
+        if(mobileNumber!=null)
+        {
+            return entityManager.createQuery(Constant.PHONE_QUERY_SERVICE_PROVIDER, ServiceProviderEntity.class)
+                    .setParameter("mobileNumber", mobileNumber)
+                    .setParameter("country_code","+91")
+                    .getResultStream()
+                    .findFirst()
+                    .orElse(null);
+        }
+        String[] fieldsNames = {"state", "district", "first_name","last_name"};
+        String[] fields = {state, district, first_name,last_name};
+        for (int i = 0; i < fields.length; i++) {
+            if (fields[i] != null) {
+                generalizedQuery = generalizedQuery + alias.get(fieldsNames[i]) + "." + fieldsNames[i] + " =:" + fieldsNames[i] + " AND ";
+            }
+        }
+        generalizedQuery = generalizedQuery.trim();
+        int lastSpaceIndex = generalizedQuery.lastIndexOf(" ");
+        generalizedQuery = generalizedQuery.substring(0, lastSpaceIndex);
+        Query query;
+        query = entityManager.createNativeQuery(generalizedQuery, ServiceProviderEntity.class);
+        for (int i = 0; i < fields.length; i++) {
+            if (fields[i] != null)
+                query.setParameter(fieldsNames[i], fields[i]);
+        }
+        List<ServiceProviderEntity>listOfSp= query.getResultList();
+        List<Map<String,Object>>response=new ArrayList<>();
+        for(ServiceProviderEntity serviceProvider:listOfSp)
+        {
+           response.add(sharedUtilityService.serviceProviderDetailsMap(serviceProvider));
+        }
+        return response;
+    }
 }

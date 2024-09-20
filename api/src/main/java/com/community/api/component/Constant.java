@@ -96,4 +96,5 @@ public class Constant {
     public static  final int MAX_NESTED_KEY_SIZE=100;
     public static final String GET_ALL_SERVICE_PROVIDERS="Select s from ServiceProviderEntity s";
     public static final String GET_ALL_CUSTOMERS="Select c from CustomCustomer c";
+    public static final String GET_SP_REFERRED_CANDIDATES="Select s.customer_id from customer_referrer s Where s.service_provider_id =:service_provider_id";
 }
