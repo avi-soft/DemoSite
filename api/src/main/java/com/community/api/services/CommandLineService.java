@@ -1,18 +1,7 @@
 package com.community.api.services;
 
 import com.community.api.endpoint.serviceProvider.ServiceProviderStatus;
-import com.community.api.entity.CustomApplicationScope;
-import com.community.api.entity.CustomJobGroup;
-import com.community.api.entity.CustomProductState;
-import com.community.api.entity.CustomReserveCategory;
-import com.community.api.entity.Districts;
-import com.community.api.entity.Qualification;
-import com.community.api.entity.Role;
-import com.community.api.entity.ServiceProviderAddressRef;
-import com.community.api.entity.ServiceProviderInfra;
-import com.community.api.entity.ServiceProviderLanguage;
-import com.community.api.entity.Skill;
-import com.community.api.entity.StateCode;
+import com.community.api.entity.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -268,6 +257,36 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(new Qualification(4L, "MASTERS", "Completed postgraduate degree program"));
             entityManager.persist(new Qualification(5L, "DOCTORATE", "Completed doctoral degree program"));
 
+        }
+
+        count = entityManager.createQuery("SELECT COUNT(e) FROM TypingText e", Long.class).getSingleResult();
+        if (count == 0) {
+            entityManager.persist(new TypingText(1L, "The quick brown fox jumps over the lazy dog near the quiet river, while the bright sun sets in the horizon, casting beautiful hues of orange."));
+            entityManager.persist(new TypingText(2L, "A curious cat chased a butterfly through the green meadows, unaware of the gentle breeze swirling around."));
+            entityManager.persist(new TypingText(3L, "In the silent night, a lone owl hooted softly as the stars twinkled brightly above the peaceful forest."));
+            entityManager.persist(new TypingText(4L, "Beneath the tall mountains, a small village thrived with joy, laughter, and the warmth of togetherness."));
+            entityManager.persist(new TypingText(5L, "The adventure begins with a journey through unknown lands, filled with unexpected challenges and thrilling discoveries along the way."));
+        }
+
+        count = entityManager.createQuery("SELECT count(e) FROM ServiceProviderTestStatus e", Long.class).getSingleResult();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String now = LocalDateTime.now().format(formatter);
+
+        if (count == 0) {
+            entityManager.persist(new ServiceProviderTestStatus(1L, "New", "The service provider has registered but has not yet completed the test.", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderTestStatus(2L, "Completed Test", "The service provider has completed the required skill tests.", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderTestStatus(3L, "Approved", "The service provider's submission has been reviewed and approved.", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderTestStatus(4L, "Rejected", "The service provider's submission was rejected due to not meeting the criteria.", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderTestStatus(5L, "Suspended", "The service provider account is currently suspended due to policy violations.", now, now, "SUPER_ADMIN"));
+        }
+        count = entityManager.createQuery("SELECT count(e) FROM ServiceProviderRank e", Long.class).getSingleResult();
+
+        if (count == 0) {
+            entityManager.persist(new ServiceProviderRank(1L, "Exceptional", "The service provider's performance was outstanding, meeting all criteria at the highest level.", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderRank(2L, "High", "The service provider's performance was above average and met most of the criteria.", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderRank(3L, "Medium", "The service provider's performance was acceptable, meeting average expectations.", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderRank(4L, "Average", "The service provider's performance was satisfactory but could improve in certain areas.", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderRank(5L, "Low", "The service provider's performance did not meet the required criteria.", now, now, "SUPER_ADMIN"));
         }
     }
 }

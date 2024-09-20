@@ -30,20 +30,17 @@ public class NotificationController
             try
             {
                 notificationService.notifyCustomer(customerId);
-                notificationService.notifyCustomer(customerId);
             }
             catch (CustomerDoesNotExistsException customerDoesNotExistsException)
             {
-                exceptionHandlingImplement.handleException(customerDoesNotExistsException);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer does not exist with id " + customerId);
+                ResponseService.generateErrorResponse("Customer does not exist", HttpStatus.NOT_FOUND);
             }
             catch (RuntimeException e)
             {
                 ResponseService.generateErrorResponse("Email address of customer is null. Please add email address ", HttpStatus.BAD_REQUEST);
             }
             catch (Exception e) {
-                exceptionHandlingImplement.handleException(e);
-                throw new Exception("Something went wrong");
+                ResponseService.generateErrorResponse("Something went wrong", HttpStatus.BAD_REQUEST);
             }
             return responseService.generateResponse(HttpStatus.OK,"Notification is sent",customerId);
         }

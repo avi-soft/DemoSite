@@ -16,6 +16,10 @@ public class Constant {
     public static final String SERVICE_PROVIDER = "SERVICE_PROVIDER";
     public static final String USER = "USER";
     public static final int INITIAL_STATUS = 1;
+    public static final Long INITIAL_TEST_STATUS = 1L;
+    public static final Long TEST_COMPLETED_STATUS = 2L;
+    public static final Long APPROVED_TEST = 3L;
+
     public static String STATE_CODE_QUERY = "SELECT s FROM StateCode s WHERE s.state_name = :state_name";
     public static final String SP_USERNAME_QUERY = "SELECT s FROM ServiceProviderEntity s WHERE s.user_name LIKE :username";
     public static final String SP_EMAIL_QUERY = "SELECT s FROM ServiceProviderEntity s WHERE s.primary_email LIKE :email";
@@ -73,6 +77,7 @@ public class Constant {
     public static String GET_ROLE_BY_ROLE_ID = "SELECT r FROM Role r WHERE r.role_id = :roleId";
     public static String PRIVILEGE_ADD_PRODUCT = "ADD_PRODUCT";
     public static String PRIVILEGE_ADD_DOCUMENT_TYPE = "ADD_DOCUMENT_TYPE";
+    public static String PRIVILEGE_SERVICE_PROVIDER_VIEW_TEST_LIST="PRIVILEGE_SERVICE_PROVIDER_VIEW_TEST_LIST";
     public static String PRIVILEGE_TICKET = "PRIVILEGE_TICKET";
     public static String GET_PRODUCT_RESERVECATEGORY_BORNBEFORE_BORNAFTER = "SELECT c FROM CustomProductReserveCategoryBornBeforeAfterRef c WHERE c.customProduct = :customProduct";
     public static String GET_PRODUCT_RESERVECATEGORY_FEE_POST = "SELECT c FROM CustomProductReserveCategoryFeePostRef c WHERE c.customProduct = :customProduct";
@@ -91,4 +96,5 @@ public class Constant {
     public static  final int MAX_NESTED_KEY_SIZE=100;
     public static final String GET_ALL_SERVICE_PROVIDERS="Select s from ServiceProviderEntity s";
     public static final String GET_ALL_CUSTOMERS="Select c from CustomCustomer c";
+    public static final String GET_SP_REFERRED_CANDIDATES="Select s.customer_id from customer_referrer s Where s.service_provider_id =:service_provider_id";
 }
