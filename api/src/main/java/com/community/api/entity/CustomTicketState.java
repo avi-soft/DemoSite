@@ -21,7 +21,7 @@ public class CustomTicketState {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ticket_state_id")
-    protected Long ticketTypeId;
+    protected Long ticketStateId;
 
     @Column(name = "ticket_state")
     protected String ticketState;

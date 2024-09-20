@@ -17,10 +17,13 @@ public class CreateTicketDto {
 
     @NotNull
     @JsonProperty("ticket_state")
-    private CustomTicketState ticketState;
+    private Long ticketState;
 
     @JsonProperty("ticket_status")
-    private CustomTicketStatus ticketStatus;
+    private Long ticketStatus;
+
+    @JsonProperty("ticket_type")
+    private Long ticketType;
 
     @JsonProperty("assign_to")
     private Long assignTo;

@@ -91,4 +91,11 @@ public class Constant {
     public static  final int MAX_NESTED_KEY_SIZE=100;
     public static final String GET_ALL_SERVICE_PROVIDERS="Select s from ServiceProviderEntity s";
     public static final String GET_ALL_CUSTOMERS="Select c from CustomCustomer c";
+
+    public static final String GET_ALL_TICKET_STATE = "SELECT c FROM CustomTicketState c";
+    public static final String GET_TICKET_STATE_BY_TICKET_STATE_ID = "SELECT c FROM CustomTicketState c WHERE c.ticketStateId = :ticketStateId";
+    public static final String GET_ALL_TICKET_TYPE = "SELECT c FROM CustomTicketType c";
+    public static final String GET_TICKET_TYPE_BY_TICKET_TYPE_ID = "SELECT c FROM CustomTicketType c WHERE c.ticketTypeId = :ticketTypeId";
+    public static final String GET_ALL_TICKET_STATUS = "SELECT c FROM CustomTicketStatus c";
+    public static final String GET_TICKET_STATE_BY_TICKET_STATUS_ID = "SELECT c FROM CustomTicketStatus c WHERE c.ticketStatusId = :ticketStatusId";
 }
