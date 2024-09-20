@@ -261,11 +261,11 @@ public class CommandLineService implements CommandLineRunner {
 
         count = entityManager.createQuery("SELECT COUNT(e) FROM TypingText e", Long.class).getSingleResult();
         if (count == 0) {
-            entityManager.persist(new TypingText(1L, "The quick brown fox jumps over the lazy dog near the quiet river, while the bright sun sets in the horizon, casting beautiful hues of orange."));
-            entityManager.persist(new TypingText(2L, "A curious cat chased a butterfly through the green meadows, unaware of the gentle breeze swirling around."));
-            entityManager.persist(new TypingText(3L, "In the silent night, a lone owl hooted softly as the stars twinkled brightly above the peaceful forest."));
-            entityManager.persist(new TypingText(4L, "Beneath the tall mountains, a small village thrived with joy, laughter, and the warmth of togetherness."));
-            entityManager.persist(new TypingText(5L, "The adventure begins with a journey through unknown lands, filled with unexpected challenges and thrilling discoveries along the way."));
+            entityManager.merge(new TypingText(1L, "The quick brown fox jumps over the lazy dog near the quiet river, while the bright sun sets in the horizon, casting beautiful hues of orange."));
+            entityManager.merge(new TypingText(2L, "A curious cat chased a butterfly through the green meadows, unaware of the gentle breeze swirling around."));
+            entityManager.merge(new TypingText(3L, "In the silent night, a lone owl hooted softly as the stars twinkled brightly above the peaceful forest."));
+            entityManager.merge(new TypingText(4L, "Beneath the tall mountains, a small village thrived with joy, laughter, and the warmth of togetherness."));
+            entityManager.merge(new TypingText(5L, "The adventure begins with a journey through unknown lands, filled with unexpected challenges and thrilling discoveries along the way."));
         }
 
         count = entityManager.createQuery("SELECT count(e) FROM ServiceProviderTestStatus e", Long.class).getSingleResult();
