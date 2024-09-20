@@ -12,7 +12,7 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "custom_ticket_type")
+@Table(name = "custom_ticket_state")
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -20,13 +20,13 @@ public class CustomTicketState {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "ticket_type_id")
+    @Column(name = "ticket_state_id")
     protected Long ticketTypeId;
 
-    @Column(name = "ticket_type")
-    protected String ticketType;
+    @Column(name = "ticket_state")
+    protected String ticketState;
 
-    @Column(name = "ticket_description")
-    protected String ticketDescription;
+    @Column(name = "ticket_state_description")
+    protected String ticketStateDescription;
 
 }

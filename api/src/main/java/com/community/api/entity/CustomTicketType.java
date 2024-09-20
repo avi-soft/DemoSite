@@ -1,5 +1,6 @@
 package com.community.api.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,20 +14,20 @@ import javax.persistence.Table;
 
 @Entity
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "custom_ticket_status")
-public class CustomTicketStatus {
+@NoArgsConstructor
+@Table(name = "custom_ticket_type")
+public class CustomTicketType {
 
     @Id
+    @Column(name = "ticket_type_id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "ticket_status_id")
-    protected Long ticketStatusId;
+    protected Long productStateId;
 
-    @Column(name = "ticket_status")
-    protected String ticketStatus;
+    @Column(name = "ticket_type")
+    protected String ticketType;
 
-    @Column(name = "ticket_status_description")
-    protected String ticketStatusDescription;
+    @Column(name = "ticket_type_description")
+    protected String ticketTypeDescription;
 
 }

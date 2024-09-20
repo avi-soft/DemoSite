@@ -7,6 +7,7 @@ import com.community.api.entity.CustomProductState;
 import com.community.api.entity.CustomReserveCategory;
 import com.community.api.entity.CustomTicketStatus;
 import com.community.api.entity.CustomTicketState;
+import com.community.api.entity.CustomTicketType;
 import com.community.api.entity.Districts;
 import com.community.api.entity.Qualification;
 import com.community.api.entity.Role;
@@ -66,31 +67,35 @@ public class CommandLineService implements CommandLineRunner {
         }
 
         if(entityManager.createQuery("SElECT COUNT(c) FROM CustomTicketState c", Long.class).getSingleResult() == 0) {
-            entityManager.persist(new CustomTicketState(1L, "PRIMARY", "Ticket is not assigned to any service provider"));
-            entityManager.persist(new CustomTicketState(2L, "IN_PROGRESS", "It's under progress"));
-            entityManager.persist(new CustomTicketState(3L, "ON-HOLD", "It's on hold"));
-            entityManager.persist(new CustomTicketState(4L, "REJECTED", "It's rejected"));
-            entityManager.persist(new CustomTicketState(5L, "REVIEW", "It's under review"));
-            entityManager.persist(new CustomTicketState(6L, "EXPIRED", "It's expired"));
-            entityManager.persist(new CustomTicketState(7L, "MISCELLANEOUS", "It's for some additional stages of a product"));
+            entityManager.merge(new CustomTicketState(1L, "TO-DO", "Ticket is not assigned to any service provider"));
+            entityManager.merge(new CustomTicketState(2L, "IN-PROGRESS", "It's under progress"));
+            entityManager.merge(new CustomTicketState(3L, "ON-HOLD", "It's on hold"));
+            entityManager.merge(new CustomTicketState(4L, "IN-REVIEW", "It's rejected"));
+            entityManager.merge(new CustomTicketState(5L, "CLOSE", "Closed successfully"));
         }
 
         if(entityManager.createQuery("SElECT COUNT(c) FROM CustomTicketStatus c", Long.class).getSingleResult() == 0) {
-            entityManager.persist(new CustomTicketStatus(1L, "NOT_REACHABLE", "User is unreachable"));
-            entityManager.persist(new CustomTicketStatus(2L, "VALIDATING_DOCUMENT", "Validating documents"));
-            entityManager.persist(new CustomTicketStatus(3L, "MISSING_DOCUMENT", "Missing documents"));
-            entityManager.persist(new CustomTicketStatus(4L, "USER_NOT_REACHABLE", "User Not reachable"));
-            entityManager.persist(new CustomTicketStatus(5L, "UPLOADING DOCUMENT", "Missing documents"));
-            entityManager.persist(new CustomTicketStatus(6L, "FILLING PERSONAL DETAILS", "Filling personal details"));
-            entityManager.persist(new CustomTicketStatus(7L, "SOME_OTHER_STATUS", "Filling personal details"));
+            entityManager.merge(new CustomTicketStatus(1L, "NOT-REACHABLE", "User is unreachable"));
+            entityManager.merge(new CustomTicketStatus(2L, "VALIDATING-DOCUMENT", "Validating documents"));
+            entityManager.merge(new CustomTicketStatus(3L, "MISSING-DOCUMENT", "Missing documents"));
+            entityManager.merge(new CustomTicketStatus(4L, "USER-NOT-REACHABLE", "User Not reachable"));
+            entityManager.merge(new CustomTicketStatus(5L, "UPLOADING-DOCUMENT", "Missing documents"));
+            entityManager.merge(new CustomTicketStatus(6L, "FILLING-PERSONAL-DETAILS", "Filling personal details"));
+            entityManager.merge(new CustomTicketStatus(7L, "SOME-OTHER-STATUS", "Filling personal details"));
+        }
+
+        if(entityManager.createQuery("SElECT COUNT(c) FROM CustomTicketType c", Long.class).getSingleResult() == 0) {
+            entityManager.merge(new CustomTicketType(1L, "PRIMARY", "Primary ticket of SP"));
+            entityManager.merge(new CustomTicketType(2L, "REVIEW-TICKET", "Review ticket of SP"));
+            entityManager.merge(new CustomTicketType(3L, "MISCELLANEOUS", "Miscellaneous (any other ticket)"));
         }
 
         if (entityManager.createQuery("SELECT COUNT(r) FROM Role r", Long.class).getSingleResult() == 0) {
-            entityManager.persist(new Role(1, "SUPER_ADMIN", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
-            entityManager.persist(new Role(2, "ADMIN", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
-            entityManager.persist(new Role(3, "ADMIN_SERVICE_PROVIDER", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
-            entityManager.persist(new Role(4, "SERVICE_PROVIDER", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
-            entityManager.persist(new Role(5, "CUSTOMER", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
+            entityManager.merge(new Role(1, "SUPER_ADMIN", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
+            entityManager.merge(new Role(2, "ADMIN", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
+            entityManager.merge(new Role(3, "ADMIN_SERVICE_PROVIDER", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
+            entityManager.merge(new Role(4, "SERVICE_PROVIDER", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
+            entityManager.merge(new Role(5, "CUSTOMER", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
         }
 
         Long count = entityManager.createQuery("SELECT COUNT(d) FROM Districts d", Long.class).getSingleResult();

@@ -23,16 +23,20 @@ public class CustomServiceProviderTicket {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "ticket_id")
+    @JoinColumn(name = "ticket_id")
     private Long ticketId;
 
     @ManyToOne
-    @JoinColumn(name = "ticket_state")
-    CustomTicketState ticketState;
+    @JoinColumn(name = "ticket_state_id")
+    protected CustomTicketState ticketState;
 
     @ManyToOne
-    @JoinColumn(name = "ticket_status")
-    CustomTicketStatus ticketStatus;
+    @JoinColumn(name = "ticket_status_id")
+    protected CustomTicketStatus ticketStatus;
+
+    @ManyToOne
+    @JoinColumn(name = "ticket_type_id")
+    protected CustomTicketType ticketType;
 
     @Column(name = "created_by")
     private Long userId;
