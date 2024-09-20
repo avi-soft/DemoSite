@@ -1,8 +1,6 @@
 package com.community.api.endpoint.avisoft.controller;
 import com.community.api.component.JwtUtil;
-import com.community.api.services.CustomCustomerService;
-import com.community.api.services.DocumentStorageService;
-import com.community.api.services.RateLimiterService;
+import com.community.api.services.*;
 import io.github.bucket4j.Bucket;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +14,7 @@ import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import java.security.Key;
 import java.util.Base64;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/test")
@@ -29,6 +28,9 @@ public class TestController {
 
     @Autowired
     private EntityManager entityManager;
+
+    @Autowired
+    private SanitizerService sanitizerService;
 
     @Autowired
     private DocumentStorageService documentStorageService;
@@ -115,6 +117,19 @@ public class TestController {
 
         }
     }
+    @PostMapping("/add-column-to-a-table/{entityName}/{columnName}/{dataType}")
+    @Transactional
+    public String addColumn(@PathVariable String entityName,@PathVariable String columnName,@PathVariable String dataType) {
+        String sql = "ALTER TABLE "+entityName +" ADD COLUMN "+columnName+" "+dataType;
+        try {
+            entityManager.createNativeQuery(sql).executeUpdate();
+            return "Column "+columnName+" added successfully to "+entityName;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Error occurred while altering the Document table";
+
+        }
+    }
 
 
     @PostMapping("/add/typing-text")
@@ -122,5 +137,10 @@ public class TestController {
         documentStorageService.saveAllTypingTexts();
         return "Typing texts inserted successfully";
     }
+    @PostMapping("/test-sanitizer")
+    public ResponseEntity<?> testSanitizer(@RequestBody Map<String,Object>map) {
+       return ResponseService.generateSuccessResponse("Sanitized map",sanitizerService.sanitizeInputMap(map),HttpStatus.OK);
+    }
+
 
 }

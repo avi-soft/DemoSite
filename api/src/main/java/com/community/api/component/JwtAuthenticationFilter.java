@@ -209,7 +209,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (!response.isCommitted()) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
-            response.getWriter().write("{\"status\":401,\"message\":\"" + message + "\"}");
+//            response.getWriter().write("{\"status\":401,\"message\":\"" + message + "\"}");
+            response.getWriter().write("{\"status\":\"UNAUTHORIZED\",\"status_code\":401,\"message\":\"" + message + "\"}");
+
 
 
             response.getWriter().flush();
@@ -220,7 +222,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (!response.isCommitted()) {
             response.setStatus(statusCode);
             response.setContentType("application/json");
-            response.getWriter().write("{\"status\":" + statusCode + ",\"message\":\"" + message + "\"}");
+//            response.getWriter().write("{\"status\":" + statusCode + ",\"message\":\"" + message + "\"}");
+            response.getWriter().write("{\"status\":\"" + (statusCode == HttpServletResponse.SC_UNAUTHORIZED ? "UNAUTHORIZED" : "ERROR") + "\",\"status_code\":" + statusCode + ",\"message\":\"" + message + "\"}");
+
             response.getWriter().flush();
         }
     }

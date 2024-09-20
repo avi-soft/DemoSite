@@ -16,6 +16,7 @@ import com.community.api.entity.ServiceProviderInfra;
 import com.community.api.entity.ServiceProviderLanguage;
 import com.community.api.entity.Skill;
 import com.community.api.entity.StateCode;
+import com.community.api.entity.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -64,30 +65,6 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(new CustomReserveCategory(2L, "SC", "Schedule Caste", false));
             entityManager.persist(new CustomReserveCategory(3L, "ST", "Schedule Tribe", false));
             entityManager.persist(new CustomReserveCategory(4L, "OBC", "Other Backward Caste", false));
-        }
-
-        if(entityManager.createQuery("SElECT COUNT(c) FROM CustomTicketState c", Long.class).getSingleResult() == 0) {
-            entityManager.merge(new CustomTicketState(1L, "TO-DO", "Ticket is not assigned to any service provider"));
-            entityManager.merge(new CustomTicketState(2L, "IN-PROGRESS", "It's under progress"));
-            entityManager.merge(new CustomTicketState(3L, "ON-HOLD", "It's on hold"));
-            entityManager.merge(new CustomTicketState(4L, "IN-REVIEW", "It's rejected"));
-            entityManager.merge(new CustomTicketState(5L, "CLOSE", "Closed successfully"));
-        }
-
-        if(entityManager.createQuery("SElECT COUNT(c) FROM CustomTicketStatus c", Long.class).getSingleResult() == 0) {
-            entityManager.merge(new CustomTicketStatus(1L, "NOT-REACHABLE", "User is unreachable"));
-            entityManager.merge(new CustomTicketStatus(2L, "VALIDATING-DOCUMENT", "Validating documents"));
-            entityManager.merge(new CustomTicketStatus(3L, "MISSING-DOCUMENT", "Missing documents"));
-            entityManager.merge(new CustomTicketStatus(4L, "USER-NOT-REACHABLE", "User Not reachable"));
-            entityManager.merge(new CustomTicketStatus(5L, "UPLOADING-DOCUMENT", "Missing documents"));
-            entityManager.merge(new CustomTicketStatus(6L, "FILLING-PERSONAL-DETAILS", "Filling personal details"));
-            entityManager.merge(new CustomTicketStatus(7L, "SOME-OTHER-STATUS", "Filling personal details"));
-        }
-
-        if(entityManager.createQuery("SElECT COUNT(c) FROM CustomTicketType c", Long.class).getSingleResult() == 0) {
-            entityManager.merge(new CustomTicketType(1L, "PRIMARY", "Primary ticket of SP"));
-            entityManager.merge(new CustomTicketType(2L, "REVIEW-TICKET", "Review ticket of SP"));
-            entityManager.merge(new CustomTicketType(3L, "MISCELLANEOUS", "Miscellaneous (any other ticket)"));
         }
 
         if (entityManager.createQuery("SELECT COUNT(r) FROM Role r", Long.class).getSingleResult() == 0) {
@@ -187,6 +164,7 @@ public class CommandLineService implements CommandLineRunner {
         count = entityManager.createQuery("SELECT COUNT(s) FROM StateCode s", Long.class).getSingleResult();
 
         if (count == 0) {
+
 
             // Insert data into the StateCode table
             entityManager.persist(new StateCode(1, "Andhra Pradesh", "AP"));
@@ -294,6 +272,36 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(new Qualification(4L, "MASTERS", "Completed postgraduate degree program"));
             entityManager.persist(new Qualification(5L, "DOCTORATE", "Completed doctoral degree program"));
 
+        }
+
+        count = entityManager.createQuery("SELECT COUNT(e) FROM TypingText e", Long.class).getSingleResult();
+        if (count == 0) {
+            entityManager.merge(new TypingText(1L, "The quick brown fox jumps over the lazy dog near the quiet river, while the bright sun sets in the horizon, casting beautiful hues of orange."));
+            entityManager.merge(new TypingText(2L, "A curious cat chased a butterfly through the green meadows, unaware of the gentle breeze swirling around."));
+            entityManager.merge(new TypingText(3L, "In the silent night, a lone owl hooted softly as the stars twinkled brightly above the peaceful forest."));
+            entityManager.merge(new TypingText(4L, "Beneath the tall mountains, a small village thrived with joy, laughter, and the warmth of togetherness."));
+            entityManager.merge(new TypingText(5L, "The adventure begins with a journey through unknown lands, filled with unexpected challenges and thrilling discoveries along the way."));
+        }
+
+        count = entityManager.createQuery("SELECT count(e) FROM ServiceProviderTestStatus e", Long.class).getSingleResult();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String now = LocalDateTime.now().format(formatter);
+
+        if (count == 0) {
+            entityManager.persist(new ServiceProviderTestStatus(1L, "New", "The service provider has registered but has not yet completed the test.", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderTestStatus(2L, "Completed Test", "The service provider has completed the required skill tests.", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderTestStatus(3L, "Approved", "The service provider's submission has been reviewed and approved.", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderTestStatus(4L, "Rejected", "The service provider's submission was rejected due to not meeting the criteria.", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderTestStatus(5L, "Suspended", "The service provider account is currently suspended due to policy violations.", now, now, "SUPER_ADMIN"));
+        }
+        count = entityManager.createQuery("SELECT count(e) FROM ServiceProviderRank e", Long.class).getSingleResult();
+
+        if (count == 0) {
+            entityManager.persist(new ServiceProviderRank(1L, "Exceptional", "The service provider's performance was outstanding, meeting all criteria at the highest level.", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderRank(2L, "High", "The service provider's performance was above average and met most of the criteria.", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderRank(3L, "Medium", "The service provider's performance was acceptable, meeting average expectations.", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderRank(4L, "Average", "The service provider's performance was satisfactory but could improve in certain areas.", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderRank(5L, "Low", "The service provider's performance did not meet the required criteria.", now, now, "SUPER_ADMIN"));
         }
     }
 }

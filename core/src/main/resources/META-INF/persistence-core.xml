@@ -92,6 +92,8 @@
         <class>com.community.api.entity.TypingText</class>
         <class>com.community.api.entity.ResizedImage</class>
         <class>com.community.api.utils.ServiceProviderDocument</class>
+        <class>com.community.api.entity.ServiceProviderTestStatus</class>
+        <class>com.community.api.entity.ServiceProviderRank</class>
         <exclude-unlisted-classes/>
     </persistence-unit>
 
