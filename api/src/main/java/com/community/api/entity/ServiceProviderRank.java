@@ -1,14 +1,13 @@
 package com.community.api.entity;
 
+import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Entity
 @AllArgsConstructor
@@ -26,4 +25,5 @@ public class ServiceProviderRank
     @Column(name = "rank_description")
     private String rank_description;
     private String created_at,updated_at,created_by;
+
 }
