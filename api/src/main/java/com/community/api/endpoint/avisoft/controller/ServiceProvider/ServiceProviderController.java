@@ -1,7 +1,9 @@
 package com.community.api.endpoint.avisoft.controller.ServiceProvider;
 
 import com.community.api.component.Constant;
+import com.community.api.dto.UpdateTestStatusRank;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
+import com.community.api.entity.ServiceProviderTestStatus;
 import com.community.api.services.DistrictService;
 import com.community.api.services.ResponseService;
 import com.community.api.entity.ServiceProviderAddress;
@@ -225,13 +227,52 @@ public class ServiceProviderController {
         }
     }
 
+    @Transactional
+    @PatchMapping("/update-test-status/{serviceProviderId}")
+    public ResponseEntity<?> updateTestStatus(@RequestBody UpdateTestStatusRank updateTestStatusRank, @PathVariable Long serviceProviderId) {
+        try {
+            return serviceProviderService.updateTestStatusRank(updateTestStatusRank,serviceProviderId);
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return responseService.generateErrorResponse("Some error updating: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @Transactional
+    @GetMapping("/get-all-service-providers-with-completed-test")
+    public ResponseEntity<?> getAllServiceProvidersWithCompletedTest(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit)
+    {
+        try {
+            int startPosition = page * limit;
+
+            TypedQuery<ServiceProviderEntity> query = entityManager.createQuery(
+                    "SELECT s FROM ServiceProviderEntity s WHERE s.testStatus.test_status_id = :testStatusId",
+                    ServiceProviderEntity.class);
+
+            query.setParameter("testStatusId", 2L);
+            query.setFirstResult(startPosition);
+            query.setMaxResults(limit);
+
+            List<ServiceProviderEntity> results = query.getResultList();
+            if(results.isEmpty())
+            {
+                return ResponseService.generateSuccessResponse("There is no any service Provider who has completed the test", results, HttpStatus.OK);
+            }
+
+            return ResponseService.generateSuccessResponse("List of service providers with test_status 2: ", results, HttpStatus.OK);
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseService.generateErrorResponse("Some issue in fetching service providers: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
     @GetMapping("/filter-service-provider")
     public ResponseEntity<?> filterServiceProvider(@RequestParam(required = false) String state,
                                                    @RequestParam(required = false) String district,
                                                    @RequestParam(required = false) String first_name,
                                                    @RequestParam(required = false) String last_name,
-                                                   @RequestParam(required = false) String mobileNumber)
-    {
+                                                   @RequestParam(required = false) String mobileNumber) {
         try {
 
             return ResponseService.generateSuccessResponse("Service Providers", serviceProviderService.searchServiceProviderBasedOnGivenFields(state, district, first_name, last_name, mobileNumber), HttpStatus.OK);
@@ -241,7 +282,7 @@ public class ServiceProviderController {
         }
     }
     @GetMapping("/show-referred-candidates/{service_provider_id}")
-    public ResponseEntity<?> showRefferedCandidates(@PathVariable Long service_provider_id) {
+    public ResponseEntity<?> showRefferedCandidates (@PathVariable Long service_provider_id){
         try {
             Query query = entityManager.createNativeQuery(Constant.GET_SP_REFERRED_CANDIDATES);
             query.setParameter("service_provider_id", service_provider_id);
@@ -268,4 +309,5 @@ public class ServiceProviderController {
             return ResponseService.generateErrorResponse("Some issue in fetching candidates: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
+
 }

@@ -184,7 +184,7 @@ public class DocumentStorageService {
     @Transactional
     public void saveAllDocumentTypes() {
 
-                DocumentType[] documents = {
+        DocumentType[] documents = {
                 new DocumentType(5, "EWS_CERTIFICATE", "Certificate for individuals and families below a certain income threshold to access various benefits and concessions."),
                 new DocumentType(6, "DIPLOMA", "Official academic certificate awarded upon completion of an undergraduate or vocational course, certifying knowledge and skills in a specific field."),
                 new DocumentType(7, "GRADUATION", "Awarded upon completion of a degree program, signifying fulfillment of academic requirements in a specific discipline."),
