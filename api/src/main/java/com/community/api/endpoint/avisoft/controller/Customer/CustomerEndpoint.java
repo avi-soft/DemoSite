@@ -401,11 +401,6 @@ public class CustomerEndpoint {
             if (!customerId.equals(tokenUserId)) {
                 return ResponseService.generateErrorResponse("Unauthorized request.", HttpStatus.UNAUTHORIZED);
             }
-            System.out.println(files.size() + "size");
-            if (files.size() == 0) {
-                return ResponseService.generateErrorResponse("Invalid request.", HttpStatus.BAD_REQUEST);
-
-            }
 
             if (roleService.findRoleName(roleId).equals(Constant.roleUser)) {
                 CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);

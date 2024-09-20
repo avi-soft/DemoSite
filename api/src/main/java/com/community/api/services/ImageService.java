@@ -43,15 +43,24 @@ public class ImageService {
 
     @Transactional
     public Image saveImage(MultipartFile file) throws Exception {
-        // Define the directory where you want to store the images
-        String dbPath="avisoftdocument/service_provider/Random Images";
 
-        // Ensure the directory exists, and create it if it doesn't
-        File baseDir = new File(dbPath);
-        if (!baseDir.exists()) {
-            baseDir.mkdirs();
+        // Define the base path where images will be saved
+        String currentDir = System.getProperty("user.dir");
+        String testDirPath = currentDir + "/../test/";
+
+        String db_path = "avisoftdocument/SERVICE_PROVIDER/Random Images";
+        // Define the directory structure
+        File avisoftDir = new File(testDirPath +db_path);
+
+        // Create the directory if it doesn't exist
+        if (!avisoftDir.exists()) {
+            avisoftDir.mkdirs();
         }
 
+
+        String filePath = avisoftDir + File.separator + file.getOriginalFilename();
+
+        String dbPath = db_path + File.separator + file.getOriginalFilename();
         if (!isValidFileType(file)) {
             throw new IllegalArgumentException("Invalid file type. Only images are allowed.");
         }
@@ -59,16 +68,8 @@ public class ImageService {
             throw new IllegalArgumentException("File size must be larger than 2 MB.");
         }
 
-        // Create the directory if it doesn't exist
-        File directory = new File(dbPath);
-        if (!directory.exists()) {
-            directory.mkdirs();
-        }
 
         byte[] fileBytes = file.getBytes();
-        // Generate the file path (append the filename properly with a separator)
-        String filePath = dbPath + File.separator + file.getOriginalFilename();
-
 
         try {
             File destFile = new File(filePath);
@@ -82,7 +83,7 @@ public class ImageService {
         image.setFile_name(file.getOriginalFilename());
         image.setFile_type(file.getContentType());
         image.setImage_data(fileBytes);
-        image.setFile_path(filePath); // Store the file path in the database
+        image.setFile_path(dbPath); // Store the file path in the database
 
         // Persist the image entity to the database
         entityManager.persist(image);
