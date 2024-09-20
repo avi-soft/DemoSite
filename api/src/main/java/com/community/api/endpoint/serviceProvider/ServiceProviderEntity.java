@@ -125,11 +125,11 @@ public class ServiceProviderEntity  {
     @JoinColumn(name = "status_id", referencedColumnName = "status_id")
     private ServiceProviderStatus status;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}) // Only persist/merge, no REMOVE
     @JoinColumn(name="test_status_id", referencedColumnName = "test_status_id")
     private ServiceProviderTestStatus testStatus;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}) // Only persist/merge, no REMOVE
     @JoinColumn(name="rank_id", referencedColumnName = "rank_id")
     private ServiceProviderRank ranking;
 

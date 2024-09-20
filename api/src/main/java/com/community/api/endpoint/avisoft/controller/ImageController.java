@@ -19,9 +19,9 @@ public class ImageController
     @Autowired
     ImageService imageService;
     @PostMapping("/upload")
-    public ResponseEntity<?> uploadImage(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
+    public ResponseEntity<?> uploadImage(@RequestParam("file") MultipartFile file) {
         try {
-            Image savedImage = imageService.saveImage(file,request);
+            Image savedImage = imageService.saveImage(file);
             return ResponseService.generateSuccessResponse("Image is saved",savedImage,HttpStatus.OK);
         } catch (IOException e) {
             return ResponseService.generateErrorResponse(e.getMessage(),HttpStatus.BAD_REQUEST);

@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.persistence.EntityNotFoundException;
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("service-provider-test")
@@ -28,10 +29,10 @@ public class ServiceProviderTestController {
     }
 
     @PostMapping("/start/{serviceProviderId}")
-    public ResponseEntity<?> startTest(@PathVariable Long serviceProviderId) throws  EntityDoesNotExistsException {
+    public ResponseEntity<?> startTest(@PathVariable Long serviceProviderId,HttpServletRequest request) throws  EntityDoesNotExistsException {
         try
         {
-            ServiceProviderTest test = testService.startTest(serviceProviderId);
+            Map<String,Object> test = testService.startTest(serviceProviderId,request);
             return responseService.generateResponse(HttpStatus.OK,"Test started",test);
         }
         catch (EntityDoesNotExistsException e)
@@ -42,17 +43,17 @@ public class ServiceProviderTestController {
         {
             return ResponseService.generateErrorResponse(e.getMessage(),HttpStatus.BAD_REQUEST);
         }
-//        catch (Exception e)
-//        {
-//            return ResponseService.generateErrorResponse("Something went wrong",HttpStatus.BAD_REQUEST);
-//        }
+        catch (Exception e)
+        {
+            return ResponseService.generateErrorResponse("Something went wrong",HttpStatus.BAD_REQUEST);
+        }
     }
 
     @PostMapping("/{serviceProviderId}/{testId}/upload-resized-image")
     public ResponseEntity<?> uploadResizedImage(@PathVariable Long serviceProviderId, @PathVariable Long testId, @RequestParam("resizedImage") MultipartFile resizedImage, HttpServletRequest request) throws Exception {
         try
         {
-            ServiceProviderTest test = testService.uploadResizedImages(serviceProviderId,testId, resizedImage,request);
+            Map<String,Object> test = testService.uploadResizedImages(serviceProviderId,testId, resizedImage,request);
             return responseService.generateResponse(HttpStatus.OK,"Image is uploaded",test);
         }
         catch (EntityDoesNotExistsException e)
@@ -102,7 +103,7 @@ public class ServiceProviderTestController {
     public ResponseEntity<?> uploadResizedSignature(@PathVariable Long serviceProviderId,@PathVariable Long testId, @RequestParam("resizedSignature") MultipartFile resizedSignature,HttpServletRequest request) throws Exception {
         try
         {
-            ServiceProviderTest test = testService.uploadSignatureImage(serviceProviderId,testId, resizedSignature,request);
+            Map<String,Object> test = testService.uploadSignatureImage(serviceProviderId,testId, resizedSignature,request);
             return responseService.generateResponse(HttpStatus.OK,"Signature image is uploaded",test);
         }
          catch (EntityDoesNotExistsException e)
@@ -117,10 +118,10 @@ public class ServiceProviderTestController {
         {
             return ResponseService.generateErrorResponse(e.getMessage(),HttpStatus.BAD_REQUEST);
         }
-//        catch (Exception e)
-//        {
-//            return ResponseService.generateErrorResponse("Something went wrong",HttpStatus.BAD_REQUEST);
-//        }
+        catch (Exception e)
+        {
+            return ResponseService.generateErrorResponse("Something went wrong",HttpStatus.BAD_REQUEST);
+        }
     }
 
     @GetMapping("/{serviceProviderId}/getAll")

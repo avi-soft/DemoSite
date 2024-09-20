@@ -1,7 +1,5 @@
 package com.community.api.services;
 
-import com.cloudinary.Cloudinary;
-import com.cloudinary.utils.ObjectUtils;
 import com.community.api.entity.Image;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +42,7 @@ public class ImageService {
 
 
     @Transactional
-    public Image saveImage(MultipartFile file, HttpServletRequest request) throws Exception {
+    public Image saveImage(MultipartFile file) throws Exception {
         // Define the directory where you want to store the images
         String dbPath="avisoftdocument/service_provider/Random Images";
 
@@ -70,7 +68,6 @@ public class ImageService {
         byte[] fileBytes = file.getBytes();
         // Generate the file path (append the filename properly with a separator)
         String filePath = dbPath + File.separator + file.getOriginalFilename();
-        String fileUrl = fileService.getFileUrl(filePath, request);
 
 
         try {
@@ -86,7 +83,6 @@ public class ImageService {
         image.setFile_type(file.getContentType());
         image.setImage_data(fileBytes);
         image.setFile_path(filePath); // Store the file path in the database
-        image.setFile_url(fileUrl);
 
         // Persist the image entity to the database
         entityManager.persist(image);

@@ -1,7 +1,6 @@
 package com.community.api.services;
 
-import com.cloudinary.Cloudinary;
-import com.cloudinary.utils.ObjectUtils;
+import com.community.api.component.Constant;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.*;
 import com.community.api.entity.Image;
@@ -21,15 +20,13 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.TypedQuery;
 import javax.servlet.http.HttpServletRequest;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Map;
-import java.util.Random;
+import java.util.List;
 
 @Service
 public class ServiceProviderTestService {
@@ -47,7 +44,7 @@ public class ServiceProviderTestService {
     }
 
     @Transactional
-    public ServiceProviderTest startTest(Long serviceProviderId) throws EntityDoesNotExistsException{
+    public Map<String, Object> startTest(Long serviceProviderId,HttpServletRequest request) throws EntityDoesNotExistsException{
         ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
         if(serviceProvider==null)
         {
@@ -55,11 +52,23 @@ public class ServiceProviderTestService {
         }
         if(serviceProvider.getTestStatus()!=null)
         {
-            if(serviceProvider.getTestStatus().getTest_status_id()==2L )
+            ServiceProviderTestStatus serviceProviderTestStatus= entityManager.find(ServiceProviderTestStatus.class, Constant.TEST_COMPLETED_STATUS);
+            if(serviceProviderTestStatus==null)
+            {
+                throw new IllegalArgumentException("Test Status id "+ Constant.TEST_COMPLETED_STATUS+" Not found so cannot start test of ServiceProvider");
+            }
+            Long testStatus= serviceProviderTestStatus.getTest_status_id();
+            if(serviceProvider.getTestStatus().getTest_status_id()==testStatus )
             {
                 throw new IllegalArgumentException("Skill Test has already been submitted.You cannot start a new test.");
             }
-            if(serviceProvider.getTestStatus().getTest_status_id()==3L)
+
+            ServiceProviderTestStatus serviceProviderTestStatusForApproved= entityManager.find(ServiceProviderTestStatus.class, Constant.APPROVED_TEST);
+            if(serviceProviderTestStatus==null)
+            {
+                throw new IllegalArgumentException("Test Status id "+ Constant.APPROVED_TEST+" Not found so cannot start test of ServiceProvider");
+            }
+            if(serviceProvider.getTestStatus().getTest_status_id()==serviceProviderTestStatusForApproved.getTest_status_id())
             {
                 throw new IllegalArgumentException("Skill Test has already been approved. No need to start test again.");
             }
@@ -83,11 +92,18 @@ public class ServiceProviderTestService {
         entityManager.persist(test);
         serviceProvider.getServiceProviderTests().add(test);
         entityManager.merge(serviceProvider);
-        return test;
+
+        String imageUrl = fileService.getFileUrl(test.getDownloaded_image().getFile_path(),request);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("test", test);
+        response.put("downloadImageUrl", imageUrl);
+
+        return response;
     }
 
     @Transactional
-    public ServiceProviderTest uploadResizedImages(Long serviceProviderId, Long testId, MultipartFile resizedFile, HttpServletRequest request) throws Exception {
+    public Map<String, Object> uploadResizedImages(Long serviceProviderId, Long testId, MultipartFile resizedFile, HttpServletRequest request) throws Exception {
         // Retrieve the service provider entity
 
         ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
@@ -151,7 +167,6 @@ public class ServiceProviderTestService {
         resizedImage.setFile_name(fileName);
         resizedImage.setFile_type(resizedFile.getContentType());
         resizedImage.setFile_path(fullFilePath);
-        resizedImage.setFile_url(fileUrl);
         resizedImage.setImage_data(resizedFile.getBytes());
         resizedImage.setServiceProvider(serviceProvider);
 
@@ -172,7 +187,12 @@ public class ServiceProviderTestService {
             test.setIs_image_test_passed(false);
             throw new IllegalArgumentException("Uploaded image is different from expected image");
         }
-        return test;
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("test", test);
+        response.put("resizedImageUrl", fileUrl);
+
+        return response;
     }
 
     @Transactional
@@ -212,7 +232,7 @@ public class ServiceProviderTestService {
     }
 
     @Transactional
-    public ServiceProviderTest uploadSignatureImage(Long serviceProviderId, Long testId, MultipartFile signatureFile,HttpServletRequest request) throws Exception {
+    public Map<String,Object> uploadSignatureImage(Long serviceProviderId, Long testId, MultipartFile signatureFile,HttpServletRequest request) throws Exception {
         // Retrieve the service provider entity
         ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
         if (serviceProvider == null) {
@@ -277,7 +297,6 @@ public class ServiceProviderTestService {
         signatureImage.setFile_name(fileName);
         signatureImage.setFile_type(signatureFile.getContentType());
         signatureImage.setFile_path(fullFilePath);
-        signatureImage.setFile_url(fileUrl);
         signatureImage.setImage_data(signatureFile.getBytes());
         signatureImage.setServiceProvider(serviceProvider);
 
@@ -288,12 +307,20 @@ public class ServiceProviderTestService {
         } catch (IOException e) {
             throw new Exception("Failed to save the file", e);
         }
-        ServiceProviderTestStatus serviceProviderTestStatus = entityManager.find(ServiceProviderTestStatus.class, 2L);
-        serviceProvider.setTestStatus(serviceProviderTestStatus);
-        // Merge and persist changes
         entityManager.merge(test);
+        ServiceProviderTestStatus serviceProviderTestStatus = entityManager.find(ServiceProviderTestStatus.class, Constant.TEST_COMPLETED_STATUS);
+        if(serviceProviderTestStatus==null)
+        {
+            throw new IllegalArgumentException("Test status with id 2 does not exists");
+        }
+        serviceProvider.setTestStatus(serviceProviderTestStatus);
+        entityManager.merge(serviceProvider);
 
-        return test;
+        Map<String, Object> response = new HashMap<>();
+        response.put("test", test);
+        response.put("signatureImageUrl", fileUrl);
+
+        return response;
     }
 
     @Transactional
@@ -419,7 +446,5 @@ public class ServiceProviderTestService {
         int b2 = rgb2 & 0xff;
         return Math.abs(r1 - r2) + Math.abs(g1 - g2) + Math.abs(b1 - b2);
     }
-
-
 }
 
