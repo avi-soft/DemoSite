@@ -228,17 +228,6 @@ public class ServiceProviderController {
     }
 
     @Transactional
-    @PatchMapping("/update-test-status/{serviceProviderId}")
-    public ResponseEntity<?> updateTestStatus(@RequestBody UpdateTestStatusRank updateTestStatusRank, @PathVariable Long serviceProviderId) {
-        try {
-            return serviceProviderService.updateTestStatusRank(updateTestStatusRank,serviceProviderId);
-        } catch (Exception e) {
-            exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Some error updating: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @Transactional
     @GetMapping("/get-all-service-providers-with-completed-test")
     public ResponseEntity<?> getAllServiceProvidersWithCompletedTest(
             @RequestParam(defaultValue = "0") int page,

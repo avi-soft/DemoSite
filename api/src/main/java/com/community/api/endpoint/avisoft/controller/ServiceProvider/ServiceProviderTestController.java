@@ -144,4 +144,17 @@ public class ServiceProviderTestController {
             return responseService.generateErrorResponse("Some issue in fetching service provider tests: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
+    @GetMapping("/{serviceProviderId}/get-completed-test")
+    public ResponseEntity<?> getAllTests(
+            @PathVariable Long serviceProviderId,HttpServletRequest request)throws EntityNotFoundException, EntityDoesNotExistsException {
+
+        try {
+            return testService.getCompletedServiceProviderTest(serviceProviderId,request);
+
+        } catch (EntityDoesNotExistsException e) {
+            return responseService.generateErrorResponse("Service provider not found: " + e.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return responseService.generateErrorResponse("Some issue in fetching service provider tests: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
 }
