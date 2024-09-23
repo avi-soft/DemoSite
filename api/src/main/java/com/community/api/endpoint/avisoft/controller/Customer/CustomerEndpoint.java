@@ -402,6 +402,7 @@ public class CustomerEndpoint {
                 return ResponseService.generateErrorResponse("Unauthorized request.", HttpStatus.UNAUTHORIZED);
             }
 
+
             if (roleService.findRoleName(roleId).equals(Constant.roleUser)) {
                 CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
                 if (customCustomer == null) {
@@ -481,7 +482,7 @@ public class CustomerEndpoint {
                             File oldFile = new File(absolutePath);
                             String oldFileName = oldFile.getName();
                             String newFileName = file.getOriginalFilename();
-                            System.out.println(oldFileName + " oldFileName " + newFileName + " newFileName");
+
                             if (!newFileName.equals(oldFileName)) {
 
                                 oldFile.delete();
@@ -540,6 +541,7 @@ public class CustomerEndpoint {
                             .getResultStream()
                             .findFirst()
                             .orElse(null);
+
                     if (!DocumentStorageService.isValidFileType(file) && existingDocument == null) {
                         return ResponseEntity.badRequest().body(Map.of(
                                 "status", ApiConstants.STATUS_ERROR,

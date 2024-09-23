@@ -495,7 +495,6 @@ public class ProductController extends CatalogEndpoint {
 
                         responses.add(wrapper);
                     }
-
                 }
             }
 
