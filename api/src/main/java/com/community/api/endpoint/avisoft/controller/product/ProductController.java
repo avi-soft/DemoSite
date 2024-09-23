@@ -211,8 +211,10 @@ public class ProductController extends CatalogEndpoint {
             }
 
             // Validations and checks.
-            productService.validateReserveCategory(addProductDto);
-            productService.deleteOldReserveCategoryMapping(customProduct);
+            if(addProductDto.getReservedCategory() != null) {
+                productService.validateReserveCategory(addProductDto);
+                productService.deleteOldReserveCategoryMapping(customProduct);
+            }
             productService.updateProductValidation(addProductDto, customProduct);
 
             // Validation of getActiveEndDate and getGoLiveDate.
@@ -311,7 +313,7 @@ public class ProductController extends CatalogEndpoint {
                 return ResponseService.generateErrorResponse(PRODUCTNOTFOUND, HttpStatus.NOT_FOUND);
             }
 
-            List<Map<String, CustomProductWrapper>> responses = new ArrayList<>();
+            List<CustomProductWrapper> responses = new ArrayList<>();
             for (Product product : products) {
 
                 // finding customProduct that resembles with productId.
@@ -324,12 +326,7 @@ public class ProductController extends CatalogEndpoint {
                         CustomProductWrapper wrapper = new CustomProductWrapper();
                         wrapper.wrapDetails(customProduct);
 
-                        Map<String, CustomProductWrapper> productDetails = new HashMap<>();
-
-                        productDetails.put("key_" + customProduct.getId(), wrapper);
-                        productDetails.remove("key_" + customProduct.getId(), "reserveCategoryDtoList"); // gives us empty list
-
-                        responses.add(productDetails);
+                        responses.add(wrapper);
                     }
                 }
             }
@@ -386,7 +383,7 @@ public class ProductController extends CatalogEndpoint {
                 return ResponseService.generateErrorResponse(PRODUCTNOTFOUND, HttpStatus.NOT_FOUND);
             }
 
-            List<Map<String, CustomProductWrapper>> responses = new ArrayList<>();
+            List<CustomProductWrapper> responses = new ArrayList<>();
             for (Product product : products) {
 
                 // finding customProduct that resembles with productId.
@@ -399,12 +396,7 @@ public class ProductController extends CatalogEndpoint {
                         CustomProductWrapper wrapper = new CustomProductWrapper();
                         wrapper.wrapDetails(customProduct);
 
-                        Map<String, CustomProductWrapper> productDetails = new HashMap<>();
-
-                        productDetails.put("key_" + customProduct.getId(), wrapper);
-                        productDetails.remove("key_" + customProduct.getId(), "reserveCategoryDtoList"); // gives us empty list
-
-                        responses.add(productDetails);
+                        responses.add(wrapper);
                     }
 
                 }
@@ -433,7 +425,7 @@ public class ProductController extends CatalogEndpoint {
                 return ResponseService.generateErrorResponse(PRODUCTNOTFOUND, HttpStatus.NOT_FOUND);
             }
 
-            List<Map<String, CustomProductWrapper>> responses = new ArrayList<>();
+            List<CustomProductWrapper> responses = new ArrayList<>();
             for (Product product : products) {
 
                 // finding customProduct that resembles with productId.
@@ -446,12 +438,7 @@ public class ProductController extends CatalogEndpoint {
                         CustomProductWrapper wrapper = new CustomProductWrapper();
                         wrapper.wrapDetails(customProduct);
 
-                        Map<String, CustomProductWrapper> productDetails = new HashMap<>();
-
-                        productDetails.put("key_" + customProduct.getId(), wrapper);
-                        productDetails.remove("key_" + customProduct.getId(), "reserveCategoryDtoList"); // gives us empty list
-
-                        responses.add(productDetails);
+                        responses.add(wrapper);
                     }
                 }
             }

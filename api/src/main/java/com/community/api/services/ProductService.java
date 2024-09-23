@@ -296,6 +296,12 @@ public class ProductService {
                 addProductDto.setQuantity(Constant.DEFAULT_QUANTITY);
             }
 
+            if(addProductDto.getPlatformFee() == null) {
+                addProductDto.setPlatformFee(DEFAULT_PLATFORM_FEE);
+            }else if(addProductDto.getPlatformFee() <= 0){
+                throw new IllegalArgumentException("PLATFORM FEE CANNOT BE <= 0");
+            }
+
             if (addProductDto.getPriorityLevel() == null) {
                 addProductDto.setPriorityLevel(Constant.DEFAULT_PRIORITY_LEVEL);
             } else if (addProductDto.getPriorityLevel() <= 0 || addProductDto.getPriorityLevel() > 5) {
@@ -330,8 +336,6 @@ public class ProductService {
 
             dateFormat.parse(dateFormat.format(addProductDto.getActiveEndDate()));
             dateFormat.parse(dateFormat.format(addProductDto.getGoLiveDate()));
-            dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
-            dateFormat.parse(dateFormat.format(addProductDto.getExamDateTo()));
 
             if (!addProductDto.getActiveEndDate().after(activeStartDate)) {
                 throw new IllegalArgumentException("EXPIRATION DATE CANNOT BE BEFORE OR EQUAL OF CURRENT DATE");
@@ -342,6 +346,9 @@ public class ProductService {
             if (addProductDto.getExamDateFrom() == null || addProductDto.getExamDateTo() == null) {
                 throw new IllegalArgumentException("TENTATIVE EXAMINATION DATE FROM-TO CANNOT BE NULL");
             }
+
+            dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
+            dateFormat.parse(dateFormat.format(addProductDto.getExamDateTo()));
 
             if (!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate()) || !addProductDto.getExamDateTo().after(addProductDto.getActiveEndDate())) {
                 throw new IllegalArgumentException(TENTATIVEDATEAFTERACTIVEENDDATE);

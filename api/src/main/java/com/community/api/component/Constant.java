@@ -105,4 +105,5 @@ public class Constant {
     public static final String GET_ALL_TICKET_STATUS = "SELECT c FROM CustomTicketStatus c";
     public static final String GET_TICKET_STATE_BY_TICKET_STATUS_ID = "SELECT c FROM CustomTicketStatus c WHERE c.ticketStatusId = :ticketStatusId";
     public static final String GET_SP_REFERRED_CANDIDATES="Select s.customer_id from customer_referrer s Where s.service_provider_id =:service_provider_id";
+    public static final Double DEFAULT_PLATFORM_FEE = 10d;
 }
