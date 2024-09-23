@@ -5,7 +5,6 @@ import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.*;
 import com.community.api.entity.Image;
 import com.community.api.services.exception.EntityDoesNotExistsException;
-import com.twilio.base.Page;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,6 +19,7 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.TypedQuery;
 import javax.servlet.http.HttpServletRequest;
 import java.awt.*;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -89,6 +89,7 @@ public class ServiceProviderTestService {
         test.setService_provider(serviceProvider);
         test.setDownloaded_image(randomImage);
         test.setTyping_test_text(randomText);
+        test.setIs_test_completed(false);
         entityManager.persist(test);
         serviceProvider.getServiceProviderTests().add(test);
         entityManager.merge(serviceProvider);
@@ -131,6 +132,11 @@ public class ServiceProviderTestService {
             throw new IllegalArgumentException("Image size exceeds 2 MB");
         }
 
+        if(!documentStorageService.isValidFileType(resizedFile))
+        {
+            throw new IllegalArgumentException("Invalid file type. Only images are allowed.");
+        }
+
         // Validate the image size using saveDocuments method logic
         ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(resizedFile, "Resized Images", serviceProviderId, "SERVICE_PROVIDER");
         Map<String, Object> responseBody = savedResponse.getBody();
@@ -149,29 +155,33 @@ public class ServiceProviderTestService {
         }
 
         String currentDir = System.getProperty("user.dir");
-
         String testDirPath = currentDir + "/../test/";
-        String dbPath="avisoftdocument/service_provider/" + serviceProviderId + "/Resized Images";
 
-        // Ensure the directory exists, and create it if it doesn't
-        File baseDir = new File(dbPath);
-        if (!baseDir.exists()) {
-            baseDir.mkdirs(); // Create the directory structure if it doesn't exist
+        String db_path = "avisoftdocument/SERVICE_PROVIDER/Signature_Images";
+        // Define the directory structure
+        File avisoftDir = new File(testDirPath +db_path);
+
+        // Create the directory if it doesn't exist
+        if (!avisoftDir.exists()) {
+            avisoftDir.mkdirs();
         }
 
-        // Full file path for the signature image
-        String fullFilePath = dbPath + File.separator + fileName;
-        String fileUrl = fileService.getFileUrl(fullFilePath, request);
+
+        String filePath = avisoftDir + File.separator + resizedFile.getOriginalFilename();
+
+        String dbPath = db_path + File.separator + resizedFile.getOriginalFilename();
+
+        String fileUrl = fileService.getFileUrl(dbPath, request);
 
         // Set file metadata in the ResizedImage object
         resizedImage.setFile_name(fileName);
         resizedImage.setFile_type(resizedFile.getContentType());
-        resizedImage.setFile_path(fullFilePath);
+        resizedImage.setFile_path(db_path);
         resizedImage.setImage_data(resizedFile.getBytes());
         resizedImage.setServiceProvider(serviceProvider);
 
         try {
-            File destFile = new File(fullFilePath);
+            File destFile = new File(filePath);
             FileUtils.writeByteArrayToFile(destFile, resizedFile.getBytes());
         } catch (IOException e) {
             throw new IllegalArgumentException("Failed to save the file", e);
@@ -279,34 +289,40 @@ public class ServiceProviderTestService {
         }
 
         String currentDir = System.getProperty("user.dir");
-
         String testDirPath = currentDir + "/../test/";
-        String dbPath="avisoftdocument/service_provider/" + serviceProviderId + "/Resized Images";
 
-        // Ensure the directory exists, and create it if it doesn't
-        File baseDir = new File(dbPath);
-        if (!baseDir.exists()) {
-            baseDir.mkdirs(); // Create the directory structure if it doesn't exist
+        String db_path = "avisoftdocument/SERVICE_PROVIDER/Signature_Images";
+        // Define the directory structure
+        File avisoftDir = new File(testDirPath +db_path);
+
+        // Create the directory if it doesn't exist
+        if (!avisoftDir.exists()) {
+            avisoftDir.mkdirs();
         }
 
-        // Full file path for the signature image
-        String fullFilePath = dbPath + File.separator + fileName;
-        String fileUrl = fileService.getFileUrl(fullFilePath, request);
+
+        String filePath = avisoftDir + File.separator + signatureFile.getOriginalFilename();
+
+        String dbPath = db_path + File.separator + signatureFile.getOriginalFilename();
+
+        String fileUrl = fileService.getFileUrl(dbPath, request);
 
         // Set the file details in the signatureImage entity
         signatureImage.setFile_name(fileName);
         signatureImage.setFile_type(signatureFile.getContentType());
-        signatureImage.setFile_path(fullFilePath);
+        signatureImage.setFile_path(db_path);
         signatureImage.setImage_data(signatureFile.getBytes());
         signatureImage.setServiceProvider(serviceProvider);
 
 //         Save the file to the specified path
         try {
-            File destFile = new File(fullFilePath);
+            File destFile = new File(filePath);
             FileUtils.writeByteArrayToFile(destFile, signatureFile.getBytes());
         } catch (IOException e) {
             throw new Exception("Failed to save the file", e);
         }
+        test.setIs_test_completed(true);
+        test.setSubmitted_at(LocalDateTime.now());
         entityManager.merge(test);
         ServiceProviderTestStatus serviceProviderTestStatus = entityManager.find(ServiceProviderTestStatus.class, Constant.TEST_COMPLETED_STATUS);
         if(serviceProviderTestStatus==null)
@@ -348,6 +364,53 @@ public class ServiceProviderTestService {
         return query.getResultList();
     }
 
+    @Transactional
+    public ResponseEntity<?> getCompletedServiceProviderTest(Long serviceProviderId,HttpServletRequest request) throws EntityDoesNotExistsException {
+        ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
+        if (serviceProvider == null) {
+            throw new EntityDoesNotExistsException("Service Provider not found");
+        }
+
+        // query to get all tests of the service provider
+        TypedQuery<ServiceProviderTest> query = entityManager.createQuery(
+                "SELECT spt FROM ServiceProviderTest spt WHERE spt.service_provider.service_provider_id = :serviceProviderId",
+                ServiceProviderTest.class
+        );
+
+        // Binding the parameter to the query
+        query.setParameter("serviceProviderId", serviceProviderId);
+
+        List<ServiceProviderTest> serviceProviderTests = query.getResultList();
+        if (serviceProviderTests.isEmpty()) {
+            return ResponseService.generateSuccessResponse("Service Provider has not given any test yet",null,HttpStatus.OK);
+        }
+
+        ServiceProviderTest serviceProviderTestToReturn = null;
+        for (ServiceProviderTest serviceProviderTest : serviceProviderTests) {
+            if((serviceProviderTest.getIs_test_completed()!=null))
+            {
+                if (Boolean.TRUE.equals(serviceProviderTest.getIs_test_completed())) {
+                    if (serviceProviderTestToReturn == null || serviceProviderTest.getSubmitted_at().isAfter(serviceProviderTestToReturn.getSubmitted_at())) {
+                        serviceProviderTestToReturn = serviceProviderTest;
+                    }
+                }
+            }
+        }
+        if(serviceProviderTestToReturn==null)
+        {
+            return ResponseService.generateSuccessResponse("Service Provider has not completed any test yet",null,HttpStatus.OK);
+        }
+        String downloadedImageUrl= fileService.getFileUrl(serviceProviderTestToReturn.getDownloaded_image().getFile_path(),request);
+        String resizedImageUrl= fileService.getFileUrl(serviceProviderTestToReturn.getResized_image().getFile_path(),request);
+        String signatureImageUrl= fileService.getFileUrl(serviceProviderTestToReturn.getSignature_image().getFile_path(),request);
+        Map<String,Object> completedTestMap= new HashMap<>();
+        completedTestMap.put("completed_test",serviceProviderTestToReturn);
+        completedTestMap.put("downloaded_image_url",downloadedImageUrl);
+        completedTestMap.put("resized_image_url",resizedImageUrl);
+        completedTestMap.put("signature_image_url",signatureImageUrl);
+
+        return ResponseService.generateSuccessResponse("Completed test is found",completedTestMap,HttpStatus.OK);
+    }
 
     private boolean validateResizedImage(ServiceProviderTest test) throws IOException {
         Image downloadedImage = test.getDownloaded_image();

@@ -661,47 +661,6 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         }
     }
 
-    @Transactional
-    public ResponseEntity<?> updateTestStatusRank(UpdateTestStatusRank updateTestStatusRank,Long serviceProviderId)
-    {
-        try
-        {
-            ServiceProviderEntity existingServiceProvider = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
-            if (existingServiceProvider == null) {
-                return responseService.generateErrorResponse("Service Provider Not found", HttpStatus.NOT_FOUND);
-            }
-            if(updateTestStatusRank.getTest_status_id()!=null)
-            {
-                ServiceProviderTestStatus serviceProviderTestStatus= entityManager.find(ServiceProviderTestStatus.class,updateTestStatusRank.getTest_status_id());
-                if(serviceProviderTestStatus==null)
-                {
-                    return responseService.generateErrorResponse("Test Status id "+ updateTestStatusRank.getTest_status_id()+" Not found", HttpStatus.NOT_FOUND);
-                }
-                if (Objects.nonNull(updateTestStatusRank.getTest_status_id())) {
-                    existingServiceProvider.setTestStatus(serviceProviderTestStatus);
-                }
-            }
-           if(updateTestStatusRank.getRank_id()!=null)
-           {
-               ServiceProviderRank serviceProviderRank = entityManager.find(ServiceProviderRank.class,updateTestStatusRank.getRank_id());
-               if(serviceProviderRank ==null)
-               {
-                   return responseService.generateErrorResponse("Rank id "+ updateTestStatusRank.getTest_status_id()+" Not found", HttpStatus.NOT_FOUND);
-               }
-               if (Objects.nonNull(updateTestStatusRank.getRank_id())) {
-                   existingServiceProvider.setRanking(serviceProviderRank);
-               }
-           }
-            entityManager.merge(existingServiceProvider);
-            return responseService.generateSuccessResponse("Test Status and rank is updated",existingServiceProvider,HttpStatus.OK);
-        }
-         catch (Exception e) {
-            exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Error updating test status and rank", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-
     public Object searchServiceProviderBasedOnGivenFields(String state,String district,String first_name,String last_name,String mobileNumber) {
         Map<String, Character> alias = new HashMap<>();
         alias.put("state", 'a');
