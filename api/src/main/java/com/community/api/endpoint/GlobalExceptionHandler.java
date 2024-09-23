@@ -1,6 +1,7 @@
 package com.community.api.endpoint;
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.http.ContentTooLongException;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpEntity;
@@ -9,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -39,7 +41,7 @@ public class GlobalExceptionHandler {
         return generateErrorResponse("Invalid request body", HttpStatus.BAD_REQUEST,ex.getMessage());
     }
 
-        public ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body, HttpHeaders headers, HttpStatus status, WebRequest request) {
+     public ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body, HttpHeaders headers, HttpStatus status, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setMessage("Internal Server Error");
         errorResponse.setStatus_code(status.value());
@@ -62,6 +64,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleBindException(BindException ex, WebRequest request) {
         return generateErrorResponse("Invalid request body", HttpStatus.BAD_REQUEST,ex.getMessage());
     }
+    @ExceptionHandler(value = { HttpMediaTypeNotSupportedException.class })
+    public ResponseEntity<ErrorResponse> handleHttpMediaTypeNotSupportedException(HttpMediaTypeNotSupportedException ex, WebRequest request) {
+        String message = "Unsupported media type: " + ex.getContentType();
+        return generateErrorResponse(message, HttpStatus.UNSUPPORTED_MEDIA_TYPE, ex.getMessage());
+    }
 
     @ExceptionHandler(value = { NullPointerException.class })
     public ResponseEntity<ErrorResponse> handleNullPointerException(NullPointerException ex, WebRequest request) {
@@ -71,6 +78,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(value = { IllegalArgumentException.class })
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex, WebRequest request) {
         return generateErrorResponse("Invalid argument", HttpStatus.BAD_REQUEST,ex.getMessage());
+    }
+
+    @ExceptionHandler(value = { ContentTooLongException.class })
+    public ResponseEntity<ErrorResponse> handleContentTooLongException(ContentTooLongException ex, WebRequest request) {
+        return generateErrorResponse("Content is TooLongE", HttpStatus.BAD_REQUEST,ex.getMessage());
     }
 
     @ExceptionHandler(value = { RuntimeException.class })
