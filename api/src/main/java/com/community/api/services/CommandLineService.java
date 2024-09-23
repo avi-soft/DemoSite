@@ -67,6 +67,30 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(new CustomReserveCategory(4L, "OBC", "Other Backward Caste", false));
         }
 
+        if(entityManager.createQuery("SELECT COUNT(c) FROM CustomTicketState c", Long.class).getSingleResult() == 0) {
+            entityManager.merge(new CustomTicketState(1L, "TO-DO", "Ticket is not assigned to any service provider"));
+            entityManager.merge(new CustomTicketState(2L, "IN-PROGRESS", "It's under progress"));
+            entityManager.merge(new CustomTicketState(3L, "ON-HOLD", "It's on hold"));
+            entityManager.merge(new CustomTicketState(4L, "IN-REVIEW", "It's rejected"));
+            entityManager.merge(new CustomTicketState(5L, "CLOSE", "Closed successfully"));
+        }
+
+        if(entityManager.createQuery("SELECT COUNT(c) FROM CustomTicketType c", Long.class).getSingleResult() == 0) {
+            entityManager.merge(new CustomTicketType(1L, "PRIMARY", "Primary ticket of SP"));
+            entityManager.merge(new CustomTicketType(2L, "REVIEW-TICKET", "Review ticket of SP"));
+            entityManager.merge(new CustomTicketType(3L, "MISCELLANEOUS", "Miscellaneous (any other ticket)"));
+        }
+
+        if(entityManager.createQuery("SELECT COUNT(c) FROM CustomTicketStatus c", Long.class).getSingleResult() == 0) {
+            entityManager.merge(new CustomTicketStatus(1L, "NOT-REACHABLE", "User is unreachable"));
+            entityManager.merge(new CustomTicketStatus(2L, "VALIDATING-DOCUMENT", "Validating documents"));
+            entityManager.merge(new CustomTicketStatus(3L, "MISSING-DOCUMENT", "Missing documents"));
+            entityManager.merge(new CustomTicketStatus(4L, "USER-NOT-REACHABLE", "User Not reachable"));
+            entityManager.merge(new CustomTicketStatus(5L, "UPLOADING-DOCUMENT", "Uploading documents"));
+            entityManager.merge(new CustomTicketStatus(6L, "FILLING-PERSONAL-DETAILS", "Filling personal details"));
+            entityManager.merge(new CustomTicketStatus(7L, "SOME-OTHER-STATUS", "Some other status"));
+        }
+
         if (entityManager.createQuery("SELECT COUNT(r) FROM Role r", Long.class).getSingleResult() == 0) {
             entityManager.merge(new Role(1, "SUPER_ADMIN", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
             entityManager.merge(new Role(2, "ADMIN", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
@@ -147,8 +171,7 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(new Districts(58, "Jhajjar", "HR"));
             entityManager.persist(new Districts(59, "Jind", "HR"));
             entityManager.persist(new Districts(60, "Kaithal", "HR"));
-            entityManager.persist(
-                    new Districts(61, "Karnal", "HR"));
+            entityManager.persist(new Districts(61, "Karnal", "HR"));
             entityManager.persist(new Districts(62, "Mahendragarh", "HR"));
             entityManager.persist(new Districts(63, "Mewat", "HR"));
             entityManager.persist(new Districts(64, "Palwal", "HR"));
