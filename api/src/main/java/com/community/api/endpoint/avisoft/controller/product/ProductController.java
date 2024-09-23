@@ -211,8 +211,10 @@ public class ProductController extends CatalogEndpoint {
             }
 
             // Validations and checks.
-            productService.validateReserveCategory(addProductDto);
-            productService.deleteOldReserveCategoryMapping(customProduct);
+            if(addProductDto.getReservedCategory() != null) {
+                productService.validateReserveCategory(addProductDto);
+                productService.deleteOldReserveCategoryMapping(customProduct);
+            }
             productService.updateProductValidation(addProductDto, customProduct);
 
             // Validation of getActiveEndDate and getGoLiveDate.
