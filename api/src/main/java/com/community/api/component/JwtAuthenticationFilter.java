@@ -87,8 +87,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
     } catch (ExpiredJwtException e) {
-        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "JWT token is expired");
-        exceptionHandling.handleException(e);
+        handleException(response, HttpServletResponse.SC_UNAUTHORIZED, "JWT token is expired");
         logger.error("ExpiredJwtException caught: {}", e.getMessage());
     } catch (MalformedJwtException e) {
         handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JWT token");
@@ -109,16 +108,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private boolean isApiKeyRequiredUri(HttpServletRequest request) {
-     /*   String requestURI = request.getRequestURI();
-        String path = requestURI.split("\\?")[0].trim();
-
-        List<String> bypassUris = Arrays.asList(
-                "/api/v1/category-custom/get-products-by-category-id/**",
-                "/api/v1/category-custom/get-all-categories"
-        );
-
-        boolean isBypassed = bypassUris.stream().anyMatch(path::equals);
-        return isBypassed;*/
 
         String requestURI = request.getRequestURI();
         String path = requestURI.split("\\?")[0].trim();
@@ -174,8 +163,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String ipAdress = request.getRemoteAddr();
         String User_Agent = request.getHeader("User-Agent");
 
-        if (!jwtUtil.validateToken(jwt, ipAdress, User_Agent)) {
-            respondWithUnauthorized(response, "Invalid JWT token");
+        try {
+            if (!jwtUtil.validateToken(jwt, ipAdress, User_Agent)) {
+                respondWithUnauthorized(response, "Invalid JWT token");
+                return true;
+            }
+        } catch (ExpiredJwtException e) {
+            jwtUtil.logoutUser(jwt);
+            respondWithUnauthorized(response, "Token is expired");
             return true;
         }
         Customer customCustomer = null;
@@ -214,7 +209,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (!response.isCommitted()) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
-            response.getWriter().write("{\"status\":401,\"message\":\"" + message + "\"}");
+//            response.getWriter().write("{\"status\":401,\"message\":\"" + message + "\"}");
+            response.getWriter().write("{\"status\":\"UNAUTHORIZED\",\"status_code\":401,\"message\":\"" + message + "\"}");
+
 
 
             response.getWriter().flush();
@@ -225,7 +222,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (!response.isCommitted()) {
             response.setStatus(statusCode);
             response.setContentType("application/json");
-            response.getWriter().write("{\"status\":" + statusCode + ",\"message\":\"" + message + "\"}");
+//            response.getWriter().write("{\"status\":" + statusCode + ",\"message\":\"" + message + "\"}");
+            response.getWriter().write("{\"status\":\"" + (statusCode == HttpServletResponse.SC_UNAUTHORIZED ? "UNAUTHORIZED" : "ERROR") + "\",\"status_code\":" + statusCode + ",\"message\":\"" + message + "\"}");
+
             response.getWriter().flush();
         }
     }

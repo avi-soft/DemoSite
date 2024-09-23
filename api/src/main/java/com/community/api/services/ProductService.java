@@ -155,104 +155,94 @@ public class ProductService {
         }
     }
 
-    public List<CustomProduct> filterProducts(List<Long> states, List<Long> categories, List<Long> reserveCategories, String title, Double fee, Integer post, Date startRange, Date endRange) throws Exception {
+    public List<CustomProduct> filterProducts(List<Long> states, List<Long> categories, List<Long> reserveCategories, String title, Double fee, Integer post, Date startRange, Date endRange) {
 
         // Initialize the JPQL query
-        try{
-            StringBuilder jpql = new StringBuilder("SELECT DISTINCT p FROM CustomProduct p ")
-                    .append("JOIN CustomProductReserveCategoryFeePostRef r ON r.customProduct = p ")
-                    .append("JOIN SkuImpl s ON s.defaultProduct = p ")
-                    .append("WHERE 1=1 "); // Use this to simplify appending conditions
+        StringBuilder jpql = new StringBuilder("SELECT DISTINCT p FROM CustomProduct p ")
+                .append("JOIN CustomProductReserveCategoryFeePostRef r ON r.customProduct = p ")
+                .append("JOIN SkuImpl s ON s.defaultProduct = p ")
+                .append("WHERE 1=1 "); // Use this to simplify appending conditions
 
-            // List to hold query parameters
-            List<CustomProductState> customProductStates = new ArrayList<>();
-            List<Category> categoryList = new ArrayList<>();
-            List<CustomReserveCategory> customReserveCategoryList = new ArrayList<>();
+        // List to hold query parameters
+        List<CustomProductState> customProductStates = new ArrayList<>();
+        List<Category> categoryList = new ArrayList<>();
+        List<CustomReserveCategory> customReserveCategoryList = new ArrayList<>();
 
-            // Conditionally build the query
-            if (states != null && !states.isEmpty()) {
-                for (Long id : states) {
-                    customProductStates.add(productStateService.getProductStateById(id));
+        // Conditionally build the query
+        if (states != null && !states.isEmpty()) {
+            for (Long id : states) {
+                CustomProductState productState = productStateService.getProductStateById(id);
+                if(productState == null) {
+                    throw new IllegalArgumentException("NO PRODUCT STATE FOUND WITH THIS ID: " + id);
                 }
-                jpql.append("AND p.productState IN :states ");
+                customProductStates.add(productState);
             }
-
-            if (categories != null && !categories.isEmpty()) {
-                for (Long id : categories) {
-                    categoryList.add(catalogService.findCategoryById(id));
-                }
-                jpql.append("AND p.defaultCategory IN :categories ");
-            }
-
-            if (reserveCategories != null && !reserveCategories.isEmpty()) {
-                for (Long id : reserveCategories) {
-                    customReserveCategoryList.add(reserveCategoryService.getReserveCategoryById(id));
-                }
-                jpql.append("AND r.customReserveCategory IN :reserveCategories ");
-            }
-
-            if (title != null && !title.isEmpty()) {
-                jpql.append("AND p.metaTitle LIKE :title ");
-            }
-
-            if (fee != null) {
-                jpql.append("AND r.fee > :fee ");
-            }
-
-            if (post != null) {
-                jpql.append("AND r.post > :post ");
-            }
-
-            System.out.println("HEELO1");
-            if (startRange != null && endRange != null) {
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); // Set active start date to current date and time in "yyyy-MM-dd HH:mm:ss" format
-                String formattedDate = dateFormat.format(new Date());
-
-                dateFormat.parse(dateFormat.format(startRange));
-                dateFormat.parse(dateFormat.format(endRange));
-                jpql.append("AND s.activeStartDate BETWEEN :startRange AND :endRange ");
-            }
-            if(startRange != null || endRange != null) {
-                throw new IllegalArgumentException("either give startDate and endDate together or none");
-            }
-            System.out.println("HEELO2");
-
-            // Create the query with the final JPQL string
-            TypedQuery<CustomProduct> query = entityManager.createQuery(jpql.toString(), CustomProduct.class);
-
-            // Set parameters
-            if (!customProductStates.isEmpty()) {
-                query.setParameter("states", customProductStates);
-            }
-            if (!categoryList.isEmpty()) {
-                query.setParameter("categories", categoryList);
-            }
-            if (!customReserveCategoryList.isEmpty()) {
-                query.setParameter("reserveCategories", customReserveCategoryList);
-            }
-            if (title != null && !title.isEmpty()) {
-                query.setParameter("title", "%" + title + "%");
-            }
-            if (fee != null) {
-                query.setParameter("fee", fee);
-            }
-            if (post != null) {
-                query.setParameter("post", post);
-            }
-            if (startRange != null && endRange != null) {
-                query.setParameter("startRange", startRange);
-                query.setParameter("endRange", endRange);
-            }
-
-            return query.getResultList();
-        } catch (ParseException parseException) {
-            exceptionHandlingService.handleException(parseException);
-            throw new IllegalArgumentException("WRONG DATE FORMAT" + parseException.getMessage() + "\n");
-        } catch (Exception exception) {
-            exceptionHandlingService.handleException(exception);
-            throw new Exception("ERRORS WHILE FETCHING FILTER PRODUCTS: " + exception.getMessage() + "\n");
+            jpql.append("AND p.productState IN :states ");
         }
 
+        if (categories != null && !categories.isEmpty()) {
+            for (Long id : categories) {
+                Category category = catalogService.findCategoryById(id);
+                if(category == null) {
+                    throw new IllegalArgumentException("NO CATEGORY FOUND WITH THIS ID: " + id);
+                }
+                categoryList.add(category);
+            }
+            jpql.append("AND p.defaultCategory IN :categories ");
+        }
+
+        if (reserveCategories != null && !reserveCategories.isEmpty()) {
+            for (Long id : reserveCategories) {
+                customReserveCategoryList.add(reserveCategoryService.getReserveCategoryById(id));
+            }
+            jpql.append("AND r.customReserveCategory IN :reserveCategories ");
+        }
+
+        if (title != null && !title.isEmpty()) {
+            jpql.append("AND p.metaTitle LIKE :title ");
+        }
+
+        if (fee != null) {
+            jpql.append("AND r.fee > :fee ");
+        }
+
+        if (post != null) {
+            jpql.append("AND r.post > :post ");
+        }
+
+        if (startRange != null && endRange != null) {
+            jpql.append("AND s.activeStartDate BETWEEN :startRange AND :endRange ");
+        }
+
+        // Create the query with the final JPQL string
+        TypedQuery<CustomProduct> query = entityManager.createQuery(jpql.toString(), CustomProduct.class);
+
+        // Set parameters
+        if (!customProductStates.isEmpty()) {
+            query.setParameter("states", customProductStates);
+        }
+        if (!categoryList.isEmpty()) {
+            query.setParameter("categories", categoryList);
+        }
+        if (!customReserveCategoryList.isEmpty()) {
+            query.setParameter("reserveCategories", customReserveCategoryList);
+        }
+        if (title != null && !title.isEmpty()) {
+            query.setParameter("title", "%" + title + "%");
+        }
+        if (fee != null) {
+            query.setParameter("fee", fee);
+        }
+        if (post != null) {
+            query.setParameter("post", post);
+        }
+        if (startRange != null && endRange != null) {
+            query.setParameter("startRange", startRange);
+            query.setParameter("endRange", endRange);
+        }
+
+        // Execute and return the result
+        return query.getResultList();
     }
 
     public boolean addProductAccessAuthorisation(String authHeader) throws Exception {
@@ -306,6 +296,12 @@ public class ProductService {
                 addProductDto.setQuantity(Constant.DEFAULT_QUANTITY);
             }
 
+            if(addProductDto.getPlatformFee() == null) {
+                addProductDto.setPlatformFee(DEFAULT_PLATFORM_FEE);
+            }else if(addProductDto.getPlatformFee() <= 0){
+                throw new IllegalArgumentException("PLATFORM FEE CANNOT BE <= 0");
+            }
+
             if (addProductDto.getPriorityLevel() == null) {
                 addProductDto.setPriorityLevel(Constant.DEFAULT_PRIORITY_LEVEL);
             } else if (addProductDto.getPriorityLevel() <= 0 || addProductDto.getPriorityLevel() > 5) {
@@ -340,8 +336,6 @@ public class ProductService {
 
             dateFormat.parse(dateFormat.format(addProductDto.getActiveEndDate()));
             dateFormat.parse(dateFormat.format(addProductDto.getGoLiveDate()));
-            dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
-            dateFormat.parse(dateFormat.format(addProductDto.getExamDateTo()));
 
             if (!addProductDto.getActiveEndDate().after(activeStartDate)) {
                 throw new IllegalArgumentException("EXPIRATION DATE CANNOT BE BEFORE OR EQUAL OF CURRENT DATE");
@@ -352,6 +346,9 @@ public class ProductService {
             if (addProductDto.getExamDateFrom() == null || addProductDto.getExamDateTo() == null) {
                 throw new IllegalArgumentException("TENTATIVE EXAMINATION DATE FROM-TO CANNOT BE NULL");
             }
+
+            dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
+            dateFormat.parse(dateFormat.format(addProductDto.getExamDateTo()));
 
             if (!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate()) || !addProductDto.getExamDateTo().after(addProductDto.getActiveEndDate())) {
                 throw new IllegalArgumentException(TENTATIVEDATEAFTERACTIVEENDDATE);
@@ -537,7 +534,9 @@ public class ProductService {
             if (customProduct == null || ((Status) customProduct).getArchived() == 'Y') {
                 throw new IllegalArgumentException(PRODUCTNOTFOUND);
             }
-
+            if(!customProduct.getProductState().getProductState().equals(PRODUCT_STATE_MODIFIED) && !customProduct.getProductState().getProductState().equals(PRODUCT_STATE_NEW)) {
+                throw new IllegalArgumentException("PRODUCT CAN ONLY BE MODIFIED IF IT IS IN NEW AND MODIFIED STATE");
+            }
             Long userId = null;
             if (role.equals(Constant.SUPER_ADMIN) || role.equals(Constant.ADMIN)) {
                 return true;
@@ -576,6 +575,9 @@ public class ProductService {
             }
 
             if (addProductDto.getPriorityLevel() != null) {
+                if(addProductDto.getPriorityLevel()<=0 || addProductDto.getPriorityLevel()>5) {
+                    throw new IllegalArgumentException("PRIORITY LEVEL MUST BE BETWEEN 1-5");
+                }
                 customProduct.setPriorityLevel(addProductDto.getPriorityLevel());
             }
 
@@ -619,14 +621,25 @@ public class ProductService {
                 CustomApplicationScope applicationScope = applicationScopeService.getApplicationScopeById(addProductDto.getApplicationScope());
                 if (applicationScope == null) {
                     throw new IllegalArgumentException("NO APPLICATION SCOPE EXISTS WITH THIS ID");
-                } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE)) {
-                    if (addProductDto.getNotifyingAuthority() == null || addProductDto.getDomicileRequired() == null) {
-                        throw new IllegalArgumentException("NOTIFYING AUTHORITY AND DOMICILE REQUIRED CANNOT BE NULL IF APPLICATION SCOPE IS: " + Constant.APPLICATION_SCOPE_STATE);
-                    } else if (!addProductDto.getNotifyingAuthority().trim().isEmpty()) {
+                } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE) && customProduct.getCustomApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE)) {
+                    if (addProductDto.getNotifyingAuthority() != null && !addProductDto.getNotifyingAuthority().trim().isEmpty()) {
                         addProductDto.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
                         customProduct.setNotifyingAuthority(addProductDto.getNotifyingAuthority());
                         customProduct.setCustomApplicationScope(applicationScope);
                     }
+                    if (addProductDto.getDomicileRequired() != null) {
+                        customProduct.setDomicileRequired(addProductDto.getDomicileRequired());
+                        customProduct.setCustomApplicationScope(applicationScope);
+                    }
+                } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE) && customProduct.getCustomApplicationScope().getApplicationScope().equals(Constant.APPLICATION_SCOPE_CENTER)) {
+                    if (addProductDto.getNotifyingAuthority() == null || addProductDto.getDomicileRequired() == null || addProductDto.getNotifyingAuthority().trim().isEmpty()) {
+                        throw new IllegalArgumentException("DOMICILE AND NOTIFYING AUTHORITY ARE REQUIRED FIELDS FOR STATE APPLICATION SCOPE");
+                    }
+
+                    addProductDto.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
+                    customProduct.setNotifyingAuthority(addProductDto.getNotifyingAuthority());
+                    customProduct.setDomicileRequired(addProductDto.getDomicileRequired());
+                    customProduct.setCustomApplicationScope(applicationScope);
                 } else if (applicationScope.getApplicationScope().equals(APPLICATION_SCOPE_CENTER)) {
                     if (addProductDto.getNotifyingAuthority() != null) {
                         throw new IllegalArgumentException("NOTIFYING AUTHORITY NOT REQUIRED IN CASE OF CENTER LEVEL APPLICATION SCOPE");

@@ -5,15 +5,14 @@ import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.Privileges;
+import com.community.api.entity.SuccessResponse;
 import com.community.api.services.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.utils.Document;
 import com.community.api.utils.DocumentType;
 import com.community.api.utils.ServiceProviderDocument;
-import com.twilio.twiml.voice.Connect;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,12 +22,13 @@ import javax.persistence.TypedQuery;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
+import java.net.URI;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -36,28 +36,29 @@ import java.util.stream.Collectors;
 @RequestMapping(value = "/document")
 public class DocumentEndpoint {
     @Autowired
-    private  JwtUtil jwtTokenUtil;
+    private JwtUtil jwtTokenUtil;
 
     @Autowired
-    private  PrivilegeService privilegeService;
+    private PrivilegeService privilegeService;
 
     @Autowired
     private FileService fileService;
 
     @Autowired
-   private DocumentStorageService documentStorageService;
+    private DocumentStorageService documentStorageService;
 
     @Autowired
     private RoleService roleService;
     private EntityManager entityManager;
     private ExceptionHandlingImplement exceptionHandling;
     private ResponseService responseService;
-    public DocumentEndpoint(EntityManager entityManager,ExceptionHandlingImplement exceptionHandling,ResponseService responseService)
-    {
-        this.entityManager=entityManager;
-        this.exceptionHandling= exceptionHandling;
-        this.responseService=responseService;
+
+    public DocumentEndpoint(EntityManager entityManager, ExceptionHandlingImplement exceptionHandling, ResponseService responseService) {
+        this.entityManager = entityManager;
+        this.exceptionHandling = exceptionHandling;
+        this.responseService = responseService;
     }
+
     @Transactional
     @RequestMapping(value = "create-document-type", method = RequestMethod.POST)
     public ResponseEntity<?> createDocumentType(@RequestBody DocumentType documentType, @RequestHeader(value = "Authorization") String authHeader) {
@@ -89,9 +90,9 @@ public class DocumentEndpoint {
                 }
 
                 entityManager.persist(documentType);
-                return responseService.generateSuccessResponse("Document type created successfully",documentType, HttpStatus.OK);
-            }else{
-                return responseService.generateSuccessResponse("You don't have privilege to create Document ",documentType, HttpStatus.OK);
+                return responseService.generateSuccessResponse("Document type created successfully", documentType, HttpStatus.OK);
+            } else {
+                return responseService.generateSuccessResponse("You don't have privilege to create Document ", documentType, HttpStatus.OK);
 
             }
 
@@ -106,9 +107,9 @@ public class DocumentEndpoint {
         try {
             List<DocumentType> documentTypes = entityManager.createQuery("SELECT dt FROM DocumentType dt", DocumentType.class).getResultList();
             if (documentTypes.isEmpty()) {
-                return responseService.generateErrorResponse("No document found",HttpStatus.NOT_FOUND);
+                return responseService.generateErrorResponse("No document found", HttpStatus.NOT_FOUND);
             }
-            return responseService.generateSuccessResponse("Document Types retrieved successfully",documentTypes, HttpStatus.OK);
+            return responseService.generateSuccessResponse("Document Types retrieved successfully", documentTypes, HttpStatus.OK);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Error retrieving Document Types", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -122,12 +123,12 @@ public class DocumentEndpoint {
             HttpServletRequest request) {
         try {
 
-            if(role!=null){
+            if (role != null) {
                 if (roleService.findRoleName(role).equals(Constant.SERVICE_PROVIDER)) {
 
-                    ServiceProviderEntity serviceProviderEntity = entityManager.find(ServiceProviderEntity.class,customerId);
+                    ServiceProviderEntity serviceProviderEntity = entityManager.find(ServiceProviderEntity.class, customerId);
 
-                    if(serviceProviderEntity==null){
+                    if (serviceProviderEntity == null) {
                         return responseService.generateErrorResponse("Data not found", HttpStatus.NOT_FOUND);
 
                     }
@@ -146,13 +147,13 @@ public class DocumentEndpoint {
                                 String fileUrl = fileService.getFileUrl(filePath, request);
                                 String document_name = documentStorageService.findRoleName(serviceProviderDocument.getDocumentType());
 
-                                return new DocumentResponse(fileName, fileUrl,document_name);
+                                return new DocumentResponse(fileName, fileUrl, document_name);
                             })
                             .collect(Collectors.toList());
                     return responseService.generateSuccessResponse("Documents retrieved successfully", documentResponses, HttpStatus.OK);
                 }
 
-            }else{
+            } else {
                 CustomCustomer customer = entityManager.find(CustomCustomer.class, customerId);
                 if (customer == null) {
                     return responseService.generateErrorResponse("Customer not found", HttpStatus.NOT_FOUND);
@@ -174,7 +175,7 @@ public class DocumentEndpoint {
 
                             String document_name = documentStorageService.findRoleName(document.getDocumentType());
 
-                            return new DocumentResponse(fileName, fileUrl,document_name);
+                            return new DocumentResponse(fileName, fileUrl, document_name);
                         })
                         .collect(Collectors.toList());
                 return responseService.generateSuccessResponse("Documents retrieved successfully", documentResponses, HttpStatus.OK);
@@ -189,25 +190,49 @@ public class DocumentEndpoint {
         }
     }
 
-    @GetMapping("/download-file")
-    public void downloadFile(@RequestParam("filePath") String filePath, HttpServletRequest request, HttpServletResponse response) {
-        String fileUrl = fileService.getFileUrl(filePath, request);
+    @GetMapping("/download")
+    public ResponseEntity<?> downloadFile(@RequestParam("filePath") String filePath, HttpServletRequest request, HttpServletResponse response) {
         try {
+            String fileUrl = fileService.getFileUrl(filePath, request);
             URL url = new URL(fileUrl);
+
+
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
             connection.setRequestMethod("GET");
+
             int responseCode = connection.getResponseCode();
-            if (responseCode == 200) {
+
+            if (responseCode == HttpURLConnection.HTTP_OK) {
                 response.setContentType("application/octet-stream");
-                response.setHeader("Content-Disposition", "attachment; filename=\"" + filePath + "\"");
-                IOUtils.copy(connection.getInputStream(), response.getOutputStream());
+
+                String fileName = url.getPath().substring(url.getPath().lastIndexOf('/') + 1);
+
+                response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+                response.setContentLength(connection.getContentLength());
+
+                try (InputStream inputStream = connection.getInputStream();
+                     OutputStream outputStream = response.getOutputStream()) {
+                    IOUtils.copy(inputStream, outputStream);
+                    outputStream.flush();
+                }
             } else {
-                response.setStatus(responseCode);
+                return responseService.generateErrorResponse("Error downloading file: " + connection.getResponseMessage(),  HttpStatus.BAD_REQUEST);
+
             }
         } catch (IOException e) {
             exceptionHandling.handleException(e);
+            return responseService.generateErrorResponse("Error downloading file: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+
+        }catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return responseService.generateErrorResponse("Error downloading file: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+
         }
+
+        return null;
     }
+
 
     private class DocumentResponse {
 
@@ -217,7 +242,7 @@ public class DocumentEndpoint {
         private String document_name;
 
 
-        public DocumentResponse(String fileName, String fileUrl,String document_name) {
+        public DocumentResponse(String fileName, String fileUrl, String document_name) {
             this.fileName = fileName;
             this.fileUrl = fileUrl;
             this.document_name = document_name;
@@ -232,7 +257,7 @@ public class DocumentEndpoint {
             return fileUrl;
         }
 
-        public String  getDocument_name(){
+        public String getDocument_name() {
             return document_name;
         }
 

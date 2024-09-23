@@ -12,10 +12,10 @@ import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
-import javax.transaction.Transactional;
 import javax.xml.bind.DatatypeConverter;
 import java.security.Key;
 import java.util.Date;
@@ -26,16 +26,11 @@ public class JwtUtil {
 
     private ExceptionHandlingImplement exceptionHandling;
     private RoleService roleService;
-    private String secretKeyString;
+    private String secretKeyString = "DASYWgfhMLL0np41rKFAGminD1zb5DlwDzE1WwnP8es=";
     private Key secretKey;
     private EntityManager entityManager;
     private TokenBlacklist tokenBlacklist;
     private CustomerService customerService;
-
-    @Value("${security.jwt.secret-key}")
-    public void setSecretKeyString(String secretKeyString) {
-        this.secretKeyString = secretKeyString;
-    }
 
     @Autowired
     public void setExceptionHandling(ExceptionHandlingImplement exceptionHandling) {
@@ -62,17 +57,19 @@ public class JwtUtil {
         this.customerService = customerService;
     }
 
-   @PostConstruct
+    @PostConstruct
     public void init() {
-
         try {
             byte[] secretKeyBytes = DatatypeConverter.parseBase64Binary(secretKeyString);
+            System.out.println("Decoded key length (bytes): " + secretKeyBytes.length);
+            if (secretKeyBytes.length * 8 < 256) {
+                throw new IllegalArgumentException("Key length is less than 256 bits.");
+            }
             this.secretKey = Keys.hmacShaKeyFor(secretKeyBytes);
-        }  catch (Exception e) {
+        } catch (Exception e) {
             exceptionHandling.handleException(e);
             throw new RuntimeException("Error generating JWT token", e);
         }
-
     }
 
    /* @PostConstruct
@@ -119,6 +116,10 @@ public class JwtUtil {
             if (token == null || token.isEmpty()) {
                 throw new IllegalArgumentException("Token is required");
             }
+
+            if (isTokenExpired(token)) {
+                throw new ExpiredJwtException(null, null, "Token is expired");
+            }
             return Jwts.parserBuilder()
                     .setSigningKey(secretKey)
                     .build()
@@ -126,7 +127,7 @@ public class JwtUtil {
                     .getBody()
                     .get("id", Long.class);
         } catch (ExpiredJwtException e) {
-            throw new RuntimeException("JWT token is expired", e);
+            throw e;
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             throw new RuntimeException("Invalid JWT token", e);
@@ -142,6 +143,7 @@ public class JwtUtil {
                 throw new IllegalArgumentException("Token is expired");
 
             }
+
             Long id = extractId(token);
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
@@ -149,9 +151,9 @@ public class JwtUtil {
                     .parseClaimsJws(token)
                     .getBody();
             String tokenId = claims.getId();
-            /*if (tokenBlacklist.isTokenBlacklisted(tokenId)) {
+            if (tokenBlacklist.isTokenBlacklisted(tokenId)) {
                 return false;
-            }*/
+            }
             int role=extractRoleId(token);
             Customer existingCustomer=null;
             ServiceProviderEntity existingServiceProvider=null;
@@ -170,10 +172,9 @@ public class JwtUtil {
             String storedIpAddress = claims.get("ipAddress", String.class);
 
 
-
             return ipAddress.trim().equals(storedIpAddress != null ? storedIpAddress.trim() : "");
         } catch (ExpiredJwtException e) {
-            exceptionHandling.handleException(e);
+            logoutUser(token);
             return false;
         } catch (MalformedJwtException | IllegalArgumentException e) {
             exceptionHandling.handleException(e);
@@ -198,6 +199,9 @@ public class JwtUtil {
                     .getExpiration();
 
             return expiration.before(new Date());
+        }catch (ExpiredJwtException e) {
+            logoutUser(token);
+            return false;
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             throw new RuntimeException("Error checking token expiration", e);
@@ -207,7 +211,10 @@ public class JwtUtil {
     public boolean logoutUser(String token) {
         try {
             if (token == null || token.trim().isEmpty()) {
-                return false;
+
+                throw new IllegalArgumentException("Token is required");
+
+
             }
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(secretKey)
@@ -216,12 +223,14 @@ public class JwtUtil {
                     .getBody();
 
             String uniqueTokenId = claims.getId();
-            tokenBlacklist.blacklistToken(uniqueTokenId);
+            tokenBlacklist.blacklistToken(token);
+            return true;
+        }catch (ExpiredJwtException e) {
+            tokenBlacklist.blacklistToken(token);
             return true;
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return false;
-
         }
     }
 
@@ -229,6 +238,11 @@ public class JwtUtil {
         try {
             if (token == null || token.isEmpty()) {
                 throw new IllegalArgumentException("Token is required");
+            }
+            if (isTokenExpired(token)) {
+
+                throw new ExpiredJwtException(null, null, "Token is expired");
+
             }
             return Jwts.parserBuilder()
                     .setSigningKey(secretKey)
