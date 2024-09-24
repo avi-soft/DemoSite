@@ -1,12 +1,14 @@
 package com.community.api.services;
 
 import com.community.api.component.Constant;
+import com.community.api.configuration.ImageSizeConfig;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.*;
 import com.community.api.entity.Image;
 import com.community.api.services.exception.EntityDoesNotExistsException;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -37,7 +39,12 @@ public class ServiceProviderTestService {
     private DocumentStorageService documentStorageService;
     @Autowired
     private FileService fileService;
-    private static final long MAX_IMAGE_SIZE_MB = 2L * 1024 * 1024;   //(2MB)
+
+    @Value("${image.size.min}")
+    private String minImageSize;
+
+    @Value("${image.size.max}")
+    private String maxImageSize;
 
     public ServiceProviderTestService(EntityManager entityManager) {
         this.entityManager = entityManager;
@@ -126,15 +133,19 @@ public class ServiceProviderTestService {
         }
 
         test.setIs_image_test_passed(false);
-        if (resizedFile.getSize() > MAX_IMAGE_SIZE_MB) {
-            test.setIs_image_test_passed(false);
-            entityManager.merge(test);
-            throw new IllegalArgumentException("Image size exceeds 2 MB");
-        }
+        long minSizeInBytes = ImageSizeConfig.convertToBytes(minImageSize);
+        long maxSizeInBytes = ImageSizeConfig.convertToBytes(maxImageSize);
 
         if(!documentStorageService.isValidFileType(resizedFile))
         {
             throw new IllegalArgumentException("Invalid file type. Only images are allowed.");
+        }
+
+        // Validate image size
+        if (resizedFile.getSize() < minSizeInBytes || resizedFile.getSize() > maxSizeInBytes) {
+            test.setIs_image_test_passed(false);
+            entityManager.merge(test);
+            throw new IllegalArgumentException("Image size should be between " + minImageSize + " and " + maxImageSize);
         }
 
         // Validate the image size using saveDocuments method logic
@@ -157,7 +168,7 @@ public class ServiceProviderTestService {
         String currentDir = System.getProperty("user.dir");
         String testDirPath = currentDir + "/../test/";
 
-        String db_path = "avisoftdocument/SERVICE_PROVIDER/Signature_Images";
+        String db_path = "avisoftdocument/SERVICE_PROVIDER/Resized_Images";
         // Define the directory structure
         File avisoftDir = new File(testDirPath +db_path);
 
@@ -225,18 +236,12 @@ public class ServiceProviderTestService {
         if (test == null) {
             throw new EntityNotFoundException();
         }
-        test.setIs_typing_test_passed(false);
-
-        boolean isPassed = validateTypedText(test.getTyping_test_text(), typedText);
         test.setSubmitted_text(typedText);
-        if(isPassed) {
-            test.setIs_typing_test_passed(true);
-        }
-        else
-        {
-            test.setIs_typing_test_passed(false);
-            throw new IllegalArgumentException("Typed text mismatch");
-        }
+
+        // Calculate typing test score based on similarity between expected text and entered text
+        int typingTestScore = calculateTypingTestScore(test.getTyping_test_text(), typedText);
+        test.setTyping_test_scores(typingTestScore);
+
         // Persist the changes
         return entityManager.merge(test);
     }
@@ -262,14 +267,20 @@ public class ServiceProviderTestService {
             throw new EntityNotFoundException("Service Provider Test not found");
         }
 
-        if (signatureFile.getSize() > MAX_IMAGE_SIZE_MB) {
-           throw new IllegalArgumentException("Signature image size exceeds 2 MB");
-        }
-
         // Check the MIME type of the file
         if(!documentStorageService.isValidFileType(signatureFile))
         {
             throw new IllegalArgumentException("Invalid file type. Only images are allowed.");
+        }
+
+        long minSizeInBytes = ImageSizeConfig.convertToBytes(minImageSize);
+        long maxSizeInBytes = ImageSizeConfig.convertToBytes(maxImageSize);
+
+        // Validate image size
+        if (signatureFile.getSize() < minSizeInBytes || signatureFile.getSize() > maxSizeInBytes) {
+            test.setIs_image_test_passed(false);
+            entityManager.merge(test);
+            throw new IllegalArgumentException("Image size should be between " + minImageSize + " and " + maxImageSize);
         }
         // Use the saveDocuments method to validate and store the signature image
         ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(signatureFile, "Signature Image", serviceProviderId, "SERVICE_PROVIDER");
@@ -455,14 +466,36 @@ public class ServiceProviderTestService {
         return typingText.getText();
     }
 
-    private boolean validateTypedText(String originalText, String typedText) {
-        if (originalText == null || typedText == null) {
-            return false;
+    private int calculateTypingTestScore(String expectedText, String typedText) {
+        // Handle null or empty cases
+        if (expectedText == null || typedText == null || expectedText.isEmpty()) {
+            return 0; // If expectedText is null or empty, no score can be given
         }
-        String trimmedOriginalText = originalText.trim();
-        String trimmedTypedText = typedText.trim();
-        return trimmedOriginalText.equals(trimmedTypedText);
+
+        // Split the texts into words for comparison (can be adjusted for character-level comparison if needed)
+        String[] expectedWords = expectedText.split("\\s+");
+        String[] typedWords = typedText.split("\\s+");
+
+        int totalWords = expectedWords.length;
+        int matchingWords = 0;
+
+        // Compare word by word up to the length of the shortest text
+        for (int i = 0; i < Math.min(expectedWords.length, typedWords.length); i++) {
+            if (expectedWords[i].equalsIgnoreCase(typedWords[i])) {
+                matchingWords++;
+            }
+        }
+
+        // Calculate the accuracy as a percentage of matching words
+        double accuracy = (double) matchingWords / totalWords;
+
+        // Map accuracy to score between 0 and 15
+        int score = (int) Math.round(accuracy * 15);
+
+        // Return the score, ensuring it's between 0 and 15
+        return Math.max(0, Math.min(15, score));
     }
+
 
     private static final double SIMILARITY_THRESHOLD = 0.95; //can adjust this value
 

@@ -1,8 +1,10 @@
 package com.community.api.services;
 
+import com.community.api.configuration.ImageSizeConfig;
 import com.community.api.entity.Image;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import javax.imageio.ImageIO;
@@ -33,8 +35,9 @@ import static com.community.api.services.DocumentStorageService.isValidFileType;
 public class ImageService {
     @Autowired
     private EntityManager entityManager;
-    @Autowired
-    private FileService fileService;
+
+    @Value("${image.size.max}")
+    private String maxImageSize;
 
     public ImageService(EntityManager entityManager) {
         this.entityManager = entityManager;
@@ -64,10 +67,9 @@ public class ImageService {
         if (!isValidFileType(file)) {
             throw new IllegalArgumentException("Invalid file type. Only images are allowed.");
         }
-        if (file.getSize() < 2 * 1024 * 1024) {
-            throw new IllegalArgumentException("File size must be larger than 2 MB.");
+        if (file.getSize() < ImageSizeConfig.convertToBytes(maxImageSize)) {
+            throw new IllegalArgumentException("File size must be larger than "+maxImageSize);
         }
-
 
         byte[] fileBytes = file.getBytes();
 
