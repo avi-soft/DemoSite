@@ -103,18 +103,31 @@ public class DocumentEndpoint {
     }
 
     @GetMapping("/get-all-document")
-    public ResponseEntity<?> getAllDocuments() {
+    public ResponseEntity<?> getAllDocuments(@RequestParam(value = "examination", required = false) String exam) {
         try {
-            List<DocumentType> documentTypes = entityManager.createQuery("SELECT dt FROM DocumentType dt", DocumentType.class).getResultList();
+            List<DocumentType> documentTypes;
+
+            if (exam != null && !exam.isEmpty()) {
+                documentTypes = entityManager.createQuery("SELECT dt FROM DocumentType dt WHERE dt.description LIKE :exam", DocumentType.class)
+                        .setParameter("exam", "%" + "Completed" + "%")
+                        .getResultList();
+            } else {
+                documentTypes = entityManager.createQuery("SELECT dt FROM DocumentType dt WHERE dt.description NOT LIKE :exam", DocumentType.class)
+                        .setParameter("exam", "%" + "Completed" + "%")
+                        .getResultList();
+            }
+
             if (documentTypes.isEmpty()) {
                 return responseService.generateErrorResponse("No document found", HttpStatus.NOT_FOUND);
             }
+
             return responseService.generateSuccessResponse("Document Types retrieved successfully", documentTypes, HttpStatus.OK);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Error retrieving Document Types", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 
     @GetMapping("/get-document-of-customer")
     public ResponseEntity<?> getDocumentOfCustomer(
