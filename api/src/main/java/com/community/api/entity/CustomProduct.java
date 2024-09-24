@@ -64,8 +64,9 @@ public class CustomProduct extends ProductImpl {
     @Column(name = "creator_user_id")
     protected Long userId;
 
-    @Column(name = "notifying_authority")
-    protected String notifyingAuthority;
+    @ManyToOne
+    @JoinColumn(name = "notifying_authority")
+    protected StateCode notifyingAuthority;
 
     @Column(name = "advertiser_url")
     String advertiserUrl;
@@ -80,7 +81,7 @@ public class CustomProduct extends ProductImpl {
     @JoinColumn(name = "modifier_role_id")
     Role modifierRole;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "rejection_status_id")
     CustomProductRejectionStatus rejectionStatus;
 }

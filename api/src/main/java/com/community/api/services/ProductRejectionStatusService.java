@@ -33,7 +33,7 @@ public class ProductRejectionStatusService {
     public CustomProductRejectionStatus getAllRejectionStatusByRejectionStatusId(Long rejectionStatusId) throws Exception {
         try {
 
-            Query query = entityManager.createQuery(Constant.GET_JOB_GROUP_BY_ID, CustomProductRejectionStatus.class);
+            Query query = entityManager.createQuery(Constant.GET_REJECTION_STATUS_BY_REJECTION_ID, CustomProductRejectionStatus.class);
             query.setParameter("rejectionStatusId", rejectionStatusId);
             List<CustomProductRejectionStatus> rejectionStaus = query.getResultList();
 

@@ -63,7 +63,7 @@ public class AddProductDto {
     List<AddReserveCategoryDto> reservedCategory;
 
     @JsonProperty("notifying_authority")
-    String notifyingAuthority;
+    Integer notifyingAuthority;
     @JsonProperty("post")
     Integer post;
     @JsonProperty("quantity")

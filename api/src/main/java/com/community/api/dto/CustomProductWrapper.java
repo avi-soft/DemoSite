@@ -12,6 +12,8 @@ import com.community.api.entity.CustomProduct;
 import com.community.api.entity.CustomProductState;
 import com.community.api.entity.CustomReserveCategory;
 import com.community.api.entity.Role;
+import com.community.api.entity.StateCode;
+import com.community.api.services.DistrictService;
 import com.community.api.services.ReserveCategoryService;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
@@ -26,6 +28,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 @Data
 @NoArgsConstructor
 public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Product> {
+
+    @Autowired
+    DistrictService districtService;
 
     @JsonProperty("id")
     protected Long id;
@@ -68,7 +73,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
     @JsonProperty("platform_fee")
     protected Double platformFee;
     @JsonProperty("notifying_authority")
-    protected String notifyingAuthority;
+    protected StateCode notifyingAuthority;
     @JsonProperty("custom_application_scope")
     protected CustomApplicationScope customApplicationScope;
     @JsonProperty("custom_product_state")
@@ -96,7 +101,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
     @JsonProperty("exam_date_to")
     protected Date examDateTo;
 
-    public void wrapDetailsAddProduct(Product product, AddProductDto addProductDto, CustomJobGroup customJobGroup, CustomProductState customProductState, CustomApplicationScope customApplicationScope, Long creatorUserId, Role creatorRole, ReserveCategoryService reserveCategoryService) {
+    public void wrapDetailsAddProduct(Product product, AddProductDto addProductDto, CustomJobGroup customJobGroup, CustomProductState customProductState, CustomApplicationScope customApplicationScope, Long creatorUserId, Role creatorRole, ReserveCategoryService reserveCategoryService, StateCode notifyingAuthority) throws Exception {
 
         this.id = product.getId();
         this.metaTitle = product.getMetaTitle();
@@ -134,7 +139,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         }
 
         this.platformFee = addProductDto.getPlatformFee();
-        this.notifyingAuthority = addProductDto.notifyingAuthority;
+        this.notifyingAuthority = notifyingAuthority;
 
         this.customApplicationScope = customApplicationScope;
         this.customJobGroup = customJobGroup;

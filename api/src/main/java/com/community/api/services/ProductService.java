@@ -75,6 +75,8 @@ public class ProductService {
     JobGroupService jobGroupService;
     @Autowired
     ProductRejectionStatusService productRejectionStatusService;
+    @Autowired
+    DistrictService districtService;
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -391,10 +393,9 @@ public class ProductService {
             }
 
             if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE)) {
-                if (addProductDto.getNotifyingAuthority() == null || addProductDto.getNotifyingAuthority().trim().isEmpty()) {
-                    throw new IllegalArgumentException("NOTIFYING AUTHORITY CANNOT BE NULL/EMPTY IF APPLICATION SCOPE IS STATE");
+                if (addProductDto.getNotifyingAuthority() == null || districtService.getStateByStateId(addProductDto.getNotifyingAuthority()) == null) {
+                    throw new IllegalArgumentException("NOTIFYING AUTHORITY NOT FOUND AND APPLICATION SCOPE IS STATE");
                 }
-                addProductDto.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
             } else {
                 if (addProductDto.getNotifyingAuthority() != null) {
                     throw new IllegalArgumentException("NOTIFYING AUTHORITY CANNOT BE GIVEN IF APPLICATION SCOPE IS CENTER");
@@ -625,22 +626,27 @@ public class ProductService {
                 if (applicationScope == null) {
                     throw new IllegalArgumentException("NO APPLICATION SCOPE EXISTS WITH THIS ID");
                 } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE) && customProduct.getCustomApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE)) {
-                    if (addProductDto.getNotifyingAuthority() != null && !addProductDto.getNotifyingAuthority().trim().isEmpty()) {
-                        addProductDto.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
-                        customProduct.setNotifyingAuthority(addProductDto.getNotifyingAuthority());
+                    if (addProductDto.getNotifyingAuthority() != null && districtService.getStateByStateId(addProductDto.getNotifyingAuthority()) != null) {
+                        customProduct.setNotifyingAuthority(districtService.getStateByStateId(addProductDto.getNotifyingAuthority()));
                         customProduct.setCustomApplicationScope(applicationScope);
+                    }else {
+                        throw new IllegalArgumentException("NOTIFYING AUTHORITY NOT FOUND");
                     }
+
                     if (addProductDto.getDomicileRequired() != null) {
                         customProduct.setDomicileRequired(addProductDto.getDomicileRequired());
                         customProduct.setCustomApplicationScope(applicationScope);
                     }
                 } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE) && customProduct.getCustomApplicationScope().getApplicationScope().equals(Constant.APPLICATION_SCOPE_CENTER)) {
-                    if (addProductDto.getNotifyingAuthority() == null || addProductDto.getDomicileRequired() == null || addProductDto.getNotifyingAuthority().trim().isEmpty()) {
+                    if (addProductDto.getNotifyingAuthority() == null || addProductDto.getDomicileRequired() == null) {
                         throw new IllegalArgumentException("DOMICILE AND NOTIFYING AUTHORITY ARE REQUIRED FIELDS FOR STATE APPLICATION SCOPE");
                     }
 
-                    addProductDto.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
-                    customProduct.setNotifyingAuthority(addProductDto.getNotifyingAuthority());
+                    if(districtService.getStateByStateId(addProductDto.getNotifyingAuthority()) != null){
+                        customProduct.setNotifyingAuthority(districtService.getStateByStateId(addProductDto.getNotifyingAuthority()));
+                    }else{
+                        throw new IllegalArgumentException("NOTIFYING AUTHORITY IS NOT FOUND");
+                    }
                     customProduct.setDomicileRequired(addProductDto.getDomicileRequired());
                     customProduct.setCustomApplicationScope(applicationScope);
                 } else if (applicationScope.getApplicationScope().equals(APPLICATION_SCOPE_CENTER)) {
@@ -653,7 +659,7 @@ public class ProductService {
 
                     addProductDto.setDomicileRequired(false);
                     addProductDto.setNotifyingAuthority(null);
-                    customProduct.setNotifyingAuthority(addProductDto.getNotifyingAuthority());
+                    customProduct.setNotifyingAuthority(null);
                     customProduct.setDomicileRequired(addProductDto.getDomicileRequired());
                     customProduct.setCustomApplicationScope(applicationScope);
                 }
@@ -667,7 +673,7 @@ public class ProductService {
             return true;
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            throw new Exception("ERRORS WHILE VALIDATING AUTHORIZATION: " + exception.getMessage() + "\n");
+            throw new Exception("ERRORS WHILE VALIDATION: " + exception.getMessage() + "\n");
         }
     }
 
@@ -911,8 +917,7 @@ public class ProductService {
                             customProduct.setProductState(customProductState);
                             break;
                         }else if((privilege.getPrivilege_name().equals(Constant.PRIVILEGE_REJECT_PRODUCT) && customProductState.getProductState().equals(Constant.PRODUCT_STATE_REJECTED)) ) {
-                            customProduct.setProductState(customProductState);
-                            System.out.println("HELLLO");
+
                             if(addProductDto.getRejectionStatus() == null) {
                                 throw new IllegalArgumentException("REJECTION STATE CANNOT BE NULL IF PRODUCT IS REJECTED");
                             }
@@ -920,6 +925,7 @@ public class ProductService {
                             if(productRejectionStatus == null) {
                                 throw new IllegalArgumentException("NO PRODUCT REJECTION STATUS IS FOUND");
                             }
+                            customProduct.setProductState(customProductState);
                             customProduct.setRejectionStatus(productRejectionStatus);
                             break;
                         }
