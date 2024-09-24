@@ -50,8 +50,11 @@ public class ServiceProviderTest {
     @Column(name = "submitted_text", columnDefinition = "TEXT")
     private String submitted_text;
 
-    @Column(name = "is_typing_test_passed")
-    private Boolean is_typing_test_passed;
+    @Column(name = "typing_test_scores",nullable = true)
+    private Integer typing_test_scores;
+
+    @Column(name ="image_test_scores",nullable=true)
+    private Integer image_test_scores;
 
     @Column(name ="is_image_test_passed")
     private Boolean is_image_test_passed;

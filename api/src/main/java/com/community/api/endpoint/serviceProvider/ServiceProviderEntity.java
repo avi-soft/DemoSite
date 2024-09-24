@@ -162,6 +162,8 @@ public class ServiceProviderEntity  {
 
 
     private String token;
+    @Column
+    private Integer totalSkillTestPoints;
 
 
 /*    @OneToMany(mappedBy = "ServiceProviderDocument", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
