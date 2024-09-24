@@ -22,7 +22,7 @@ public class ImageSizeConfig {
         return convertToBytes(max);
     }
 
-    private long convertToBytes(String size) {
+    public static long convertToBytes(String size) {
         if (size.endsWith("MB")) {
             return Long.parseLong(size.replace("MB", "")) * 1024 * 1024;
         } else if (size.endsWith("KB")) {

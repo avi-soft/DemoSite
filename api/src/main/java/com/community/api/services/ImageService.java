@@ -1,5 +1,6 @@
 package com.community.api.services;
 
+import com.community.api.configuration.ImageSizeConfig;
 import com.community.api.entity.Image;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,7 +67,7 @@ public class ImageService {
         if (!isValidFileType(file)) {
             throw new IllegalArgumentException("Invalid file type. Only images are allowed.");
         }
-        if (file.getSize() < ServiceProviderTestService.convertSizeToBytes(maxImageSize)) {
+        if (file.getSize() < ImageSizeConfig.convertToBytes(maxImageSize)) {
             throw new IllegalArgumentException("File size must be larger than "+maxImageSize);
         }
 

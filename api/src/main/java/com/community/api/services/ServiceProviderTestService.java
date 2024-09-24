@@ -1,6 +1,7 @@
 package com.community.api.services;
 
 import com.community.api.component.Constant;
+import com.community.api.configuration.ImageSizeConfig;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.*;
 import com.community.api.entity.Image;
@@ -44,16 +45,6 @@ public class ServiceProviderTestService {
 
     @Value("${image.size.max}")
     private String maxImageSize;
-
-    public static long convertSizeToBytes(String size) {
-        if (size.endsWith("MB")) {
-            return Long.parseLong(size.replace("MB", "")) * 1024 * 1024;
-        } else if (size.endsWith("KB")) {
-            return Long.parseLong(size.replace("KB", "")) * 1024;
-        } else {
-            return Long.parseLong(size);
-        }
-    }
 
     public ServiceProviderTestService(EntityManager entityManager) {
         this.entityManager = entityManager;
@@ -142,13 +133,8 @@ public class ServiceProviderTestService {
         }
 
         test.setIs_image_test_passed(false);
-//        if (resizedFile.getSize() > MAX_IMAGE_SIZE_MB) {
-//            test.setIs_image_test_passed(false);
-//            entityManager.merge(test);
-//            throw new IllegalArgumentException("Image size exceeds 2 MB");
-//        }
-        long minSizeInBytes = convertSizeToBytes(minImageSize);
-        long maxSizeInBytes = convertSizeToBytes(maxImageSize);
+        long minSizeInBytes = ImageSizeConfig.convertToBytes(minImageSize);
+        long maxSizeInBytes = ImageSizeConfig.convertToBytes(maxImageSize);
 
         if(!documentStorageService.isValidFileType(resizedFile))
         {
@@ -287,8 +273,8 @@ public class ServiceProviderTestService {
             throw new IllegalArgumentException("Invalid file type. Only images are allowed.");
         }
 
-        long minSizeInBytes = convertSizeToBytes(minImageSize);
-        long maxSizeInBytes = convertSizeToBytes(maxImageSize);
+        long minSizeInBytes = ImageSizeConfig.convertToBytes(minImageSize);
+        long maxSizeInBytes = ImageSizeConfig.convertToBytes(maxImageSize);
 
         // Validate image size
         if (signatureFile.getSize() < minSizeInBytes || signatureFile.getSize() > maxSizeInBytes) {
