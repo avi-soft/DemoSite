@@ -77,4 +77,6 @@ public class AddProductDto {
     @JsonProperty("display_template")
     String displayTemplate;
 
+    @JsonProperty("rejection_status")
+    Long rejectionStatus;
 }

@@ -6,6 +6,7 @@ import com.community.api.dto.AddProductDto;
 import com.community.api.entity.CustomApplicationScope;
 import com.community.api.entity.CustomJobGroup;
 import com.community.api.entity.CustomProduct;
+import com.community.api.entity.CustomProductRejectionStatus;
 import com.community.api.entity.CustomProductState;
 import com.community.api.entity.CustomReserveCategory;
 import com.community.api.entity.Privileges;
@@ -72,6 +73,8 @@ public class ProductService {
     ExceptionHandlingService exceptionHandlingService;
     @Autowired
     JobGroupService jobGroupService;
+    @Autowired
+    ProductRejectionStatusService productRejectionStatusService;
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -904,20 +907,36 @@ public class ProductService {
                 if (role.equals(Constant.SERVICE_PROVIDER)) {
                     List<Privileges> privileges = privilegeService.getServiceProviderPrivilege(userId);
                     for (Privileges privilege : privileges) {
-                        if ((privilege.getPrivilege_name().equals(Constant.PRIVILEGE_APPROVE_PRODUCT) && customProduct.getProductState().getProductState().equals(Constant.PRODUCT_STATE_APPROVED)) || (privilege.getPrivilege_name().equals(Constant.PRIVILEGE_REJECT_PRODUCT) && customProduct.getProductState().getProductState().equals(Constant.PRODUCT_STATE_REJECTED))) {
+                        if ((privilege.getPrivilege_name().equals(Constant.PRIVILEGE_APPROVE_PRODUCT) && customProductState.getProductState().equals(Constant.PRODUCT_STATE_APPROVED)) ) {
                             customProduct.setProductState(customProductState);
+                            break;
+                        }else if((privilege.getPrivilege_name().equals(Constant.PRIVILEGE_REJECT_PRODUCT) && customProductState.getProductState().equals(Constant.PRODUCT_STATE_REJECTED)) ) {
+                            customProduct.setProductState(customProductState);
+                            System.out.println("HELLLO");
+                            if(addProductDto.getRejectionStatus() == null) {
+                                throw new IllegalArgumentException("REJECTION STATE CANNOT BE NULL IF PRODUCT IS REJECTED");
+                            }
+                            CustomProductRejectionStatus productRejectionStatus = productRejectionStatusService.getAllRejectionStatusByRejectionStatusId(addProductDto.getRejectionStatus());
+                            if(productRejectionStatus == null) {
+                                throw new IllegalArgumentException("NO PRODUCT REJECTION STATUS IS FOUND");
+                            }
+                            customProduct.setRejectionStatus(productRejectionStatus);
                             break;
                         }
                     }
                 } else if (role.equals(Constant.ADMIN) || role.equals(Constant.SUPER_ADMIN)) {
                     customProduct.setProductState(customProductState);
+                    if(addProductDto.getRejectionStatus() == null) {
+                        throw new IllegalArgumentException("REJECTION STATE CANNOT BE NULL IF PRODUCT IS REJECTED");
+                    }
+                    CustomProductRejectionStatus productRejectionStatus = productRejectionStatusService.getAllRejectionStatusByRejectionStatusId(addProductDto.getRejectionStatus());
+                    if(productRejectionStatus == null) {
+                        throw new IllegalArgumentException("NO PRODUCT REJECTION STATUS IS FOUND");
+                    }
+                    customProduct.setRejectionStatus(productRejectionStatus);
+                }else{
+                    throw new IllegalArgumentException("SOME ERRORS HAVE BEEN FOUND");
                 }
-
-                /*{
-                    throw new IllegalArgumentException("PRODUCT STATE IS NOT MODIFIABLE");
-                }*/
-
-                customProduct.setProductState(customProductState);
             }
             return true;
         } catch (Exception exception) {

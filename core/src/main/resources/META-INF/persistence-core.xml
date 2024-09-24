@@ -52,6 +52,7 @@
         <class>com.community.api.entity.CustomTicketStatus</class>
         <class>com.community.api.entity.CustomTicketType</class>
         <class>com.community.api.entity.CustomServiceProviderTicket</class>
+        <class>com.community.api.entity.CustomProductRejectionStatus</class>
 
         <exclude-unlisted-classes/>
     </persistence-unit>

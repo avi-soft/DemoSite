@@ -80,4 +80,7 @@ public class CustomProduct extends ProductImpl {
     @JoinColumn(name = "modifier_role_id")
     Role modifierRole;
 
+    @OneToOne
+    @JoinColumn(name = "rejection_status_id")
+    CustomProductRejectionStatus rejectionStatus;
 }
