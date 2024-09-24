@@ -44,6 +44,7 @@ public class ServiceProviderEntity  {
     private String last_name;
     //@TODO-countryCode to country_code for both customer and service provider
     private String country_code;
+
     private String father_name;
 
     private Date date_of_birth;

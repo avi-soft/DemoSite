@@ -66,6 +66,20 @@ public class CustomCustomer extends CustomerImpl {
     @Column(name = "category")
     private String category; //@TODO -make it int for using in cart
 
+
+    @Column(name = "category_issue_date", insertable = false, updatable = false)
+    private String categoryIssueDate;
+
+
+    @Column(name = "category_issue_date")
+    private String categoryValidUpto;
+
+    @Column(name="religion")
+    private String relgion;
+
+    @Column(name = "belongs_to_minority")
+    private Boolean belongsToMinority=false;
+
     @Nullable
     @Column(name = "sub_category")
     private String subcategory;
@@ -126,6 +140,21 @@ public class CustomCustomer extends CustomerImpl {
 
     @Column(name = "pincode")
     private String pincode;
+
+    @Column(name = "disability_handicapped")
+    private boolean disability=false;
+
+    @Column(name = "is_ex_service_man")
+    private boolean exService=false;
+
+    @Column(name = "is_married")
+    private boolean isMarried=false;
+
+    @Column(name = "visible_identification_mark_1")
+    private String identificationMark1;
+
+    @Column(name = "visible_identification_mark_2")
+    private String identificationMark2;
 
     @Nullable
     @OneToOne(fetch = FetchType.LAZY)

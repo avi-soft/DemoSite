@@ -8,6 +8,7 @@ import com.community.api.entity.CustomCustomer;
 import com.community.api.services.*;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
 import com.community.api.services.exception.ExceptionHandlingImplement;
+import io.swagger.models.auth.In;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,11 +100,15 @@ public class AccountEndPoint {
     @ResponseBody
     public ResponseEntity<?> verifyAndLogin(@RequestBody Map<String, Object> loginDetails, HttpSession session) {
         try {
-            //validating input map
             if(!sharedUtilityService.validateInputMap(loginDetails).equals(SharedUtilityService.ValidationResult.SUCCESS))
             {
                 return ResponseService.generateErrorResponse("Invalid Request Body",HttpStatus.UNPROCESSABLE_ENTITY);
             }
+            String roleName=roleService.findRoleName((Integer) loginDetails.get("role"));
+            if(roleName.equals("EMPTY"))
+                return ResponseService.generateErrorResponse("Role not found",HttpStatus.NOT_FOUND);
+            //validating input map
+
             loginDetails=sanitizerService.sanitizeInputMap(loginDetails);//@TODO-Need to sanitize this too
             String mobileNumber = (String) loginDetails.get("mobileNumber");
             //}
@@ -138,6 +143,9 @@ public class AccountEndPoint {
     @ResponseBody
     public ResponseEntity<?> loginWithPassword(@RequestBody Map<String, Object> loginDetails, HttpSession session, HttpServletRequest request) {
         try {
+            String roleName=roleService.findRoleName((Integer) loginDetails.get("role"));
+            if(roleName.equals("EMPTY"))
+                return ResponseService.generateErrorResponse("Role not found",HttpStatus.NOT_FOUND);
             String mobileNumber = (String) loginDetails.get("mobileNumber");
             String username = (String) loginDetails.get("username");
             if (mobileNumber != null) {
@@ -164,6 +172,7 @@ public class AccountEndPoint {
     @RequestMapping(value = "phone-otp", method = RequestMethod.POST)
     private ResponseEntity<?> loginWithPhoneOtp(Map<String, Object> loginDetails, HttpSession session) throws UnsupportedEncodingException, UnsupportedEncodingException {
         try {
+
             if (loginDetails == null) {
                 return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
 
@@ -241,6 +250,7 @@ public class AccountEndPoint {
     @RequestMapping(value = "login-with-username", method = RequestMethod.POST)
     public ResponseEntity<?> loginWithUsername(@RequestBody Map<String, Object> loginDetails, HttpSession session, HttpServletRequest request) {
         try {
+
             if (loginDetails == null) {
                 return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
             }
@@ -301,6 +311,7 @@ public class AccountEndPoint {
     private ResponseEntity<?> loginWithUsernameOtp(
             @RequestBody Map<String, Object> loginDetails, HttpSession session) {
         try {
+
             if (loginDetails == null) {
                 return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
 
@@ -353,6 +364,7 @@ public class AccountEndPoint {
     public ResponseEntity<?> loginWithCustomerPassword(@RequestBody Map<String, Object> loginDetails, HttpSession session,
                                                        HttpServletRequest request) {
         try {
+
             if (loginDetails == null) {
                 return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
 

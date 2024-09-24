@@ -11,6 +11,7 @@ import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.twilio.Twilio;
 import com.twilio.exception.ApiException;
 import io.github.bucket4j.Bucket;
+import io.micrometer.core.lang.Nullable;
 import org.apache.zookeeper.server.SessionTracker;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
@@ -27,13 +28,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.client.HttpClientErrorException;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import javax.persistence.TypedQuery;
+import javax.persistence.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
+import javax.validation.constraints.NotNull;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -186,6 +185,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 addAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress);
             }
         }
+        List<String>errorMessages=new ArrayList<>();
         //removing key for address
             updates.remove("address_line");
             updates.remove("city");
@@ -200,6 +200,13 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
             try {
                 Field field = ServiceProviderEntity.class.getDeclaredField(fieldName);
+                Column columnAnnotation = field.getAnnotation(Column.class);
+                boolean isColumnNotNull = (columnAnnotation != null && !columnAnnotation.nullable());
+                // Check if the field has the @Nullable annotation
+                boolean isNullable = field.isAnnotationPresent(Nullable.class);
+                field.setAccessible(true);
+                if(newValue.toString().isEmpty() && !isNullable)
+                    errorMessages.add(fieldName+ " cannot be null");
                 field.setAccessible(true);
                 // Optionally, check for type compatibility before setting the value
                 if (newValue != null && field.getType().isAssignableFrom(newValue.getClass())) {
@@ -211,7 +218,9 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 return responseService.generateErrorResponse("Invalid field: " + fieldName, HttpStatus.BAD_REQUEST);
             }
         }
-        // Merge the updated entity
+        if(!errorMessages.isEmpty())
+            return ResponseService.generateErrorResponse(errorMessages.toString(),HttpStatus.BAD_REQUEST);
+            // Merge the updated entity
         entityManager.merge(existingServiceProvider);
         if(existingServiceProvider.getUser_name()==null) {
             String username=generateUsernameForServiceProvider(existingServiceProvider);
@@ -657,6 +666,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             return responseService.generateErrorResponse("Error adding address",HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    @Transactional
     public Object searchServiceProviderBasedOnGivenFields(String state,String district,String first_name,String last_name,String mobileNumber) {
         Map<String, Character> alias = new HashMap<>();
         alias.put("state", 'a');
