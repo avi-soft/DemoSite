@@ -68,10 +68,10 @@ public class ServiceProviderTestController {
         {
             return ResponseService.generateErrorResponse(e.getMessage(),HttpStatus.BAD_REQUEST);
         }
-        catch (Exception e)
-        {
-            return ResponseService.generateErrorResponse("Something went wrong",HttpStatus.BAD_REQUEST);
-        }
+//        catch (Exception e)
+//        {
+//            return ResponseService.generateErrorResponse("Something went wrong",HttpStatus.BAD_REQUEST);
+//        }
     }
 
     @PostMapping("/{serviceProviderId}/{testId}/submit-text")
@@ -93,10 +93,10 @@ public class ServiceProviderTestController {
         {
             return ResponseService.generateErrorResponse(e.getMessage(),HttpStatus.BAD_REQUEST);
         }
-        catch (Exception e)
-        {
-            return ResponseService.generateErrorResponse("Something went wrong",HttpStatus.BAD_REQUEST);
-        }
+//        catch (Exception e)
+//        {
+//            return ResponseService.generateErrorResponse("Something went wrong",HttpStatus.BAD_REQUEST);
+//        }
     }
 
     @PostMapping("/{serviceProviderId}/{testId}/upload-resized-signature")
