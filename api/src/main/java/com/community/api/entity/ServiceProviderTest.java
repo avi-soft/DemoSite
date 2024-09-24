@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "service_provider_test")
@@ -49,10 +50,19 @@ public class ServiceProviderTest {
     @Column(name = "submitted_text", columnDefinition = "TEXT")
     private String submitted_text;
 
-    @Column(name = "is_typing_test_passed")
-    private Boolean is_typing_test_passed;
+    @Column(name = "typing_test_scores",nullable = true)
+    private Integer typing_test_scores;
+
+    @Column(name ="image_test_scores",nullable=true)
+    private Integer image_test_scores;
 
     @Column(name ="is_image_test_passed")
     private Boolean is_image_test_passed;
+
+    @Column(name ="is_signature_test_passed")
+    private Boolean is_test_completed;
+
+    @Column(name = "submitted_at")
+    private LocalDateTime submitted_at;
 
 }

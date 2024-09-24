@@ -6,6 +6,7 @@ import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.AddressDTO;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.CustomCustomer;
+import com.community.api.entity.Qualification;
 import com.community.api.entity.CustomProduct;
 import com.community.api.services.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
@@ -40,6 +41,7 @@ import javax.transaction.Transactional;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping(value = "/customer",
@@ -278,10 +280,38 @@ public class CustomerEndpoint {
             }
             CustomerImpl customer = em.find(CustomerImpl.class, customerId);  // Assuming you retrieve the base Customer entity
             Map<String, Object> customerDetails = sharedUtilityService.breakReferenceForCustomer(customer);
-            customerDetails.put("qualificationDetails", customCustomer.getQualificationDetailsList());
-            customerDetails.put("documents", customCustomer.getDocuments());
-            return ResponseService.generateSuccessResponse("User details retrieved successfully", customerDetails, HttpStatus.OK);
+            // Fetch qualification details and replace qualification_id with qualification_name
+            List<Map<String, Object>> qualificationsWithNames = customCustomer.getQualificationDetailsList().stream()
+                    .map(qualificationDetail -> {
+                        // Create a new map to store qualification information
+                        Map<String, Object> qualificationInfo = new HashMap<>();
 
+                        // Fetch the qualification by qualification_id
+                        Qualification qualification = em.find(Qualification.class, qualificationDetail.getQualification_id());
+
+                        // Populate the map with necessary fields from qualificationDetail
+                        qualificationInfo.put("institution_name", qualificationDetail.getInstitution_name());
+                        qualificationInfo.put("year_of_passing", qualificationDetail.getYear_of_passing());
+                        qualificationInfo.put("board_or_university", qualificationDetail.getBoard_or_university());
+                        qualificationInfo.put("subject_stream", qualificationDetail.getSubject_stream());
+                        qualificationInfo.put("grade_or_percentage_value", qualificationDetail.getGrade_or_percentage_value());
+                        qualificationInfo.put("marks_total", qualificationDetail.getTotal_marks());
+                        qualificationInfo.put("marks_obtained", qualificationDetail.getMarks_obtained());
+
+                        // Replace the qualification_id with qualification_name
+                        if (qualification != null) {
+                            qualificationInfo.put("qualification_name", qualification.getQualification_name());
+                        } else {
+                            qualificationInfo.put("qualification_name", "Unknown Qualification");
+                        }
+
+                        return qualificationInfo;
+                    }).collect(Collectors.toList());
+
+            customerDetails.put("qualificationDetails", qualificationsWithNames);
+
+            customerDetails.put("documents",customCustomer.getDocuments());
+            return responseService.generateSuccessResponse("User details retrieved successfully", customerDetails, HttpStatus.OK);
 
         } catch (Exception e) {
             exceptionHandling.handleException(e);
@@ -388,11 +418,7 @@ public class CustomerEndpoint {
             if (!customerId.equals(tokenUserId)) {
                 return ResponseService.generateErrorResponse("Unauthorized request.", HttpStatus.UNAUTHORIZED);
             }
-            System.out.println(files.size() + "size");
-            if (files.size() == 0) {
-                return ResponseService.generateErrorResponse("Invalid request.", HttpStatus.BAD_REQUEST);
 
-            }
 
             if (roleService.findRoleName(roleId).equals(Constant.roleUser)) {
                 CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
@@ -473,7 +499,7 @@ public class CustomerEndpoint {
                             File oldFile = new File(absolutePath);
                             String oldFileName = oldFile.getName();
                             String newFileName = file.getOriginalFilename();
-                            System.out.println(oldFileName + " oldFileName " + newFileName + " newFileName");
+
                             if (!newFileName.equals(oldFileName)) {
 
                                 oldFile.delete();
@@ -532,6 +558,7 @@ public class CustomerEndpoint {
                             .getResultStream()
                             .findFirst()
                             .orElse(null);
+
                     if (!DocumentStorageService.isValidFileType(file) && existingDocument == null) {
                         return ResponseEntity.badRequest().body(Map.of(
                                 "status", ApiConstants.STATUS_ERROR,
@@ -559,7 +586,7 @@ public class CustomerEndpoint {
                             existingDocument.setFilePath(null);
                             em.persist(existingDocument);
 
-                            deletedDocumentMessages.add("File for document type '" + documentTypeObj.getDocument_type_name() + "' has been deleted.");
+                            deletedDocumentMessages.add( documentTypeObj.getDocument_type_name() + " has been deleted.");
                         }
                         continue;
                     }
@@ -941,7 +968,8 @@ public class CustomerEndpoint {
             return ResponseService.generateSuccessResponse("Forms saved : ", listOfSavedProducts, HttpStatus.OK);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+          return   ResponseService.generateErrorResponse("SOME EXCEPTION OCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+
         }
     }
 
@@ -960,7 +988,8 @@ public class CustomerEndpoint {
             return ResponseService.generateSuccessResponse("Forms saved : ", listOfSavedProducts, HttpStatus.OK);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+           return ResponseService.generateErrorResponse("SOME EXCEPTION OCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+
         }
     }
 

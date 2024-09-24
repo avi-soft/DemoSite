@@ -7,8 +7,9 @@ public class Constant {
     public static String PHONE_QUERY = "SELECT c FROM CustomCustomer c WHERE c.mobileNumber = :mobileNumber AND c.countryCode = :countryCode";
     public static String PHONE_QUERY_OTP = "SELECT c FROM CustomCustomer c WHERE c.mobileNumber = :mobileNumber AND c.countryCode = :countryCode AND c.otp=:otp";
     public static String ID_QUERY = "SELECT c FROM CustomCustomer c WHERE c.customer_id = :customer_id";
-    public static final String FIND_ALL_EXAMINATIONS_QUERY = "SELECT q FROM Examination q";
     public static final String FIND_ALL_QUALIFICATIONS_QUERY = "SELECT q FROM Qualification q";
+    public static final String FIND_ALL_SERVICE_PROVIDER_TEST_STATUS_QUERY= "SELECT q FROM ServiceProviderTestStatus q";
+    public static final String FIND_ALL_SERVICE_PROVIDER_TEST_RANK_QUERY= "SELECT q FROM ServiceProviderRank q";
     public static String PHONE_QUERY_SERVICE_PROVIDER = "SELECT c FROM ServiceProviderEntity c WHERE c.mobileNumber = :mobileNumber AND c.country_code = :country_code";
     public static String USERNAME_QUERY_SERVICE_PROVIDER = "SELECT c FROM ServiceProviderEntity c WHERE c.user_name = :username";
     public static final String ADMIN = "ADMIN";
@@ -16,6 +17,10 @@ public class Constant {
     public static final String SERVICE_PROVIDER = "SERVICE_PROVIDER";
     public static final String USER = "USER";
     public static final int INITIAL_STATUS = 1;
+    public static final Long INITIAL_TEST_STATUS = 1L;
+    public static final Long TEST_COMPLETED_STATUS = 2L;
+    public static final Long APPROVED_TEST = 3L;
+
     public static String STATE_CODE_QUERY = "SELECT s FROM StateCode s WHERE s.state_name = :state_name";
     public static final String SP_USERNAME_QUERY = "SELECT s FROM ServiceProviderEntity s WHERE s.user_name LIKE :username";
     public static final String SP_EMAIL_QUERY = "SELECT s FROM ServiceProviderEntity s WHERE s.primary_email LIKE :email";
@@ -91,5 +96,13 @@ public class Constant {
     public static  final int MAX_NESTED_KEY_SIZE=100;
     public static final String GET_ALL_SERVICE_PROVIDERS="Select s from ServiceProviderEntity s";
     public static final String GET_ALL_CUSTOMERS="Select c from CustomCustomer c";
+
+    public static final String GET_ALL_TICKET_STATE = "SELECT c FROM CustomTicketState c";
+    public static final String GET_TICKET_STATE_BY_TICKET_STATE_ID = "SELECT c FROM CustomTicketState c WHERE c.ticketStateId = :ticketStateId";
+    public static final String GET_ALL_TICKET_TYPE = "SELECT c FROM CustomTicketType c";
+    public static final String GET_TICKET_TYPE_BY_TICKET_TYPE_ID = "SELECT c FROM CustomTicketType c WHERE c.ticketTypeId = :ticketTypeId";
+    public static final String GET_ALL_TICKET_STATUS = "SELECT c FROM CustomTicketStatus c";
+    public static final String GET_TICKET_STATE_BY_TICKET_STATUS_ID = "SELECT c FROM CustomTicketStatus c WHERE c.ticketStatusId = :ticketStatusId";
     public static final String GET_SP_REFERRED_CANDIDATES="Select s.customer_id from customer_referrer s Where s.service_provider_id =:service_provider_id";
+    public static final Double DEFAULT_PLATFORM_FEE = 10d;
 }

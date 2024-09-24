@@ -2,26 +2,17 @@ package com.community.api.endpoint.serviceProvider;
 
 
 import com.community.api.entity.*;
-import com.community.api.utils.ServiceProviderDocument;
-import com.community.api.utils.Document;
-import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import io.micrometer.core.lang.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.broadleafcommerce.profile.core.domain.Address;
-import org.ehcache.impl.serialization.ByteArraySerializer;
 
 import javax.persistence.*;
 import javax.validation.constraints.*;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 @Entity
 @Table(name = "service_provider")
@@ -135,6 +126,14 @@ public class ServiceProviderEntity  {
     @JoinColumn(name = "status_id", referencedColumnName = "status_id")
     private ServiceProviderStatus status;
 
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}) // Only persist/merge, no REMOVE
+    @JoinColumn(name="test_status_id", referencedColumnName = "test_status_id")
+    private ServiceProviderTestStatus testStatus;
+
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}) // Only persist/merge, no REMOVE
+    @JoinColumn(name="rank_id", referencedColumnName = "rank_id")
+    private ServiceProviderRank ranking;
+
     @ManyToMany
     @JoinTable(
             name = "service_provider_privileges", // The name of the join table
@@ -164,6 +163,8 @@ public class ServiceProviderEntity  {
 
 
     private String token;
+    @Column
+    private Integer totalSkillTestPoints;
 
 
 /*    @OneToMany(mappedBy = "ServiceProviderDocument", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)

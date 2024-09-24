@@ -83,6 +83,13 @@ public class CategoryController extends CatalogEndpoint {
             if (addCategoryDto.getDescription() != null && !addCategoryDto.getDescription().trim().isEmpty()) {
                 addCategoryDto.setDescription(addCategoryDto.getDescription().trim());
                 categoryImpl.setDescription(addCategoryDto.getDescription());
+            }else{
+                return ResponseService.generateErrorResponse("CATEGORY DESCRIPTION CANNOT BE EMPTY OR NULL", HttpStatus.BAD_REQUEST);
+            }
+
+            if(addCategoryDto.getLongDescription() != null && !addCategoryDto.getLongDescription().trim().isEmpty()){
+                addCategoryDto.setLongDescription(addCategoryDto.getLongDescription().trim());
+                categoryImpl.setLongDescription(addCategoryDto.getLongDescription());
             }
 
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
@@ -229,17 +236,17 @@ public class CategoryController extends CatalogEndpoint {
 
             if (category != null && ((Status)category).getArchived() != 'Y') {
 
-                if (!addCategoryDto.getName().isEmpty() && !addCategoryDto.getName().trim().isEmpty()) { // trim works on nonNull values only.
+                if (addCategoryDto.getName() != null && !addCategoryDto.getName().trim().isEmpty()) { // trim works on nonNull values only.
                     category.setName(addCategoryDto.getName().trim());
                 }
-                if (!addCategoryDto.getDescription().isEmpty() && !addCategoryDto.getDescription().trim().isEmpty()) {
+                if (addCategoryDto.getDescription()!= null && !addCategoryDto.getDescription().trim().isEmpty()) {
                     category.setDescription(addCategoryDto.getDescription().trim());
                 }
                 if (addCategoryDto.getActiveEndDate() != null && !addCategoryDto.getActiveEndDate().after(addCategoryDto.getActiveStartDate()) && !addCategoryDto.getActiveEndDate().after(new Date())) {
                     return ResponseService.generateErrorResponse("ACTIVE END DATE CANNOT BE BEFORE OR EQUAL TO ACTIVE START DATE(CURRENT DATE)", HttpStatus.INTERNAL_SERVER_ERROR);
                 }
-                if (!addCategoryDto.getDisplayTemplate().isEmpty() && !addCategoryDto.getDisplayTemplate().trim().isEmpty()) {
-                    category.setDisplayTemplate(addCategoryDto.getDescription().trim());
+                if (addCategoryDto.getDisplayTemplate() != null && !addCategoryDto.getDisplayTemplate().trim().isEmpty()) {
+                    category.setDisplayTemplate(addCategoryDto.getDisplayTemplate().trim());
                 }
 
                 category = catalogService.saveCategory(category); // Save the updated category
