@@ -216,8 +216,6 @@ public class DocumentEndpoint {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
 
-            System.out.println(fileUrl + " fileUrl");
-
             int responseCode = connection.getResponseCode();
 
             if (responseCode == HttpURLConnection.HTTP_OK) {
