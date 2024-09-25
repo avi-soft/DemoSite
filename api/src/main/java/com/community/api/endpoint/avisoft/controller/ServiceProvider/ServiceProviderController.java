@@ -25,8 +25,10 @@ import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
+import javax.validation.ConstraintViolationException;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -256,6 +258,7 @@ public class ServiceProviderController {
             return ResponseService.generateErrorResponse("Some issue in fetching service providers: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
+
     @GetMapping("/filter-service-provider")
     public ResponseEntity<?> filterServiceProvider(@RequestParam(required = false) String state,
                                                    @RequestParam(required = false) String district,

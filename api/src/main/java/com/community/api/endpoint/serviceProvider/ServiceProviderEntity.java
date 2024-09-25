@@ -1,13 +1,26 @@
 package com.community.api.endpoint.serviceProvider;
 
 
-import com.community.api.entity.*;
+
+import com.community.api.entity.Privileges;
+import com.community.api.entity.ResizedImage;
+import com.community.api.entity.ServiceProviderAddress;
+import com.community.api.entity.ServiceProviderInfra;
+import com.community.api.entity.ServiceProviderLanguage;
+import com.community.api.entity.ServiceProviderRank;
+import com.community.api.entity.ServiceProviderTest;
+import com.community.api.entity.ServiceProviderTestStatus;
+import com.community.api.entity.Skill;
+import com.community.api.utils.Document;
+import com.community.api.utils.ServiceProviderDocument;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 import javax.persistence.*;
 import javax.validation.constraints.*;
@@ -35,9 +48,10 @@ public class ServiceProviderEntity  {
     private String last_name;
     //@TODO-countryCode to country_code for both customer and service provider
     private String country_code;
+
     private String father_name;
 
-    private Date date_of_birth;
+    private String date_of_birth;
 
     private String aadhaar_number;
 
@@ -87,11 +101,7 @@ public class ServiceProviderEntity  {
 //    @Column(name = "cFormPhoto", columnDefinition="BLOB")
 //    @OneToOne(cascade = CascadeType.ALL)
 //    @JoinColumn(name = "c_form_photo_id")
-
-  /*  @OneToOne(cascade = CascadeType.ALL)
-    private Document cFormPhoto;*/
-
-   /*@OneToMany(cascade = CascadeType.ALL,orphanRemoval = true)
+ /*@OneToMany(cascade = CascadeType.ALL,orphanRemoval = true)
     private List<Equipment> equipment;*/
 
     private Boolean has_technical_knowledge;
@@ -166,7 +176,8 @@ public class ServiceProviderEntity  {
     private Integer totalSkillTestPoints;
 
 
-/*    @OneToMany(mappedBy = "ServiceProviderDocument", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
-    private List<ServiceProviderDocument> documents;*/
+    @OneToMany(mappedBy = "serviceProviderEntity", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
+    @Fetch(FetchMode.SUBSELECT)
+    private List<ServiceProviderDocument> documents;
 
 }

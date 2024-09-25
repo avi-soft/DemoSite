@@ -157,13 +157,14 @@ public class CustomerEndpoint {
 
     @Transactional
     @RequestMapping(value = "update", method = RequestMethod.POST)
-    public ResponseEntity<?> updateCustomer(@RequestBody CustomCustomer customerDetails, @RequestParam Long customerId) {
+    public ResponseEntity<?> updateCustomer(@RequestBody Map<String,Object>details, @RequestParam Long customerId) {
 
         try {
             if (customerService == null) {
                 return ResponseService.generateErrorResponse("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
-
+            CustomCustomer customerDetails=entityManager.find(CustomCustomer.class,customerId);
+            Set<String> fieldNames = details.keySet();
             CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
             if (customCustomer == null) {
                 return ResponseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
@@ -247,9 +248,17 @@ public class CustomerEndpoint {
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error updating", HttpStatus.INTERNAL_SERVER_ERROR);
-
         }
     }
+    public  boolean isFieldPresent(Class<?> clazz, String fieldName) {
+        try {
+            Field field = clazz.getDeclaredField(fieldName);
+            return field != null; // Field exists
+        } catch (NoSuchFieldException e) {
+            return false; // Field does not exist
+        }
+    }
+
 
     @Transactional
     @RequestMapping(value = "/get-customer-details/{customerId}", method = RequestMethod.GET)
@@ -854,8 +863,63 @@ public class CustomerEndpoint {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error during logout");
         }
     }
-
-
+    @Transactional
+    @PostMapping("/save-form/{customer_id}")
+    public ResponseEntity<?>saveForm(@PathVariable long customer_id,@RequestParam long product_id)
+    {
+        try{
+            CustomCustomer customer=entityManager.find(CustomCustomer.class,customer_id);
+            if(customer==null)
+            {
+                return ResponseService.generateErrorResponse("Customer not found",HttpStatus.NOT_FOUND);
+            }
+            CustomProduct product=entityManager.find(CustomProduct.class,product_id);
+            if(product==null)
+            {
+                return ResponseService.generateErrorResponse(Constant.PRODUCTNOTFOUND,HttpStatus.NOT_FOUND);
+            }
+            List<CustomProduct>savedForms=customer.getSavedForms();
+            if(savedForms.contains(product))
+                return ResponseService.generateErrorResponse("You can save a form only once",HttpStatus.UNPROCESSABLE_ENTITY);
+            savedForms.add(product);
+            customer.setSavedForms(savedForms);
+            entityManager.merge(customer);
+            Map<String,Object>responseBody=new HashMap<>();
+            Map<String,Object>formBody=sharedUtilityService.createProductResponseMap(product,null);
+            return ResponseService.generateSuccessResponse("Form Saved",formBody,HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseService.generateErrorResponse("Error saving Form : "+e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @Transactional
+    @DeleteMapping("/unsave-form/{customer_id}")
+    public ResponseEntity<?>unSaveForm(@PathVariable long customer_id,@RequestParam long product_id)
+    {
+        try{
+            CustomCustomer customer=entityManager.find(CustomCustomer.class,customer_id);
+            if(customer==null)
+            {
+                return ResponseService.generateErrorResponse("Customer not found",HttpStatus.NOT_FOUND);
+            }
+            CustomProduct product=entityManager.find(CustomProduct.class,product_id);
+            if(product==null)
+            {
+                return ResponseService.generateErrorResponse(Constant.PRODUCTNOTFOUND,HttpStatus.NOT_FOUND);
+            }
+            List<CustomProduct>savedForms=customer.getSavedForms();
+            if(savedForms.contains(product))
+                savedForms.remove(product);
+            else
+                return ResponseService.generateErrorResponse("Form not present in saved Form list",HttpStatus.UNPROCESSABLE_ENTITY);
+            customer.setSavedForms(savedForms);
+            entityManager.merge(customer);
+            Map<String,Object>responseBody=new HashMap<>();
+            Map<String,Object>formBody=sharedUtilityService.createProductResponseMap(product,null);
+            return ResponseService.generateSuccessResponse("Form Removed",formBody,HttpStatus.OK);
+        } catch (Exception e) {
+            return ResponseService.generateErrorResponse("Error removing Form : "+e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
     @GetMapping(value = "/forms/show-saved-forms")
     public ResponseEntity<?> getSavedForms(HttpServletRequest request, @RequestParam long customer_id) throws Exception {
         try {

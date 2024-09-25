@@ -44,11 +44,14 @@ public class RoleService {
     }
 
     public String findRoleName(int role_id) {
-        return entityManager.createQuery(Constant.FETCH_ROLE, String.class)
+        String response= entityManager.createQuery(Constant.FETCH_ROLE, String.class)
                 .setParameter("role_id", role_id)
                 .getResultStream()
                 .findFirst()
                 .orElse(null);
+        if(response==null)
+            return "EMPTY";
+        else return response;
     }
     @Transactional
         public ResponseEntity<?> addRole(Role role)
@@ -74,7 +77,7 @@ public class RoleService {
         return query.getResultList();
     }
 
-    public Role getRoleByRoleId(int roleId) {
+        public Role getRoleByRoleId(int roleId) {
         return entityManager.createQuery(Constant.GET_ROLE_BY_ROLE_ID, Role.class)
                 .setParameter("roleId", roleId)
                 .getResultStream()
