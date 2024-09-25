@@ -16,7 +16,6 @@ import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 import java.util.List;
 
-import static com.community.api.component.Constant.FIND_ALL_QUALIFICATIONS_QUERY;
 import static com.community.api.component.Constant.FIND_ALL_SERVICE_PROVIDER_TEST_STATUS_QUERY;
 
 @RestController
