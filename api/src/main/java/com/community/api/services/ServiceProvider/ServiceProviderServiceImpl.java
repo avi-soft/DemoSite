@@ -3,10 +3,24 @@ package com.community.api.services.ServiceProvider;
 import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
 import com.community.api.dto.UpdateTestStatusRank;
-import com.community.api.entity.*;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.endpoint.serviceProvider.ServiceProviderStatus;
-import com.community.api.services.*;
+import com.community.api.entity.ServiceProviderAddress;
+import com.community.api.entity.ServiceProviderAddressRef;
+import com.community.api.entity.ServiceProviderInfra;
+import com.community.api.entity.ServiceProviderLanguage;
+import com.community.api.entity.Skill;
+import com.community.api.entity.StateCode;
+import com.community.api.services.ApiConstants;
+import com.community.api.services.CustomCustomerService;
+import com.community.api.services.DistrictService;
+import com.community.api.services.RateLimiterService;
+import com.community.api.services.ResponseService;
+import com.community.api.services.ServiceProviderInfraService;
+import com.community.api.services.ServiceProviderLanguageService;
+import com.community.api.services.SharedUtilityService;
+import com.community.api.services.SkillService;
+import com.community.api.services.TwilioServiceForServiceProvider;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.twilio.Twilio;
 import com.twilio.exception.ApiException;
@@ -24,7 +38,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.client.HttpClientErrorException;
 
-import javax.persistence.*;
+
+import javax.persistence.Column;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
@@ -35,7 +53,14 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.util.*;
+
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.regex.Pattern;
 
 @Service
@@ -94,7 +119,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     @Transactional
     public ResponseEntity<?> updateServiceProvider(Long userId, Map<String, Object> updates)  {
         try{
-            List<String>errorMessages=new ArrayList<>();
+            List<String> errorMessages=new ArrayList<>();
         // Find existing ServiceProviderEntity
         ServiceProviderEntity existingServiceProvider = entityManager.find(ServiceProviderEntity.class, userId);
         if (existingServiceProvider == null) {

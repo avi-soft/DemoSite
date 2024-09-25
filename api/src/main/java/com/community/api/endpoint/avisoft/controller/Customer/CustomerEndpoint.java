@@ -164,14 +164,6 @@ public class CustomerEndpoint {
             }
             CustomCustomer customerDetails=entityManager.find(CustomCustomer.class,customerId);
             Set<String> fieldNames = details.keySet();
-            for (String fieldName : fieldNames) {
-                if (isFieldPresent(CustomCustomer.class, fieldName)) {
-                    System.out.println(fieldName + " is a field of CustomCustomer.");
-                } else {
-                    System.out.println(fieldName + " is NOT a field of CustomCustomer.");
-                }
-            }
-                return ResponseService.generateSuccessResponse("Success",null,HttpStatus.OK);
             /*CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
             if (customCustomer == null) {
                 return ResponseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
@@ -255,6 +247,7 @@ public class CustomerEndpoint {
             em.merge(customCustomer);
             return ResponseService.generateSuccessResponse("User details updated successfully : ",sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK);
 */
+            return null;
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error updating", HttpStatus.INTERNAL_SERVER_ERROR);

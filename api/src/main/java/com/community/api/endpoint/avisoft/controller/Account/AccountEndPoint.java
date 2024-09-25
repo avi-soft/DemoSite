@@ -5,8 +5,15 @@ import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.avisoft.controller.Customer.CustomerEndpoint;
 import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.entity.CustomCustomer;
-import com.community.api.services.*;
+
+import com.community.api.services.ApiConstants;
+import com.community.api.services.CustomCustomerService;
+import com.community.api.services.ResponseService;
+import com.community.api.services.RoleService;
+import com.community.api.services.SanitizerService;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
+import com.community.api.services.SharedUtilityService;
+import com.community.api.services.TwilioService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import io.swagger.models.auth.In;
 import org.broadleafcommerce.profile.core.domain.Customer;
@@ -48,7 +55,7 @@ public class AccountEndPoint {
     private PasswordEncoder passwordEncoder;
 
     @Autowired
-    private  SharedUtilityService sharedUtilityService;
+    private SharedUtilityService sharedUtilityService;
     @Autowired
     private SanitizerService sanitizerService;
     @Autowired

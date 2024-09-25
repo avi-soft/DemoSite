@@ -1,7 +1,16 @@
 package com.community.api.endpoint.serviceProvider;
 
 
-import com.community.api.entity.*;
+
+import com.community.api.entity.Privileges;
+import com.community.api.entity.ResizedImage;
+import com.community.api.entity.ServiceProviderAddress;
+import com.community.api.entity.ServiceProviderInfra;
+import com.community.api.entity.ServiceProviderLanguage;
+import com.community.api.entity.ServiceProviderRank;
+import com.community.api.entity.ServiceProviderTest;
+import com.community.api.entity.ServiceProviderTestStatus;
+import com.community.api.entity.Skill;
 import com.community.api.utils.Document;
 import com.community.api.utils.ServiceProviderDocument;
 import com.fasterxml.jackson.annotation.JsonIgnore;
