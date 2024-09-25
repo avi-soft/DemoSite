@@ -25,11 +25,11 @@ import javax.transaction.Transactional;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URI;
-import java.net.URL;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -108,7 +108,8 @@ public class DocumentEndpoint {
             List<DocumentType> documentTypes;
 
             if (exam != null && !exam.isEmpty()) {
-                documentTypes = entityManager.createQuery("SELECT dt FROM DocumentType dt WHERE dt.description LIKE :exam", DocumentType.class)
+                documentTypes = entityManager.createQuery(
+                        "SELECT dt FROM DocumentType dt WHERE dt.description LIKE :exam", DocumentType.class)
                         .setParameter("exam", "%" + "Completed" + "%")
                         .getResultList();
             } else {
@@ -203,16 +204,19 @@ public class DocumentEndpoint {
         }
     }
 
-    @GetMapping("/download")
-    public ResponseEntity<?> downloadFile(@RequestParam("filePath") String filePath, HttpServletRequest request, HttpServletResponse response) {
+    @PostMapping("/download")
+    public ResponseEntity<?> downloadFile(@RequestBody Map<String, Object> loginDetails, HttpServletRequest request, HttpServletResponse response) {
         try {
-            String fileUrl = fileService.getFileUrl(filePath, request);
-            URL url = new URL(fileUrl);
+            String filePath = (String) loginDetails.get("filePath");
+            String fileUrl = fileService.getDownloadFileUrl(filePath, request); // No encoding here
 
+            URI uri = URI.create(fileUrl);
+            URL url = uri.toURL();
 
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
             connection.setRequestMethod("GET");
+
+            System.out.println(fileUrl + " fileUrl");
 
             int responseCode = connection.getResponseCode();
 
@@ -220,7 +224,6 @@ public class DocumentEndpoint {
                 response.setContentType("application/octet-stream");
 
                 String fileName = url.getPath().substring(url.getPath().lastIndexOf('/') + 1);
-
                 response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
                 response.setContentLength(connection.getContentLength());
 
@@ -230,17 +233,16 @@ public class DocumentEndpoint {
                     outputStream.flush();
                 }
             } else {
-                return responseService.generateErrorResponse("Error downloading file: " + connection.getResponseMessage(),  HttpStatus.BAD_REQUEST);
-
+                return responseService.generateErrorResponse("Error downloading file: " + connection.getResponseMessage(), HttpStatus.BAD_REQUEST);
             }
+        } catch (IllegalArgumentException e) {
+            return responseService.generateErrorResponse("Invalid file URL: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (IOException e) {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Error downloading file: " + e.getMessage(), HttpStatus.BAD_REQUEST);
-
-        }catch (Exception e) {
+        } catch (Exception e) {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Error downloading file: " + e.getMessage(), HttpStatus.BAD_REQUEST);
-
         }
 
         return null;
