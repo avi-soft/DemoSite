@@ -303,4 +303,5 @@ public class DocumentStorageService {
     public void saveTypingText(TypingText typingText) {
         entityManager.persist(typingText);
     }
+
 }
