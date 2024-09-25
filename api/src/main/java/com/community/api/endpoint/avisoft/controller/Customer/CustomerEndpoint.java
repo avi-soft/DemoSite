@@ -423,6 +423,22 @@ public class CustomerEndpoint {
                             if (existingDocument13 == null) {
                                 documentStorageService.createDocument(file, documentTypeObj, customCustomer, customerId, role);
                             }
+                            if (existingDocument != null) {
+                                String filePath = existingDocument.getFilePath();
+                                if (removeFileTypes != null && removeFileTypes) {
+                                    if (filePath != null) {
+
+                                        String absolutePath = System.getProperty("user.dir") + "/../test/" + filePath;
+                                        File oldFile = new File(absolutePath);
+                                        String oldFileName = oldFile.getName();
+
+                                        oldFile.delete();
+                                        existingDocument.setFilePath(null);
+                                        existingDocument.setName(null);
+                                        em.merge(existingDocument);
+                                    }
+                                }
+                            }
                         }
                         // If the file is not empty and a document already exists, update the document
                         else if (existingDocument != null && (!file.isEmpty() || file != null) && fileNameId != 13) {
