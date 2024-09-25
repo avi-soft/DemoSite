@@ -170,7 +170,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         updates.remove("skill_list");
         updates.remove("infra_list");
         updates.remove("language_list");
-        if (updates.containsKey("district") && updates.containsKey("state")) {
+        if (updates.containsKey("district") && updates.containsKey("state") && existingServiceProvider.getSpAddresses().isEmpty()) {
             ServiceProviderAddress serviceProviderAddress = new ServiceProviderAddress();
             serviceProviderAddress.setAddress_type_id(findAddressName("CURRENT_ADDRESS").getAddress_type_Id());
             serviceProviderAddress.setPincode((String) updates.get("pincode"));
@@ -184,7 +184,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         }
 
         //removing key for address
-        updates.remove("address_line");
+        updates.remove("residential_address");
         updates.remove("city");
         updates.remove("state");
         updates.remove("district");

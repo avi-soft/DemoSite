@@ -187,14 +187,16 @@ public class DocumentStorageService {
         DocumentType[] documents = {
             
        
-                new DocumentType(14,"MATRICULATION", "Completed secondary education or equivalent"),
+                /*new DocumentType(14,"MATRICULATION", "Completed secondary education or equivalent"),
                 new DocumentType( 15,"INTERMEDIATE", "Completed higher secondary education or equivalent"),
                 new DocumentType(16,"BACHELORS", "Completed undergraduate degree program education "),
                 new DocumentType(17,"MASTERS", "Completed postgraduate degree program education"),
                 new DocumentType( 18,"DOCTORATE", "Completed doctoral degree program education"),
                 new DocumentType(19,"DOMICILE", "The permanent home or principal residence of a person."),
-                new DocumentType( 20,"HANDICAPED", "An outdated term for individuals with physical or mental disabilities; \"person with a disability\" is preferred today"),
-       
+                new DocumentType( 20,"HANDICAPED", "An outdated term for individuals with physical or mental disabilities; \"person with a disability\" is preferred today"),*/
+                new DocumentType(21,"C-FORM-PHOTO", "A C Form photo is a standardized ID photo for official documents."),
+                new DocumentType(23,"BUSSINESS_PHOTO", "A Standard proof of Running Bussiness"),
+                new DocumentType(24,"PERSONAL_PHOTO", "A Personal Photgraph of SP")
             };
 
 
