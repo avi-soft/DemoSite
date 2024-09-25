@@ -1,5 +1,6 @@
 package com.community.api.endpoint.avisoft.controller.ServiceProvider;
 
+import com.community.api.dto.GiveUploadedImageScoreDTO;
 import com.community.api.dto.SubmitTextDto;
 import com.community.api.entity.ServiceProviderTest;
 import com.community.api.services.ResponseService;
@@ -145,7 +146,7 @@ public class ServiceProviderTestController {
         }
     }
     @GetMapping("/get-completed-test/{serviceProviderId}")
-    public ResponseEntity<?> getAllTests(
+    public ResponseEntity<?> getCompletedTest(
             @PathVariable Long serviceProviderId,HttpServletRequest request)throws EntityNotFoundException, EntityDoesNotExistsException {
 
         try {
@@ -154,7 +155,21 @@ public class ServiceProviderTestController {
         } catch (EntityDoesNotExistsException e) {
             return responseService.generateErrorResponse("Service provider not found: " + e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            return responseService.generateErrorResponse("Some issue in fetching service provider tests: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+            return responseService.generateErrorResponse("Some issue in fetching service provider completed test: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PostMapping("/add-image-test-scores/{serviceProviderId}")
+    public ResponseEntity<?> giveImageTestScores(
+            @PathVariable Long serviceProviderId,
+            @RequestBody GiveUploadedImageScoreDTO giveUploadedImageScoreDTO) {
+        try {
+            return testService.givePointsForImageUpload(serviceProviderId,giveUploadedImageScoreDTO);
+        } catch (EntityDoesNotExistsException e) {
+            return responseService.generateErrorResponse("Service provider not found: " + e.getMessage(), HttpStatus.NOT_FOUND);
+        }
+        catch (Exception e) {
+            return responseService.generateErrorResponse("Some issue in adding image score " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 }

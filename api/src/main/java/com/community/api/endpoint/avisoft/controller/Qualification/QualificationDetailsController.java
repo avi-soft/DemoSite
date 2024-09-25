@@ -126,17 +126,17 @@ public class QualificationDetailsController
 
     }
 
-@ExceptionHandler(MethodArgumentNotValidException.class)
-public ResponseEntity<Map<String,Object>>handlesValidationErrors(MethodArgumentNotValidException exception) {
-    HttpStatus status;
-    List<String> errors = exception.getBindingResult().getFieldErrors()
-            .stream().map(FieldError::getDefaultMessage).collect(Collectors.toList());
-    Map<String,Object>responseData=new HashMap<>();
-    responseData.put("message",errors);
-    status= HttpStatus.BAD_REQUEST;
-    responseData.put("status_code",400);
-    responseData.put("status",status);
-    return ResponseEntity.status(status).body(responseData);
-}
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String,Object>>handlesValidationErrors(MethodArgumentNotValidException exception) {
+        HttpStatus status;
+        List<String> errors = exception.getBindingResult().getFieldErrors()
+                .stream().map(FieldError::getDefaultMessage).collect(Collectors.toList());
+        Map<String,Object>responseData=new HashMap<>();
+        responseData.put("message",errors);
+        status= HttpStatus.BAD_REQUEST;
+        responseData.put("status_code",400);
+        responseData.put("status",status);
+        return ResponseEntity.status(status).body(responseData);
+    }
 
 }

@@ -2,6 +2,7 @@ package com.community.api.services;
 
 import com.community.api.component.Constant;
 import com.community.api.configuration.ImageSizeConfig;
+import com.community.api.dto.GiveUploadedImageScoreDTO;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.*;
 import com.community.api.entity.Image;
@@ -422,6 +423,53 @@ public class ServiceProviderTestService {
 
         return ResponseService.generateSuccessResponse("Completed test is found",completedTestMap,HttpStatus.OK);
     }
+
+    @Transactional
+    public ResponseEntity<?> givePointsForImageUpload(Long serviceProviderId, GiveUploadedImageScoreDTO giveUploadedImageScoreDTO) throws EntityDoesNotExistsException {
+        if(giveUploadedImageScoreDTO.getImage_test_scores()==null)
+        {
+            return ResponseService.generateErrorResponse("Image Test Score cannot be null",HttpStatus.BAD_REQUEST);
+        }
+        ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
+        if (serviceProvider == null) {
+            throw new EntityDoesNotExistsException("Service Provider not found");
+        }
+
+        TypedQuery<ServiceProviderTest> query = entityManager.createQuery(
+                "SELECT spt FROM ServiceProviderTest spt WHERE spt.service_provider.service_provider_id = :serviceProviderId",
+                ServiceProviderTest.class
+        );
+
+        query.setParameter("serviceProviderId", serviceProviderId);
+
+        List<ServiceProviderTest> serviceProviderTests = query.getResultList();
+        if (serviceProviderTests.isEmpty()) {
+            return ResponseService.generateSuccessResponse("Service Provider has not given any test yet",null,HttpStatus.OK);
+        }
+
+        ServiceProviderTest serviceProviderTest = null;
+        for (ServiceProviderTest serviceProviderTest1 : serviceProviderTests) {
+            if((serviceProviderTest1.getIs_test_completed()!=null))
+            {
+                if (Boolean.TRUE.equals(serviceProviderTest1.getIs_test_completed())) {
+                    if (serviceProviderTest == null || serviceProviderTest1.getSubmitted_at().isAfter(serviceProviderTest.getSubmitted_at())) {
+                        serviceProviderTest = serviceProviderTest1;
+                    }
+                }
+            }
+        }
+        if(serviceProviderTest==null)
+        {
+            return ResponseService.generateSuccessResponse("Service Provider has not completed any test yet",null,HttpStatus.OK);
+        }
+
+        serviceProviderTest.setImage_test_scores(giveUploadedImageScoreDTO.getImage_test_scores());
+        entityManager.merge(serviceProviderTest);
+
+        serviceProvider.setTotalSkillTestPoints(serviceProviderTest.getImage_test_scores() + serviceProviderTest.getTyping_test_scores());
+        entityManager.merge(serviceProvider);
+                return ResponseService.generateSuccessResponse("Image test scores updated successfully",serviceProviderTest,HttpStatus.OK);
+            }
 
     private boolean validateResizedImage(ServiceProviderTest test) throws IOException {
         Image downloadedImage = test.getDownloaded_image();
