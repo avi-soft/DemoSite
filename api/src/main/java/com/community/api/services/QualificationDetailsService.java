@@ -6,6 +6,7 @@ import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.Qualification;
 import com.community.api.entity.QualificationDetails;
 import com.community.api.services.exception.*;
+import com.community.api.utils.DocumentType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
@@ -45,13 +46,13 @@ public class QualificationDetailsService
         if (existingQualificationDetails != null ) {
             throw new EntityAlreadyExistsException("Qualification with id " + qualificationDetails.getQualification_id() + " already exists");
         }
-        List<Qualification> qualifications = qualificationService.getAllQualifications();
-        Long examinationToAdd=null;
+        List<DocumentType> qualifications = qualificationService.getAllQualifications();
+        Integer examinationToAdd=null;
 
-        for(Qualification qualification : qualifications)
+        for(DocumentType qualification : qualifications)
         {
-            if(qualification.getQualification_id()== qualificationDetails.getQualification_id()) {
-                examinationToAdd= qualification.getQualification_id();
+            if(qualification.getDocument_type_id()== qualificationDetails.getQualification_id()) {
+                examinationToAdd= qualification.getDocument_type_id();
                 break;
             }
         }
@@ -134,12 +135,12 @@ public class QualificationDetailsService
        }
 
        if (Objects.nonNull(qualification.getQualification_id())) {
-           List<Qualification> qualifications = qualificationService.getAllQualifications();
-           Long examinationToAdd = null;
+           List<DocumentType> qualifications = qualificationService.getAllQualifications();
+           Integer examinationToAdd = null;
 
-           for (Qualification examination : qualifications) {
-               if (examination.getQualification_id()==(qualification.getQualification_id())) {
-                   examinationToAdd = examination.getQualification_id();
+           for (DocumentType examination : qualifications) {
+               if ((examination.getDocument_type_id())==qualification.getQualification_id()) {
+                   examinationToAdd = examination.getDocument_type_id();
                    break;
                }
            }

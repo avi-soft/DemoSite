@@ -4,6 +4,7 @@ import com.community.api.entity.Qualification;
 import com.community.api.services.QualificationService;
 import com.community.api.services.ResponseService;
 import com.community.api.services.exception.*;
+import com.community.api.utils.DocumentType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -39,8 +40,11 @@ public class QualificationController {
     @GetMapping("/get-all-qualifications")
 
     public ResponseEntity<?> getAllQualifications() {
-        TypedQuery<Qualification> query = entityManager.createQuery(FIND_ALL_QUALIFICATIONS_QUERY, Qualification.class);
-        List<Qualification> qualifications = query.getResultList();
+//        TypedQuery<DocumentType> query = entityManager.createQuery(FIND_ALL_QUALIFICATIONS_QUERY, DocumentType.class);
+        List<DocumentType> qualifications = entityManager.createQuery(
+                        FIND_ALL_QUALIFICATIONS_QUERY, DocumentType.class)
+                .setParameter("exam", "%" + "Completed" + "%")
+                .getResultList();
         if(qualifications.isEmpty())
         {
             return responseService.generateResponse(HttpStatus.OK,"Qualification List is Empty", qualifications);

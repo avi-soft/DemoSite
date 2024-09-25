@@ -1,5 +1,6 @@
 package com.community.api.services;
 
+import com.community.api.component.Constant;
 import com.community.api.configuration.ImageSizeConfig;
 import com.community.api.entity.Image;
 import org.apache.commons.io.FileUtils;
@@ -36,9 +37,6 @@ public class ImageService {
     @Autowired
     private EntityManager entityManager;
 
-    @Value("${image.size.max}")
-    private String maxImageSize;
-
     public ImageService(EntityManager entityManager) {
         this.entityManager = entityManager;
     }
@@ -67,7 +65,8 @@ public class ImageService {
         if (!isValidFileType(file)) {
             throw new IllegalArgumentException("Invalid file type. Only images are allowed.");
         }
-        if (file.getSize() < ImageSizeConfig.convertToBytes(maxImageSize)) {
+        if (file.getSize() < Constant.MAX_FILE_SIZE) {
+            String maxImageSize= ImageSizeConfig.convertBytesToReadableSize(Constant.MAX_FILE_SIZE);
             throw new IllegalArgumentException("File size must be larger than "+maxImageSize);
         }
 

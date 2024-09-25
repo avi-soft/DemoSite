@@ -1,9 +1,8 @@
 package com.community.api.services;
 
 import com.community.api.component.Constant;
-import com.community.api.dto.UpdateTestStatusRank;
+import com.community.api.dto.UpdateTestStatus;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
-import com.community.api.entity.Qualification;
 import com.community.api.entity.ServiceProviderRank;
 import com.community.api.entity.ServiceProviderTestStatus;
 import com.community.api.services.exception.ExceptionHandlingImplement;
@@ -11,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
@@ -26,8 +24,7 @@ public class ServiceProviderTestStatusService {
 
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
-    @Autowired
-    private QualificationService qualificationService;
+
     @Autowired
     private ResponseService responseService;
 
@@ -38,7 +35,7 @@ public class ServiceProviderTestStatusService {
     }
 
     @Transactional
-    public ResponseEntity<?> updateTestStatusRank(UpdateTestStatusRank updateTestStatusRank, Long serviceProviderId)
+    public ResponseEntity<?> updateTestStatus(UpdateTestStatus updateTestStatus, Long serviceProviderId)
     {
         try
         {
@@ -46,34 +43,23 @@ public class ServiceProviderTestStatusService {
             if (existingServiceProvider == null) {
                 return responseService.generateErrorResponse("Service Provider Not found", HttpStatus.NOT_FOUND);
             }
-            if(updateTestStatusRank.getTest_status_id()!=null)
+            if(updateTestStatus.getTest_status_id()!=null)
             {
-                ServiceProviderTestStatus serviceProviderTestStatus= entityManager.find(ServiceProviderTestStatus.class,updateTestStatusRank.getTest_status_id());
+                ServiceProviderTestStatus serviceProviderTestStatus= entityManager.find(ServiceProviderTestStatus.class, updateTestStatus.getTest_status_id());
                 if(serviceProviderTestStatus==null)
                 {
-                    return responseService.generateErrorResponse("Test Status id "+ updateTestStatusRank.getTest_status_id()+" Not found", HttpStatus.NOT_FOUND);
+                    return responseService.generateErrorResponse("Test Status id "+ updateTestStatus.getTest_status_id()+" Not found", HttpStatus.NOT_FOUND);
                 }
-                if (Objects.nonNull(updateTestStatusRank.getTest_status_id())) {
+                if (Objects.nonNull(updateTestStatus.getTest_status_id())) {
                     existingServiceProvider.setTestStatus(serviceProviderTestStatus);
                 }
             }
-            if(updateTestStatusRank.getRank_id()!=null)
-            {
-                ServiceProviderRank serviceProviderRank = entityManager.find(ServiceProviderRank.class,updateTestStatusRank.getRank_id());
-                if(serviceProviderRank ==null)
-                {
-                    return responseService.generateErrorResponse("Rank id "+ updateTestStatusRank.getTest_status_id()+" Not found", HttpStatus.NOT_FOUND);
-                }
-                if (Objects.nonNull(updateTestStatusRank.getRank_id())) {
-                    existingServiceProvider.setRanking(serviceProviderRank);
-                }
-            }
             entityManager.merge(existingServiceProvider);
-            return responseService.generateSuccessResponse("Test Status and rank is updated",existingServiceProvider,HttpStatus.OK);
+            return responseService.generateSuccessResponse("Test Status is updated",existingServiceProvider,HttpStatus.OK);
         }
         catch (Exception e) {
             exceptionHandling.handleException(e);
-            return responseService.generateErrorResponse("Error updating test status and rank", HttpStatus.INTERNAL_SERVER_ERROR);
+            return responseService.generateErrorResponse("Error updating test status", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 }

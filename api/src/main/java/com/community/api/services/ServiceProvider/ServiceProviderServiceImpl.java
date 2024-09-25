@@ -2,7 +2,7 @@ package com.community.api.services.ServiceProvider;
 
 import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
-import com.community.api.dto.UpdateTestStatusRank;
+import com.community.api.entity.*;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.endpoint.serviceProvider.ServiceProviderStatus;
 import com.community.api.entity.ServiceProviderAddress;
@@ -51,6 +51,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
+
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
