@@ -29,9 +29,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 @NoArgsConstructor
 public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Product> {
 
-    @Autowired
-    DistrictService districtService;
-
     @JsonProperty("id")
     protected Long id;
     @JsonProperty("meta_title")
@@ -101,6 +98,23 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
     @JsonProperty("exam_date_to")
     protected Date examDateTo;
 
+    @JsonProperty("last_date_to_pay_fee")
+    Date lateDateToPayFee;
+    @JsonProperty("admit_card_date_from")
+    Date admitCardDateFrom;
+    @JsonProperty("admit_card_date_to")
+    Date adminCardDateTo;
+    @JsonProperty("modification_date_from")
+    Date modificationDateFrom;
+    @JsonProperty("modification_date_to")
+    Date modificationDateTo;
+    @JsonProperty("download_notification_link")
+    String downloadNotificationLink;
+    @JsonProperty("download_syllabus_link")
+    String downloadSyllabusLink;
+    @JsonProperty("form_complexity")
+    Long formComplexity;
+
     public void wrapDetailsAddProduct(Product product, AddProductDto addProductDto, CustomJobGroup customJobGroup, CustomProductState customProductState, CustomApplicationScope customApplicationScope, Long creatorUserId, Role creatorRole, ReserveCategoryService reserveCategoryService, StateCode notifyingAuthority) throws Exception {
 
         this.id = product.getId();
@@ -155,6 +169,15 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.advertiserUrl = addProductDto.getAdvertiserUrl();
         this.examDateFrom = addProductDto.getExamDateFrom();
         this.examDateTo = addProductDto.getExamDateTo();
+
+        this.lateDateToPayFee = addProductDto.getLastDateToPayFee();
+        this.admitCardDateFrom = addProductDto.getAdmitCardDateFrom();
+        this.adminCardDateTo = addProductDto.getAdmitCardDateTo();
+        this.modificationDateFrom = addProductDto.getModificationDateFrom();
+        this.modificationDateTo = addProductDto.getModificationDateTo();
+        this.downloadNotificationLink = addProductDto.getDownloadNotificationLink();
+        this.downloadSyllabusLink = addProductDto.getDownloadSyllabusLink();
+        this.formComplexity = addProductDto.getFormComplexity();
 
         if (product.getDefaultCategory() != null) {
             this.defaultCategoryId = product.getDefaultCategory().getId();

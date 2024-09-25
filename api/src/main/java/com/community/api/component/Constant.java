@@ -109,4 +109,21 @@ public class Constant {
     public static final String GET_ALL_REJECTION_STATUS = "SELECT c FROM CustomProductRejectionStatus c";
     public static final String GET_REJECTION_STATUS_BY_REJECTION_ID = "SELECT c FROM CustomProductRejectionStatus c WHERE c.rejectionStatusId = :rejectionStatusId";
     public static final String GET_STATE_BY_STATE_ID = "SELECT c FROM StateCode c WHERE c.state_id = :stateId";
+
+    public static final String GET_ALL_GENDER = "SELECT c FROM CustomGender c";
+    public static final String GET_GENDER_BY_GENDER_ID = "SELECT c FROM CustomGender c WHERE c.genderId = :genderId";
+    public static final Double MAX_HEIGHT = 300d;
+    public static final Double MIN_HEIGHT = 50d;
+    public static final Double MAX_WEIGHT = 700d;
+    public static final Double MIN_WEIGHT = 2d;
+    public static final Double MAX_SHOE_SIZE = 12d;
+    public static final Double MIN_SHOE_SIZE = 2d;
+    public static final Double MAX_WAIST_SIZE = 120d;
+    public static final Double MIN_WAIST_SIZE = 10d;
+    public static final Double MAX_CHEST_SIZE = 125d;
+    public static final Double MIN_CHEST_SIZE = 20d;
+
+    public static final String GET_PRODUCT_GENDER_PHYSICAL_REQUIREMENT = "SELECT c FROM CustomProductGenderPhysicalRequirement c WHERE c.customProduct = :customProduct";
+    public static final String ADD_PRODUCT_GENDER_PHYSICAL_REQUIREMENT = "INSERT INTO custom_product_gender_physical_requirement_reference (product_id, gender_id, height, weight, shoe_size, waist_size, chest_size) VALUES (:productId, :genderId, :height, :weight, :shoeSize, :waistSize, :chestSize)";
+
 }

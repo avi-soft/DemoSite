@@ -62,6 +62,9 @@ public class AddProductDto {
     @JsonProperty("reserve_category")
     List<AddReserveCategoryDto> reservedCategory;
 
+    @JsonProperty("physical_requirement")
+    List<AddPhysicalRequirementDto> physicalRequirement;
+
     @JsonProperty("notifying_authority")
     Integer notifyingAuthority;
     @JsonProperty("post")
@@ -79,4 +82,22 @@ public class AddProductDto {
 
     @JsonProperty("rejection_status")
     Long rejectionStatus;
+
+    @JsonProperty("last_date_to_pay_fee")
+    Date lastDateToPayFee;
+    @JsonProperty("admit_card_date_from")
+    Date admitCardDateFrom;
+    @JsonProperty("admit_card_date_to")
+    Date admitCardDateTo;
+    @JsonProperty("modification_date_from")
+    Date modificationDateFrom;
+    @JsonProperty("modification_date_to")
+    Date modificationDateTo;
+    @JsonProperty("download_notification_link")
+    String downloadNotificationLink;
+    @JsonProperty("download_syllabus_link")
+    String downloadSyllabusLink;
+    @JsonProperty("form_complexity")
+    Long formComplexity;
+
 }

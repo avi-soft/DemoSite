@@ -4,6 +4,7 @@ import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
 import com.community.api.dto.AddProductDto;
 import com.community.api.entity.CustomApplicationScope;
+import com.community.api.entity.CustomGender;
 import com.community.api.entity.CustomJobGroup;
 import com.community.api.entity.CustomProduct;
 import com.community.api.entity.CustomProductRejectionStatus;
@@ -12,6 +13,8 @@ import com.community.api.entity.CustomReserveCategory;
 import com.community.api.entity.Privileges;
 import com.community.api.entity.Role;
 import com.community.api.services.exception.ExceptionHandlingService;
+import org.apache.commons.math3.analysis.function.Add;
+import org.apache.tomcat.util.bcel.Const;
 import org.broadleafcommerce.common.persistence.Status;
 import org.broadleafcommerce.core.catalog.domain.Category;
 import org.broadleafcommerce.core.catalog.domain.Product;
@@ -77,6 +80,8 @@ public class ProductService {
     ProductRejectionStatusService productRejectionStatusService;
     @Autowired
     DistrictService districtService;
+    @Autowired
+    GenderService genderService;
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -959,6 +964,223 @@ public class ProductService {
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             throw new Exception("SOME EXCEPTION OCCURRED: " + exception.getMessage());
+        }
+    }
+
+    public boolean validateAdmitCardDates(AddProductDto addProductDto) throws Exception {
+        try{
+            if(addProductDto.getAdmitCardDateFrom() != null) {
+                dateFormat.parse(dateFormat.format(addProductDto.getAdmitCardDateFrom()));
+            }
+            if(addProductDto.getAdmitCardDateTo() != null){
+                dateFormat.parse(dateFormat.format(addProductDto.getAdmitCardDateTo()));
+            }
+
+            if(addProductDto.getAdmitCardDateFrom() != null && addProductDto.getAdmitCardDateTo() != null) {
+                if(addProductDto.getAdmitCardDateFrom().after(addProductDto.getAdmitCardDateTo())) {
+                    throw new IllegalArgumentException("ADMIT CARD DATE FROM CANNOT BE OF FUTURE OF ADMIT CARD DATE TO");
+                }
+                if(!addProductDto.getAdmitCardDateFrom().after(addProductDto.getActiveEndDate())){
+                    throw new IllegalArgumentException("ADMIT CARD DATE FROM HAS TO BE OF FUTURE OF ACTIVE END DATE");
+                }
+                if(!addProductDto.getAdmitCardDateTo().before(addProductDto.getExamDateFrom())) {
+                    throw new IllegalArgumentException("ADMIT CARD DATE TO HAS TO BE OF PAST OF EXAM DATE FROM");
+                }
+            } else if(addProductDto.getAdmitCardDateFrom() != null) {
+                if(!addProductDto.getAdmitCardDateFrom().after(addProductDto.getActiveEndDate())){
+                    throw new IllegalArgumentException("ADMIT CARD DATE FROM HAS TO BE OF FUTURE OF ACTIVE END DATE");
+                }
+                if(!addProductDto.getAdmitCardDateFrom().before(addProductDto.getExamDateFrom())) {
+                    throw new IllegalArgumentException("ADMIT CARD DATE FROM HAS TO BE OF PAST OF EXAM DATE FROM");
+                }
+                addProductDto.setAdmitCardDateTo(addProductDto.getAdmitCardDateFrom());
+            } else if(addProductDto.getAdmitCardDateTo() != null) {
+                if(!addProductDto.getAdmitCardDateTo().after(addProductDto.getActiveEndDate())){
+                    throw new IllegalArgumentException("ADMIT CARD DATE FROM HAS TO BE OF FUTURE OF ACTIVE END DATE");
+                }
+                if(!addProductDto.getAdmitCardDateTo().before(addProductDto.getExamDateFrom())) {
+                    throw new IllegalArgumentException("ADMIT CARD DATE FROM HAS TO BE OF PAST OF EXAM DATE FROM");
+                }
+                addProductDto.setAdmitCardDateFrom(addProductDto.getAdmitCardDateTo());
+            }
+            return true;
+        } catch (ParseException parseException) {
+            exceptionHandlingService.handleException(parseException);
+            throw new Exception("PARSE EXCEPTION CAUGHT WHILE VALIDATING ADMIT CARD DATES: " + parseException.getMessage() + "\n");
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            throw new Exception("SOME EXCEPTION OCCURRED: " + exception.getMessage());
+        }
+    }
+    public boolean validateModificationDates(AddProductDto addProductDto) throws Exception {
+        try{
+            if(addProductDto.getModificationDateFrom() != null){
+                dateFormat.parse(dateFormat.format(addProductDto.getModificationDateFrom()));
+            }
+            if(addProductDto.getModificationDateTo() != null) {
+                dateFormat.parse(dateFormat.format(addProductDto.getModificationDateTo()));
+            }
+
+            if(addProductDto.getModificationDateFrom() != null && addProductDto.getModificationDateTo() != null) {
+                if(addProductDto.getModificationDateFrom().after(addProductDto.getModificationDateTo())) {
+                    throw new IllegalArgumentException("MODIFICATION DATE FROM CANNOT BE OF FUTURE OF MODIFICATION DATE TO");
+                }
+                if(addProductDto.getAdmitCardDateFrom() != null) {
+                    if(addProductDto.getModificationDateFrom().after(addProductDto.getAdmitCardDateFrom())) {
+                        throw new IllegalArgumentException("MODIFICATION DATE FROM CANNOT BE OF FUTURE OF ADMIT CARD DATE FROM");
+                    }
+                }else{
+                    if(addProductDto.getModificationDateFrom().after(addProductDto.getActiveEndDate())) {
+                        throw new IllegalArgumentException("MODIFICATION DATE FROM CANNOT BE OF FUTURE OF ACTIVE END DATE");
+                    }
+                }
+            } else if(addProductDto.getAdmitCardDateFrom() != null ) {
+                addProductDto.setModificationDateTo(addProductDto.getModificationDateFrom());
+                if(addProductDto.getModificationDateFrom().after(addProductDto.getModificationDateTo())) {
+                    throw new IllegalArgumentException("MODIFICATION DATE FROM CANNOT BE OF FUTURE OF MODIFICATION DATE TO");
+                }
+                if(addProductDto.getAdmitCardDateFrom() != null) {
+                    if(addProductDto.getModificationDateFrom().after(addProductDto.getAdmitCardDateFrom())) {
+                        throw new IllegalArgumentException("MODIFICATION DATE FROM CANNOT BE OF FUTURE OF ADMIT CARD DATE FROM");
+                    }
+                }else{
+                    if(addProductDto.getModificationDateFrom().after(addProductDto.getActiveEndDate())) {
+                        throw new IllegalArgumentException("MODIFICATION DATE FROM CANNOT BE OF FUTURE OF ACTIVE END DATE");
+                    }
+                }
+            } else if(addProductDto.getAdmitCardDateTo() != null) {
+                addProductDto.setModificationDateFrom(addProductDto.getModificationDateTo());
+                if(addProductDto.getModificationDateFrom().after(addProductDto.getModificationDateTo())) {
+                    throw new IllegalArgumentException("MODIFICATION DATE FROM CANNOT BE OF FUTURE OF MODIFICATION DATE TO");
+                }
+                if(addProductDto.getAdmitCardDateFrom() != null) {
+                    if(addProductDto.getModificationDateFrom().after(addProductDto.getAdmitCardDateFrom())) {
+                        throw new IllegalArgumentException("MODIFICATION DATE FROM CANNOT BE OF FUTURE OF ADMIT CARD DATE FROM");
+                    }
+                }else{
+                    if(addProductDto.getModificationDateFrom().after(addProductDto.getActiveEndDate())) {
+                        throw new IllegalArgumentException("MODIFICATION DATE FROM CANNOT BE OF FUTURE OF ACTIVE END DATE");
+                    }
+                }
+            }
+            return true;
+        } catch (ParseException parseException) {
+            exceptionHandlingService.handleException(parseException);
+            throw new Exception("PARSE EXCEPTION CAUGHT WHILE VALIDATING MODIFICATION DATES: " + parseException.getMessage() + "\n");
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            throw new Exception("SOME EXCEPTION OCCURRED: " + exception.getMessage());
+        }
+    }
+
+    public boolean validateLastDateToPayFee(AddProductDto addProductDto) throws Exception {
+        try{
+            if(addProductDto.getLastDateToPayFee() != null) {
+                dateFormat.parse(dateFormat.format(addProductDto.getLastDateToPayFee()));
+            }
+
+            if(addProductDto.getLastDateToPayFee() != null) {
+                if(addProductDto.getLastDateToPayFee().before(addProductDto.getActiveEndDate())){
+                    throw new IllegalArgumentException("LAST DATE TO PAY FEE CANNOT BE PAST OF ACTIVE END DATE");
+                }
+                if(addProductDto.getModificationDateFrom()!= null && addProductDto.getLastDateToPayFee().before(addProductDto.getModificationDateFrom())) {
+                    throw new IllegalArgumentException("LAST DATE TO PAY FEE CANNOT BE AFTER OR EQUAL TO MODIFYING DATE FROM");
+                }
+                if(addProductDto.getModificationDateFrom()!= null && addProductDto.getLastDateToPayFee().before(addProductDto.getAdmitCardDateFrom())) {
+                    throw new IllegalArgumentException("LAST DATE TO PAY FEE CANNOT BE AFTER OR EQUAL TO ADMIT CARD DATE FROM");
+                }
+            }
+            return true;
+        } catch (ParseException parseException) {
+            exceptionHandlingService.handleException(parseException);
+            throw new Exception("PARSE EXCEPTION CAUGHT WHILE VALIDATING MODIFICATION DATES: " + parseException.getMessage() + "\n");
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            throw new Exception("SOME EXCEPTION OCCURRED: " + exception.getMessage());
+        }
+    }
+
+    public boolean validateLinks(AddProductDto addProductDto) throws Exception {
+        try{
+            if(addProductDto.getDownloadNotificationLink() != null) {
+                if( addProductDto.getDownloadNotificationLink().trim().isEmpty()){
+                    throw new IllegalArgumentException("NOTIFICATION DOWNLOAD LINK CANNOT BE EMPTY");
+                }
+                addProductDto.setDownloadNotificationLink(addProductDto.getDownloadNotificationLink().trim());
+            }
+
+            if(addProductDto.getDownloadSyllabusLink() != null ) {
+                if( addProductDto.getDownloadSyllabusLink().trim().isEmpty()){
+                    throw new IllegalArgumentException("SYLLABUS DOWNLOAD LINK CANNOT BE EMPTY");
+                }
+                addProductDto.setDownloadSyllabusLink(addProductDto.getDownloadSyllabusLink().trim());
+            }
+            return true;
+        }catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            throw new Exception("SOME EXCEPTION OCCURRED: " + exception.getMessage());
+        }
+    }
+
+    public boolean validateFormComplexity(AddProductDto addProductDto) throws Exception {
+        try{
+            if(addProductDto.getFormComplexity() == null){
+                addProductDto.setFormComplexity(1L);
+            }else if(addProductDto.getFormComplexity()<=0 || addProductDto.getFormComplexity()>5){
+                throw new IllegalArgumentException("FORM COMPLEXITY MUST LIE IN RANGE 1-5");
+            }
+            return true;
+        }catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            throw new Exception("SOME EXCEPTION OCCURRED: " + exception.getMessage());
+        }
+    }
+
+    public boolean validatePhysicalRequirement(AddProductDto addProductDto) throws Exception {
+        try {
+
+            if (addProductDto.getPhysicalRequirement() != null) {
+                Set<Long> genderId = new HashSet<>();
+
+                for (int physicalAttributeIndex = 0; physicalAttributeIndex < addProductDto.getPhysicalRequirement().size(); physicalAttributeIndex++) {
+                    if (addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getGenderId() == null || addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getGenderId() <= 0) {
+                        throw new IllegalArgumentException("GENDER ID CANNOT BE NULL OR <= 0");
+                    }
+                    genderId.add(addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getGenderId());
+
+                    CustomGender customGender = genderService.getGenderByGenderId(addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getGenderId());
+                    if (customGender == null) {
+                        throw new IllegalArgumentException("GENDER NOT FOUND WITH ID: " + addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getGenderId());
+                    }
+
+                    if (addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getHeight() == null || addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getHeight() > Constant.MAX_HEIGHT || addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getHeight() < Constant.MIN_HEIGHT) {
+                        throw new IllegalArgumentException("HEIGHT IS MANDATORY FIELD AND MUST BE LESS THAN " + MAX_HEIGHT + " AND GREATER THAN " + MIN_HEIGHT);
+                    }
+                    if (addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getWeight() == null || addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getWeight() > MAX_WEIGHT || addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getWeight() < MIN_HEIGHT) {
+                        throw new IllegalArgumentException("WEIGHT IS MANDATORY FIELD AND MUST BE LESS THAN " + MAX_WEIGHT + " AND GREATER THAN " + MIN_WEIGHT);
+                    }
+
+                    if(addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getShoeSize() != null && (addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getShoeSize() > MAX_SHOE_SIZE || addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getShoeSize() < MIN_SHOE_SIZE) ) {
+                        throw new IllegalArgumentException("SHOE SIZE MUST BE LESS THAN " + MAX_SHOE_SIZE + " AND GREATER THAN " + MIN_SHOE_SIZE);
+                    }
+                    if(addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getWaistSize() != null && (addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getWaistSize() > MAX_WAIST_SIZE || addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getWaistSize() < MIN_WAIST_SIZE) ) {
+                        throw new IllegalArgumentException("WAIST SIZE MUST BE LESS THAN " + MAX_WAIST_SIZE + " AND GREATER THAN " + MIN_WAIST_SIZE);
+                    }
+                    if(addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getChestSize() != null && (addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getChestSize() > MAX_CHEST_SIZE || addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getChestSize() < MIN_CHEST_SIZE) ) {
+                        throw new IllegalArgumentException("CHEST SIZE MUST BE LESS THAN " + MAX_CHEST_SIZE + " AND GREATER THAN " + MIN_CHEST_SIZE);
+                    }
+
+                }
+
+                if (genderId.size() != addProductDto.getPhysicalRequirement().size()) {
+                    throw new IllegalArgumentException("DUPLICATE GENDER NOT ALLOWED");
+                }
+            }
+
+            return true;
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            throw new Exception("SOME EXCEPTION WHILE VALIDATING PHYSICAL REQUIREMENTS: " + exception.getMessage() + "\n");
         }
     }
 }

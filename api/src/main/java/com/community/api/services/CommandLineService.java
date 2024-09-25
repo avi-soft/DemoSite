@@ -92,10 +92,16 @@ public class CommandLineService implements CommandLineRunner {
         }
 
         if(entityManager.createQuery("SELECT COUNT(c) FROM CustomProductRejectionStatus c", Long.class).getSingleResult() == 0) {
-            entityManager.merge(new CustomProductRejectionStatus(2L, "TO-BE-MODIFIED", "Product needs modification to get approved."));
+            entityManager.merge(new CustomProductRejectionStatus(1L, "TO-BE-MODIFIED", "Product needs modification to get approved."));
             entityManager.merge(new CustomProductRejectionStatus(2L, "DUPLICATE", "There is already a product present with these details."));
             entityManager.merge(new CustomProductRejectionStatus(3L, "IRRELEVANT", "The product is irrelevant."));
             entityManager.merge(new CustomProductRejectionStatus(4L, "UNFEASIBLE", "The product is not feasible to exists."));
+        }
+
+        if(entityManager.createQuery("SELECT COUNT(c) FROM CustomGender c", Long.class).getSingleResult() == 0) {
+            entityManager.persist(new CustomGender(1L, 'M', "MALE"));
+            entityManager.persist(new CustomGender(2L, 'F', "FEMALE"));
+            entityManager.persist(new CustomGender(3L, 'O', "OTHERS"));
         }
 
         if (entityManager.createQuery("SELECT COUNT(r) FROM Role r", Long.class).getSingleResult() == 0) {

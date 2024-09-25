@@ -13,6 +13,9 @@ import com.community.api.entity.CustomProduct;
 import com.community.api.entity.CustomProductState;
 
 import com.community.api.entity.Role;
+import com.community.api.entity.StateCode;
+import com.community.api.services.DistrictService;
+import com.community.api.services.ProductGenderPhysicalRequirementService;
 import com.community.api.services.ResponseService;
 import org.broadleafcommerce.common.persistence.Status;
 
@@ -90,6 +93,12 @@ public class ProductController extends CatalogEndpoint {
     private final ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService;
     private final ReserveCategoryService reserveCategoryService;
     private final ReserveCategoryDtoService reserveCategoryDtoService;
+
+    @Autowired
+    DistrictService districtService;
+
+    @Autowired
+    ProductGenderPhysicalRequirementService productGenderPhysicalRequirementService;
 
     @Autowired
     public ProductController(ExceptionHandlingService exceptionHandlingService, EntityManager entityManager, JwtUtil jwtTokenUtil, ProductService productService, RoleService roleService, JobGroupService jobGroupService, ProductStateService productStateService, ApplicationScopeService applicationScopeService, ProductReserveCategoryBornBeforeAfterRefService productReserveCategoryBornBeforeAfterRefService, ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService, ReserveCategoryService reserveCategoryService, ReserveCategoryDtoService reserveCategoryDtoService) {
@@ -173,11 +182,24 @@ public class ProductController extends CatalogEndpoint {
             productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getReservedCategory(), product);
             productReserveCategoryBornBeforeAfterRefService.saveBornBeforeAndBornAfter(addProductDto.getReservedCategory(), product);
 
-            CustomProductWrapper wrapper = new CustomProductWrapper();
             CustomJobGroup jobGroup = jobGroupService.getJobGroupById(addProductDto.getJobGroup());
             CustomApplicationScope applicationScope = applicationScopeService.getApplicationScopeById(addProductDto.getApplicationScope());
 
-            wrapper.wrapDetailsAddProduct(product, addProductDto, jobGroup, customProductState, applicationScope, creatorUserId, role, reserveCategoryService, null);
+            StateCode notifyingAuthority = null;
+            if(addProductDto.getNotifyingAuthority() != null) {
+                notifyingAuthority = districtService.getStateByStateId(addProductDto.getNotifyingAuthority());
+            }
+
+            productService.validateAdmitCardDates(addProductDto);
+            productService.validateModificationDates(addProductDto);
+            productService.validateLastDateToPayFee(addProductDto);
+            productService.validateLinks(addProductDto);
+            productService.validateFormComplexity(addProductDto);
+            productService.validatePhysicalRequirement(addProductDto);
+            productGenderPhysicalRequirementService.savePhysicalRequirement(addProductDto.getPhysicalRequirement(), product);
+
+            CustomProductWrapper wrapper = new CustomProductWrapper();
+            wrapper.wrapDetailsAddProduct(product, addProductDto, jobGroup, customProductState, applicationScope, creatorUserId, role, reserveCategoryService, notifyingAuthority);
 
             return ResponseService.generateSuccessResponse("PRODUCT ADDED SUCCESSFULLY", wrapper, HttpStatus.OK);
 
@@ -494,4 +516,5 @@ public class ProductController extends CatalogEndpoint {
             return ResponseService.generateErrorResponse("SOME EXCEPTION OCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 }

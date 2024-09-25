@@ -1,5 +1,6 @@
 package com.community.api.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -84,4 +85,31 @@ public class CustomProduct extends ProductImpl {
     @ManyToOne
     @JoinColumn(name = "rejection_status_id")
     CustomProductRejectionStatus rejectionStatus;
+
+    @Column(name = "last_date_to_pay_fee")
+    Date lateDateToPayFee;
+
+    @Column(name = "admit_card_date_from")
+    Date admitCardDateFrom;
+
+    @Column(name = "admit_card_date_to")
+    Date adminCardDateTo;
+
+    @Column(name = "modification_date_from")
+    Date modificationDateFrom;
+
+    @Column(name = "modification_date_to")
+    Date modificationDateTo;
+
+    @Column(name = "download_notification_link")
+    String downloadNotificationLink;
+
+    @Column(name = "download_syllabus_link")
+    String downloadSyllabusLink;
+
+    @Column(name = "form_complexity")
+    @Min(value = 1, message = "Value must be between 1 and 5")
+    @Max(value = 5, message = "Value must be between 1 and 5")
+    Long formComplexity;
+
 }
