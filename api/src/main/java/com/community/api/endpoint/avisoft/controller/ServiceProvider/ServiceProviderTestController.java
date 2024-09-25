@@ -49,7 +49,7 @@ public class ServiceProviderTestController {
         }
     }
 
-    @PostMapping("/{serviceProviderId}/{testId}/upload-resized-image")
+    @PostMapping("/upload-resized-image/{serviceProviderId}/{testId}")
     public ResponseEntity<?> uploadResizedImage(@PathVariable Long serviceProviderId, @PathVariable Long testId, @RequestParam("resizedImage") MultipartFile resizedImage, HttpServletRequest request) throws Exception {
         try
         {
@@ -74,7 +74,7 @@ public class ServiceProviderTestController {
         }
     }
 
-    @PostMapping("/{serviceProviderId}/{testId}/submit-text")
+    @PostMapping("/submit-text/{serviceProviderId}/{testId}")
     public ResponseEntity<?> submitTypedText(@PathVariable Long serviceProviderId,@PathVariable Long testId, @RequestBody SubmitTextDto submitTextDto) throws Exception {
         try
         {
@@ -99,7 +99,7 @@ public class ServiceProviderTestController {
         }
     }
 
-    @PostMapping("/{serviceProviderId}/{testId}/upload-resized-signature")
+    @PostMapping("/upload-resized-signature/{serviceProviderId}/{testId}")
     public ResponseEntity<?> uploadResizedSignature(@PathVariable Long serviceProviderId,@PathVariable Long testId, @RequestParam("resizedSignature") MultipartFile resizedSignature,HttpServletRequest request) throws Exception {
         try
         {
@@ -124,7 +124,7 @@ public class ServiceProviderTestController {
         }
     }
 
-    @GetMapping("/{serviceProviderId}/getAll")
+    @GetMapping("/getAll/{serviceProviderId}")
     public ResponseEntity<?> getAllTests(
             @PathVariable Long serviceProviderId,
             @RequestParam(defaultValue = "0") int page,
@@ -144,7 +144,7 @@ public class ServiceProviderTestController {
             return responseService.generateErrorResponse("Some issue in fetching service provider tests: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
-    @GetMapping("/{serviceProviderId}/get-completed-test")
+    @GetMapping("/get-completed-test/{serviceProviderId}")
     public ResponseEntity<?> getAllTests(
             @PathVariable Long serviceProviderId,HttpServletRequest request)throws EntityNotFoundException, EntityDoesNotExistsException {
 
