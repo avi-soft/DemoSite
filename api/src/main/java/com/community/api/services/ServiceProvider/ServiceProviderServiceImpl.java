@@ -255,7 +255,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             return ResponseService.generateErrorResponse(errorMessages.toString(),HttpStatus.BAD_REQUEST);
             // Merge the updated entity
         entityManager.merge(existingServiceProvider);
-        if (existingServiceProvider.getUser_name() == null) {
+        if (existingServiceProvider.getUser_name() == null&&!existingServiceProvider.getSpAddresses().isEmpty()) {
             String username = generateUsernameForServiceProvider(existingServiceProvider);
             existingServiceProvider.setUser_name(username);
         }

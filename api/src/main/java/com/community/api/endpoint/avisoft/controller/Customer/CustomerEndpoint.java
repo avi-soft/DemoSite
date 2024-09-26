@@ -203,14 +203,14 @@ public class CustomerEndpoint {
             List<String> errorMessages = new ArrayList<>();
             //using reflections
             for (Field field : CustomCustomer.class.getDeclaredFields()) {
-                Column columnAnnotation = field.getAnnotation(Column.class);
+         /*       Column columnAnnotation = field.getAnnotation(Column.class);
                 boolean isColumnNotNull = (columnAnnotation != null && !columnAnnotation.nullable());
                 // Check if the field has the @Nullable annotation
-                boolean isNullable = field.isAnnotationPresent(Nullable.class);
+                boolean isNullable = field.isAnnotationPresent(Nullable.class);*/
                 field.setAccessible(true);
                 Object newValue = field.get(customerDetails);
-                if (newValue == null && !isNullable)
-                    errorMessages.add(field.getName() + " cannot be null");
+               /* if (newValue == null && !isNullable)
+                    errorMessages.add(field.getName() + " cannot be null");*/
                 if (newValue != null) {
                     field.set(customCustomer, newValue);
                 }
@@ -240,8 +240,8 @@ public class CustomerEndpoint {
             if (customerDetails.getEmailAddress() != null) {
                 customer.setEmailAddress(customerDetails.getEmailAddress());
             }
-            if (!errorMessages.isEmpty())
-                return ResponseService.generateErrorResponse("List of Failed validations : " + errorMessages.toString(), HttpStatus.BAD_REQUEST);
+           /* if (!errorMessages.isEmpty())
+                return ResponseService.generateErrorResponse("List of Failed validations : " + errorMessages.toString(), HttpStatus.BAD_REQUEST);*/
             em.merge(customCustomer);
             return ResponseService.generateSuccessResponse("User details updated successfully : ", sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK);
 
