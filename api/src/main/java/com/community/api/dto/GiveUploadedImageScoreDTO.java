@@ -5,12 +5,11 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
-public class UpdateTestStatusRank
+@AllArgsConstructor
+@NoArgsConstructor
+public class GiveUploadedImageScoreDTO
 {
-    Long test_status_id;
-    Long rank_id;
+    private Integer image_test_scores;
 }

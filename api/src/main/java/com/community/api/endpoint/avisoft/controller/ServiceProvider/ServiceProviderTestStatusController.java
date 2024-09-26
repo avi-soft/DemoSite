@@ -1,9 +1,7 @@
 package com.community.api.endpoint.avisoft.controller.ServiceProvider;
 
-import com.community.api.dto.UpdateTestStatusRank;
-import com.community.api.entity.Qualification;
+import com.community.api.dto.UpdateTestStatus;
 import com.community.api.entity.ServiceProviderTestStatus;
-import com.community.api.services.QualificationService;
 import com.community.api.services.ResponseService;
 import com.community.api.services.ServiceProviderTestStatusService;
 import com.community.api.services.exception.*;
@@ -49,9 +47,9 @@ public class ServiceProviderTestStatusController {
 
     @Transactional
     @PatchMapping("/update-test-status/{serviceProviderId}")
-    public ResponseEntity<?> updateTestStatus(@RequestBody UpdateTestStatusRank updateTestStatusRank, @PathVariable Long serviceProviderId) {
+    public ResponseEntity<?> updateTestStatus(@RequestBody UpdateTestStatus updateTestStatus, @PathVariable Long serviceProviderId) {
         try {
-            return serviceProviderTestStatusService.updateTestStatusRank(updateTestStatusRank,serviceProviderId);
+            return serviceProviderTestStatusService.updateTestStatus(updateTestStatus,serviceProviderId);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Some error updating: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);

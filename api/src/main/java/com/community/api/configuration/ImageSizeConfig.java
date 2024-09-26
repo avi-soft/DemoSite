@@ -31,4 +31,18 @@ public class ImageSizeConfig {
         return Long.parseLong(size);
     }
 
+    public static String convertBytesToReadableSize(long bytes) {
+        if (bytes >= 1024 * 1024) {
+            // Convert to MB if greater than or equal to 1MB
+            return String.format("%.2f MB", (double) bytes / (1024 * 1024));
+        } else if (bytes >= 1024) {
+            // Convert to KB if greater than or equal to 1KB
+            return String.format("%.2f KB", (double) bytes / 1024);
+        } else {
+            // If less than 1KB, show in bytes
+            return bytes + " Bytes";
+        }
+    }
+
+
 }

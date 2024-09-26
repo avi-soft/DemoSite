@@ -2,6 +2,7 @@ package com.community.api.services;
 
 import com.community.api.component.Constant;
 import com.community.api.configuration.ImageSizeConfig;
+import com.community.api.dto.GiveUploadedImageScoreDTO;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.*;
 import com.community.api.entity.Image;
@@ -42,9 +43,6 @@ public class ServiceProviderTestService {
 
     @Value("${image.size.min}")
     private String minImageSize;
-
-    @Value("${image.size.max}")
-    private String maxImageSize;
 
     public ServiceProviderTestService(EntityManager entityManager) {
         this.entityManager = entityManager;
@@ -134,7 +132,6 @@ public class ServiceProviderTestService {
 
         test.setIs_image_test_passed(false);
         long minSizeInBytes = ImageSizeConfig.convertToBytes(minImageSize);
-        long maxSizeInBytes = ImageSizeConfig.convertToBytes(maxImageSize);
 
         if(!documentStorageService.isValidFileType(resizedFile))
         {
@@ -142,7 +139,8 @@ public class ServiceProviderTestService {
         }
 
         // Validate image size
-        if (resizedFile.getSize() < minSizeInBytes || resizedFile.getSize() > maxSizeInBytes) {
+        if (resizedFile.getSize() < minSizeInBytes || resizedFile.getSize() > Constant.MAX_FILE_SIZE) {
+            String maxImageSize= ImageSizeConfig.convertBytesToReadableSize(Constant.MAX_FILE_SIZE);
             test.setIs_image_test_passed(false);
             entityManager.merge(test);
             throw new IllegalArgumentException("Image size should be between " + minImageSize + " and " + maxImageSize);
@@ -187,7 +185,7 @@ public class ServiceProviderTestService {
         // Set file metadata in the ResizedImage object
         resizedImage.setFile_name(fileName);
         resizedImage.setFile_type(resizedFile.getContentType());
-        resizedImage.setFile_path(db_path);
+        resizedImage.setFile_path(dbPath);
         resizedImage.setImage_data(resizedFile.getBytes());
         resizedImage.setServiceProvider(serviceProvider);
 
@@ -200,14 +198,15 @@ public class ServiceProviderTestService {
 
         // Set the image data and validate the resized image
         test.setResized_image_data(resizedFile.getBytes());
-        entityManager.merge(test);
         boolean isImageValid = validateResizedImage(test);
-        if (isImageValid) {
-            test.setIs_image_test_passed(true);
-        } else {
-            test.setIs_image_test_passed(false);
+        if (!isImageValid) {
             throw new IllegalArgumentException("Uploaded image is different from expected image");
         }
+
+        // If image validation passes, mark the test as passed
+        test.setIs_image_test_passed(true);
+        entityManager.merge(test);
+
 
         Map<String, Object> response = new HashMap<>();
         response.put("test", test);
@@ -274,10 +273,11 @@ public class ServiceProviderTestService {
         }
 
         long minSizeInBytes = ImageSizeConfig.convertToBytes(minImageSize);
-        long maxSizeInBytes = ImageSizeConfig.convertToBytes(maxImageSize);
+//        long maxSizeInBytes = ImageSizeConfig.convertToBytes(maxImageSize);
 
         // Validate image size
-        if (signatureFile.getSize() < minSizeInBytes || signatureFile.getSize() > maxSizeInBytes) {
+        if (signatureFile.getSize() < minSizeInBytes || signatureFile.getSize() > Constant.MAX_FILE_SIZE) {
+            String maxImageSize= ImageSizeConfig.convertBytesToReadableSize(Constant.MAX_FILE_SIZE);
             test.setIs_image_test_passed(false);
             entityManager.merge(test);
             throw new IllegalArgumentException("Image size should be between " + minImageSize + " and " + maxImageSize);
@@ -321,7 +321,7 @@ public class ServiceProviderTestService {
         // Set the file details in the signatureImage entity
         signatureImage.setFile_name(fileName);
         signatureImage.setFile_type(signatureFile.getContentType());
-        signatureImage.setFile_path(db_path);
+        signatureImage.setFile_path(dbPath);
         signatureImage.setImage_data(signatureFile.getBytes());
         signatureImage.setServiceProvider(serviceProvider);
 
@@ -422,6 +422,53 @@ public class ServiceProviderTestService {
 
         return ResponseService.generateSuccessResponse("Completed test is found",completedTestMap,HttpStatus.OK);
     }
+
+    @Transactional
+    public ResponseEntity<?> givePointsForImageUpload(Long serviceProviderId, GiveUploadedImageScoreDTO giveUploadedImageScoreDTO) throws EntityDoesNotExistsException {
+        if(giveUploadedImageScoreDTO.getImage_test_scores()==null)
+        {
+            return ResponseService.generateErrorResponse("Image Test Score cannot be null",HttpStatus.BAD_REQUEST);
+        }
+        ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
+        if (serviceProvider == null) {
+            throw new EntityDoesNotExistsException("Service Provider not found");
+        }
+
+        TypedQuery<ServiceProviderTest> query = entityManager.createQuery(
+                "SELECT spt FROM ServiceProviderTest spt WHERE spt.service_provider.service_provider_id = :serviceProviderId",
+                ServiceProviderTest.class
+        );
+
+        query.setParameter("serviceProviderId", serviceProviderId);
+
+        List<ServiceProviderTest> serviceProviderTests = query.getResultList();
+        if (serviceProviderTests.isEmpty()) {
+            return ResponseService.generateSuccessResponse("Service Provider has not given any test yet",null,HttpStatus.OK);
+        }
+
+        ServiceProviderTest serviceProviderTest = null;
+        for (ServiceProviderTest serviceProviderTest1 : serviceProviderTests) {
+            if((serviceProviderTest1.getIs_test_completed()!=null))
+            {
+                if (Boolean.TRUE.equals(serviceProviderTest1.getIs_test_completed())) {
+                    if (serviceProviderTest == null || serviceProviderTest1.getSubmitted_at().isAfter(serviceProviderTest.getSubmitted_at())) {
+                        serviceProviderTest = serviceProviderTest1;
+                    }
+                }
+            }
+        }
+        if(serviceProviderTest==null)
+        {
+            return ResponseService.generateSuccessResponse("Service Provider has not completed any test yet",null,HttpStatus.OK);
+        }
+
+        serviceProviderTest.setImage_test_scores(giveUploadedImageScoreDTO.getImage_test_scores());
+        entityManager.merge(serviceProviderTest);
+
+        serviceProvider.setTotalSkillTestPoints(serviceProviderTest.getImage_test_scores() + serviceProviderTest.getTyping_test_scores());
+        entityManager.merge(serviceProvider);
+                return ResponseService.generateSuccessResponse("Image test scores updated successfully",serviceProviderTest,HttpStatus.OK);
+            }
 
     private boolean validateResizedImage(ServiceProviderTest test) throws IOException {
         Image downloadedImage = test.getDownloaded_image();
