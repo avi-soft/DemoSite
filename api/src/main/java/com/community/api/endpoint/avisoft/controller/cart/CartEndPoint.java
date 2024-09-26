@@ -294,14 +294,16 @@ public class CartEndPoint extends BaseEndpoint {
         try {
             Map<String, Object> responseMap = new HashMap<>();
             List<Order> individualOrders = new ArrayList<>();
-            CustomCustomer customCustomer=entityManager.find(CustomCustomer.class,customerId);
-            if (customCustomer == null)
-                ResponseService.generateErrorResponse("Customer not found", HttpStatus.NOT_FOUND);
             Customer customer = customerService.readCustomerById(customerId);
+            if (customer == null)
+                return ResponseService.generateErrorResponse("Customer not found", HttpStatus.NOT_FOUND);
+            CustomCustomer customCustomer=entityManager.find(CustomCustomer.class,customerId);
             Order cart = orderService.findCartForCustomer(customer);
             if (cart == null)
-                ResponseService.generateErrorResponse("Cart not found", HttpStatus.NOT_FOUND);
-                for (OrderItem orderItem : cart.getOrderItems()) {
+                return ResponseService.generateErrorResponse("Cart not found", HttpStatus.NOT_FOUND);
+            if(cart.getOrderItems().isEmpty())
+                return ResponseService.generateErrorResponse("Cart is empty",HttpStatus.NOT_FOUND);
+            for (OrderItem orderItem : cart.getOrderItems()) {
                     Product product = findProductFromItemAttribute(orderItem);
                     Order individualOrder = orderService.createNamedOrderForCustomer(orderItem.getName(), customer);
                     individualOrder.setCustomer(customer);
