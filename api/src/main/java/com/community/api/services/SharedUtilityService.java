@@ -107,8 +107,6 @@ public class SharedUtilityService {
         customerDetails.put("receiveEmail", customer.isReceiveEmail());
         customerDetails.put("registered", customer.isRegistered());
         customerDetails.put("deactivated", customer.isDeactivated());
-        customerDetails.put("customerLocale", customer.getCustomerLocale());
-        customerDetails.put("customerPhones", customer.getCustomerPhones());
         customerDetails.put("customerPayments", customer.getCustomerPayments());
         customerDetails.put("taxExemptionCode", customer.getTaxExemptionCode());
         customerDetails.put("unencodedPassword", customer.getUnencodedPassword());
@@ -123,6 +121,8 @@ public class SharedUtilityService {
         customerDetails.put("otp", customCustomer.getOtp());
         customerDetails.put("fathersName", customCustomer.getFathersName());
         customerDetails.put("mothersName", customCustomer.getMothersName());
+        customerDetails.put("panNumber",customCustomer.getPanNumber());
+        customerDetails.put("nationality",customCustomer.getNationality());
         customerDetails.put("dob", customCustomer.getDob());
         customerDetails.put("gender", customCustomer.getGender());
         customerDetails.put("adharNumber", customCustomer.getAdharNumber());
@@ -132,6 +132,11 @@ public class SharedUtilityService {
         customerDetails.put("secondaryMobileNumber", customCustomer.getSecondaryMobileNumber());
         customerDetails.put("whatsappNumber", customCustomer.getWhatsappNumber());
         customerDetails.put("secondaryEmail", customCustomer.getSecondaryEmail());
+        customerDetails.put("state", customCustomer.getState());
+        customerDetails.put("city", customCustomer.getCity());
+        customerDetails.put("district", customCustomer.getDistrict());
+        customerDetails.put("pincode", customCustomer.getPincode());
+        customerDetails.put("residentialAddress",customCustomer.getResidentialAddress());
       /*  customerDetails.put("qualificationDetails",customCustomer.getQualificationDetailsList());
         customerDetails.put("documentList",customCustomer.getDocumentList());
         List<Map<String,Object>>listOfSavedProducts=new ArrayList<>();*/

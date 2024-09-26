@@ -3,6 +3,8 @@ package com.community.api.services;
 import com.community.api.component.Constant;
 import com.community.api.entity.Qualification;
 import com.community.api.services.exception.ExceptionHandlingImplement;
+import com.community.api.utils.Document;
+import com.community.api.utils.DocumentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,6 +30,8 @@ public class QualificationService {
         List<Qualification> qualifications = query.getResultList();
         return qualifications;
 }
+
+
     @Transactional
     public Qualification addQualification(@RequestBody Qualification qualification) {
             Qualification qualificationToBeSaved =new Qualification();
