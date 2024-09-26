@@ -179,14 +179,19 @@ public class OtpEndpoint {
                     existingCustomer.setOtp(null);
                     em.persist(existingCustomer);
 
+
                     String existingToken = (String) session.getAttribute(tokenKey);
                     if (jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
+
                         ApiResponse response = new ApiResponse(existingToken,sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
                         return ResponseEntity.ok(response);
 
                     } else {
                         String newToken = jwtUtil.generateToken(existingCustomer.getId(), role, ipAddress, userAgent);
                         session.setAttribute(tokenKey, newToken);
+                        existingCustomer.setToken(newToken);
+                        em.persist(existingCustomer);
+    
                         ApiResponse response = new ApiResponse(newToken,sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
                         return ResponseEntity.ok(response);
 

@@ -1,4 +1,4 @@
-package com.community.api.endpoint;
+package com.community.api.endpoint.avisoft.controller;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.core.Ordered;
@@ -14,6 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -25,7 +26,7 @@ import java.util.List;
 @ControllerAdvice
 @Order(Ordered.HIGHEST_PRECEDENCE)
 
-public class GlobalExceptionHandler {
+public class GlobalException {
 
     @ExceptionHandler(value = {  HttpRequestMethodNotSupportedException.class })
     public ResponseEntity<ErrorResponse> handleNotFoundRequests(Exception ex, WebRequest request) {
@@ -39,7 +40,7 @@ public class GlobalExceptionHandler {
         return generateErrorResponse("Invalid request body", HttpStatus.BAD_REQUEST,ex.getMessage());
     }
 
-        public ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body, HttpHeaders headers, HttpStatus status, WebRequest request) {
+    public ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body, HttpHeaders headers, HttpStatus status, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setMessage("Internal Server Error");
         errorResponse.setStatus_code(status.value());
@@ -75,9 +76,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(value = { RuntimeException.class })
     public ResponseEntity<ErrorResponse> handleRuntimeException(RuntimeException ex, WebRequest request) {
-
         return generateErrorResponse("Runtime exception" , HttpStatus.INTERNAL_SERVER_ERROR,ex.getMessage());
-
     }
 
     public static ResponseEntity<ErrorResponse> generateErrorResponse(String message, HttpStatus status,String trace) {

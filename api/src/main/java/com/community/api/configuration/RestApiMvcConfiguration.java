@@ -41,6 +41,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.core.env.Environment;
+import org.springframework.http.CacheControl;
 import org.springframework.orm.jpa.support.OpenEntityManagerInViewFilter;
 import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.util.StringUtils;
@@ -112,11 +113,15 @@ public class RestApiMvcConfiguration extends BroadleafRestApiMvcConfiguration {
         registry.addResourceHandler("/webjars/**")
                 .addResourceLocations("classpath:/META-INF/resources/webjars/");
 
-        registry.addResourceHandler("/images/favicon-32x32.png")
+        registry.addResourceHandler("/images/" +
+                        "-32x32.png")
                 .addResourceLocations("classpath:/META-INF/resources/webjars/images/favicon-32x32.png");
 
         registry.addResourceHandler("/images/favicon-16x16.png")
                 .addResourceLocations("classpath:/META-INF/resources/webjars/images/favicon-16x16.png");
+
+        registry.addResourceHandler("/avisoftdocument/**")
+                .addResourceLocations("file:" + System.getProperty("user.dir") + "/avisoftdocument/");
     }
     
     @EnableSwagger2

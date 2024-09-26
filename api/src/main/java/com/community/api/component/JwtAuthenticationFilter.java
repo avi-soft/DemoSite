@@ -86,9 +86,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
+
     } catch (ExpiredJwtException e) {
-        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "JWT token is expired");
-        exceptionHandling.handleException(e);
+        handleException(response, HttpServletResponse.SC_UNAUTHORIZED, "JWT token is expired");
         logger.error("ExpiredJwtException caught: {}", e.getMessage());
     } catch (MalformedJwtException e) {
         handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JWT token");
@@ -98,8 +98,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
         exceptionHandling.handleException(e);
 
-        logger.error("Exception caught: {}", e.getMessage());
-    }
+            logger.error("Exception caught: {}", e.getMessage());
+        }
 
     }
 
@@ -108,17 +108,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     }
 
+
+
     private boolean isApiKeyRequiredUri(HttpServletRequest request) {
-     /*   String requestURI = request.getRequestURI();
-        String path = requestURI.split("\\?")[0].trim();
-
-        List<String> bypassUris = Arrays.asList(
-                "/api/v1/category-custom/get-products-by-category-id/**",
-                "/api/v1/category-custom/get-all-categories"
-        );
-
-        boolean isBypassed = bypassUris.stream().anyMatch(path::equals);
-        return isBypassed;*/
 
         String requestURI = request.getRequestURI();
         String path = requestURI.split("\\?")[0].trim();
@@ -174,8 +166,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         String ipAdress = request.getRemoteAddr();
         String User_Agent = request.getHeader("User-Agent");
 
-        if (!jwtUtil.validateToken(jwt, ipAdress, User_Agent)) {
-            respondWithUnauthorized(response, "Invalid JWT token");
+        try {
+            if (!jwtUtil.validateToken(jwt, ipAdress, User_Agent)) {
+                respondWithUnauthorized(response, "Invalid JWT token");
+                return true;
+            }
+        } catch (ExpiredJwtException e) {
+            jwtUtil.logoutUser(jwt);
+            respondWithUnauthorized(response, "Token is expired");
             return true;
         }
         Customer customCustomer = null;
@@ -194,7 +192,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     return true;
                 }
             } else if (roleService.findRoleName(jwtUtil.extractRoleId(jwt)).equals(Constant.roleServiceProvider)) {
-              serviceProvider=entityManager.find(ServiceProviderEntity.class,id);
+                serviceProvider=entityManager.find(ServiceProviderEntity.class,id);
                 if (serviceProvider != null && jwtUtil.validateToken(jwt, ipAdress, User_Agent)) {
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                             serviceProvider.getService_provider_id(), null, new ArrayList<>());

@@ -93,4 +93,20 @@ public class ProductReserveCategoryBornBeforeAfterRefService {
         }
 
     }
+
+    public boolean removeProductReserveCategoryBornBeforeAfterByProductId (CustomProduct customProduct) throws Exception {
+        try {
+
+            int rowsAffected = entityManager.createQuery(
+                            "DELETE FROM CustomProductReserveCategoryBornBeforeAfterRef c WHERE c.customProduct = :customProduct")
+                    .setParameter("customProduct", customProduct)
+                    .executeUpdate();
+
+            return rowsAffected > 0;
+
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            throw new Exception("SOME EXCEPTION OCCURRED: " + exception.getMessage());
+        }
+    }
 }

@@ -6,6 +6,8 @@ import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.Qualification;
 import com.community.api.entity.QualificationDetails;
 import com.community.api.services.exception.*;
+import com.community.api.utils.Document;
+import com.community.api.utils.DocumentType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
@@ -45,13 +47,19 @@ public class QualificationDetailsService
         if (existingQualificationDetails != null ) {
             throw new EntityAlreadyExistsException("Qualification with id " + qualificationDetails.getQualification_id() + " already exists");
         }
-        List<Qualification> qualifications = qualificationService.getAllQualifications();
-        Long examinationToAdd=null;
 
-        for(Qualification qualification : qualifications)
+        List<DocumentType> documentTypes;
+
+
+        documentTypes = entityManager.createQuery("SELECT dt FROM DocumentType dt WHERE dt.description LIKE :exam", DocumentType.class)
+                .setParameter("exam", "%" + "Completed" + "%")
+                .getResultList();
+        Integer examinationToAdd=null;
+
+        for(DocumentType qualification : documentTypes)
         {
-            if(qualification.getQualification_id()== qualificationDetails.getQualification_id()) {
-                examinationToAdd= qualification.getQualification_id();
+            if(qualification.getDocument_type_id()== qualificationDetails.getQualification_id()) {
+                examinationToAdd= qualification.getDocument_type_id();
                 break;
             }
         }
@@ -134,20 +142,8 @@ public class QualificationDetailsService
        }
 
        if (Objects.nonNull(qualification.getQualification_id())) {
-           List<Qualification> qualifications = qualificationService.getAllQualifications();
-           Long examinationToAdd = null;
 
-           for (Qualification examination : qualifications) {
-               if (examination.getQualification_id()==(qualification.getQualification_id())) {
-                   examinationToAdd = examination.getQualification_id();
-                   break;
-               }
-           }
-
-           if (examinationToAdd == null) {
-               throw new ExaminationDoesNotExistsException("Qualification with id " + qualification.getQualification_id() + " does not exist");
-           }
-           qualificationDetailsToUpdate.setQualification_id(examinationToAdd);
+           qualificationDetailsToUpdate.setQualification_id(qualification.getQualification_id());
        }
         if (Objects.nonNull(qualification.getInstitution_name())) {
             qualificationDetailsToUpdate.setInstitution_name(qualification.getInstitution_name());
