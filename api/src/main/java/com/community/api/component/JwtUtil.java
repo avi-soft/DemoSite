@@ -63,7 +63,8 @@ private String secretKeyString = "DASYWgfhMLL0np41rKFAGminD1zb5DlwDzE1WwnP8es=";
     }
 
 
-    @PostConstruct
+  @PostConstruct
+
     public void init() {
         try {
             byte[] secretKeyBytes = DatatypeConverter.parseBase64Binary(secretKeyString);
@@ -79,13 +80,11 @@ private String secretKeyString = "DASYWgfhMLL0np41rKFAGminD1zb5DlwDzE1WwnP8es=";
             exceptionHandling.handleException(e);
             throw new RuntimeException("Error generating JWT token", e);
         }
+
+
     }
 
 
-   /*@PostConstruct
-    public void init() {
-        this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-    }*/
 
     public String generateToken(Long id, Integer role, String ipAddress, String userAgent) {
         try {
@@ -127,8 +126,10 @@ private String secretKeyString = "DASYWgfhMLL0np41rKFAGminD1zb5DlwDzE1WwnP8es=";
                 throw new IllegalArgumentException("Token is required");
             }
 
+
             if (isTokenExpired(token)) {
                 throw new ExpiredJwtException(null, null, "Token is expired");
+
             }
             return Jwts.parserBuilder()
                     .setSigningKey(secretKey)
@@ -251,7 +252,9 @@ private String secretKeyString = "DASYWgfhMLL0np41rKFAGminD1zb5DlwDzE1WwnP8es=";
             }
             if (isTokenExpired(token)) {
 
+
                 throw new ExpiredJwtException(null, null, "Token is expired");
+
 
             }
             return Jwts.parserBuilder()
