@@ -124,6 +124,10 @@ public class Constant {
     public static final Double MIN_CHEST_SIZE = 20d;
 
     public static final String GET_PRODUCT_GENDER_PHYSICAL_REQUIREMENT = "SELECT c FROM CustomProductGenderPhysicalRequirement c WHERE c.customProduct = :customProduct";
-    public static final String ADD_PRODUCT_GENDER_PHYSICAL_REQUIREMENT = "INSERT INTO custom_product_gender_physical_requirement_reference (product_id, gender_id, height, weight, shoe_size, waist_size, chest_size) VALUES (:productId, :genderId, :height, :weight, :shoeSize, :waistSize, :chestSize)";
+
+    public static final String GET_ALL_SUBJECT = "SELECT c FROM CustomSubject c";
+    public static final String GET_ALL_STREAM = "SELECT c FROM CustomStream c";
+    public static final String GET_SUBJECT_BY_SUBJECT_ID = "SELECT c FROM CustomSubject c WHERE c.subjectId = :subjectId";
+    public static final String GET_STREAM_BY_STREAM_ID = "SELECT c FROM CustomStream c WHERE c.streamId = :streamId";
 
 }

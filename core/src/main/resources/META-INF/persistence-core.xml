@@ -55,6 +55,8 @@
         <class>com.community.api.entity.CustomProductRejectionStatus</class>
         <class>com.community.api.entity.CustomGender</class>
         <class>com.community.api.entity.CustomProductGenderPhysicalRequirementRef</class>
+        <class>com.community.api.entity.CustomStream</class>
+        <class>com.community.api.entity.CustomSubject</class>
 
         <exclude-unlisted-classes/>
     </persistence-unit>
