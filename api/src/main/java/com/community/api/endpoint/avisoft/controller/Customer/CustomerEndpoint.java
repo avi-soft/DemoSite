@@ -39,6 +39,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
+import javax.validation.constraints.Size;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.*;
@@ -157,93 +158,114 @@ public class CustomerEndpoint {
 
     @Transactional
     @RequestMapping(value = "update", method = RequestMethod.POST)
-    public ResponseEntity<?> updateCustomer(@RequestBody Map<String,Object>details, @RequestParam Long customerId) {
-
+    public ResponseEntity<?> updateCustomer(@RequestBody Map<String,Object> details, @RequestParam Long customerId) {
         try {
+            List<String> errorMessages = new ArrayList<>();
             if (customerService == null) {
                 return ResponseService.generateErrorResponse("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
-            CustomCustomer customerDetails=entityManager.find(CustomCustomer.class,customerId);
-            Set<String> fieldNames = details.keySet();
+
             CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
             if (customCustomer == null) {
                 return ResponseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
-
             }
-            if (customerDetails.getMobileNumber() != null) {
-                if (customCustomerService.isValidMobileNumber(customerDetails.getMobileNumber()) == false) {
-                    return ResponseService.generateErrorResponse("Cannot update phoneNumber", HttpStatus.INTERNAL_SERVER_ERROR);
 
+            // Validate mobile number
+            String mobileNumber = (String) details.get("mobileNumber");
+            if (mobileNumber != null && !customCustomerService.isValidMobileNumber(mobileNumber)) {
+                return ResponseService.generateErrorResponse("Cannot update phoneNumber", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            // Check for existing username and email
+            String username = (String) details.get("username");
+            String emailAddress = (String) details.get("emailAddress");
+            Customer existingCustomerByUsername = (username != null) ? customerService.readCustomerByUsername(username) : null;
+            Customer existingCustomerByEmail = (emailAddress != null) ? customerService.readCustomerByEmail(emailAddress) : null;
+
+            if ((existingCustomerByUsername != null && !existingCustomerByUsername.getId().equals(customerId)) ||
+                    (existingCustomerByEmail != null && !existingCustomerByEmail.getId().equals(customerId))) {
+                return ResponseService.generateErrorResponse("Email or Username already in use", HttpStatus.BAD_REQUEST);
+            }
+
+            // Update customer fields
+            customCustomer.setId(customerId);
+            customCustomer.setMobileNumber(mobileNumber);
+            customCustomer.setQualificationDetailsList(customCustomer.getQualificationDetailsList());
+            customCustomer.setCountryCode(customCustomer.getCountryCode());
+
+            if (details.containsKey("firstName") && details.containsKey("lastName")) {
+                customCustomer.setFirstName((String) details.get("firstName"));
+                customCustomer.setLastName((String) details.get("lastName"));
+            } else {
+                if (!details.containsKey("firstName")) {
+                    errorMessages.add("First Name cannot be null");
+                }
+                if (!details.containsKey("lastName")) {
+                    errorMessages.add("Last Name cannot be null");
                 }
             }
-            Customer existingCustomerByUsername = null;
-            Customer existingCustomerByEmail = null;
-            if (customerDetails.getUsername() != null) {
-                existingCustomerByUsername = customerService.readCustomerByUsername(customerDetails.getUsername());
+
+            if (emailAddress != null) {
+                customCustomer.setEmailAddress(emailAddress);
             }
 
-            if (customerDetails.getEmailAddress() != null) {
-                existingCustomerByEmail = customerService.readCustomerByEmail(customerDetails.getEmailAddress());
-            }
-            if ((existingCustomerByUsername != null) || existingCustomerByEmail != null) {
-                if (existingCustomerByUsername != null && !existingCustomerByUsername.getId().equals(customerId)) {
-                    return ResponseService.generateErrorResponse("Cannot update phoneNumber", HttpStatus.INTERNAL_SERVER_ERROR);
+            // Handle dynamic fields
+            details.remove("firstName");
+            details.remove("lastName");
+            details.remove("emailAddress");
 
-                }
-                if (existingCustomerByEmail != null && !existingCustomerByEmail.getId().equals(customerId)) {
-                    return ResponseService.generateErrorResponse("Email not available", HttpStatus.BAD_REQUEST);
-                }
-            }
-            customerDetails.setId(customerId);
-            customerDetails.setMobileNumber(customCustomer.getMobileNumber());
-            customerDetails.setQualificationDetailsList(customCustomer.getQualificationDetailsList());
-
-            customerDetails.setCountryCode(customCustomer.getCountryCode());
-            Customer customer = customerService.readCustomerById(customerId);
-            List<String> errorMessages = new ArrayList<>();
-            //using reflections
-            for (Field field : CustomCustomer.class.getDeclaredFields()) {
-         /*       Column columnAnnotation = field.getAnnotation(Column.class);
-                boolean isColumnNotNull = (columnAnnotation != null && !columnAnnotation.nullable());
-                // Check if the field has the @Nullable annotation
-                boolean isNullable = field.isAnnotationPresent(Nullable.class);*/
+            for (Map.Entry<String, Object> entry : details.entrySet()) {
+                String fieldName = entry.getKey();
+                Object newValue = entry.getValue();
+                Field field = CustomCustomer.class.getDeclaredField(fieldName);
                 field.setAccessible(true);
-                Object newValue = field.get(customerDetails);
-               /* if (newValue == null && !isNullable)
-                    errorMessages.add(field.getName() + " cannot be null");*/
-                if (newValue != null) {
+
+                // Validate not null
+                if (newValue.toString().isEmpty() && !field.isAnnotationPresent(Nullable.class)) {
+                    errorMessages.add(fieldName + " cannot be null");
+                    continue;
+                }
+
+                // Validate size if applicable
+                if (field.isAnnotationPresent(Size.class)) {
+                    Size sizeAnnotation = field.getAnnotation(Size.class);
+                    int min = sizeAnnotation.min();
+                    int max = sizeAnnotation.max();
+                    if (newValue.toString().length() > max || newValue.toString().length() < min) {
+                        errorMessages.add(fieldName + " size should be between " + min + " and " + max);
+                        continue;
+                    }
+                }
+
+                // Set value if type is compatible
+                if (newValue != null && field.getType().isAssignableFrom(newValue.getClass())) {
                     field.set(customCustomer, newValue);
                 }
             }
 
-            if (customerDetails.getState() != null && customerDetails.getDistrict() != null && customerDetails.getPincode() != null) {
-                customCustomer.setState(districtService.findStateById(Integer.parseInt(customerDetails.getState())));
-                customCustomer.setDistrict(districtService.findDistrictById(Integer.parseInt(customerDetails.getDistrict())));
+            // Update address if needed
+            String state = (String) details.get("state");
+            String district = (String) details.get("district");
+            String pincode = (String) details.get("pincode");
+            if (state != null && district != null && pincode != null) {
+                customCustomer.setState(districtService.findStateById(Integer.parseInt(state)));
+                customCustomer.setDistrict(districtService.findDistrictById(Integer.parseInt(district)));
                 Map<String, Object> addressMap = new HashMap<>();
-                addressMap.put("address", customerDetails.getResidentailAddress());
-                addressMap.put("state", districtService.findStateById(Integer.parseInt(customerDetails.getState())));
-                addressMap.put("city", districtService.findDistrictById(Integer.parseInt(customerDetails.getDistrict())));
-                addressMap.put("district", customerDetails.getDistrict());
-                addressMap.put("pinCode", customerDetails.getPincode());
+                addressMap.put("address", details.get("residentailAddress"));
+                addressMap.put("state", customCustomer.getState());
+                addressMap.put("city", customCustomer.getDistrict());
+                addressMap.put("district", district);
+                addressMap.put("pinCode", pincode);
                 addressMap.put("addressName", "Residential Address");
                 addAddress(customerId, addressMap);
             }
-            if (customerDetails.getFirstName() != null && customerDetails.getLastName() != null) {
-                customer.setFirstName(customerDetails.getFirstName());
-                customer.setLastName(customerDetails.getLastName());
-            } else if (customerDetails.getFirstName() == null || customerDetails.getLastName() == null) {
-                if (customerDetails.getFirstName() == null)
-                    errorMessages.add("First Name cannot be null");
-                if (customCustomer.getLastName() == null)
-                    errorMessages.add("Last Name cannot be null");
+
+            if (!errorMessages.isEmpty()) {
+                return ResponseService.generateErrorResponse("List of Failed validations: " + errorMessages.toString(), HttpStatus.BAD_REQUEST);
             }
-            if (customerDetails.getEmailAddress() != null) {
-                customer.setEmailAddress(customerDetails.getEmailAddress());
-            }
-           /* if (!errorMessages.isEmpty())
-                return ResponseService.generateErrorResponse("List of Failed validations : " + errorMessages.toString(), HttpStatus.BAD_REQUEST);*/
+
             em.merge(customCustomer);
-            return ResponseService.generateSuccessResponse("User details updated successfully : ", sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK);
+            return ResponseService.generateSuccessResponse("User details updated successfully", sharedUtilityService.breakReferenceForCustomer(customCustomer), HttpStatus.OK);
 
         } catch (Exception e) {
             exceptionHandling.handleException(e);
