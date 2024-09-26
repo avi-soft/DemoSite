@@ -207,6 +207,19 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             if (serviceProviderAddress.getAddress_line() != null || serviceProviderAddress.getCity() != null || serviceProviderAddress.getDistrict() != null || serviceProviderAddress.getState() != null || serviceProviderAddress.getPincode() != null) {
                 addAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress);
             }
+        }else if(updates.containsKey("district") && updates.containsKey("state") && !existingServiceProvider.getSpAddresses().isEmpty()) {
+            ServiceProviderAddress serviceProviderAddress = existingServiceProvider.getSpAddresses().get(0);
+            ServiceProviderAddress serviceProviderAddressDTO = new ServiceProviderAddress();
+            serviceProviderAddressDTO.setState((String) updates.get("state"));
+            serviceProviderAddressDTO.setDistrict((String) updates.get("state"));
+            serviceProviderAddressDTO.setAddress_line((String) updates.get("residential_address"));
+            serviceProviderAddressDTO.setPincode((String) updates.get("pincode"));
+            serviceProviderAddressDTO.setCity((String) updates.get("city"));
+            for (String error : updateAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress, serviceProviderAddressDTO))
+            {
+                errorMessages.add(error);
+            }
+            updateAddress(existingServiceProvider.getService_provider_id(),serviceProviderAddress,serviceProviderAddressDTO);
         }
 
         //removing key for address
@@ -255,7 +268,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             return ResponseService.generateErrorResponse(errorMessages.toString(),HttpStatus.BAD_REQUEST);
             // Merge the updated entity
         entityManager.merge(existingServiceProvider);
-        if (existingServiceProvider.getUser_name() == null&&!existingServiceProvider.getSpAddresses().isEmpty()) {
+        if (existingServiceProvider.getUser_name() == null && !existingServiceProvider.getSpAddresses().isEmpty() ) {
             String username = generateUsernameForServiceProvider(existingServiceProvider);
             existingServiceProvider.setUser_name(username);
         }
@@ -699,6 +712,11 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 return responseService.generateErrorResponse("Service Provider Not found", HttpStatus.BAD_REQUEST);
             }
             List<ServiceProviderAddress> addresses = existingServiceProvider.getSpAddresses();
+            for(ServiceProviderAddress serviceProviderAddressToAdd:addresses)
+            {
+                if(serviceProviderAddressToAdd.getAddress_type_id()==serviceProviderAddress.getAddress_type_id())
+                    return ResponseService.generateErrorResponse("Cannot add another address of this type",HttpStatus.BAD_REQUEST);
+            }
             serviceProviderAddress.setState(districtService.findStateById(Integer.parseInt(serviceProviderAddress.getState())));
             serviceProviderAddress.setDistrict(districtService.findDistrictById(Integer.parseInt(serviceProviderAddress.getDistrict())));
             addresses.add(serviceProviderAddress);
@@ -714,6 +732,57 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             return responseService.generateErrorResponse("Error adding address", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    @Transactional
+    public List<String> updateAddress(long serviceProviderId, ServiceProviderAddress serviceProviderAddress,ServiceProviderAddress dto) throws Exception {
+            List<String>errorList=new ArrayList<>();
+            if (serviceProviderAddress == null) {
+                errorList.add("Incomplete Details");
+            }
+            ServiceProviderEntity existingServiceProvider = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
+            if (existingServiceProvider == null) {
+                errorList.add("Incomplete Details");
+            }
+            ServiceProviderAddress addressToupdate=null;
+            List<ServiceProviderAddress> addresses = existingServiceProvider.getSpAddresses();
+            if(addresses.contains(serviceProviderAddress))
+            {
+                for(ServiceProviderAddress iteratedAddress:addresses)
+                {
+                    if(iteratedAddress.getAddress_id()==serviceProviderAddress.getAddress_id())
+                    {
+                        addressToupdate=iteratedAddress;
+                        break;
+                }
+                }
+            }
+            for (Field field : ServiceProviderAddress.class.getDeclaredFields()) {
+                Column columnAnnotation = field.getAnnotation(Column.class);
+                boolean isColumnNotNull = (columnAnnotation != null && !columnAnnotation.nullable());
+                // Check if the field has the @Nullable annotation
+                boolean isNullable = field.isAnnotationPresent(Nullable.class);
+                field.setAccessible(true);
+                Object newValue = field.get(serviceProviderAddress);
+                if (newValue == null && !isNullable)
+                    errorList.add(field.getName() + " cannot be null");
+            }
+            if(addressToupdate!=null) {
+                if(dto.getState()!=null && !dto.getState().isEmpty())
+                    addressToupdate.setState(districtService.findStateById(Integer.parseInt(dto.getState())));
+                if(dto.getDistrict()!=null && !dto.getDistrict().isEmpty())
+                    addressToupdate.setDistrict(districtService.findDistrictById(Integer.parseInt(dto.getDistrict())));
+                if(dto.getAddress_line()!=null&& !dto.getAddress_line().isEmpty())
+                    addressToupdate.setAddress_line(dto.getAddress_line());
+                if(dto.getCity()!=null && !dto.getCity().isEmpty())
+                    addressToupdate.setCity(dto.getCity());
+                if(dto.getPincode()!=null && !dto.getPincode().isEmpty())
+                    addressToupdate.setPincode(dto.getPincode());
+                existingServiceProvider.setSpAddresses(addresses);
+                serviceProviderAddress.setServiceProviderEntity(existingServiceProvider);
+            }
+            entityManager.merge(serviceProviderAddress);
+            return errorList;
+        }
+
 
     @Transactional
 
