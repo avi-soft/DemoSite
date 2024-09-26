@@ -5,11 +5,29 @@ import com.community.api.component.JwtUtil;
 import com.community.api.entity.*;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.endpoint.serviceProvider.ServiceProviderStatus;
-import com.community.api.services.*;
+import com.community.api.entity.ServiceProviderAddress;
+import com.community.api.entity.ServiceProviderAddressRef;
+import com.community.api.entity.ServiceProviderInfra;
+import com.community.api.entity.ServiceProviderLanguage;
+import com.community.api.entity.Skill;
+import com.community.api.entity.StateCode;
+import com.community.api.services.ApiConstants;
+import com.community.api.services.CustomCustomerService;
+import com.community.api.services.DistrictService;
+import com.community.api.services.RateLimiterService;
+import com.community.api.services.ResponseService;
+import com.community.api.services.ServiceProviderInfraService;
+import com.community.api.services.ServiceProviderLanguageService;
+import com.community.api.services.SharedUtilityService;
+import com.community.api.services.SkillService;
+import com.community.api.services.TwilioServiceForServiceProvider;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.twilio.Twilio;
 import com.twilio.exception.ApiException;
 import io.github.bucket4j.Bucket;
+import io.micrometer.core.lang.Nullable;
+import org.apache.zookeeper.server.SessionTracker;
+import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,15 +38,30 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.client.HttpClientErrorException;
 
+
+import javax.persistence.Column;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
+import javax.validation.ConstraintViolationException;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Size;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Field;
-import java.util.*;
+
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
 import java.util.regex.Pattern;
 
 @Service
@@ -85,11 +118,13 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
 
     @Transactional
-    public ResponseEntity<?> updateServiceProvider(Long userId, Map<String, Object> updates) throws Exception {
+    public ResponseEntity<?> updateServiceProvider(Long userId, Map<String, Object> updates)  {
+        try{
+            List<String> errorMessages=new ArrayList<>();
         // Find existing ServiceProviderEntity
         ServiceProviderEntity existingServiceProvider = entityManager.find(ServiceProviderEntity.class, userId);
         if (existingServiceProvider == null) {
-            throw new Exception("ServiceProvider with ID " + userId + " not found");
+            errorMessages.add("ServiceProvider with ID " + userId + " not found");
         }
 
         // Validate and check for unique constraints
@@ -97,8 +132,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         ServiceProviderEntity existingSPByEmail = null;
 
         if (updates.containsKey("user_name")) {
-            String userName = (String) updates.get("user_name");
-            existingSPByUsername = findServiceProviderByUserName(userName);
+            updates.remove("user_name");
         }
         if (updates.containsKey("primary_mobile_number")) {
             String userName = (String) updates.get("user_name");
@@ -162,7 +196,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         updates.remove("skill_list");
         updates.remove("infra_list");
         updates.remove("language_list");
-        if (updates.containsKey("district") && updates.containsKey("state")) {
+        if (updates.containsKey("district") && updates.containsKey("state") && existingServiceProvider.getSpAddresses().isEmpty()) {
             ServiceProviderAddress serviceProviderAddress = new ServiceProviderAddress();
             serviceProviderAddress.setAddress_type_id(findAddressName("CURRENT_ADDRESS").getAddress_type_Id());
             serviceProviderAddress.setPincode((String) updates.get("pincode"));
@@ -174,8 +208,9 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 addAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress);
             }
         }
+
         //removing key for address
-        updates.remove("address_line");
+        updates.remove("residential_address");
         updates.remove("city");
         updates.remove("state");
         updates.remove("district");
@@ -188,6 +223,23 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
             try {
                 Field field = ServiceProviderEntity.class.getDeclaredField(fieldName);
+                System.out.println(field);
+                Column columnAnnotation = field.getAnnotation(Column.class);
+                boolean isColumnNotNull = (columnAnnotation != null && !columnAnnotation.nullable());
+                // Check if the field has the @Nullable annotation
+                boolean isNullable = field.isAnnotationPresent(Nullable.class);
+                field.setAccessible(true);
+                if(newValue.toString().isEmpty() && !isNullable)
+                    errorMessages.add(fieldName+ " cannot be null");
+                if (field.isAnnotationPresent(Size.class)) {
+                    Size sizeAnnotation = field.getAnnotation(Size.class);
+                    int min = sizeAnnotation.min();
+                    int max = sizeAnnotation.max();
+                    if(newValue.toString().length()>max||newValue.toString().length()<min) {
+                        errorMessages.add(fieldName + " size should be in between " + min + " " + max);
+                        continue;
+                    }
+                }
                 field.setAccessible(true);
                 // Optionally, check for type compatibility before setting the value
                 if (newValue != null && field.getType().isAssignableFrom(newValue.getClass())) {
@@ -199,7 +251,9 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 return responseService.generateErrorResponse("Invalid field: " + fieldName, HttpStatus.BAD_REQUEST);
             }
         }
-        // Merge the updated entity
+        if(!errorMessages.isEmpty())
+            return ResponseService.generateErrorResponse(errorMessages.toString(),HttpStatus.BAD_REQUEST);
+            // Merge the updated entity
         entityManager.merge(existingServiceProvider);
         if (existingServiceProvider.getUser_name() == null) {
             String username = generateUsernameForServiceProvider(existingServiceProvider);
@@ -207,6 +261,10 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         }
         entityManager.merge(existingServiceProvider);
         return responseService.generateSuccessResponse("Service Provider Updated Successfully", existingServiceProvider, HttpStatus.OK);
+    }catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseService.generateErrorResponse("Error updating Service Provider : ", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override
@@ -656,6 +714,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             return responseService.generateErrorResponse("Error adding address", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @Transactional
 
     public Object searchServiceProviderBasedOnGivenFields(String state,String district,String first_name,String last_name,String mobileNumber) {
         Map<String, Character> alias = new HashMap<>();

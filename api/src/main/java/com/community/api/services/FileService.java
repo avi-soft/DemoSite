@@ -19,13 +19,31 @@ public class FileService {
      * @return The URL to access the file.
      */
 
-    private static String baseURL = "http://192.168.0.138:8080";
+    private static String baseURL = "http://192.168.0.181:8080";
     public String getFileUrl(String filePath, HttpServletRequest request) {
         String normalizedFilePath = filePath.replace("\\", "/");
         String encodedFilePath = URLEncoder.encode(normalizedFilePath, StandardCharsets.UTF_8);
 
         return baseURL + "/"  + normalizedFilePath;
     }
+
+    public String getDownloadFileUrl(String filePath, HttpServletRequest request) {
+        String normalizedFilePath = filePath.replace("\\", "/");
+
+        String[] pathSegments = normalizedFilePath.split("/");
+        StringBuilder encodedFilePath = new StringBuilder();
+
+        for (String segment : pathSegments) {
+            if (encodedFilePath.length() > 0) {
+                encodedFilePath.append("/");
+            }
+            String encodedSegment = URLEncoder.encode(segment, StandardCharsets.UTF_8).replace("+", "%20");
+            encodedFilePath.append(encodedSegment);
+        }
+
+        return baseURL + "/" + encodedFilePath.toString();
+    }
+
 
 
 }
