@@ -29,12 +29,11 @@ import java.util.List;
 
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(value = {  HttpRequestMethodNotSupportedException.class })
+    @ExceptionHandler(value = { HttpRequestMethodNotSupportedException.class })
     public ResponseEntity<ErrorResponse> handleNotFoundRequests(Exception ex, WebRequest request) {
-
-        return generateErrorResponse("Invalid request body", HttpStatus.BAD_REQUEST,ex.getMessage());
-
+        return generateErrorResponse("Invalid request method", HttpStatus.BAD_REQUEST, ex.getMessage());
     }
+
 
     @ExceptionHandler(value = NoHandlerFoundException.class)
     public ResponseEntity<ErrorResponse> handleNoHandlerFoundException(NoHandlerFoundException ex, WebRequest request) {
@@ -91,7 +90,11 @@ public class GlobalExceptionHandler {
         return generateErrorResponse("Runtime exception" , HttpStatus.INTERNAL_SERVER_ERROR,ex.getMessage());
 
     }
-
+    @ExceptionHandler(value = { MissingServletRequestParameterException.class })
+    public ResponseEntity<ErrorResponse> handleMissingParams(MissingServletRequestParameterException ex, WebRequest request) {
+        String message = "Missing required parameter: " + ex.getParameterName();
+        return generateErrorResponse(message, HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
     public static ResponseEntity<ErrorResponse> generateErrorResponse(String message, HttpStatus status,String trace) {
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setMessage(message);

@@ -362,12 +362,14 @@ public class CustomerEndpoint {
                         }
 
                         Document existingDocument = em.createQuery(
-                                        "SELECT d FROM Document d WHERE d.custom_customer = :customCustomer AND d.documentType = :documentType", Document.class)
+                                        "SELECT d FROM Document d WHERE d.custom_customer = :customCustomer " +
+                                                "AND d.documentType = :documentType AND d.name IS NOT NULL ", Document.class)
                                 .setParameter("customCustomer", customCustomer)
                                 .setParameter("documentType", documentTypeObj)
                                 .getResultStream()
                                 .findFirst()
                                 .orElse(null);
+
 
                         if (!DocumentStorageService.isValidFileType(file) && existingDocument == null) {
                             return ResponseEntity.badRequest().body(Map.of(
@@ -384,7 +386,7 @@ public class CustomerEndpoint {
                                 if (existingDocument != null) {
                                     String filePath = existingDocument.getFilePath();
 
-                                    System.out.println(filePath + " is empty");
+
                                     if (filePath != null) {
                                         String absolutePath = System.getProperty("user.dir") + "/../test/" + filePath;
                                         File oldFile = new File(absolutePath);
@@ -399,7 +401,6 @@ public class CustomerEndpoint {
                                     existingDocument.setName(null);
                                     em.persist(existingDocument);
 
-
                                     deletedDocumentMessages.add("File for document type '" + documentTypeObj.getDocument_type_name() + "' has been deleted.");
                                 }
                                 continue;
@@ -409,10 +410,9 @@ public class CustomerEndpoint {
 
                         if (fileNameId == 13 && (!file.isEmpty() || file != null)) {
                             String newFileName = file.getOriginalFilename();
-
                             // Check for existing document with the same name
                             Document existingDocument13 = em.createQuery(
-                                            "SELECT d FROM Document d WHERE d.custom_customer = :customCustomer AND d.documentType = :documentType AND d.name = :documentName", Document.class)
+                                            "SELECT d FROM Document d WHERE d.custom_customer = :customCustomer AND d.documentType = :documentType AND d.name = :documentName AND (d.name IS NOT NULL)", Document.class)
                                     .setParameter("customCustomer", customCustomer)
                                     .setParameter("documentType", documentTypeObj)
                                     .setParameter("documentName", newFileName)
@@ -422,6 +422,19 @@ public class CustomerEndpoint {
 
                             if (existingDocument13 == null) {
                                 documentStorageService.createDocument(file, documentTypeObj, customCustomer, customerId, role);
+                            } else if (existingDocument13 != null) {
+                                String filePath = existingDocument13.getFilePath();
+                                if (removeFileTypes != null && removeFileTypes && newFileName!=null ) {
+                                    String absolutePath = System.getProperty("user.dir") + "/../test/" + filePath;
+                                    File oldFile = new File(absolutePath);
+                                    oldFile.delete();
+                                    existingDocument13.setFilePath(null);
+                                    existingDocument13.setName(null);
+                                    existingDocument13.setCustom_customer(null);
+                                    em.merge(existingDocument);
+                                    deletedDocumentMessages.add( documentTypeObj.getDocument_type_name() + "' has been deleted.");
+
+                                }
                             }
                         }
                         // If the file is not empty and a document already exists, update the document
@@ -438,8 +451,8 @@ public class CustomerEndpoint {
 
                                     oldFile.delete();
 
-                                    existingDocument.setFilePath(null);
-                                    existingDocument.setName(null);
+                                    documentStorageService.updateOrCreateDocument(existingDocument, file, documentTypeObj, customerId, role);
+
                                 }
                             }
                         } else {
@@ -491,9 +504,10 @@ public class CustomerEndpoint {
                         }
 
                         ServiceProviderDocument existingDocument = em.createQuery(
-                                        "SELECT d FROM ServiceProviderDocument d WHERE d.serviceProviderEntity = :serviceProviderEntity AND d.documentType = :documentType", ServiceProviderDocument.class)
+                                        "SELECT d FROM ServiceProviderDocument d WHERE d.serviceProviderEntity = :serviceProviderEntity AND d.documentType = :documentType AND d.name IS NOT NULL", ServiceProviderDocument.class)
                                 .setParameter("serviceProviderEntity", serviceProviderEntity)
                                 .setParameter("documentType", documentTypeObj)
+
                                 .getResultStream()
                                 .findFirst()
                                 .orElse(null);
@@ -514,7 +528,6 @@ public class CustomerEndpoint {
 
                                     String filePath = existingDocument.getFilePath();
                                     if (filePath != null) {
-//                                File filesobj = new File(filePath);
                                         String absolutePath = System.getProperty("user.dir") + "/../test/" + filePath;
                                         File oldFile = new File(absolutePath);
 
@@ -525,6 +538,7 @@ public class CustomerEndpoint {
                                     existingDocument.setDocumentType(null);
                                     existingDocument.setName(null);
                                     existingDocument.setFilePath(null);
+                                    existingDocument.setServiceProviderEntity(null);
                                     em.persist(existingDocument);
 
                                     deletedDocumentMessages.add(documentTypeObj.getDocument_type_name() + " has been deleted.");
@@ -538,7 +552,7 @@ public class CustomerEndpoint {
 
                             // Check for existing document with the same name
                             ServiceProviderDocument existingDocument13 = em.createQuery(
-                                            "SELECT d FROM ServiceProviderDocument d WHERE d.serviceProviderEntity = :serviceProviderEntity AND d.documentType = :documentType AND d.name = :documentName", ServiceProviderDocument.class)
+                                            "SELECT d FROM ServiceProviderDocument d WHERE d.serviceProviderEntity = :serviceProviderEntity AND d.documentType = :documentType AND d.name = :documentName AND (d.name IS NOT NULL)", ServiceProviderDocument.class)
                                     .setParameter("serviceProviderEntity", serviceProviderEntity)
                                     .setParameter("documentType", documentTypeObj)
                                     .setParameter("documentName", newFileName)
@@ -549,20 +563,22 @@ public class CustomerEndpoint {
                             if (existingDocument13 == null) {
                                 documentStorageService.createDocumentServiceProvider(file, documentTypeObj, serviceProviderEntity, customerId, role);
                             }
-                            if (existingDocument != null) {
-                                String filePath = existingDocument.getFilePath();
-                                if (removeFileTypes != null && removeFileTypes) {
-                                    if (filePath != null) {
 
-                                        String absolutePath = System.getProperty("user.dir") + "/../test/" + filePath;
-                                        File oldFile = new File(absolutePath);
-                                        String oldFileName = oldFile.getName();
+                            else if (existingDocument13 != null) {
+                                String filePath = existingDocument13.getFilePath();
+                                if (removeFileTypes != null && removeFileTypes && newFileName!=null ) {
 
-                                        oldFile.delete();
-                                        existingDocument.setFilePath(null);
-                                        existingDocument.setName(null);
-                                        em.merge(existingDocument);
-                                    }
+                                    String absolutePath = System.getProperty("user.dir") + "/../test/" + filePath;
+                                    File oldFile = new File(absolutePath);
+
+                                    oldFile.delete();
+                                    existingDocument13.setFilePath(null);
+                                    existingDocument13.setName(null);
+                                    existingDocument13.setServiceProviderEntity(null);
+
+                                    em.merge(existingDocument13);
+                                    deletedDocumentMessages.add( documentTypeObj.getDocument_type_name() + "' has been deleted.");
+
                                 }
                             }
 
