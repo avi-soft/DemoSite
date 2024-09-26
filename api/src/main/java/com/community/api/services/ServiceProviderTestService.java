@@ -44,9 +44,6 @@ public class ServiceProviderTestService {
     @Value("${image.size.min}")
     private String minImageSize;
 
-    @Value("${image.size.max}")
-    private String maxImageSize;
-
     public ServiceProviderTestService(EntityManager entityManager) {
         this.entityManager = entityManager;
     }
@@ -135,7 +132,6 @@ public class ServiceProviderTestService {
 
         test.setIs_image_test_passed(false);
         long minSizeInBytes = ImageSizeConfig.convertToBytes(minImageSize);
-        long maxSizeInBytes = ImageSizeConfig.convertToBytes(maxImageSize);
 
         if(!documentStorageService.isValidFileType(resizedFile))
         {
@@ -143,7 +139,8 @@ public class ServiceProviderTestService {
         }
 
         // Validate image size
-        if (resizedFile.getSize() < minSizeInBytes || resizedFile.getSize() > maxSizeInBytes) {
+        if (resizedFile.getSize() < minSizeInBytes || resizedFile.getSize() > Constant.MAX_FILE_SIZE) {
+            String maxImageSize= ImageSizeConfig.convertBytesToReadableSize(Constant.MAX_FILE_SIZE);
             test.setIs_image_test_passed(false);
             entityManager.merge(test);
             throw new IllegalArgumentException("Image size should be between " + minImageSize + " and " + maxImageSize);
@@ -201,14 +198,15 @@ public class ServiceProviderTestService {
 
         // Set the image data and validate the resized image
         test.setResized_image_data(resizedFile.getBytes());
-        entityManager.merge(test);
         boolean isImageValid = validateResizedImage(test);
-        if (isImageValid) {
-            test.setIs_image_test_passed(true);
-        } else {
-            test.setIs_image_test_passed(false);
+        if (!isImageValid) {
             throw new IllegalArgumentException("Uploaded image is different from expected image");
         }
+
+        // If image validation passes, mark the test as passed
+        test.setIs_image_test_passed(true);
+        entityManager.merge(test);
+
 
         Map<String, Object> response = new HashMap<>();
         response.put("test", test);
@@ -275,10 +273,11 @@ public class ServiceProviderTestService {
         }
 
         long minSizeInBytes = ImageSizeConfig.convertToBytes(minImageSize);
-        long maxSizeInBytes = ImageSizeConfig.convertToBytes(maxImageSize);
+//        long maxSizeInBytes = ImageSizeConfig.convertToBytes(maxImageSize);
 
         // Validate image size
-        if (signatureFile.getSize() < minSizeInBytes || signatureFile.getSize() > maxSizeInBytes) {
+        if (signatureFile.getSize() < minSizeInBytes || signatureFile.getSize() > Constant.MAX_FILE_SIZE) {
+            String maxImageSize= ImageSizeConfig.convertBytesToReadableSize(Constant.MAX_FILE_SIZE);
             test.setIs_image_test_passed(false);
             entityManager.merge(test);
             throw new IllegalArgumentException("Image size should be between " + minImageSize + " and " + maxImageSize);
