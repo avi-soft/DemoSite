@@ -129,5 +129,7 @@ public class Constant {
     public static final String GET_ALL_STREAM = "SELECT c FROM CustomStream c";
     public static final String GET_SUBJECT_BY_SUBJECT_ID = "SELECT c FROM CustomSubject c WHERE c.subjectId = :subjectId";
     public static final String GET_STREAM_BY_STREAM_ID = "SELECT c FROM CustomStream c WHERE c.streamId = :streamId";
+    public static final String GET_ALL_SECTOR = "SELECT c FROM CustomSector c";
+    public static final String GET_SECTOR_BY_SECTOR_ID = "SELECT c FROM CustomSector c WHERE c.sectorId = :sectorId";
 
 }

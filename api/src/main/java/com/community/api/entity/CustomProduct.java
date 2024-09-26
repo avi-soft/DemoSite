@@ -112,4 +112,22 @@ public class CustomProduct extends ProductImpl {
     @Max(value = 5, message = "Value must be between 1 and 5")
     Long formComplexity;
 
+    @ManyToOne
+    @JoinColumn(name = "qualification")
+    Qualification qualification;
+    @ManyToOne
+    @JoinColumn(name ="stream")
+    CustomStream stream;
+    @ManyToOne
+    @JoinColumn(name = "subject")
+    CustomSubject subject;
+    @ManyToOne
+    @JoinColumn(name = "gender_specific")
+    CustomGender gender_specific;
+    @Column(name = "selection_criteria")
+    String selectionCriteria;
+    @ManyToOne
+    @JoinColumn(name = "sector")
+    CustomSector sector;
+
 }

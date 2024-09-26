@@ -100,4 +100,16 @@ public class AddProductDto {
     @JsonProperty("form_complexity")
     Long formComplexity;
 
+    @JsonProperty("qualification")
+    Long qualification;
+    @JsonProperty("stream")
+    Long stream;
+    @JsonProperty("subject")
+    Long subject;
+    @JsonProperty("gender_specific")
+    Long gender_specific;
+    @JsonProperty("selection_criteria")
+    String selectionCriteria;
+    @JsonProperty("sector")
+    Long sector;
 }

@@ -104,6 +104,20 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(new CustomGender(3L, 'O', "OTHERS"));
         }
 
+        if(entityManager.createQuery("SELECT COUNT(c) FROM CustomSector c", Long.class).getSingleResult() == 0) {
+            entityManager.merge(new CustomSector(1L, "HEALTHCARE", "Forms related to patient care and medical services."));
+            entityManager.merge(new CustomSector(2L, "EDUCATION", "Forms for student enrollment and academic records."));
+            entityManager.merge(new CustomSector(3L, "FINANCE", "Forms for loans, taxes, and financial services."));
+            entityManager.merge(new CustomSector(4L, "GOVERNMENT", "Forms for taxes and civic registration."));
+            entityManager.merge(new CustomSector(5L, "HUMAN_RESOURCES", "Forms for job applications and employee management."));
+            entityManager.merge(new CustomSector(6L, "REAL_ESTATE", "Forms for property transactions and leases."));
+            entityManager.merge(new CustomSector(7L, "INSURANCE", "Forms for claims and policy management."));
+            entityManager.merge(new CustomSector(8L, "RETAIL", "Forms for customer feedback and warranties."));
+            entityManager.merge(new CustomSector(9L, "TRANSPORTATION", "Forms for shipping and travel documentation."));
+            entityManager.merge(new CustomSector(10L, "LEGAL", "Forms for legal processes and documentation."));
+
+        }
+
         if (entityManager.createQuery("SELECT COUNT(r) FROM Role r", Long.class).getSingleResult() == 0) {
             entityManager.merge(new Role(1, "SUPER_ADMIN", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
             entityManager.merge(new Role(2, "ADMIN", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
