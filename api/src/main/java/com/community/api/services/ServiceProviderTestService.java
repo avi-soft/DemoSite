@@ -185,7 +185,7 @@ public class ServiceProviderTestService {
         // Set file metadata in the ResizedImage object
         resizedImage.setFile_name(fileName);
         resizedImage.setFile_type(resizedFile.getContentType());
-        resizedImage.setFile_path(db_path);
+        resizedImage.setFile_path(dbPath);
         resizedImage.setImage_data(resizedFile.getBytes());
         resizedImage.setServiceProvider(serviceProvider);
 
@@ -321,7 +321,7 @@ public class ServiceProviderTestService {
         // Set the file details in the signatureImage entity
         signatureImage.setFile_name(fileName);
         signatureImage.setFile_type(signatureFile.getContentType());
-        signatureImage.setFile_path(db_path);
+        signatureImage.setFile_path(dbPath);
         signatureImage.setImage_data(signatureFile.getBytes());
         signatureImage.setServiceProvider(serviceProvider);
 

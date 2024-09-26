@@ -238,7 +238,7 @@ public class ServiceProviderController {
                     "SELECT s FROM ServiceProviderEntity s WHERE s.testStatus.test_status_id = :testStatusId",
                     ServiceProviderEntity.class);
 
-            query.setParameter("testStatusId", 2L);
+            query.setParameter("testStatusId", Constant.TEST_COMPLETED_STATUS);
             query.setFirstResult(startPosition);
             query.setMaxResults(limit);
 
@@ -248,7 +248,7 @@ public class ServiceProviderController {
                 return ResponseService.generateSuccessResponse("There is no any service Provider who has completed the test", results, HttpStatus.OK);
             }
 
-            return ResponseService.generateSuccessResponse("List of service providers with test_status 2: ", results, HttpStatus.OK);
+            return ResponseService.generateSuccessResponse("List of service providers with completed test status: ", results, HttpStatus.OK);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Some issue in fetching service providers: " + e.getMessage(), HttpStatus.BAD_REQUEST);
