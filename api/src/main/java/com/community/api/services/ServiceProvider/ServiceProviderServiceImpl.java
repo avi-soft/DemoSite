@@ -62,7 +62,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.regex.Pattern;
+import javax.validation.constraints.Pattern;
 
 @Service
 public class ServiceProviderServiceImpl implements ServiceProviderService {
@@ -210,16 +210,18 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         }else if(updates.containsKey("district") && updates.containsKey("state") && !existingServiceProvider.getSpAddresses().isEmpty()) {
             ServiceProviderAddress serviceProviderAddress = existingServiceProvider.getSpAddresses().get(0);
             ServiceProviderAddress serviceProviderAddressDTO = new ServiceProviderAddress();
+            serviceProviderAddressDTO.setAddress_type_id(serviceProviderAddress.getAddress_type_id());
+            serviceProviderAddressDTO.setAddress_id(serviceProviderAddress.getAddress_id());
             serviceProviderAddressDTO.setState((String) updates.get("state"));
             serviceProviderAddressDTO.setDistrict((String) updates.get("state"));
             serviceProviderAddressDTO.setAddress_line((String) updates.get("residential_address"));
             serviceProviderAddressDTO.setPincode((String) updates.get("pincode"));
+            serviceProviderAddressDTO.setServiceProviderEntity(existingServiceProvider);
             serviceProviderAddressDTO.setCity((String) updates.get("city"));
             for (String error : updateAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress, serviceProviderAddressDTO))
             {
                 errorMessages.add(error);
             }
-            updateAddress(existingServiceProvider.getService_provider_id(),serviceProviderAddress,serviceProviderAddressDTO);
         }
 
         //removing key for address
@@ -234,7 +236,6 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             String fieldName = entry.getKey();
             Object newValue = entry.getValue();
 
-            try {
                 Field field = ServiceProviderEntity.class.getDeclaredField(fieldName);
                 System.out.println(field);
                 Column columnAnnotation = field.getAnnotation(Column.class);
@@ -253,16 +254,20 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                         continue;
                     }
                 }
+                if (field.isAnnotationPresent(Pattern.class)) {
+                    Pattern patternAnnotation = field.getAnnotation(Pattern.class);
+                    String regex = patternAnnotation.regexp();
+                    String message = patternAnnotation.message(); // Get custom message
+                    if (!newValue.toString().matches(regex)) {
+                        errorMessages.add(message.replace("{field}", fieldName)); // Use a placeholder
+                        continue;
+                    }
+                }
                 field.setAccessible(true);
                 // Optionally, check for type compatibility before setting the value
                 if (newValue != null && field.getType().isAssignableFrom(newValue.getClass())) {
-
                     field.set(existingServiceProvider, newValue);
                 }
-            } catch (NoSuchFieldException | IllegalAccessException e) {
-                // Handle the exception if the field is not found or not accessible
-                return responseService.generateErrorResponse("Invalid field: " + fieldName, HttpStatus.BAD_REQUEST);
-            }
         }
         if(!errorMessages.isEmpty())
             return ResponseService.generateErrorResponse(errorMessages.toString(),HttpStatus.BAD_REQUEST);
@@ -274,7 +279,10 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         }
         entityManager.merge(existingServiceProvider);
         return responseService.generateSuccessResponse("Service Provider Updated Successfully", existingServiceProvider, HttpStatus.OK);
-    }catch (Exception e) {
+    }catch (NoSuchFieldException e)
+        {
+            return ResponseService.generateErrorResponse("No such field present :"+e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error updating Service Provider : ", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -371,7 +379,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             mobileNumber = mobileNumber.substring(1);
         }
         String mobileNumberPattern = "^\\d{9,13}$";
-        return Pattern.compile(mobileNumberPattern).matcher(mobileNumber).matches();
+        return java.util.regex.Pattern.compile(mobileNumberPattern).matcher(mobileNumber).matches();
     }
 
     public ServiceProviderEntity findServiceProviderByPhone(String mobileNumber, String countryCode) {
@@ -761,9 +769,10 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 // Check if the field has the @Nullable annotation
                 boolean isNullable = field.isAnnotationPresent(Nullable.class);
                 field.setAccessible(true);
-                Object newValue = field.get(serviceProviderAddress);
-                if (newValue == null && !isNullable)
-                    errorList.add(field.getName() + " cannot be null");
+                Object newValue = field.get(dto);
+                if (newValue == null || (newValue.toString().isEmpty())) {
+                    errorList.add(field.getName() + " cannot be empty");
+                }
             }
             if(addressToupdate!=null) {
                 if(dto.getState()!=null && !dto.getState().isEmpty())
@@ -779,7 +788,6 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 existingServiceProvider.setSpAddresses(addresses);
                 serviceProviderAddress.setServiceProviderEntity(existingServiceProvider);
             }
-            entityManager.merge(serviceProviderAddress);
             return errorList;
         }
 
