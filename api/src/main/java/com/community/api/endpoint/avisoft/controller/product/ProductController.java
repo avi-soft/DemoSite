@@ -14,6 +14,9 @@ import com.community.api.entity.CustomProduct;
 import com.community.api.entity.CustomProductState;
 
 import com.community.api.entity.CustomSector;
+import com.community.api.entity.CustomStream;
+import com.community.api.entity.CustomSubject;
+import com.community.api.entity.Qualification;
 import com.community.api.entity.Role;
 import com.community.api.entity.StateCode;
 import com.community.api.services.DistrictService;
@@ -60,9 +63,7 @@ import javax.transaction.Transactional;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static com.community.api.component.Constant.*;
 
@@ -179,6 +180,14 @@ public class ProductController extends CatalogEndpoint {
             CustomGender customGender = productService.validateGenderSpecificField(addProductDto);
             CustomSector customSector = productService.validateSector(addProductDto);
             productService.validateSelectionCriteria(addProductDto);
+            Qualification qualification = productService.validateQualification(addProductDto);
+            CustomStream customStream = productService.validateStream(addProductDto);
+            CustomSubject customSubject = productService.validateSubject(addProductDto);
+            productService.validateAdmitCardDates(addProductDto);
+            productService.validateModificationDates(addProductDto);
+            productService.validateLastDateToPayFee(addProductDto);
+            productService.validateLinks(addProductDto);
+            productService.validateFormComplexity(addProductDto);
 
             Role role = productService.getRoleByToken(authHeader);
             Long creatorUserId = productService.getUserIdByToken(authHeader);
@@ -195,16 +204,11 @@ public class ProductController extends CatalogEndpoint {
                 notifyingAuthority = districtService.getStateByStateId(addProductDto.getNotifyingAuthority());
             }
 
-            productService.validateAdmitCardDates(addProductDto);
-            productService.validateModificationDates(addProductDto);
-            productService.validateLastDateToPayFee(addProductDto);
-            productService.validateLinks(addProductDto);
-            productService.validateFormComplexity(addProductDto);
             productService.validatePhysicalRequirement(addProductDto);
             productGenderPhysicalRequirementService.savePhysicalRequirement(addProductDto.getPhysicalRequirement(), product);
 
             CustomProductWrapper wrapper = new CustomProductWrapper();
-            wrapper.wrapDetailsAddProduct(product, addProductDto, jobGroup, customProductState, applicationScope, creatorUserId, role, reserveCategoryService, notifyingAuthority);
+            wrapper.wrapDetailsAddProduct(product, addProductDto, jobGroup, customProductState, applicationScope, creatorUserId, role, reserveCategoryService, notifyingAuthority, customGender, customSector, qualification, customStream, customSubject);
 
             return ResponseService.generateSuccessResponse("PRODUCT ADDED SUCCESSFULLY", wrapper, HttpStatus.OK);
 
@@ -256,7 +260,7 @@ public class ProductController extends CatalogEndpoint {
             productService.validateExamDateFromAndExamDateTo(addProductDto, customProduct);
             productService.validateProductState(addProductDto, customProduct, authHeader);
 
-            customProduct.setModifiedDate(new Date());
+//            customProduct.setModifiedDate(new Date());
             customProduct.setModifierRole(roleService.getRoleByRoleId(jwtTokenUtil.extractRoleId(authHeader.substring(7))));
             customProduct.setModifierUserId(jwtTokenUtil.extractId(authHeader.substring(7)));
 

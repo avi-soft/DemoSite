@@ -83,14 +83,19 @@ public class AddProductDto {
     @JsonProperty("rejection_status")
     Long rejectionStatus;
 
+    @Temporal(TemporalType.TIMESTAMP)
     @JsonProperty("last_date_to_pay_fee")
     Date lastDateToPayFee;
+    @Temporal(TemporalType.TIMESTAMP)
     @JsonProperty("admit_card_date_from")
     Date admitCardDateFrom;
+    @Temporal(TemporalType.TIMESTAMP)
     @JsonProperty("admit_card_date_to")
     Date admitCardDateTo;
+    @Temporal(TemporalType.TIMESTAMP)
     @JsonProperty("modification_date_from")
     Date modificationDateFrom;
+    @Temporal(TemporalType.TIMESTAMP)
     @JsonProperty("modification_date_to")
     Date modificationDateTo;
     @JsonProperty("download_notification_link")
@@ -100,16 +105,16 @@ public class AddProductDto {
     @JsonProperty("form_complexity")
     Long formComplexity;
 
-    @JsonProperty("qualification")
+    @JsonProperty("qualification_id")
     Long qualification;
-    @JsonProperty("stream")
+    @JsonProperty("stream_id")
     Long stream;
-    @JsonProperty("subject")
+    @JsonProperty("subject_id")
     Long subject;
-    @JsonProperty("gender_specific")
+    @JsonProperty("gender_specific_id")
     Long genderSpecific;
     @JsonProperty("selection_criteria")
     String selectionCriteria;
-    @JsonProperty("sector")
+    @JsonProperty("sector_id")
     Long sector;
 }

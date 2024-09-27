@@ -57,6 +57,7 @@
         <class>com.community.api.entity.CustomProductGenderPhysicalRequirementRef</class>
         <class>com.community.api.entity.CustomStream</class>
         <class>com.community.api.entity.CustomSubject</class>
+        <class>com.community.api.entity.CustomSector</class>
 
         <exclude-unlisted-classes/>
     </persistence-unit>

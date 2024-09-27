@@ -61,7 +61,7 @@ public class StreamService {
     public CustomStream getStreamByStreamId(Long streamId) {
         try {
 
-            Query query = entityManager.createQuery(Constant.GET_STREAM_BY_STREAM_ID, CustomTicketState.class);
+            Query query = entityManager.createQuery(Constant.GET_STREAM_BY_STREAM_ID, CustomStream.class);
             query.setParameter("streamId", streamId);
             List<CustomStream> stream = query.getResultList();
 

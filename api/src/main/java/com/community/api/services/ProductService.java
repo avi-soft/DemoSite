@@ -11,7 +11,10 @@ import com.community.api.entity.CustomProductRejectionStatus;
 import com.community.api.entity.CustomProductState;
 import com.community.api.entity.CustomReserveCategory;
 import com.community.api.entity.CustomSector;
+import com.community.api.entity.CustomStream;
+import com.community.api.entity.CustomSubject;
 import com.community.api.entity.Privileges;
+import com.community.api.entity.Qualification;
 import com.community.api.entity.Role;
 import com.community.api.services.exception.ExceptionHandlingService;
 import org.broadleafcommerce.common.persistence.Status;
@@ -28,6 +31,7 @@ import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.sql.Time;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -83,18 +87,58 @@ public class ProductService {
     GenderService genderService;
     @Autowired
     SectorService sectorService;
+    @Autowired
+    QualificationService qualificationService;
+    @Autowired
+    StreamService streamService;
+    @Autowired
+    SubjectService subjectService;
     @PersistenceContext
     private EntityManager entityManager;
 
-    public void saveCustomProduct(Product product, AddProductDto addProductDto, CustomProductState productState, Role role, Long creatorUserId, Date modifiedDate) {
+/*    public void saveCustomProduct(Product product, AddProductDto addProductDto, CustomProductState productState, Role role, Long creatorUserId, Date modifiedDate) {
 
-        String sql = "INSERT INTO custom_product (product_id, exam_date_from, exam_date_to, go_live_date, platform_fee, priority_level, application_scope_id, job_group_id, product_state_id, creator_role_id, creator_user_id, notifying_authority, last_modified, advertiser_url, domicile_required) VALUES (:productId, :examDateFrom, :examDateTo, :goLiveDate, :platformFee, :priorityLevel, :applicationScopeId, :jobGroupId, :productStateId, :roleId, :userId, :notifyingAuthority, :modifiedDate, :advertiserUrl, :domicileRequired)";
+        String sql = "INSERT INTO custom_product (product_id, exam_date_from, exam_date_to, go_live_date, platform_fee, priority_level, application_scope_id, job_group_id, product_state_id" +
+                ", creator_role_id, creator_user_id, notifying_authority, last_modified, advertiser_url, domicile_required" +
+                ", admit_card_date_from" +
+                ", admit_card_date_to" +
+                ", modification_date_from" +
+                ", modification_date_to" +
+                ", last_date_to_pay_fee" +
+                ", download_notification_link" +
+                ", download_syllabus_link" +
+                ", form_complexity" +
+                ", gender_specific_id" +
+                ", sector_id" +
+                ", selection_criteria" +
+                ", qualification_id" +
+                ", stream_id" +
+                ", subject_id" +
+                ") " +
+                "VALUES (:productId, :examDateFrom, :examDateTo, :goLiveDate, :platformFee, :priorityLevel, :applicationScopeId, :jobGroupId, :productStateId" +
+                ", :roleId, :userId, :notifyingAuthority, :modifiedDate, :advertiserUrl, :domicileRequired" +
+                ", :admitCardDateFrom" +
+                ", :admitCardDateTo" +
+                ", :modificationDateFrom" +
+                ", :modificationDateTo" +
+                ", :lastDateToPayFee" +
+                ", :downloadNotificationLink" +
+                ", :downloadSyllabusLink" +
+                ", :formComplexity" +
+                ", :genderSpecificId" +
+                ", :sectorId" +
+                ", :selectionCriteria" +
+                ", :qualificationId" +
+                ", :streamId" +
+                ", :subjectId" +
+                ")";
 
         try {
+
             entityManager.createNativeQuery(sql)
                     .setParameter("productId", product)
                     .setParameter("examDateFrom", addProductDto.getExamDateFrom() != null ? new Timestamp(addProductDto.getExamDateFrom().getTime()) : null)
-                    .setParameter("examDateTo", addProductDto.getExamDateTo() != null ? new Timestamp(addProductDto.getExamDateTo().getTime()) : null)
+                    .setParameter("examDateTo",  addProductDto.getExamDateTo() != null ? new Timestamp(addProductDto.getExamDateTo().getTime()) : null)
                     .setParameter("goLiveDate", addProductDto.getGoLiveDate() != null ? new Timestamp(addProductDto.getGoLiveDate().getTime()) : null)
                     .setParameter("platformFee", addProductDto.getPlatformFee())
                     .setParameter("priorityLevel", addProductDto.getPriorityLevel())
@@ -108,12 +152,239 @@ public class ProductService {
                     .setParameter("advertiserUrl", addProductDto.getAdvertiserUrl())
                     .setParameter("domicileRequired", addProductDto.getDomicileRequired())
 
+                    .setParameter("admitCardDateFrom", (addProductDto.getAdmitCardDateFrom() != null) ? new Timestamp(addProductDto.getAdmitCardDateFrom().getTime()) : null)
+                    .setParameter("admitCardDateTo",  addProductDto.getAdmitCardDateTo() != null ? new Timestamp(addProductDto.getAdmitCardDateTo().getTime()) : null)
+                    .setParameter("modificationDateFrom", addProductDto.getModificationDateFrom() != null ? new Timestamp(addProductDto.getModificationDateFrom().getTime()) : null)
+                    .setParameter("modificationDateTo", addProductDto.getModificationDateTo() != null ? new Timestamp(addProductDto.getModificationDateTo().getTime()) : null)
+                    .setParameter("lastDateToPayFee", addProductDto.getLastDateToPayFee() != null ? new Timestamp(addProductDto.getLastDateToPayFee().getTime()) : null)
+                    .setParameter("downloadNotificationLink", addProductDto.getDownloadNotificationLink())
+                    .setParameter("downloadSyllabusLink", addProductDto.getDownloadSyllabusLink())
+                    .setParameter("formComplexity", addProductDto.getFormComplexity())
+                    .setParameter("genderSpecificId", addProductDto.getGenderSpecific())
+                    .setParameter("sectorId", addProductDto.getSector())
+                    .setParameter("selectionCriteria", addProductDto.getSelectionCriteria())
+                    .setParameter("qualificationId", addProductDto.getQualification())
+                    .setParameter("streamId", addProductDto.getStream())
+                    .setParameter("subjectId", addProductDto.getSubject())
                     .executeUpdate();
 
         } catch (Exception e) {
             throw new RuntimeException("Failed to save Custom Product: " + e.getMessage(), e);
         }
+    }*/
+
+    public void saveCustomProduct(Product product, AddProductDto addProductDto, CustomProductState productState, Role role, Long creatorUserId, Date modifiedDate) {
+
+
+
+        try {
+
+            // Start building the SQL query
+            StringBuilder sql = new StringBuilder("INSERT INTO custom_product (product_id");
+            StringBuilder values = new StringBuilder("VALUES (:productId");
+
+
+            // Dynamically add columns and values based on non-null fields
+            if (addProductDto.getExamDateFrom() != null) {
+                sql.append(", exam_date_from");
+                values.append(", :examDateFrom");
+            }
+
+            if (addProductDto.getExamDateTo() != null) {
+                sql.append(", exam_date_to");
+                values.append(", :examDateTo");
+            }
+
+            sql.append(", product_state_id");
+            values.append(", :productState");
+
+            if (addProductDto.getGoLiveDate() != null) {
+                sql.append(", go_live_date");
+                values.append(", :goLiveDate");
+            }
+
+            if (addProductDto.getPlatformFee() != null) {
+                sql.append(", platform_fee");
+                values.append(", :platformFee");
+            }
+
+            if (addProductDto.getPriorityLevel() != null) {
+                sql.append(", priority_level");
+                values.append(", :priorityLevel");
+            }
+
+            if (addProductDto.getAdmitCardDateFrom() != null) {
+                sql.append(", admit_card_date_from");
+                values.append(", :admitCardDateFrom");
+            }
+
+            if (addProductDto.getAdmitCardDateTo() != null) {
+                sql.append(", admit_card_date_to");
+                values.append(", :admitCardDateTo");
+            }
+
+            if (addProductDto.getModificationDateFrom() != null) {
+                sql.append(", modification_date_from");
+                values.append(", :modificationDateFrom");
+            }
+
+            if (addProductDto.getModificationDateTo() != null) {
+                sql.append(", modification_date_to");
+                values.append(", :modificationDateTo");
+            }
+
+            if (addProductDto.getLastDateToPayFee() != null) {
+                sql.append(", last_date_to_pay_fee");
+                values.append(", :lastDateToPayFee");
+            }
+
+            if (addProductDto.getDownloadNotificationLink() != null) {
+                sql.append(", download_notification_link");
+                values.append(", :downloadNotificationLink");
+            }
+
+            if (addProductDto.getDownloadSyllabusLink() != null) {
+                sql.append(", download_syllabus_link");
+                values.append(", :downloadSyllabusLink");
+            }
+
+            if (addProductDto.getFormComplexity() != null) {
+                sql.append(", form_complexity");
+                values.append(", :formComplexity");
+            }
+
+            if (addProductDto.getGenderSpecific() != null) {
+                sql.append(", gender_specific_id");
+                values.append(", :genderSpecificId");
+            }
+
+            if (addProductDto.getSector() != null) {
+                sql.append(", sector_id");
+                values.append(", :sectorId");
+            }
+
+            if (addProductDto.getSelectionCriteria() != null) {
+                sql.append(", selection_criteria");
+                values.append(", :selectionCriteria");
+            }
+
+            if (addProductDto.getQualification() != null) {
+                sql.append(", qualification_id");
+                values.append(", :qualificationId");
+            }
+
+            if (addProductDto.getStream() != null) {
+                sql.append(", stream_id");
+                values.append(", :streamId");
+            }
+
+            if (addProductDto.getSubject() != null) {
+                sql.append(", subject_id");
+                values.append(", :subjectId");
+            }
+
+            if(addProductDto.getJobGroup() != null) {
+                sql.append(", job_group_id");
+                values.append(", :jobGroup");
+            }
+
+            // Complete the SQL statement
+            sql.append(") ").append(values).append(")");
+            // Create the query
+            var query = entityManager.createNativeQuery(sql.toString())
+                    .setParameter("productId", product);
+
+            // Set parameters conditionally
+            if (addProductDto.getExamDateFrom() != null) {
+                query.setParameter("examDateFrom", new Timestamp(addProductDto.getExamDateFrom().getTime()));
+            }
+            if(addProductDto.getJobGroup() != null) {
+                query.setParameter("jobGroup", addProductDto.getJobGroup());
+            }
+
+            query.setParameter("productState", productState);
+
+            if (addProductDto.getExamDateTo() != null) {
+                query.setParameter("examDateTo", new Timestamp(addProductDto.getExamDateTo().getTime()));
+            }
+
+            if (addProductDto.getGoLiveDate() != null) {
+                query.setParameter("goLiveDate", new Timestamp(addProductDto.getGoLiveDate().getTime()));
+            }
+
+            if (addProductDto.getPlatformFee() != null) {
+                query.setParameter("platformFee", addProductDto.getPlatformFee());
+            }
+
+            if (addProductDto.getPriorityLevel() != null) {
+                query.setParameter("priorityLevel", addProductDto.getPriorityLevel());
+            }
+
+            if (addProductDto.getAdmitCardDateFrom() != null) {
+                query.setParameter("admitCardDateFrom", new Timestamp(addProductDto.getAdmitCardDateFrom().getTime()));
+            }
+
+            if (addProductDto.getAdmitCardDateTo() != null) {
+                query.setParameter("admitCardDateTo", new Timestamp(addProductDto.getAdmitCardDateTo().getTime()));
+            }
+
+            if (addProductDto.getModificationDateFrom() != null) {
+                query.setParameter("modificationDateFrom", new Timestamp(addProductDto.getModificationDateFrom().getTime()));
+            }
+
+            if (addProductDto.getModificationDateTo() != null) {
+                query.setParameter("modificationDateTo", new Timestamp(addProductDto.getModificationDateTo().getTime()));
+            }
+
+            if (addProductDto.getLastDateToPayFee() != null) {
+                query.setParameter("lastDateToPayFee", new Timestamp(addProductDto.getLastDateToPayFee().getTime()));
+            }
+
+            if (addProductDto.getDownloadNotificationLink() != null) {
+                query.setParameter("downloadNotificationLink", addProductDto.getDownloadNotificationLink());
+            }
+
+            if (addProductDto.getDownloadSyllabusLink() != null) {
+                query.setParameter("downloadSyllabusLink", addProductDto.getDownloadSyllabusLink());
+            }
+
+            if (addProductDto.getFormComplexity() != null) {
+                query.setParameter("formComplexity", addProductDto.getFormComplexity());
+            }
+
+            if (addProductDto.getGenderSpecific() != null) {
+                query.setParameter("genderSpecificId", addProductDto.getGenderSpecific());
+            }
+
+            if (addProductDto.getSector() != null) {
+                query.setParameter("sectorId", addProductDto.getSector());
+            }
+
+            if (addProductDto.getSelectionCriteria() != null) {
+                query.setParameter("selectionCriteria", addProductDto.getSelectionCriteria());
+            }
+
+            if (addProductDto.getQualification() != null) {
+                query.setParameter("qualificationId", addProductDto.getQualification());
+            }
+
+            if (addProductDto.getStream() != null) {
+                query.setParameter("streamId", addProductDto.getStream());
+            }
+
+            if (addProductDto.getSubject() != null) {
+                query.setParameter("subjectId", addProductDto.getSubject());
+            }
+
+            // Execute the update
+            query.executeUpdate();
+
+        } catch (Exception e) {
+            exceptionHandlingService.handleException(e);
+            throw new RuntimeException("Failed to save Custom Product: " + e.getMessage(), e);
+        }
     }
+
 
     public List<CustomProduct> getCustomProducts() {
         String sql = "SELECT * FROM custom_product";
@@ -1081,15 +1352,15 @@ public class ProductService {
             }
 
             if(addProductDto.getLastDateToPayFee() != null) {
-                if(addProductDto.getLastDateToPayFee().before(addProductDto.getActiveEndDate())){
-                    throw new IllegalArgumentException("LAST DATE TO PAY FEE CANNOT BE PAST OF ACTIVE END DATE");
-                }
+//                if(addProductDto.getLastDateToPayFee().before(addProductDto.getActiveEndDate())){
+//                    throw new IllegalArgumentException("LAST DATE TO PAY FEE CANNOT BE PAST OF ACTIVE END DATE");
+//                }
                 if(addProductDto.getModificationDateFrom()!= null && addProductDto.getLastDateToPayFee().before(addProductDto.getModificationDateFrom())) {
                     throw new IllegalArgumentException("LAST DATE TO PAY FEE CANNOT BE AFTER OR EQUAL TO MODIFYING DATE FROM");
                 }
-                if(addProductDto.getModificationDateFrom()!= null && addProductDto.getLastDateToPayFee().before(addProductDto.getAdmitCardDateFrom())) {
-                    throw new IllegalArgumentException("LAST DATE TO PAY FEE CANNOT BE AFTER OR EQUAL TO ADMIT CARD DATE FROM");
-                }
+//                if(addProductDto.getModificationDateFrom()!= null && addProductDto.getLastDateToPayFee().before(addProductDto.getAdmitCardDateFrom())) {
+//                    throw new IllegalArgumentException("LAST DATE TO PAY FEE CANNOT BE AFTER OR EQUAL TO ADMIT CARD DATE FROM");
+//                }
             }
             return true;
         } catch (ParseException parseException) {
@@ -1231,4 +1502,56 @@ public class ProductService {
             throw new Exception("SOME EXCEPTION WHILE VALIDATING PHYSICAL REQUIREMENTS: " + exception.getMessage() + "\n");
         }
     }
+
+    public Qualification validateQualification(AddProductDto addProductDto) throws Exception {
+        try{
+            if(addProductDto.getQualification() != null){
+                Qualification qualification = qualificationService.getQualificationByQualificationId(addProductDto.getQualification());
+                if(qualification == null) {
+                    throw new IllegalArgumentException("QUALIFICATION NOT FOUND WITH THIS ID");
+                }
+                return qualification;
+
+            }else{
+                throw new IllegalArgumentException("QUALIFICATION IS A MANDATORY FIELD");
+            }
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            throw new Exception("SOME EXCEPTION WHILE VALIDATING QUALIFICATION: " + exception.getMessage() + "\n");
+        }
+    }
+
+    public CustomStream validateStream(AddProductDto addProductDto) throws Exception {
+        try{
+            if(addProductDto.getStream() != null){
+                CustomStream customStream = streamService.getStreamByStreamId(addProductDto.getStream());
+                if(customStream == null) {
+                    throw new IllegalArgumentException("STREAM NOT FOUND WITH THIS ID");
+                }
+                return customStream;
+
+            }
+            return null;
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            throw new Exception("SOME EXCEPTION WHILE VALIDATING STREAM: " + exception.getMessage() + "\n");
+        }
+    }
+
+    public CustomSubject validateSubject(AddProductDto addProductDto) throws Exception {
+        try{
+            if(addProductDto.getSubject() != null){
+                CustomSubject customSubject = subjectService.getSubjectBySubjectId(addProductDto.getSubject());
+                if(customSubject == null) {
+                    throw new IllegalArgumentException("SUBJECT NOT FOUND WITH THIS ID");
+                }
+                return customSubject;
+            }
+            return null;
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            throw new Exception("SOME EXCEPTION WHILE VALIDATING SUBJECT: " + exception.getMessage() + "\n");
+        }
+    }
+
 }

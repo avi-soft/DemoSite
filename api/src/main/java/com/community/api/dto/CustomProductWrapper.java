@@ -7,10 +7,15 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.broadleafcommerce.rest.api.wrapper.MediaWrapper;
 import com.community.api.entity.CustomApplicationScope;
+import com.community.api.entity.CustomGender;
 import com.community.api.entity.CustomJobGroup;
 import com.community.api.entity.CustomProduct;
 import com.community.api.entity.CustomProductState;
 import com.community.api.entity.CustomReserveCategory;
+import com.community.api.entity.CustomSector;
+import com.community.api.entity.CustomStream;
+import com.community.api.entity.CustomSubject;
+import com.community.api.entity.Qualification;
 import com.community.api.entity.Role;
 import com.community.api.entity.StateCode;
 import com.community.api.services.DistrictService;
@@ -114,8 +119,18 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
     String downloadSyllabusLink;
     @JsonProperty("form_complexity")
     Long formComplexity;
+    @JsonProperty("qualification")
+    Qualification qualification;
+    @JsonProperty("sector")
+    CustomSector customSector;
+    @JsonProperty("genderSpecific")
+    CustomGender customGender;
+    @JsonProperty("stream")
+    CustomStream customStream;
+    @JsonProperty("subject")
+    CustomSubject customSubject;
 
-    public void wrapDetailsAddProduct(Product product, AddProductDto addProductDto, CustomJobGroup customJobGroup, CustomProductState customProductState, CustomApplicationScope customApplicationScope, Long creatorUserId, Role creatorRole, ReserveCategoryService reserveCategoryService, StateCode notifyingAuthority) throws Exception {
+    public void wrapDetailsAddProduct(Product product, AddProductDto addProductDto, CustomJobGroup customJobGroup, CustomProductState customProductState, CustomApplicationScope customApplicationScope, Long creatorUserId, Role creatorRole, ReserveCategoryService reserveCategoryService, StateCode notifyingAuthority, CustomGender customGender, CustomSector customSector, Qualification qualification, CustomStream customStream, CustomSubject customSubject) throws Exception {
 
         this.id = product.getId();
         this.metaTitle = product.getMetaTitle();
@@ -178,6 +193,12 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.downloadNotificationLink = addProductDto.getDownloadNotificationLink();
         this.downloadSyllabusLink = addProductDto.getDownloadSyllabusLink();
         this.formComplexity = addProductDto.getFormComplexity();
+
+        this.customGender = customGender;
+        this.customSector = customSector;
+        this.qualification = qualification;
+        this.customStream = customStream;
+        this.customSubject = customSubject;
 
         if (product.getDefaultCategory() != null) {
             this.defaultCategoryId = product.getDefaultCategory().getId();

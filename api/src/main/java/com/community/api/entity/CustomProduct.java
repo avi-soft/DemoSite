@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.NonNull;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.catalog.domain.ProductImpl;
+import org.springframework.lang.Nullable;
 
 import javax.persistence.*;
 import javax.validation.constraints.Max;
@@ -46,7 +47,7 @@ public class CustomProduct extends ProductImpl {
     @Column(name = "exam_date_to")
     protected Date examDateTo;
 
-    @Column(name = "last_modified")
+    @Column(name = "last_modified" )
     protected Date modifiedDate;
 
     @ManyToOne
@@ -70,64 +71,71 @@ public class CustomProduct extends ProductImpl {
     protected StateCode notifyingAuthority;
 
     @Column(name = "advertiser_url")
-    String advertiserUrl;
+    protected String advertiserUrl;
 
     @Column(name = "domicile_required")
-    Boolean domicileRequired;
+    protected Boolean domicileRequired;
 
     @Column(name = "modifier_user_id")
-    Long modifierUserId;
+    protected Long modifierUserId;
 
     @ManyToOne
     @JoinColumn(name = "modifier_role_id")
-    Role modifierRole;
+    protected Role modifierRole;
 
     @ManyToOne
     @JoinColumn(name = "rejection_status_id")
-    CustomProductRejectionStatus rejectionStatus;
+    protected CustomProductRejectionStatus rejectionStatus;
 
     @Column(name = "last_date_to_pay_fee")
-    Date lateDateToPayFee;
+    protected Date lateDateToPayFee;
 
-    @Column(name = "admit_card_date_from")
-    Date admitCardDateFrom;
+    @Nullable
+    @Column(name = "admit_card_date_from" )
+    protected Date admitCardDateFrom;
 
-    @Column(name = "admit_card_date_to")
-    Date adminCardDateTo;
+    @Nullable
+    @Column(name = "admit_card_date_to" )
+    protected Date admitCardDateTo;
 
-    @Column(name = "modification_date_from")
-    Date modificationDateFrom;
+    @Column(name = "modification_date_from" )
+    protected Date modificationDateFrom;
 
-    @Column(name = "modification_date_to")
-    Date modificationDateTo;
+    @Column(name = "modification_date_to" )
+    protected Date modificationDateTo;
 
     @Column(name = "download_notification_link")
-    String downloadNotificationLink;
+    protected String downloadNotificationLink;
 
     @Column(name = "download_syllabus_link")
-    String downloadSyllabusLink;
+    protected String downloadSyllabusLink;
 
     @Column(name = "form_complexity")
     @Min(value = 1, message = "Value must be between 1 and 5")
     @Max(value = 5, message = "Value must be between 1 and 5")
-    Long formComplexity;
+    protected Long formComplexity;
 
     @ManyToOne
-    @JoinColumn(name = "qualification")
-    Qualification qualification;
+    @JoinColumn(name = "qualification_id")
+    protected Qualification qualification;
+
     @ManyToOne
-    @JoinColumn(name ="stream")
-    CustomStream stream;
+    @JoinColumn(name ="stream_id")
+    protected CustomStream stream;
+
     @ManyToOne
-    @JoinColumn(name = "subject")
-    CustomSubject subject;
+    @JoinColumn(name = "subject_id")
+    protected CustomSubject subject;
+
     @ManyToOne
-    @JoinColumn(name = "gender_specific")
-    CustomGender gender_specific;
+    @JoinColumn(name = "gender_specific_id")
+    protected CustomGender genderSpecific;
+
     @Column(name = "selection_criteria")
-    String selectionCriteria;
+    protected String selectionCriteria;
+
     @ManyToOne
-    @JoinColumn(name = "sector")
-    CustomSector sector;
+    @JoinColumn(name = "sector_id")
+    protected CustomSector sector;
 
 }

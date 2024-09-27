@@ -15,9 +15,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+@RestController
 public class SectorController {
 
     private final ExceptionHandlingService exceptionHandlingService;
@@ -31,7 +33,7 @@ public class SectorController {
         this.staticDataService = staticDataService;
     }
 
-    @PostMapping("/add-subject")
+    @PostMapping("/add-sector")
     public ResponseEntity<?> addSubject(@RequestBody AddSectorDto addSectorDto, @RequestHeader(value = "Authorization") String authHeader) {
         try{
             if(!staticDataService.validiateAuthorization(authHeader)) {
@@ -63,9 +65,9 @@ public class SectorController {
     }
 
     @GetMapping("/get-sector-by-sector-id/{sectorId}")
-    public ResponseEntity<?> getSubjectById(@PathVariable Long subjectId) {
+    public ResponseEntity<?> getSubjectById(@PathVariable Long sectorId) {
         try {
-            CustomSector sector = sectorService.getSectorBySectorId(subjectId);
+            CustomSector sector = sectorService.getSectorBySectorId(sectorId);
             if (sector == null) {
                 return ResponseService.generateErrorResponse("NO SECTOR FOUND", HttpStatus.NOT_FOUND);
             }

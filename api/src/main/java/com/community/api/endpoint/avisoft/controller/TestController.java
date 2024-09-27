@@ -95,10 +95,10 @@ public class TestController {
     }
 
 
-    @PostMapping("/alter/document")
+    @PostMapping("/alter/CustomProduct")
     @Transactional
-    public String alterDocument(@RequestParam String userId) {
-        String sql = "ALTER TABLE Document ADD COLUMN role INTEGER";
+    public String alterDocument() {
+        String sql = "ALTER TABLE custom_product ALTER COLUMN admit_card_date_from SET DEFAULT NULL";
 
         try {
             entityManager.createNativeQuery(sql).executeUpdate();

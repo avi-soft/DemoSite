@@ -18,7 +18,7 @@ import javax.persistence.Table;
 public class CustomGender {
     @Id
     @Column(name="gender_id")
-    @JsonProperty("job_group_id")
+    @JsonProperty("gender_id")
     protected Long genderId;
 
     @Column(name="gender_symbol")
