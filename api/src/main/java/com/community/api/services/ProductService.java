@@ -10,11 +10,10 @@ import com.community.api.entity.CustomProduct;
 import com.community.api.entity.CustomProductRejectionStatus;
 import com.community.api.entity.CustomProductState;
 import com.community.api.entity.CustomReserveCategory;
+import com.community.api.entity.CustomSector;
 import com.community.api.entity.Privileges;
 import com.community.api.entity.Role;
 import com.community.api.services.exception.ExceptionHandlingService;
-import org.apache.commons.math3.analysis.function.Add;
-import org.apache.tomcat.util.bcel.Const;
 import org.broadleafcommerce.common.persistence.Status;
 import org.broadleafcommerce.core.catalog.domain.Category;
 import org.broadleafcommerce.core.catalog.domain.Product;
@@ -82,6 +81,8 @@ public class ProductService {
     DistrictService districtService;
     @Autowired
     GenderService genderService;
+    @Autowired
+    SectorService sectorService;
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -1177,6 +1178,53 @@ public class ProductService {
                 }
             }
 
+            return true;
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            throw new Exception("SOME EXCEPTION WHILE VALIDATING PHYSICAL REQUIREMENTS: " + exception.getMessage() + "\n");
+        }
+    }
+
+    public CustomGender validateGenderSpecificField(AddProductDto addProductDto) throws Exception {
+        try{
+            if(addProductDto.getGenderSpecific() != null) {
+                CustomGender customGender = genderService.getGenderByGenderId(addProductDto.getGenderSpecific());
+                if(customGender == null) {
+                    throw new IllegalArgumentException("NO GENDER FOUND WITH THIS ID");
+                }
+                return customGender;
+            }
+            return null;
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            throw new Exception("SOME EXCEPTION WHILE VALIDATING PHYSICAL REQUIREMENTS: " + exception.getMessage() + "\n");
+        }
+    }
+
+    public CustomSector validateSector(AddProductDto addProductDto) throws Exception {
+        try{
+            if(addProductDto.getSector() != null) {
+                CustomSector customSector = sectorService.getSectorBySectorId(addProductDto.getGenderSpecific());
+                if(customSector == null) {
+                    throw new IllegalArgumentException("NO SECTOR FOUND WITH THIS ID");
+                }
+                return customSector;
+            }
+            return null;
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            throw new Exception("SOME EXCEPTION WHILE VALIDATING PHYSICAL REQUIREMENTS: " + exception.getMessage() + "\n");
+        }
+    }
+
+    public Boolean validateSelectionCriteria(AddProductDto addProductDto) throws Exception {
+        try{
+            if(addProductDto.getSector() != null ) {
+                if(addProductDto.getSelectionCriteria().trim().isEmpty()) {
+                    throw new IllegalArgumentException("SELECTION CRITERIA CANNOT BE NULL");
+                }
+                addProductDto.setSelectionCriteria(addProductDto.getSelectionCriteria().trim());
+            }
             return true;
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);

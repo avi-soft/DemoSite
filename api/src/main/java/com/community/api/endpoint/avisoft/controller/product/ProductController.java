@@ -8,10 +8,12 @@ import com.community.api.dto.ReserveCategoryDto;
 import com.community.api.dto.CustomProductWrapper;
 
 import com.community.api.entity.CustomApplicationScope;
+import com.community.api.entity.CustomGender;
 import com.community.api.entity.CustomJobGroup;
 import com.community.api.entity.CustomProduct;
 import com.community.api.entity.CustomProductState;
 
+import com.community.api.entity.CustomSector;
 import com.community.api.entity.Role;
 import com.community.api.entity.StateCode;
 import com.community.api.services.DistrictService;
@@ -174,6 +176,9 @@ public class ProductController extends CatalogEndpoint {
             product.setDefaultSku(sku); // Set default SKU in the product
 
             productService.validateReserveCategory(addProductDto);
+            CustomGender customGender = productService.validateGenderSpecificField(addProductDto);
+            CustomSector customSector = productService.validateSector(addProductDto);
+            productService.validateSelectionCriteria(addProductDto);
 
             Role role = productService.getRoleByToken(authHeader);
             Long creatorUserId = productService.getUserIdByToken(authHeader);

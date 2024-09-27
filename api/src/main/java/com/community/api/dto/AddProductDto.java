@@ -107,7 +107,7 @@ public class AddProductDto {
     @JsonProperty("subject")
     Long subject;
     @JsonProperty("gender_specific")
-    Long gender_specific;
+    Long genderSpecific;
     @JsonProperty("selection_criteria")
     String selectionCriteria;
     @JsonProperty("sector")
