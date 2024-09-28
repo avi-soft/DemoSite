@@ -143,7 +143,7 @@ public class ServiceProviderTestService {
             String maxImageSize= ImageSizeConfig.convertBytesToReadableSize(Constant.MAX_FILE_SIZE);
             test.setIs_image_test_passed(false);
             entityManager.merge(test);
-            throw new IllegalArgumentException("Image size should be between " + minImageSize + " and " + maxImageSize);
+            throw new IllegalArgumentException("Resized image size should be between " + minImageSize + " and " + maxImageSize);
         }
 
         // Validate the image size using saveDocuments method logic
@@ -280,7 +280,7 @@ public class ServiceProviderTestService {
             String maxImageSize= ImageSizeConfig.convertBytesToReadableSize(Constant.MAX_FILE_SIZE);
             test.setIs_image_test_passed(false);
             entityManager.merge(test);
-            throw new IllegalArgumentException("Image size should be between " + minImageSize + " and " + maxImageSize);
+            throw new IllegalArgumentException("Signature image size should be between " + minImageSize + " and " + maxImageSize);
         }
         // Use the saveDocuments method to validate and store the signature image
         ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(signatureFile, "Signature Image", serviceProviderId, "SERVICE_PROVIDER");
