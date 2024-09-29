@@ -1263,6 +1263,10 @@ public class ProductService {
 
     public boolean validateAdmitCardDates(AddProductDto addProductDto) throws Exception {
         try {
+            if (addProductDto.getAdmitCardDateFrom() == null && addProductDto.getAdmitCardDateTo() == null) {
+                return true;
+            }
+
             if (addProductDto.getAdmitCardDateFrom() != null) {
                 dateFormat.parse(dateFormat.format(addProductDto.getAdmitCardDateFrom()));
             }
@@ -1272,32 +1276,38 @@ public class ProductService {
 
             if (addProductDto.getAdmitCardDateFrom() != null && addProductDto.getAdmitCardDateTo() != null) {
                 if (addProductDto.getAdmitCardDateFrom().after(addProductDto.getAdmitCardDateTo())) {
-                    throw new IllegalArgumentException("ADMIT CARD DATE FROM CANNOT BE OF FUTURE OF ADMIT CARD DATE TO");
-                }
-                if (!addProductDto.getAdmitCardDateFrom().after(addProductDto.getActiveEndDate())) {
-                    throw new IllegalArgumentException("ADMIT CARD DATE FROM HAS TO BE OF FUTURE OF ACTIVE END DATE");
-                }
-                if (!addProductDto.getAdmitCardDateTo().before(addProductDto.getExamDateFrom())) {
-                    throw new IllegalArgumentException("ADMIT CARD DATE TO HAS TO BE OF PAST OF EXAM DATE FROM");
+                    throw new IllegalArgumentException("Admit card date from cannot be of future of admit card date to.");
                 }
             } else if (addProductDto.getAdmitCardDateFrom() != null) {
-                if (!addProductDto.getAdmitCardDateFrom().after(addProductDto.getActiveEndDate())) {
-                    throw new IllegalArgumentException("ADMIT CARD DATE FROM HAS TO BE OF FUTURE OF ACTIVE END DATE");
-                }
-                if (!addProductDto.getAdmitCardDateFrom().before(addProductDto.getExamDateFrom())) {
-                    throw new IllegalArgumentException("ADMIT CARD DATE FROM HAS TO BE OF PAST OF EXAM DATE FROM");
-                }
                 addProductDto.setAdmitCardDateTo(addProductDto.getAdmitCardDateFrom());
             } else if (addProductDto.getAdmitCardDateTo() != null) {
-                if (!addProductDto.getAdmitCardDateTo().after(addProductDto.getActiveEndDate())) {
-                    throw new IllegalArgumentException("ADMIT CARD DATE FROM HAS TO BE OF FUTURE OF ACTIVE END DATE");
-                }
-                if (!addProductDto.getAdmitCardDateTo().before(addProductDto.getExamDateFrom())) {
-                    throw new IllegalArgumentException("ADMIT CARD DATE FROM HAS TO BE OF PAST OF EXAM DATE FROM");
-                }
                 addProductDto.setAdmitCardDateFrom(addProductDto.getAdmitCardDateTo());
             }
+
+            if (!addProductDto.getExamDateFrom().after(addProductDto.getAdmitCardDateTo())) {
+                throw new IllegalArgumentException("Admit card to cannot be future of exam date from.");
+            }
+
+            if(addProductDto.getModificationDateTo() != null) {
+                dateFormat.parse(dateFormat.format(addProductDto.getModificationDateTo()));
+                if(!addProductDto.getAdmitCardDateFrom().after(addProductDto.getModificationDateTo())) {
+                    throw new IllegalArgumentException("Admit card date from must be of future of modification date to.");
+                }
+            } else if(addProductDto.getLastDateToPayFee() != null){
+                dateFormat.parse(dateFormat.format(addProductDto.getLastDateToPayFee()));
+                if(!addProductDto.getAdmitCardDateFrom().after(addProductDto.getLastDateToPayFee())) {
+                    throw new IllegalArgumentException("Admit card date from must be of future of last date to pay application fee.");
+                }
+            } else {
+                if(!addProductDto.getAdmitCardDateFrom().after(addProductDto.getActiveEndDate())) {
+                    throw new IllegalArgumentException("Admit card date from must be of future of active end date.");
+                }
+            }
+
             return true;
+        } catch (IllegalArgumentException illegalArgumentException) {
+            exceptionHandlingService.handleException(illegalArgumentException);
+            throw new IllegalArgumentException(illegalArgumentException.getMessage() + "\n");
         } catch (ParseException parseException) {
             exceptionHandlingService.handleException(parseException);
             throw new Exception("PARSE EXCEPTION CAUGHT WHILE VALIDATING ADMIT CARD DATES: " + parseException.getMessage() + "\n");
@@ -1309,6 +1319,11 @@ public class ProductService {
 
     public boolean validateModificationDates(AddProductDto addProductDto) throws Exception {
         try {
+
+            if(addProductDto.getModificationDateFrom() == null && addProductDto.getModificationDateTo() == null){
+                return true;
+            }
+
             if (addProductDto.getModificationDateFrom() != null) {
                 dateFormat.parse(dateFormat.format(addProductDto.getModificationDateFrom()));
             }
@@ -1318,80 +1333,89 @@ public class ProductService {
 
             if (addProductDto.getModificationDateFrom() != null && addProductDto.getModificationDateTo() != null) {
                 if (addProductDto.getModificationDateFrom().after(addProductDto.getModificationDateTo())) {
-                    throw new IllegalArgumentException("MODIFICATION DATE FROM CANNOT BE OF FUTURE OF MODIFICATION DATE TO");
+                    throw new IllegalArgumentException("Modification date from cannot be of future of modification date to.");
                 }
-                if (addProductDto.getAdmitCardDateFrom() != null) {
-                    if (addProductDto.getModificationDateFrom().after(addProductDto.getAdmitCardDateFrom())) {
-                        throw new IllegalArgumentException("MODIFICATION DATE FROM CANNOT BE OF FUTURE OF ADMIT CARD DATE FROM");
-                    }
-                } else {
-                    if (addProductDto.getModificationDateFrom().after(addProductDto.getActiveEndDate())) {
-                        throw new IllegalArgumentException("MODIFICATION DATE FROM CANNOT BE OF FUTURE OF ACTIVE END DATE");
-                    }
-                }
+
             } else if (addProductDto.getAdmitCardDateFrom() != null) {
                 addProductDto.setModificationDateTo(addProductDto.getModificationDateFrom());
-                if (addProductDto.getModificationDateFrom().after(addProductDto.getModificationDateTo())) {
-                    throw new IllegalArgumentException("MODIFICATION DATE FROM CANNOT BE OF FUTURE OF MODIFICATION DATE TO");
-                }
-                if (addProductDto.getAdmitCardDateFrom() != null) {
-                    if (addProductDto.getModificationDateFrom().after(addProductDto.getAdmitCardDateFrom())) {
-                        throw new IllegalArgumentException("MODIFICATION DATE FROM CANNOT BE OF FUTURE OF ADMIT CARD DATE FROM");
-                    }
-                } else {
-                    if (addProductDto.getModificationDateFrom().after(addProductDto.getActiveEndDate())) {
-                        throw new IllegalArgumentException("MODIFICATION DATE FROM CANNOT BE OF FUTURE OF ACTIVE END DATE");
-                    }
-                }
             } else if (addProductDto.getAdmitCardDateTo() != null) {
                 addProductDto.setModificationDateFrom(addProductDto.getModificationDateTo());
-                if (addProductDto.getModificationDateFrom().after(addProductDto.getModificationDateTo())) {
-                    throw new IllegalArgumentException("MODIFICATION DATE FROM CANNOT BE OF FUTURE OF MODIFICATION DATE TO");
+            }
+
+            if (addProductDto.getAdmitCardDateFrom() != null) {
+                if (addProductDto.getModificationDateTo().after(addProductDto.getAdmitCardDateFrom())) {
+                    throw new IllegalArgumentException("Modification date to cannot be of future of admit card date from.");
                 }
-                if (addProductDto.getAdmitCardDateFrom() != null) {
-                    if (addProductDto.getModificationDateFrom().after(addProductDto.getAdmitCardDateFrom())) {
-                        throw new IllegalArgumentException("MODIFICATION DATE FROM CANNOT BE OF FUTURE OF ADMIT CARD DATE FROM");
-                    }
-                } else {
-                    if (addProductDto.getModificationDateFrom().after(addProductDto.getActiveEndDate())) {
-                        throw new IllegalArgumentException("MODIFICATION DATE FROM CANNOT BE OF FUTURE OF ACTIVE END DATE");
-                    }
+            } else {
+                if (addProductDto.getModificationDateTo().after(addProductDto.getExamDateFrom())) {
+                    throw new IllegalArgumentException("Modification date to cannot be of future of exam date from");
                 }
             }
+
+            if (addProductDto.getLastDateToPayFee() != null) {
+                dateFormat.parse(dateFormat.format(addProductDto.getLastDateToPayFee()));
+
+                if (!addProductDto.getModificationDateFrom().after(addProductDto.getLastDateToPayFee())) {
+                    throw new IllegalArgumentException("Modification date from has to be future of last date to pay application fee.");
+                }
+            } else {
+                if (!addProductDto.getModificationDateFrom().after(addProductDto.getActiveEndDate())) {
+                    throw new IllegalArgumentException("Modification date from has to be future of active end date.");
+                }
+            }
+
             return true;
+        } catch (IllegalArgumentException illegalArgumentException) {
+            exceptionHandlingService.handleException(illegalArgumentException);
+            throw new IllegalArgumentException(illegalArgumentException.getMessage() + "\n");
         } catch (ParseException parseException) {
             exceptionHandlingService.handleException(parseException);
-            throw new Exception("PARSE EXCEPTION CAUGHT WHILE VALIDATING MODIFICATION DATES: " + parseException.getMessage() + "\n");
+            throw new Exception("Parse exception caught while validating modification dates: " + parseException.getMessage() + "\n");
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            throw new Exception("SOME EXCEPTION OCCURRED: " + exception.getMessage());
+            throw new Exception("Some exception occurred while validating modification dates: " + exception.getMessage());
         }
     }
 
     public boolean validateLastDateToPayFee(AddProductDto addProductDto) throws Exception {
         try {
+
+            if(addProductDto.getLastDateToPayFee() == null){
+                return true;
+            }
+
             if (addProductDto.getLastDateToPayFee() != null) {
                 dateFormat.parse(dateFormat.format(addProductDto.getLastDateToPayFee()));
             }
 
-            if (addProductDto.getLastDateToPayFee() != null) {
-//                if(addProductDto.getLastDateToPayFee().before(addProductDto.getActiveEndDate())){
-//                    throw new IllegalArgumentException("LAST DATE TO PAY FEE CANNOT BE PAST OF ACTIVE END DATE");
-//                }
-                if (addProductDto.getModificationDateFrom() != null && addProductDto.getLastDateToPayFee().before(addProductDto.getModificationDateFrom())) {
-                    throw new IllegalArgumentException("LAST DATE TO PAY FEE CANNOT BE AFTER OR EQUAL TO MODIFYING DATE FROM");
+            if (addProductDto.getModificationDateFrom() != null) {
+                if (addProductDto.getLastDateToPayFee().after(addProductDto.getModificationDateFrom())) {
+                    throw new IllegalArgumentException("Last date to pay fee cannot be after or equal to modifying date from.");
                 }
-//                if(addProductDto.getModificationDateFrom()!= null && addProductDto.getLastDateToPayFee().before(addProductDto.getAdmitCardDateFrom())) {
-//                    throw new IllegalArgumentException("LAST DATE TO PAY FEE CANNOT BE AFTER OR EQUAL TO ADMIT CARD DATE FROM");
-//                }
+            } else if (addProductDto.getAdmitCardDateFrom() != null) {
+                if (addProductDto.getLastDateToPayFee().after(addProductDto.getAdmitCardDateFrom())) {
+                    throw new IllegalArgumentException("Last date to pay fee cannot be after or equal to admit card date from.");
+                }
+            } else {
+                if (addProductDto.getLastDateToPayFee().after(addProductDto.getExamDateFrom())) {
+                    throw new IllegalArgumentException("Last date to pay fee cannot be after or equal to exam date from.");
+                }
             }
+
+            if(!addProductDto.getLastDateToPayFee().after(addProductDto.getActiveEndDate())) {
+                throw  new IllegalArgumentException("Last date to pay application fee has to future of active end date");
+            }
+
             return true;
+        } catch (IllegalArgumentException illegalArgumentException) {
+            exceptionHandlingService.handleException(illegalArgumentException);
+            throw new IllegalArgumentException(illegalArgumentException.getMessage() + "\n");
         } catch (ParseException parseException) {
             exceptionHandlingService.handleException(parseException);
-            throw new Exception("PARSE EXCEPTION CAUGHT WHILE VALIDATING MODIFICATION DATES: " + parseException.getMessage() + "\n");
+            throw new Exception("Parse exception caught while validating last date to pay application fee: " + parseException.getMessage() + "\n");
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            throw new Exception("SOME EXCEPTION OCCURRED: " + exception.getMessage());
+            throw new Exception("Some exception occurred while validating last date to pay application fee: " + exception.getMessage());
         }
     }
 
@@ -1414,7 +1438,7 @@ public class ProductService {
         } catch (IllegalArgumentException illegalArgumentException) {
             exceptionHandlingService.handleException(illegalArgumentException);
             throw new IllegalArgumentException(illegalArgumentException.getMessage() + "\n");
-        }  catch (Exception exception) {
+        } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             throw new Exception("Some exception occurred while validating links: " + exception.getMessage());
         }
@@ -1439,8 +1463,12 @@ public class ProductService {
 
     public boolean validatePhysicalRequirement(AddProductDto addProductDto) throws Exception {
         try {
+            CustomGender gender = null;
+            if(addProductDto.getGenderSpecific() != null) {
+                gender = genderService.getGenderByGenderId(addProductDto.getGenderSpecific());
+            }
 
-            if (addProductDto.getPhysicalRequirement() != null) {
+            if (!addProductDto.getPhysicalRequirement().isEmpty()) {
                 Set<Long> genderId = new HashSet<>();
 
                 for (int physicalAttributeIndex = 0; physicalAttributeIndex < addProductDto.getPhysicalRequirement().size(); physicalAttributeIndex++) {
@@ -1452,6 +1480,9 @@ public class ProductService {
                     CustomGender customGender = genderService.getGenderByGenderId(addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getGenderId());
                     if (customGender == null) {
                         throw new IllegalArgumentException("GENDER NOT FOUND WITH ID: " + addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getGenderId());
+                    }
+                    if(addProductDto.getGenderSpecific() != null && customGender != gender){
+                        throw new IllegalArgumentException("Gender id is not matched with the specific gender.");
                     }
 
                     if (addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getHeight() == null || addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getHeight() > Constant.MAX_HEIGHT || addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getHeight() < Constant.MIN_HEIGHT) {
