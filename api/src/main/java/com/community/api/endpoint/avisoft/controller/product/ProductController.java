@@ -134,10 +134,6 @@ public class ProductController extends CatalogEndpoint {
             }
 
             Category category = productService.validateCategory(categoryId);
-            if (category == null || ((Status) category).getArchived() != 'Y') {
-                ResponseService.generateErrorResponse("CATEGORY NOT FOUND", HttpStatus.NOT_FOUND);
-            }
-
             productService.addProductDtoValidation(addProductDto);
 
             Product product = catalogService.createProduct(ProductType.PRODUCT);
@@ -162,16 +158,15 @@ public class ProductController extends CatalogEndpoint {
             sku.setDescription(addProductDto.getMetaDescription());
             sku.setActiveEndDate(addProductDto.getActiveEndDate());
             sku.setDefaultProduct(product);
-//            catalogService.saveSku(sku); // this was creating duplicate entries in the db.
 
             CustomJobGroup customJobGroup = productService.validateCustomJobGroup(addProductDto.getJobGroup());
             if (customJobGroup == null) {
-                ResponseService.generateErrorResponse("CUSTOM JOB GROUP NOT FOUND", HttpStatus.NOT_FOUND);
+                ResponseService.generateErrorResponse("Custom job group not found.", HttpStatus.NOT_FOUND);
             }
 
             CustomProductState customProductState = productStateService.getProductStateByName(PRODUCT_STATE_NEW);
             if (customProductState == null) {
-                ResponseService.generateErrorResponse("CUSTOM PRODUCT STATE NOT FOUND", HttpStatus.NOT_FOUND);
+                ResponseService.generateErrorResponse("Custom product state not found.", HttpStatus.NOT_FOUND);
             }
 
             product.setDefaultSku(sku); // Set default SKU in the product
@@ -179,13 +174,17 @@ public class ProductController extends CatalogEndpoint {
             productService.validateReserveCategory(addProductDto);
             CustomGender customGender = productService.validateGenderSpecificField(addProductDto);
             CustomSector customSector = productService.validateSector(addProductDto);
+
             productService.validateSelectionCriteria(addProductDto);
+
             Qualification qualification = productService.validateQualification(addProductDto);
             CustomStream customStream = productService.validateStream(addProductDto);
             CustomSubject customSubject = productService.validateSubject(addProductDto);
+
             productService.validateAdmitCardDates(addProductDto);
             productService.validateModificationDates(addProductDto);
             productService.validateLastDateToPayFee(addProductDto);
+
             productService.validateLinks(addProductDto);
             productService.validateFormComplexity(addProductDto);
 
@@ -200,7 +199,7 @@ public class ProductController extends CatalogEndpoint {
             CustomApplicationScope applicationScope = applicationScopeService.getApplicationScopeById(addProductDto.getApplicationScope());
 
             StateCode notifyingAuthority = null;
-            if(addProductDto.getNotifyingAuthority() != null) {
+            if (addProductDto.getNotifyingAuthority() != null) {
                 notifyingAuthority = districtService.getStateByStateId(addProductDto.getNotifyingAuthority());
             }
 
@@ -242,7 +241,7 @@ public class ProductController extends CatalogEndpoint {
             }
 
             // Validations and checks.
-            if(addProductDto.getReservedCategory() != null) {
+            if (addProductDto.getReservedCategory() != null) {
                 productService.validateReserveCategory(addProductDto);
                 productService.deleteOldReserveCategoryMapping(customProduct);
             }
@@ -268,7 +267,7 @@ public class ProductController extends CatalogEndpoint {
 
             Product product = catalogService.findProductById(customProduct.getId());
 
-            if(addProductDto.getReservedCategory() != null) {
+            if (addProductDto.getReservedCategory() != null) {
                 productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getReservedCategory(), product);
                 productReserveCategoryBornBeforeAfterRefService.saveBornBeforeAndBornAfter(addProductDto.getReservedCategory(), product);
             }

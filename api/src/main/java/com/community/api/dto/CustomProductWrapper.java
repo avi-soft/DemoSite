@@ -129,6 +129,8 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
     CustomStream customStream;
     @JsonProperty("subject")
     CustomSubject customSubject;
+    @JsonProperty("selection_criteria")
+    String selectionCriteria;
 
     public void wrapDetailsAddProduct(Product product, AddProductDto addProductDto, CustomJobGroup customJobGroup, CustomProductState customProductState, CustomApplicationScope customApplicationScope, Long creatorUserId, Role creatorRole, ReserveCategoryService reserveCategoryService, StateCode notifyingAuthority, CustomGender customGender, CustomSector customSector, Qualification qualification, CustomStream customStream, CustomSubject customSubject) throws Exception {
 
@@ -199,7 +201,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.qualification = qualification;
         this.customStream = customStream;
         this.customSubject = customSubject;
-
+        this.selectionCriteria = addProductDto.getSelectionCriteria();
         if (product.getDefaultCategory() != null) {
             this.defaultCategoryId = product.getDefaultCategory().getId();
         }

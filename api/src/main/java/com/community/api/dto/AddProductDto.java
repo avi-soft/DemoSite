@@ -20,19 +20,15 @@ public class AddProductDto {
     @NotNull
     String metaTitle;
 
-    @JsonProperty("fee")
-    @NotNull
-    Double fee;
-
     @JsonProperty("platform_fee")
     @NotNull
     Double platformFee;
 
-    @JsonProperty("application_scope")
+    @JsonProperty("application_scope_id")
     @NotNull
     Long applicationScope;
 
-    @JsonProperty("job_group")
+    @JsonProperty("job_group_id")
     Long jobGroup;
 
     @Temporal(TemporalType.TIMESTAMP)
@@ -47,12 +43,6 @@ public class AddProductDto {
     @Temporal(TemporalType.TIMESTAMP)
     @JsonProperty("exam_date_to")
     Date examDateTo;
-    @Temporal(TemporalType.TIMESTAMP)
-    @JsonProperty("born_after")
-    Date bornAfter;
-    @Temporal(TemporalType.TIMESTAMP)
-    @JsonProperty("born_before")
-    Date bornBefore;
 
     @JsonProperty("priority_level")
     Integer priorityLevel;
@@ -65,10 +55,8 @@ public class AddProductDto {
     @JsonProperty("physical_requirement")
     List<AddPhysicalRequirementDto> physicalRequirement;
 
-    @JsonProperty("notifying_authority")
+    @JsonProperty("notifying_authority_id")
     Integer notifyingAuthority;
-    @JsonProperty("post")
-    Integer post;
     @JsonProperty("quantity")
     Integer quantity;
     @JsonProperty("advertiser_url")
@@ -117,4 +105,5 @@ public class AddProductDto {
     String selectionCriteria;
     @JsonProperty("sector_id")
     Long sector;
+
 }
