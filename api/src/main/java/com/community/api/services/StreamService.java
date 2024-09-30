@@ -12,10 +12,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.util.Collections;
 import java.util.List;
+
+import static com.community.api.component.Constant.GET_STREAM_BY_STREAM_ID;
 
 @Service
 public class StreamService {
@@ -58,22 +61,22 @@ public class StreamService {
         }
     }
 
-    public CustomStream getStreamByStreamId(Long streamId) {
+    public CustomStream getStreamByStreamId(Long streamId) throws Exception {
         try {
 
-            Query query = entityManager.createQuery(Constant.GET_STREAM_BY_STREAM_ID, CustomStream.class);
+            Query query = entityManager.createQuery(GET_STREAM_BY_STREAM_ID, CustomStream.class);
             query.setParameter("streamId", streamId);
             List<CustomStream> stream = query.getResultList();
 
             if (!stream.isEmpty()) {
                 return stream.get(0);
             } else {
-                return null;
+                throw new NoResultException("No stream found with this id.");
             }
 
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return null;
+            throw new Exception("Exception caught while fetching stream: " + exception.getMessage());
         }
     }
 

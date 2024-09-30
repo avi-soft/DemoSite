@@ -13,6 +13,9 @@ import javax.persistence.Query;
 import java.util.Collections;
 import java.util.List;
 
+import static com.community.api.component.Constant.GET_ALL_SECTOR;
+import static com.community.api.component.Constant.GET_SECTOR_BY_SECTOR_ID;
+
 @Service
 public class SectorService {
 
@@ -24,7 +27,7 @@ public class SectorService {
 
     public List<CustomSector> getAllSector() {
         try {
-            List<CustomSector> sectorList = entityManager.createQuery(Constant.GET_ALL_SECTOR, CustomSector.class).getResultList();
+            List<CustomSector> sectorList = entityManager.createQuery(GET_ALL_SECTOR, CustomSector.class).getResultList();
             return sectorList;
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
@@ -32,36 +35,36 @@ public class SectorService {
         }
     }
 
-    public CustomSector getSectorBySectorId(Long sectorId) {
+    public CustomSector getSectorBySectorId(Long sectorId) throws Exception {
         try {
 
-            Query query = entityManager.createQuery(Constant.GET_SECTOR_BY_SECTOR_ID, CustomSector.class);
+            Query query = entityManager.createQuery(GET_SECTOR_BY_SECTOR_ID, CustomSector.class);
             query.setParameter("sectorId", sectorId);
             List<CustomSector> sector = query.getResultList();
 
             if (!sector.isEmpty()) {
                 return sector.get(0);
             } else {
-                return null;
+                throw new IllegalArgumentException("No sector found with this id.");
             }
 
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return null;
+            throw new Exception("Exception caught while fetching sector: " + exception.getMessage());
         }
     }
     public Boolean validateAddSubjectDto(AddSectorDto addSectorDto) throws Exception {
         try{
-            if(addSectorDto.getSectorName() == null || addSectorDto.getSectorDescription().trim().isEmpty()) {
-                throw new IllegalArgumentException("SECTOR NAME CANNOT BE NULL OR EMPTY");
+            if(addSectorDto.getSectorName() == null || addSectorDto.getSectorName().trim().isEmpty()) {
+                throw new IllegalArgumentException("Sector name cannot be null or empty.");
             }
             if(addSectorDto.getSectorDescription() != null && addSectorDto.getSectorDescription().trim().isEmpty()) {
-                throw new IllegalArgumentException("SECTOR DESCRIPTION CANNOT BE EMPTY");
+                throw new IllegalArgumentException("Sector description cannot be empty.");
             }
             return true;
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            throw new Exception("SOME EXCEPTION OCCURRED: "+ exception.getMessage());
+            throw new Exception("Exception caught while fetching sector: "+ exception.getMessage());
         }
     }
 
@@ -73,11 +76,11 @@ public class SectorService {
 
             int affectedRow = query.executeUpdate();
             if(affectedRow <= 0){
-                throw new IllegalArgumentException("ENTRY NOT ADDED IN THE DB");
+                throw new IllegalArgumentException("Entry not added.");
             }
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            throw new Exception("SOME EXCEPTION OCCURRED: "+ exception.getMessage());
+            throw new Exception("Exception caught while fetching sector: "+ exception.getMessage());
         }
     }
 }

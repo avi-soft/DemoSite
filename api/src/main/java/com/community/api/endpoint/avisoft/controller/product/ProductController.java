@@ -226,21 +226,21 @@ public class ProductController extends CatalogEndpoint {
 
     @Transactional
     @PutMapping("/update/{productId}")
-    public ResponseEntity<?> updateProduct(HttpServletRequest request, @RequestBody AddProductDto addProductDto, @PathVariable Long productId, @RequestHeader(value = "Authorization") String authHeader) {
+    public ResponseEntity<?> updateProduct(@RequestBody AddProductDto addProductDto, @PathVariable Long productId, @RequestHeader(value = "Authorization") String authHeader) {
 
         try {
 
             if (!productService.updateProductAccessAuthorisation(authHeader, productId)) {
-                return ResponseService.generateErrorResponse("NOT AUTHORIZED TO UPDATE PRODUCT", HttpStatus.FORBIDDEN);
+                return ResponseService.generateErrorResponse("Not authorized to update product.", HttpStatus.FORBIDDEN);
             }
 
             if (catalogService == null) {
-                return ResponseService.generateErrorResponse(Constant.CATALOG_SERVICE_NOT_INITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
+                return ResponseService.generateErrorResponse(CATALOG_SERVICE_NOT_INITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
             CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
             if (customProduct == null) {
-                return ResponseService.generateErrorResponse(Constant.PRODUCTNOTFOUND, HttpStatus.NOT_FOUND);
+                return ResponseService.generateErrorResponse(PRODUCTNOTFOUND, HttpStatus.NOT_FOUND);
             }
 
             // Validations and checks.
@@ -251,9 +251,9 @@ public class ProductController extends CatalogEndpoint {
             productService.updateProductValidation(addProductDto, customProduct);
 
             // Validation of getActiveEndDate and getGoLiveDate.
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); // Set active start date to current date and time in "yyyy-MM-dd HH:mm:ss" format
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String formattedDate = dateFormat.format(new Date());
-            Date currentDate = dateFormat.parse(formattedDate); // Convert formatted date string back to Date
+            Date currentDate = dateFormat.parse(formattedDate);
             customProduct.setModifiedDate(currentDate);
 
             productService.validateAndSetActiveEndDateAndGoLiveDateFields(addProductDto, customProduct);

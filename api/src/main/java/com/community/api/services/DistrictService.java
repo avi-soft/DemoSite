@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import java.util.List;
@@ -20,11 +21,13 @@ public class DistrictService {
     private EntityManager entityManager;
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
+
     public List<Districts> findDistrictsByStateCode(String state_code) {
-            TypedQuery<Districts> query = entityManager.createQuery(Constant.DISTRICT_QUERY, Districts.class);
-        query.setParameter("state_code",state_code);
+        TypedQuery<Districts> query = entityManager.createQuery(Constant.DISTRICT_QUERY, Districts.class);
+        query.setParameter("state_code", state_code);
         return query.getResultList();
     }
+
     public String findDistrictById(int district_id) {
         return entityManager.createQuery(Constant.FIND_DISTRICT, String.class)
                 .setParameter("district_id", district_id)
@@ -32,7 +35,8 @@ public class DistrictService {
                 .findFirst()
                 .orElse(null);
     }
-        public String findStateById(int state_id) {
+
+    public String findStateById(int state_id) {
 
         return entityManager.createQuery(Constant.FIND_STATE, String.class)
                 .setParameter("state_id", state_id)
@@ -40,22 +44,29 @@ public class DistrictService {
                 .findFirst()
                 .orElse(null);
     }
+
     public List<StateCode> findStateList() {
         TypedQuery<StateCode> query = entityManager.createQuery(Constant.GET_STATES_LIST, StateCode.class);
         return query.getResultList();
     }
+
     public StateCode getStateByStateId(int stateId) throws Exception {
-        try{
+        try {
             Query query = entityManager.createQuery(Constant.GET_STATE_BY_STATE_ID, StateCode.class);
             query.setParameter("stateId", stateId);
 
             List<StateCode> stateCode = query.getResultList();
-            return stateCode.get(0);
+
+            if (!stateCode.isEmpty()) {
+                return stateCode.get(0);
+            } else {
+                throw new NoResultException("No state found with this id.");
+            }
         } catch (NumberFormatException numberFormatException) {
-            throw new NumberFormatException("NUMBER FORMAT EXCEPTION: " + numberFormatException.getMessage());
+            throw new NumberFormatException("Number format exception: " + numberFormatException.getMessage());
         } catch (Exception exception) {
             exceptionHandling.handleException(exception);
-            throw new Exception("SOME EXCEPTION OCCURED: "+ exception.getMessage());
+            throw new Exception("Some exception occurred: " + exception.getMessage());
         }
     }
 }

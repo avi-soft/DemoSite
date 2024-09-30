@@ -10,12 +10,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 import java.util.List;
 
 import static com.community.api.component.Constant.FIND_ALL_QUALIFICATIONS_QUERY;
+import static com.community.api.component.Constant.GET_QUALIFICATION_BY_ID;
 
 @Service
 public class QualificationService {
@@ -83,19 +85,19 @@ public class QualificationService {
     public Qualification getQualificationByQualificationId(Long qualificationId) throws Exception {
         try {
 
-            Query query = entityManager.createQuery(Constant.GET_QUALIFICATION_BY_ID, Qualification.class);
+            Query query = entityManager.createQuery(GET_QUALIFICATION_BY_ID, Qualification.class);
             query.setParameter("qualificationId", qualificationId);
             List<Qualification> qualification = query.getResultList();
 
             if (!qualification.isEmpty()) {
                 return qualification.get(0);
             } else {
-                return null;
+                throw new NoResultException("No qualification found with this id.");
             }
 
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            throw new Exception("SOMETHING WENT WRONG: "+ exception.getMessage());
+            throw new Exception("Exception caught while fetching qualification: "+ exception.getMessage());
         }
     }
 }

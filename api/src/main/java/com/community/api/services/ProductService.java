@@ -820,32 +820,39 @@ public class ProductService {
         try {
             if (addProductDto.getQuantity() != null) {
                 if (addProductDto.getQuantity() <= 0) {
-                    throw new IllegalArgumentException("QUANTITY CANNOT BE EMPTY <= 0");
+                    throw new IllegalArgumentException("Quantity cannot be empty <= 0.");
                 }
                 customProduct.getDefaultSku().setQuantityAvailable(addProductDto.getQuantity());
             }
 
             if (addProductDto.getPriorityLevel() != null) {
                 if (addProductDto.getPriorityLevel() <= 0 || addProductDto.getPriorityLevel() > 5) {
-                    throw new IllegalArgumentException("PRIORITY LEVEL MUST BE BETWEEN 1-5");
+                    throw new IllegalArgumentException("Priority level must be between 1-5.");
                 }
                 customProduct.setPriorityLevel(addProductDto.getPriorityLevel());
             }
 
-            if (addProductDto.getMetaTitle() != null && !addProductDto.getMetaTitle().trim().isEmpty()) {
+            if (addProductDto.getMetaTitle() != null) {
+                if(addProductDto.getMetaTitle().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Meta title cannot be empty.");
+                }
                 addProductDto.setMetaTitle(addProductDto.getMetaTitle().trim());
                 customProduct.setMetaTitle(addProductDto.getMetaTitle());
                 customProduct.getDefaultSku().setName(addProductDto.getMetaTitle());
             }
 
-            if (addProductDto.getDisplayTemplate() != null && !addProductDto.getDisplayTemplate().trim().isEmpty()) {
-                customProduct.setDisplayTemplate(addProductDto.getDisplayTemplate().trim());
+            if (addProductDto.getDisplayTemplate() != null) {
+                if(addProductDto.getDisplayTemplate().trim().isEmpty()) {
+                   throw new IllegalArgumentException("Display title cannot be empty.");
+                }
+                addProductDto.setDisplayTemplate(addProductDto.getDisplayTemplate().trim());
+                customProduct.setDisplayTemplate(addProductDto.getDisplayTemplate());
             }
 
-            if ((addProductDto.getPriorityLevel() != null) && (addProductDto.getPriorityLevel() <= 0 || addProductDto.getPriorityLevel() > 5)) {
-                throw new IllegalArgumentException("PRIORITY LEVEL MUST LIE BETWEEN 1-5");
-            }
-            if (addProductDto.getMetaDescription() != null && !addProductDto.getMetaDescription().trim().isEmpty()) {
+            if (addProductDto.getMetaDescription() != null) {
+                if(addProductDto.getMetaDescription().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Meta Description cannot be empty.");
+                }
                 addProductDto.setMetaDescription(addProductDto.getMetaDescription().trim());
                 customProduct.setMetaDescription(addProductDto.getMetaDescription());
                 customProduct.getDefaultSku().setDescription(addProductDto.getMetaDescription());
@@ -856,52 +863,45 @@ public class ProductService {
 
                 jobGroup = jobGroupService.getJobGroupById(addProductDto.getJobGroup());
                 if (jobGroup == null) {
-                    throw new IllegalArgumentException("NO JOB GROUP EXISTS WITH THIS JOB GROUP ID");
+                    throw new IllegalArgumentException("No job group exists with this job group id.");
                 }
                 customProduct.setJobGroup(jobGroup);
             }
 
             if (addProductDto.getPlatformFee() != null) {
                 if (addProductDto.getPlatformFee() <= 0) {
-                    throw new IllegalArgumentException("PLATFORM FEE CANNOT BE LESS THAN OR EQUAL TO ZERO");
+                    throw new IllegalArgumentException("Platform fee cannot be less than or equal to zero.");
                 }
                 customProduct.setPlatformFee(addProductDto.getPlatformFee());
             }
 
             if (addProductDto.getApplicationScope() != null) {
                 CustomApplicationScope applicationScope = applicationScopeService.getApplicationScopeById(addProductDto.getApplicationScope());
-                if (applicationScope == null) {
-                    throw new IllegalArgumentException("NO APPLICATION SCOPE EXISTS WITH THIS ID");
-                } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE) && customProduct.getCustomApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE)) {
-                    if (addProductDto.getState() != null && districtService.getStateByStateId(addProductDto.getState()) != null) {
-                        customProduct.setState(districtService.getStateByStateId(addProductDto.getState()));
-                        customProduct.setCustomApplicationScope(applicationScope);
-                    } else {
-                        throw new IllegalArgumentException("STATE NOT FOUND");
+
+                if (applicationScope.getApplicationScope().equals(APPLICATION_SCOPE_STATE) && customProduct.getCustomApplicationScope().getApplicationScope().equals(APPLICATION_SCOPE_STATE)) {
+                    if (addProductDto.getState() != null) {
+                        StateCode state = districtService.getStateByStateId(addProductDto.getState());
+                        customProduct.setState(state);
                     }
 
                     if (addProductDto.getDomicileRequired() != null) {
                         customProduct.setDomicileRequired(addProductDto.getDomicileRequired());
-                        customProduct.setCustomApplicationScope(applicationScope);
                     }
-                } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE) && customProduct.getCustomApplicationScope().getApplicationScope().equals(Constant.APPLICATION_SCOPE_CENTER)) {
+                } else if (applicationScope.getApplicationScope().equals(APPLICATION_SCOPE_STATE) && customProduct.getCustomApplicationScope().getApplicationScope().equals(APPLICATION_SCOPE_CENTER)) {
                     if (addProductDto.getState() == null || addProductDto.getDomicileRequired() == null) {
-                        throw new IllegalArgumentException("DOMICILE AND STATE ARE REQUIRED FIELDS FOR STATE APPLICATION SCOPE");
+                        throw new IllegalArgumentException("Domicile required and state are required fields for state application scope.");
                     }
 
-                    if (districtService.getStateByStateId(addProductDto.getState()) != null) {
-                        customProduct.setState(districtService.getStateByStateId(addProductDto.getState()));
-                    } else {
-                        throw new IllegalArgumentException("STATE IS NOT FOUND");
-                    }
+                    StateCode state = districtService.getStateByStateId(addProductDto.getState());
+                    customProduct.setState(state);
                     customProduct.setDomicileRequired(addProductDto.getDomicileRequired());
                     customProduct.setCustomApplicationScope(applicationScope);
                 } else if (applicationScope.getApplicationScope().equals(APPLICATION_SCOPE_CENTER)) {
                     if (addProductDto.getState() != null) {
-                        throw new IllegalArgumentException("STATE NOT REQUIRED IN CASE OF CENTER LEVEL APPLICATION SCOPE");
+                        throw new IllegalArgumentException("State not required in case of center level application scope.");
                     }
-                    if (addProductDto.getDomicileRequired() != null && addProductDto.getDomicileRequired()) {
-                        throw new IllegalArgumentException("DOMICILE IS NOT REQUIRED IN CASE OF CENTER APPLICATION SCOPE");
+                    if (addProductDto.getDomicileRequired() != null) {
+                        throw new IllegalArgumentException("Domicile is not required in case of center application scope.");
                     }
 
                     addProductDto.setDomicileRequired(false);
@@ -912,9 +912,71 @@ public class ProductService {
                 }
             }
 
-            if (addProductDto.getAdvertiserUrl() != null && !addProductDto.getAdvertiserUrl().trim().isEmpty()) {
+            if (addProductDto.getAdvertiserUrl() != null) {
+                if(addProductDto.getAdvertiserUrl().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Advertiser url cannot be empty.");
+                }
                 addProductDto.setAdvertiserUrl(addProductDto.getAdvertiserUrl().trim());
                 customProduct.setAdvertiserUrl(addProductDto.getAdvertiserUrl());
+            }
+
+            if(addProductDto.getDownloadNotificationLink() != null) {
+                if(addProductDto.getDownloadNotificationLink().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Download notification link cannot be empty.");
+                }
+                addProductDto.setDownloadNotificationLink(addProductDto.getDownloadNotificationLink().trim());
+                customProduct.setDownloadSyllabusLink(addProductDto.getDownloadNotificationLink());
+            }
+
+            if(addProductDto.getDownloadSyllabusLink() != null) {
+                if(addProductDto.getDownloadSyllabusLink().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Download syllabus link cannot be empty.");
+                }
+                addProductDto.setDownloadSyllabusLink(addProductDto.getDownloadSyllabusLink().trim());
+                customProduct.setDownloadSyllabusLink(addProductDto.getDownloadSyllabusLink());
+            }
+
+            if(addProductDto.getFormComplexity() != null) {
+                if(addProductDto.getFormComplexity() <= 0 || addProductDto.getFormComplexity() > 5 ) {
+                    throw new IllegalArgumentException("From complexity must lie between 1 and 5");
+                }
+                customProduct.setFormComplexity(addProductDto.getFormComplexity());
+            }
+
+            if(addProductDto.getQualification() != null) {
+                Qualification qualification = qualificationService.getQualificationByQualificationId(addProductDto.getQualification());
+                customProduct.setQualification(qualification);
+            }
+
+            if(addProductDto.getStream() != null) {
+                CustomStream customStream = streamService.getStreamByStreamId(addProductDto.getStream());
+                customProduct.setStream(customStream);
+            }
+
+            if(addProductDto.getSubject() != null) {
+                CustomSubject customSubject = subjectService.getSubjectBySubjectId(addProductDto.getSubject());
+                customProduct.setSubject(customSubject);
+            }
+
+            if(addProductDto.getSector() != null) {
+                CustomSector customSector = sectorService.getSectorBySectorId(addProductDto.getSector());
+                customProduct.setSector(customSector);
+            }
+
+            if(addProductDto.getSelectionCriteria() != null) {
+                if(addProductDto.getSelectionCriteria().trim().isEmpty()){
+                    throw new IllegalArgumentException("Selection criteria cannot be empty");
+                }
+                addProductDto.setSelectionCriteria(addProductDto.getSelectionCriteria().trim());
+                customProduct.setSelectionCriteria(addProductDto.getSelectionCriteria());
+            }
+
+            if(addProductDto.getNotifyingAuthority() != null) {
+                if(addProductDto.getNotifyingAuthority().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Notifying authority cannot be empty");
+                }
+                addProductDto.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
+                customProduct.setNotifyingAuthority(addProductDto.getNotifyingAuthority());
             }
 
             return true;

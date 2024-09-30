@@ -57,7 +57,7 @@ public class SubjectService {
         }
     }
 
-    public CustomSubject getSubjectBySubjectId(Long subjectId) {
+    public CustomSubject getSubjectBySubjectId(Long subjectId) throws Exception {
         try {
 
             Query query = entityManager.createQuery(Constant.GET_SUBJECT_BY_SUBJECT_ID, CustomSubject.class);
@@ -67,26 +67,26 @@ public class SubjectService {
             if (!stream.isEmpty()) {
                 return stream.get(0);
             } else {
-                return null;
+                throw new IllegalArgumentException("No subject found with this id.");
             }
 
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return null;
+            throw new Exception("Exception caught while fetching subject: " + exception.getMessage());
         }
     }
     public Boolean validateAddSubjectDto(AddSubjectDto addSubjectDto) throws Exception {
         try{
-            if(addSubjectDto.getSubjectName() == null || addSubjectDto.getSubjectDescription().trim().isEmpty()) {
-                throw new IllegalArgumentException("SUBJECT NAME CANNOT BE NULL OR EMPTY");
+            if(addSubjectDto.getSubjectName() == null || addSubjectDto.getSubjectName().trim().isEmpty()) {
+                throw new IllegalArgumentException("Subject name cannot be null or empty.");
             }
             if(addSubjectDto.getSubjectDescription() != null && addSubjectDto.getSubjectDescription().trim().isEmpty()) {
-                throw new IllegalArgumentException("SUBJECT DESCRIPTION CANNOT BE EMPTY");
+                throw new IllegalArgumentException("Subject description cannot be empty.");
             }
             return true;
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            throw new Exception("SOME EXCEPTION OCCURRED: "+ exception.getMessage());
+            throw new Exception("Exception caught while validating subject: "+ exception.getMessage());
         }
     }
 
@@ -102,7 +102,7 @@ public class SubjectService {
             }
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            throw new Exception("SOME EXCEPTION OCCURRED: "+ exception.getMessage());
+            throw new Exception("Exception caught while saving subject: "+ exception.getMessage());
         }
     }
 
