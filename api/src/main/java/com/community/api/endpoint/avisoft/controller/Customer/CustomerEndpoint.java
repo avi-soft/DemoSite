@@ -747,25 +747,16 @@ public class CustomerEndpoint {
                             ));
                         }
 
-
                         fileUploadService.uploadFile(file, documentTypeObj.getDocument_type_name(), customerId, role);
 
+
                         if (removeFileTypes != null && removeFileTypes) {
+
                             if (existingDocument != null && fileNameId != 13) {
                                 if (existingDocument != null) {
                                     String filePath = existingDocument.getFilePath();
 
                                     if (filePath != null) {
-
-                                        //i want to call from the file server which has file controller and documentStorageService and test is project level and parraler to it it has avisoft document
-                                       /* String absolutePath = System.getProperty("user.dir") + "/../test/" + filePath;
-                                        File oldFile = new File(absolutePath);
-
-                                        if (oldFile.exists()) {
-                                            oldFile.delete();
-                                        }*/
-
-
                                         fileUploadService.deleteFile( customerId,  documentTypeObj.getDocument_type_name(),  existingDocument.getName(),  role);
                                     }
 
@@ -774,7 +765,7 @@ public class CustomerEndpoint {
                                     existingDocument.setName(null);
                                     em.persist(existingDocument);
 
-                                    deletedDocumentMessages.add("File for document type '" + documentTypeObj.getDocument_type_name() + "' has been deleted.");
+                                    deletedDocumentMessages.add( documentTypeObj.getDocument_type_name() + "' has been deleted.");
                                 }
                                 continue;
                             }
@@ -798,18 +789,13 @@ public class CustomerEndpoint {
                             } else if (existingDocument13 != null) {
                                 String filePath = existingDocument13.getFilePath();
                                 if (removeFileTypes != null && removeFileTypes && newFileName!=null ) {
-                                   /* String absolutePath = System.getProperty("user.dir") + "/../test/" + filePath;
-                                    File oldFile = new File(absolutePath);
-                                    oldFile.delete();*/
                                     fileUploadService.deleteFile( customerId,  documentTypeObj.getDocument_type_name(),  existingDocument.getName(),  role);
-
-                                    existingDocument13.setFilePath(null);
-                                    existingDocument13.setName(null);
-                                    existingDocument13.setCustom_customer(null);
-                                    em.merge(existingDocument);
-                                    deletedDocumentMessages.add( documentTypeObj.getDocument_type_name() + "' has been deleted.");
-
                                 }
+                                existingDocument13.setFilePath(null);
+                                existingDocument13.setName(null);
+                                existingDocument13.setCustom_customer(null);
+                                em.merge(existingDocument);
+                                deletedDocumentMessages.add( documentTypeObj.getDocument_type_name() + "' has been deleted.");
                             }
                         }
                         // If the file is not empty and a document already exists, update the document
@@ -823,12 +809,8 @@ public class CustomerEndpoint {
                                 String newFileName = file.getOriginalFilename();
 
                                 if (!newFileName.equals(oldFileName)) {
-
-//                                    oldFile.delete();
                                     fileUploadService.deleteFile( customerId,  documentTypeObj.getDocument_type_name(),  existingDocument.getName(),  role);
-
                                     documentStorageService.updateOrCreateDocument(existingDocument, file, documentTypeObj, customerId, role);
-
                                 }
                             }
                         } else {
@@ -902,13 +884,6 @@ public class CustomerEndpoint {
                                     String filePath = existingDocument.getFilePath();
                                     if (filePath != null) {
                                         fileUploadService.deleteFile( customerId,  documentTypeObj.getDocument_type_name(),  existingDocument.getName(),  role);
-
-                                        /*String absolutePath = System.getProperty("user.dir") + "/../test/" + filePath;
-                                        File oldFile = new File(absolutePath);
-
-                                        if (oldFile.exists()) {
-                                            oldFile.delete();
-                                        }*/
                                     }
                                     existingDocument.setDocumentType(null);
                                     existingDocument.setName(null);
@@ -940,23 +915,16 @@ public class CustomerEndpoint {
                             }
 
                             else if (existingDocument13 != null) {
-//                                String filePath = existingDocument13.getFilePath();
                                 if (removeFileTypes != null && removeFileTypes && newFileName!=null ) {
-
-                                   /* String absolutePath = System.getProperty("user.dir") + "/../test/" + filePath;
-                                    File oldFile = new File(absolutePath);
-
-                                    oldFile.delete();*/
                                     fileUploadService.deleteFile( customerId,  documentTypeObj.getDocument_type_name(),  existingDocument.getName(),  role);
 
-                                    existingDocument13.setFilePath(null);
-                                    existingDocument13.setName(null);
-                                    existingDocument13.setServiceProviderEntity(null);
-
-                                    em.merge(existingDocument13);
-                                    deletedDocumentMessages.add( documentTypeObj.getDocument_type_name() + "' has been deleted.");
-
                                 }
+                                existingDocument13.setFilePath(null);
+                                existingDocument13.setName(null);
+                                existingDocument13.setServiceProviderEntity(null);
+
+                                em.merge(existingDocument13);
+                                deletedDocumentMessages.add( documentTypeObj.getDocument_type_name() + "' has been deleted.");
                             }
 
 
