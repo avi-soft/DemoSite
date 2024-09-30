@@ -176,6 +176,7 @@ public class CustomerEndpoint {
             }
 
             CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
+            Customer customer=customerService.readCustomerById(customerId);
             if (customCustomer == null) {
                 return ResponseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
             }
@@ -227,7 +228,7 @@ public class CustomerEndpoint {
             String pincode = (String) details.get("currentPincode");
             if (state != null && district != null && pincode != null) {
                 boolean updated=false;
-                for (CustomerAddress customerAddress : customCustomer.getCustomerAddresses()) {
+                for (CustomerAddress customerAddress : customer.getCustomerAddresses()) {
                     if (customerAddress.getAddressName().equals("CURRENT_ADDRESS")) {
                         customerAddress.getAddress().setAddressLine1((String) details.get("currentAddress"));
                         customerAddress.getAddress().setStateProvinceRegion(districtService.findStateById(Integer.parseInt(state)));
@@ -235,6 +236,7 @@ public class CustomerEndpoint {
                         customerAddress.getAddress().setPostalCode(pincode);
                         customerAddress.getAddress().setCity((String) details.get("currentCity"));
                         updated = true;
+                        entityManager.merge(customerAddress);
                         break;
                     }
                 }
@@ -259,7 +261,7 @@ public class CustomerEndpoint {
                 pincode = (String) details.get("permanentPincode");
                 if (state != null && district != null && pincode != null) {
                     boolean updated = false;
-                    for (CustomerAddress customerAddress : customCustomer.getCustomerAddresses()) {
+                    for (CustomerAddress customerAddress : customer.getCustomerAddresses()) {
 
                         if (customerAddress.getAddressName().equals("PERMANENT_ADDRESS")) {
                             System.out.println("1");
@@ -269,6 +271,7 @@ public class CustomerEndpoint {
                             customerAddress.getAddress().setPostalCode(pincode);
                             customerAddress.getAddress().setCity((String) details.get("permanentCity"));
                             updated = true;
+                            entityManager.merge(customerAddress);
                             break;
                         }
                     }
@@ -867,7 +870,9 @@ public class CustomerEndpoint {
                 List<CustomerAddress> addressLists = customer.getCustomerAddresses();
                 addressLists.add(newAddress);
                 customer.setCustomerAddresses(addressLists);
+                if(!addressDetails.containsKey("inFunctionCall"))
                     em.merge(customer);
+                addressDetails.remove("inFunctionCall");
                 //using reflections
                 AddressDTO addressDTO = new AddressDTO();
                 for (Map.Entry<String, Object> entry : addressDetails.entrySet()) {
