@@ -29,7 +29,7 @@ import org.broadleafcommerce.core.search.service.SearchService;
 @NoArgsConstructor
 public class CustomCategoryWrapper extends BaseWrapper implements APIWrapper<Category> {
 
-    @JsonProperty("id")
+    @JsonProperty("category_id")
     protected Long id;
     @JsonProperty("name")
     protected String name;

@@ -34,7 +34,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 @NoArgsConstructor
 public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Product> {
 
-    @JsonProperty("id")
+    @JsonProperty("product_id")
     protected Long id;
     @JsonProperty("meta_title")
     protected String metaTitle;

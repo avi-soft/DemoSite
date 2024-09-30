@@ -100,8 +100,8 @@ public class ProductService {
         try {
 
             // Start building the SQL query
-            StringBuilder sql = new StringBuilder("INSERT INTO custom_product (product_id, creator_user_id, creator_role_id, modified_date");
-            StringBuilder values = new StringBuilder("VALUES (:productId, :creatorUserId, :role, :modifiedDate");
+            StringBuilder sql = new StringBuilder("INSERT INTO custom_product (product_id, creator_user_id, creator_role_id, last_modified");
+            StringBuilder values = new StringBuilder("VALUES (:productId, :creatorUserId, :role, :lastModified");
 
             // Dynamically add columns and values based on non-null fields
             if (addProductDto.getExamDateFrom() != null) {
@@ -215,7 +215,7 @@ public class ProductService {
                     .setParameter("productId", product)
                     .setParameter("creatorUserId", creatorUserId)
                     .setParameter("role", role)
-                    .setParameter("modifiedDate", modifiedDate);
+                    .setParameter("lastModified", modifiedDate);
 
             // Set parameters conditionally
             if (addProductDto.getExamDateFrom() != null) {
