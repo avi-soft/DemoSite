@@ -18,6 +18,7 @@ import java.util.Iterator;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
+import javax.persistence.TypedQuery;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.awt.image.BufferedImage;
@@ -89,5 +90,13 @@ public class ImageService {
         // Persist the image entity to the database
         entityManager.persist(image);
         return image;
+    }
+
+    @Transactional
+    public List<Image> getAllRandomImages()
+    {
+        TypedQuery<Image> typedQuery= entityManager.createQuery(Constant.GET_ALL_RANDOM_IMAGES,Image.class);
+        List<Image> images = typedQuery.getResultList();
+        return images;
     }
 }
