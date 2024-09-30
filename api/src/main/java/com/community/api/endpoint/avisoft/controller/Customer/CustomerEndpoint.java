@@ -221,7 +221,7 @@ public class CustomerEndpoint {
                 customCustomer.setDistrict(districtService.findDistrictById(Integer.parseInt(customerDetails.getDistrict())));
                 Map<String, Object> addressMap = new HashMap<>();
 
-                addressMap.put("address", customerDetails.getResidentailAddress());
+                addressMap.put("address", customerDetails.getResidentialAddress());
 
                 addressMap.put("state", districtService.findStateById(Integer.parseInt(customerDetails.getState())));
                 addressMap.put("city", districtService.findDistrictById(Integer.parseInt(customerDetails.getDistrict())));
