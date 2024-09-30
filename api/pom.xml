@@ -45,6 +45,7 @@
             <artifactId>boot-community-demo-core</artifactId>
         </dependency>
 
+
         <!-- https://mvnrepository.com/artifact/com.twilio.sdk/twilio -->
         <dependency>
             <groupId>com.twilio.sdk</groupId>
@@ -159,7 +160,10 @@
             <groupId>org.broadleafcommerce</groupId>
             <artifactId>broadleaf-profile</artifactId>
         </dependency>
-        <!--<dependency>
+
+
+       <!-- <dependency>
+
             <groupId>org.liquibase</groupId>
 
             <artifactId>liquibase-core</artifactId>
@@ -177,7 +181,9 @@
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>2.0</version>
-        </dependency>-->
+
+        </dependency>
+-->
 
     </dependencies>
 </project>

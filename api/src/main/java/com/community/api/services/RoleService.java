@@ -54,7 +54,7 @@ public class RoleService {
         else return response;
     }
     @Transactional
-        public ResponseEntity<?> addRole(Role role)
+    public ResponseEntity<?> addRole(Role role)
     {
         try{
             if(role.getRole_name()==null)

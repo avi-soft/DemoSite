@@ -67,28 +67,59 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(new CustomReserveCategory(4L, "OBC", "Other Backward Caste", false));
         }
 
-        if(entityManager.createQuery("SELECT COUNT(c) FROM CustomTicketState c", Long.class).getSingleResult() == 0) {
-            entityManager.merge(new CustomTicketState(1L, "TO-DO", "Ticket is not assigned to any service provider"));
-            entityManager.merge(new CustomTicketState(2L, "IN-PROGRESS", "It's under progress"));
-            entityManager.merge(new CustomTicketState(3L, "ON-HOLD", "It's on hold"));
-            entityManager.merge(new CustomTicketState(4L, "IN-REVIEW", "It's rejected"));
-            entityManager.merge(new CustomTicketState(5L, "CLOSE", "Closed successfully"));
+
+
+
+        if(entityManager.createQuery("SELECT COUNT(c) FROM CustomProductRejectionStatus c", Long.class).getSingleResult() == 0) {
+            entityManager.merge(new CustomProductRejectionStatus(1L, "TO-BE-MODIFIED", "Product needs modification to get approved."));
+            entityManager.merge(new CustomProductRejectionStatus(2L, "DUPLICATE", "There is already a product present with these details."));
+            entityManager.merge(new CustomProductRejectionStatus(3L, "IRRELEVANT", "The product is irrelevant."));
+            entityManager.merge(new CustomProductRejectionStatus(4L, "UNFEASIBLE", "The product is not feasible to exists."));
         }
 
-        if(entityManager.createQuery("SELECT COUNT(c) FROM CustomTicketType c", Long.class).getSingleResult() == 0) {
-            entityManager.merge(new CustomTicketType(1L, "PRIMARY", "Primary ticket of SP"));
-            entityManager.merge(new CustomTicketType(2L, "REVIEW-TICKET", "Review ticket of SP"));
-            entityManager.merge(new CustomTicketType(3L, "MISCELLANEOUS", "Miscellaneous (any other ticket)"));
+        if(entityManager.createQuery("SELECT COUNT(c) FROM CustomGender c", Long.class).getSingleResult() == 0) {
+            entityManager.persist(new CustomGender(1L, 'M', "MALE"));
+            entityManager.persist(new CustomGender(2L, 'F', "FEMALE"));
+            entityManager.persist(new CustomGender(3L, 'O', "OTHERS"));
         }
 
-        if(entityManager.createQuery("SELECT COUNT(c) FROM CustomTicketStatus c", Long.class).getSingleResult() == 0) {
-            entityManager.merge(new CustomTicketStatus(1L, "NOT-REACHABLE", "User is unreachable"));
-            entityManager.merge(new CustomTicketStatus(2L, "VALIDATING-DOCUMENT", "Validating documents"));
-            entityManager.merge(new CustomTicketStatus(3L, "MISSING-DOCUMENT", "Missing documents"));
-            entityManager.merge(new CustomTicketStatus(4L, "USER-NOT-REACHABLE", "User Not reachable"));
-            entityManager.merge(new CustomTicketStatus(5L, "UPLOADING-DOCUMENT", "Uploading documents"));
-            entityManager.merge(new CustomTicketStatus(6L, "FILLING-PERSONAL-DETAILS", "Filling personal details"));
-            entityManager.merge(new CustomTicketStatus(7L, "SOME-OTHER-STATUS", "Some other status"));
+        if(entityManager.createQuery("SELECT COUNT(c) FROM CustomSector c", Long.class).getSingleResult() == 0) {
+            entityManager.merge(new CustomSector(1L, "HEALTHCARE", "Forms related to patient care and medical services."));
+            entityManager.merge(new CustomSector(2L, "EDUCATION", "Forms for student enrollment and academic records."));
+            entityManager.merge(new CustomSector(3L, "FINANCE", "Forms for loans, taxes, and financial services."));
+            entityManager.merge(new CustomSector(4L, "GOVERNMENT", "Forms for taxes and civic registration."));
+            entityManager.merge(new CustomSector(5L, "HUMAN_RESOURCES", "Forms for job applications and employee management."));
+            entityManager.merge(new CustomSector(6L, "REAL_ESTATE", "Forms for property transactions and leases."));
+            entityManager.merge(new CustomSector(7L, "INSURANCE", "Forms for claims and policy management."));
+            entityManager.merge(new CustomSector(8L, "RETAIL", "Forms for customer feedback and warranties."));
+            entityManager.merge(new CustomSector(9L, "TRANSPORTATION", "Forms for shipping and travel documentation."));
+            entityManager.merge(new CustomSector(10L, "LEGAL", "Forms for legal processes and documentation."));
+        }
+
+        if(entityManager.createQuery("SELECT COUNT(c) FROM CustomStream c", Long.class).getSingleResult() == 0) {
+            entityManager.merge(new CustomStream(1L, "SCIENCE", "Description of Science"));
+            entityManager.merge(new CustomStream(2L, "ARTS", "Description of Arts"));
+            entityManager.merge(new CustomStream(3L, "COMMERCE", "Description of Commerce"));
+            entityManager.merge(new CustomStream(4L, "ENGINEERING", "Description of Engineering"));
+            entityManager.merge(new CustomStream(5L, "MEDICINE", "Description of Medicine"));
+            entityManager.merge(new CustomStream(6L, "HUMANITIES", "Description of Humanities"));
+            entityManager.merge(new CustomStream(7L, "SOCIAL SCIENCES", "Description of Social Sciences"));
+            entityManager.merge(new CustomStream(8L, "TECHNOLOGY", "Description of Technology"));
+            entityManager.merge(new CustomStream(9L, "MATHEMATICS", "Description of Mathematics"));
+            entityManager.merge(new CustomStream(10L, "DESIGN", "Description of Design"));
+        }
+
+        if(entityManager.createQuery("SELECT COUNT(s) FROM CustomSubject s", Long.class).getSingleResult() == 0) {
+            entityManager.merge(new CustomSubject(1L, "Mathematics", "Description of Mathematics"));
+            entityManager.merge(new CustomSubject(2L, "Physics", "Description of Physics"));
+            entityManager.merge(new CustomSubject(3L, "Chemistry", "Description of Chemistry"));
+            entityManager.merge(new CustomSubject(4L, "Biology", "Description of Biology"));
+            entityManager.merge(new CustomSubject(5L, "English", "Description of English"));
+            entityManager.merge(new CustomSubject(6L, "History", "Description of History"));
+            entityManager.merge(new CustomSubject(7L, "Geography", "Description of Geography"));
+            entityManager.merge(new CustomSubject(8L, "Computer Science", "Description of Computer Science"));
+            entityManager.merge(new CustomSubject(9L, "Art", "Description of Art"));
+            entityManager.merge(new CustomSubject(10L, "Physical Education", "Description of Physical Education"));
         }
 
         if (entityManager.createQuery("SELECT COUNT(r) FROM Role r", Long.class).getSingleResult() == 0) {
