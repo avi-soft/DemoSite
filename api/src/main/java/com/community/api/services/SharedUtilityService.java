@@ -117,8 +117,13 @@ public class SharedUtilityService {
         customerDetails.put("loggedIn", customer.isLoggedIn());
         customerDetails.put("transientProperties", customer.getTransientProperties());
         CustomCustomer customCustomer=entityManager.find(CustomCustomer.class,customer.getId());
+        if(customCustomer.getShow_my_contact_details().equals(true))
+        {
+            customerDetails.put("mobileNumber", customCustomer.getMobileNumber());
+            customerDetails.put("secondaryMobileNumber", customCustomer.getSecondaryMobileNumber());
+            customerDetails.put("whatsappNumber", customCustomer.getWhatsappNumber());
+        }
         customerDetails.put("countryCode", customCustomer.getCountryCode());
-        customerDetails.put("mobileNumber", customCustomer.getMobileNumber());
         customerDetails.put("otp", customCustomer.getOtp());
         customerDetails.put("fathersName", customCustomer.getFathersName());
         customerDetails.put("mothersName", customCustomer.getMothersName());
@@ -130,8 +135,7 @@ public class SharedUtilityService {
         customerDetails.put("category", customCustomer.getCategory());
         customerDetails.put("subcategory", customCustomer.getSubcategory());
         customerDetails.put("domicile", customCustomer.getDomicile());
-        customerDetails.put("secondaryMobileNumber", customCustomer.getSecondaryMobileNumber());
-        customerDetails.put("whatsappNumber", customCustomer.getWhatsappNumber());
+
         customerDetails.put("secondaryEmail", customCustomer.getSecondaryEmail());
         customerDetails.put("mothers_name", customCustomer.getMothersName());
         customerDetails.put("date_of_birth", customCustomer.getDob());

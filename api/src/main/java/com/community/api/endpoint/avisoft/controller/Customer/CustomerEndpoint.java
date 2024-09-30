@@ -204,15 +204,17 @@ public class CustomerEndpoint {
             customCustomer.setQualificationDetailsList(customCustomer.getQualificationDetailsList());
             customCustomer.setCountryCode(customCustomer.getCountryCode());
 
-            if (details.containsKey("firstName") && details.containsKey("lastName")) {
-                if (!details.get("firstName").toString().isEmpty())
+                if (details.containsKey("firstName")&&!details.get("firstName").toString().isEmpty()) {
                     customCustomer.setFirstName((String) details.get("firstName"));
-                else
-                    errorMessages.add("first name cannot be null");
-                if (!details.get("lastName").toString().isEmpty())
+                } else if (details.containsKey("firstName")&&details.get("firstName").toString().isEmpty())
+                {
+                    errorMessages.add("First name cannot be null");
+                }
+            if (details.containsKey("lastName")&&!details.get("lastName").toString().isEmpty())
                     customCustomer.setLastName((String) details.get("lastName"));
-                else
-                    errorMessages.add("last name cannot be null");
+            else if (details.containsKey("lastName")&&details.get("lastName").toString().isEmpty())
+            {
+                errorMessages.add("Last name cannot be null");
             }
 
             if (details.containsKey("emailAddress") && ((String) details.get("emailAddress")).isEmpty())
@@ -751,23 +753,26 @@ public class CustomerEndpoint {
 
             }
             String username = (String) updates.get("username");
+            if(username!=null)
+                username=username.trim();
+
+            if (username.isEmpty()||username.contains(" ")) {
+                return ResponseService.generateErrorResponse("Invalid username", HttpStatus.NOT_FOUND);
+            }
             Customer customer = customerService.readCustomerById(customerId);
             if (customer == null) {
                 return ResponseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
 
             }
             Customer existingCustomerByUsername = null;
-            if (username != null) {
-                existingCustomerByUsername = customerService.readCustomerByUsername(username);
-            } else {
-                return ResponseService.generateErrorResponse("username Empty", HttpStatus.BAD_REQUEST);
-
-            }
+            existingCustomerByUsername = customerService.readCustomerByUsername(username);
 
             if ((existingCustomerByUsername != null) && !existingCustomerByUsername.getId().equals(customerId)) {
                 return ResponseService.generateErrorResponse("Username is not available", HttpStatus.BAD_REQUEST);
 
             } else {
+                if(customer.getUsername()!=null && customer.getUsername().equals(username))
+                    return ResponseService.generateErrorResponse("Old and new username cannot be same", HttpStatus.BAD_REQUEST);
                 customer.setUsername(username);
                 em.merge(customer);
                 return ResponseService.generateSuccessResponse("User name  updated successfully : ", sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK);

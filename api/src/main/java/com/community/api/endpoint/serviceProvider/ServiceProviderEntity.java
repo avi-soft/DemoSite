@@ -43,6 +43,7 @@ public class ServiceProviderEntity  {
 
     private String user_name;
 
+    @Pattern(regexp = "^[a-zA-Z]+$", message = "First name must contain only alphabets")
     private String first_name;
 
     private String last_name;
