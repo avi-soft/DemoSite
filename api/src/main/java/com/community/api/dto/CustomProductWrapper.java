@@ -228,7 +228,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
 
         this.displayTemplate = customProduct.getDisplayTemplate();
         this.platformFee = customProduct.getPlatformFee();
-        this.notifyingAuthority = customProduct.getState();
+        this.state = customProduct.getState();
 
         this.customApplicationScope = customProduct.getCustomApplicationScope();
         this.customJobGroup = customProduct.getJobGroup();
@@ -246,6 +246,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.advertiserUrl = customProduct.getAdvertiserUrl();
         this.examDateFrom = customProduct.getExamDateFrom();
         this.examDateTo = customProduct.getExamDateTo();
+        this.notifyingAuthority = customProduct.getNotifyingAuthority();
 
         if (customProduct.getDefaultCategory() != null) {
             this.defaultCategoryId = customProduct.getDefaultCategory().getId();
@@ -271,7 +272,8 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
 
         this.displayTemplate = customProduct.getDisplayTemplate();
         this.platformFee = customProduct.getPlatformFee();
-        this.notifyingAuthority = customProduct.getState();
+        this.state = customProduct.getState();
+        this.notifyingAuthority = customProduct.getNotifyingAuthority();
 
         this.customApplicationScope = customProduct.getCustomApplicationScope();
         this.customJobGroup = customProduct.getJobGroup();
