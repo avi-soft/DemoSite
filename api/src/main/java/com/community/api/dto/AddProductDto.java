@@ -32,6 +32,9 @@ public class AddProductDto {
     Long jobGroup;
 
     @Temporal(TemporalType.TIMESTAMP)
+    @JsonProperty("active_start_date")
+    Date activeStartDate;
+    @Temporal(TemporalType.TIMESTAMP)
     @JsonProperty("active_end_date")
     Date activeEndDate;
     @Temporal(TemporalType.TIMESTAMP)

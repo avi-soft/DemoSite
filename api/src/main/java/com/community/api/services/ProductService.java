@@ -95,13 +95,13 @@ public class ProductService {
     @PersistenceContext
     private EntityManager entityManager;
 
-    public void saveCustomProduct(Product product, AddProductDto addProductDto, CustomProductState productState, Role role, Long creatorUserId, Date modifiedDate) {
+    public void saveCustomProduct(Product product, AddProductDto addProductDto, CustomProductState productState, Role role, Long creatorUserId, Date modifiedDate, Date currentDate) {
 
         try {
 
             // Start building the SQL query
-            StringBuilder sql = new StringBuilder("INSERT INTO custom_product (product_id, creator_user_id, creator_role_id, last_modified, product_state_id, state_id");
-            StringBuilder values = new StringBuilder("VALUES (:productId, :creatorUserId, :role, :lastModified, :productState, :state");
+            StringBuilder sql = new StringBuilder("INSERT INTO custom_product (product_id, creator_user_id, creator_role_id, last_modified, product_state_id, state_id, current_date");
+            StringBuilder values = new StringBuilder("VALUES (:productId, :creatorUserId, :role, :lastModified, :productState, :state, :currentDate");
 
             // Dynamically add columns and values based on non-null fields
             if (addProductDto.getExamDateFrom() != null) {
@@ -117,6 +117,11 @@ public class ProductService {
             if (addProductDto.getGoLiveDate() != null) {
                 sql.append(", go_live_date");
                 values.append(", :goLiveDate");
+            }
+
+            if(addProductDto.getActiveStartDate() != null) {
+                sql.append(", active_start_date");
+                values.append(", :activeStartDate");
             }
 
             if (addProductDto.getPlatformFee() != null) {
@@ -212,11 +217,16 @@ public class ProductService {
                     .setParameter("productId", product)
                     .setParameter("creatorUserId", creatorUserId)
                     .setParameter("role", role)
-                    .setParameter("lastModified", modifiedDate);
+                    .setParameter("lastModified", modifiedDate)
+                    .setParameter("currentDate", currentDate);
 
             // Set parameters conditionally
             if (addProductDto.getExamDateFrom() != null) {
                 query.setParameter("examDateFrom", new Timestamp(addProductDto.getExamDateFrom().getTime()));
+            }
+
+            if(addProductDto.getActiveStartDate() != null) {
+                query.setParameter("activeStartDate", new Timestamp(addProductDto.getActiveStartDate().getTime()));
             }
             if (addProductDto.getJobGroup() != null) {
                 query.setParameter("jobGroup", addProductDto.getJobGroup());
@@ -297,7 +307,6 @@ public class ProductService {
                 query.setParameter("subjectId", addProductDto.getSubject());
             }
 
-
             // Execute the update
             query.executeUpdate();
 
@@ -308,14 +317,14 @@ public class ProductService {
     }
 
 
-    public List<CustomProduct> getCustomProducts() {
+    public List<CustomProduct> getCustomProducts() throws Exception {
         try{
             String sql = "SELECT * FROM custom_product";
             return entityManager.createNativeQuery(sql, CustomProduct.class).getResultList();
 
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            throw new RuntimeException("Failed to retrieve CustomProducts: " + exception.getMessage(), exception);
+            throw new Exception("Failed to retrieve CustomProducts: " + exception.getMessage(), exception);
         }
     }
 
@@ -554,12 +563,16 @@ public class ProductService {
             String formattedDate = dateFormat.format(new Date());
             Date activeStartDate = dateFormat.parse(formattedDate); // Convert formatted date string back to Date
 
-            if (addProductDto.getActiveEndDate() == null || addProductDto.getGoLiveDate() == null) {
-                throw new IllegalArgumentException("Active end date and go live date cannot be empty.");
+            if (addProductDto.getActiveEndDate() == null || addProductDto.getGoLiveDate() == null || addProductDto.getActiveStartDate() == null) {
+                throw new IllegalArgumentException("Active start date, active end date, and go live date cannot be empty.");
             }
-
+            dateFormat.parse(dateFormat.format(addProductDto.getActiveStartDate()));
             dateFormat.parse(dateFormat.format(addProductDto.getActiveEndDate()));
             dateFormat.parse(dateFormat.format(addProductDto.getGoLiveDate()));
+
+            if(addProductDto.getGoLiveDate().after(addProductDto.getActiveStartDate())){
+                throw new IllegalArgumentException("Go live date cannot be Greater than application open date");
+            }
 
             if (!addProductDto.getActiveEndDate().after(activeStartDate)) {
                 throw new IllegalArgumentException("Expiration date cannot be before or equal of current date.");
