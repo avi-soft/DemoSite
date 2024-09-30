@@ -33,8 +33,5 @@ public class CustomReserveCategory {
     @Column(name = "is_default_category")
     @JsonProperty("default_category")
     protected Boolean isReservedCategory;
-<<<<<<< HEAD
 
-=======
->>>>>>> fae2c91eb2878955cc31b4ec18dd7ce4c4b41b26
 }
