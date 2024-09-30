@@ -354,18 +354,7 @@ public class DocumentStorageService {
 
             String deletedFilePath = response.getBody();
             if (deletedFilePath != null && !deletedFilePath.isEmpty()) {
-                /*File localFile = new File(deletedFilePath);
-                if (localFile.exists()) {
-                    if (localFile.delete()) {
-                        System.out.println("Local file deleted successfully: " + deletedFilePath);
-                    } else {
-                        throw new IOException("Failed to delete the local file: " + deletedFilePath);
-                    }
-                } else {
-                    System.out.println("Local file does not exist: " + deletedFilePath);
-                }
 
-                return deletedFilePath;*/
             } else {
                 throw new IOException("No file path returned from server.");
             }
