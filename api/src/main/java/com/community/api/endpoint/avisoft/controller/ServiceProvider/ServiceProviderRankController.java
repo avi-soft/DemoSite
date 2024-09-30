@@ -1,7 +1,7 @@
 package com.community.api.endpoint.avisoft.controller.ServiceProvider;
 import com.community.api.entity.ServiceProviderRank;
 import com.community.api.services.ResponseService;
-import com.community.api.services.ServiceProvider.ServiceProviderTestRankService;
+import com.community.api.services.ServiceProvider.ServiceProviderRankService;
 import com.community.api.services.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,23 +13,22 @@ import javax.persistence.TypedQuery;
 import java.util.List;
 
 import static com.community.api.component.Constant.FIND_ALL_SERVICE_PROVIDER_TEST_RANK_QUERY;
-import static com.community.api.component.Constant.FIND_ALL_SERVICE_PROVIDER_TEST_STATUS_QUERY;
 
 @RestController
 @RequestMapping("/service-provider-test-rank")
-public class ServiceProviderTestRankController {
+public class ServiceProviderRankController {
 
     private EntityManager entityManager;
     private ResponseService responseService;
     protected ExceptionHandlingImplement exceptionHandling;
-    private ServiceProviderTestRankService serviceProviderTestRankService;
+    private ServiceProviderRankService serviceProviderRankService;
 
 
-    public ServiceProviderTestRankController(EntityManager entityManager, ResponseService responseService, ExceptionHandlingImplement exceptionHandling, ServiceProviderTestRankService serviceProviderTestRankService) {
+    public ServiceProviderRankController(EntityManager entityManager, ResponseService responseService, ExceptionHandlingImplement exceptionHandling, ServiceProviderRankService serviceProviderRankService) {
         this.responseService = responseService;
         this.entityManager = entityManager;
         this.exceptionHandling = exceptionHandling;
-        this.serviceProviderTestRankService = serviceProviderTestRankService;
+        this.serviceProviderRankService = serviceProviderRankService;
     }
 
 

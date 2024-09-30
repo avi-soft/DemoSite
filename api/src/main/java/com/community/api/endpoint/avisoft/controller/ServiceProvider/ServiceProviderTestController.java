@@ -1,5 +1,6 @@
 package com.community.api.endpoint.avisoft.controller.ServiceProvider;
 
+import com.community.api.dto.GiveUploadedImageScoreDTO;
 import com.community.api.dto.SubmitTextDto;
 import com.community.api.entity.ServiceProviderTest;
 import com.community.api.services.ResponseService;
@@ -49,7 +50,7 @@ public class ServiceProviderTestController {
         }
     }
 
-    @PostMapping("/{serviceProviderId}/{testId}/upload-resized-image")
+    @PostMapping("/upload-resized-image/{serviceProviderId}/{testId}")
     public ResponseEntity<?> uploadResizedImage(@PathVariable Long serviceProviderId, @PathVariable Long testId, @RequestParam("resizedImage") MultipartFile resizedImage, HttpServletRequest request) throws Exception {
         try
         {
@@ -74,7 +75,7 @@ public class ServiceProviderTestController {
         }
     }
 
-    @PostMapping("/{serviceProviderId}/{testId}/submit-text")
+    @PostMapping("/submit-text/{serviceProviderId}/{testId}")
     public ResponseEntity<?> submitTypedText(@PathVariable Long serviceProviderId,@PathVariable Long testId, @RequestBody SubmitTextDto submitTextDto) throws Exception {
         try
         {
@@ -99,7 +100,7 @@ public class ServiceProviderTestController {
         }
     }
 
-    @PostMapping("/{serviceProviderId}/{testId}/upload-resized-signature")
+    @PostMapping("/upload-resized-signature/{serviceProviderId}/{testId}")
     public ResponseEntity<?> uploadResizedSignature(@PathVariable Long serviceProviderId,@PathVariable Long testId, @RequestParam("resizedSignature") MultipartFile resizedSignature,HttpServletRequest request) throws Exception {
         try
         {
@@ -124,7 +125,7 @@ public class ServiceProviderTestController {
         }
     }
 
-    @GetMapping("/{serviceProviderId}/getAll")
+    @GetMapping("/getAll/{serviceProviderId}")
     public ResponseEntity<?> getAllTests(
             @PathVariable Long serviceProviderId,
             @RequestParam(defaultValue = "0") int page,
@@ -144,8 +145,8 @@ public class ServiceProviderTestController {
             return responseService.generateErrorResponse("Some issue in fetching service provider tests: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
-    @GetMapping("/{serviceProviderId}/get-completed-test")
-    public ResponseEntity<?> getAllTests(
+    @GetMapping("/get-completed-test/{serviceProviderId}")
+    public ResponseEntity<?> getCompletedTest(
             @PathVariable Long serviceProviderId,HttpServletRequest request)throws EntityNotFoundException, EntityDoesNotExistsException {
 
         try {
@@ -154,7 +155,21 @@ public class ServiceProviderTestController {
         } catch (EntityDoesNotExistsException e) {
             return responseService.generateErrorResponse("Service provider not found: " + e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            return responseService.generateErrorResponse("Some issue in fetching service provider tests: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+            return responseService.generateErrorResponse("Some issue in fetching service provider completed test: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    @PostMapping("/add-image-test-scores/{serviceProviderId}")
+    public ResponseEntity<?> giveImageTestScores(
+            @PathVariable Long serviceProviderId,
+            @RequestBody GiveUploadedImageScoreDTO giveUploadedImageScoreDTO) {
+        try {
+            return testService.givePointsForImageUpload(serviceProviderId,giveUploadedImageScoreDTO);
+        } catch (EntityDoesNotExistsException e) {
+            return responseService.generateErrorResponse("Service provider not found: " + e.getMessage(), HttpStatus.NOT_FOUND);
+        }
+        catch (Exception e) {
+            return responseService.generateErrorResponse("Some issue in adding image score " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
 }

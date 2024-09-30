@@ -17,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Paths;
@@ -230,5 +231,32 @@ public class TestController {
         }
 
     }
+    @PostMapping("/altercolumnDocument")
+    @Transactional
+    public String altercolumnDocument() {
+        String sqlServiceProvider = "ALTER TABLE service_provider_documents DROP CONSTRAINT IF EXISTS unique_name_filePath;";
+        String sqlDocument = "ALTER TABLE Document DROP CONSTRAINT IF EXISTS unique_name_filePath;";
 
+        try {
+            entityManager.createNativeQuery(sqlDocument).executeUpdate();
+            entityManager.createNativeQuery(sqlServiceProvider).executeUpdate();
+
+            return "Unique constraints added where applicable.";
+        } catch (Exception e) {
+            e.printStackTrace(); // Log the error
+            throw new RuntimeException("Error occurred while altering the tables: " + e.getMessage());
+        }
+    }
+
+    private boolean constraintExists(String constraintName, String tableName) {
+        String query = "SELECT COUNT(*) FROM information_schema.table_constraints " +
+                "WHERE constraint_name = :constraintName AND table_name = :tableName";
+
+        BigInteger count = (BigInteger) entityManager.createNativeQuery(query)
+                .setParameter("constraintName", constraintName)
+                .setParameter("tableName", tableName)
+                .getSingleResult();
+
+        return count.compareTo(BigInteger.ZERO) > 0;
+    }
 }

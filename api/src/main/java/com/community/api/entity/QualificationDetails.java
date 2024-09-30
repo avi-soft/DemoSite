@@ -53,7 +53,7 @@ public class QualificationDetails {
     private Long marks_obtained;
 
     @Column(name = "qualification_id", nullable = false)
-    private long qualification_id;
+    private Integer qualification_id;
 
     @AssertTrue(message = "Total marks cannot be less than marks obtained")
     private boolean isMarksTotalValid() {

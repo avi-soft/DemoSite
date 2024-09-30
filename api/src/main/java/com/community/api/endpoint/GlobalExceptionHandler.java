@@ -20,7 +20,9 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.NoHandlerFoundException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import javax.validation.ConstraintViolationException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -29,12 +31,25 @@ import java.util.List;
 
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(value = {  HttpRequestMethodNotSupportedException.class })
+    @ExceptionHandler(value = { HttpRequestMethodNotSupportedException.class })
     public ResponseEntity<ErrorResponse> handleNotFoundRequests(Exception ex, WebRequest request) {
-
-        return generateErrorResponse("Invalid request body", HttpStatus.BAD_REQUEST,ex.getMessage());
-
+        return generateErrorResponse("Invalid request method", HttpStatus.BAD_REQUEST, ex.getMessage());
     }
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<Object> handleConstraintViolation(ConstraintViolationException ex) {
+        // Collect all violation messages
+        StringBuilder errorMessage = new StringBuilder("Validation failed: ");
+        ex.getConstraintViolations().forEach(violation -> {
+            errorMessage.append(violation.getPropertyPath())
+                    .append(": ")
+                    .append(violation.getMessage())
+                    .append("; ");
+        });
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(Collections.singletonMap("message", errorMessage.toString()));
+    }
+
 
     @ExceptionHandler(value = NoHandlerFoundException.class)
     public ResponseEntity<ErrorResponse> handleNoHandlerFoundException(NoHandlerFoundException ex, WebRequest request) {
@@ -91,7 +106,11 @@ public class GlobalExceptionHandler {
         return generateErrorResponse("Runtime exception" , HttpStatus.INTERNAL_SERVER_ERROR,ex.getMessage());
 
     }
-
+    @ExceptionHandler(value = { MissingServletRequestParameterException.class })
+    public ResponseEntity<ErrorResponse> handleMissingParams(MissingServletRequestParameterException ex, WebRequest request) {
+        String message = "Missing required parameter: " + ex.getParameterName();
+        return generateErrorResponse(message, HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
     public static ResponseEntity<ErrorResponse> generateErrorResponse(String message, HttpStatus status,String trace) {
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setMessage(message);

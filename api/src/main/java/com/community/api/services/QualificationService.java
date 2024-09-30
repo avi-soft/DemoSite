@@ -4,6 +4,7 @@ import com.community.api.component.Constant;
 import com.community.api.entity.CustomJobGroup;
 import com.community.api.entity.Qualification;
 import com.community.api.services.exception.ExceptionHandlingImplement;
+import com.community.api.utils.DocumentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -13,6 +14,8 @@ import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 import java.util.List;
+
+import static com.community.api.component.Constant.FIND_ALL_QUALIFICATIONS_QUERY;
 
 @Service
 public class QualificationService {
@@ -25,9 +28,13 @@ public class QualificationService {
     private QualificationService qualificationService;
     @Autowired
     private ResponseService responseService;
-    public List<Qualification> getAllQualifications() {
-        TypedQuery<Qualification> query = entityManager.createQuery(Constant.FIND_ALL_QUALIFICATIONS_QUERY, Qualification.class);
-        List<Qualification> qualifications = query.getResultList();
+    public List<DocumentType> getAllQualifications() {
+//        TypedQuery<Qualification> query = entityManager.createQuery(Constant.FIND_ALL_QUALIFICATIONS_QUERY, Qualification.class);
+        List<DocumentType> qualifications = entityManager.createQuery(
+                        FIND_ALL_QUALIFICATIONS_QUERY, DocumentType.class)
+                .setParameter("exam", "%" + "Completed" + "%")
+                .getResultList();
+//        List<Qualification> qualifications = query.getResultList();
         return qualifications;
 }
     @Transactional
@@ -51,9 +58,9 @@ public class QualificationService {
                 throw new IllegalArgumentException("Qualification description cannot be empty");
             }
 
-            List<Qualification> qualifications = qualificationService.getAllQualifications();
-            for (Qualification existingQualification : qualifications) {
-                if (existingQualification.getQualification_name().equalsIgnoreCase(qualification.getQualification_name())) {
+            List<DocumentType> qualifications = qualificationService.getAllQualifications();
+            for (DocumentType existingQualification : qualifications) {
+                if (existingQualification.getDocument_type_name().equalsIgnoreCase(qualification.getQualification_name())) {
                     throw new IllegalArgumentException("Qualification with the same name already exists");
                 }
             }
@@ -63,6 +70,8 @@ public class QualificationService {
         entityManager.persist(qualificationToBeSaved);
         return qualificationToBeSaved;
     }
+
+    //need to be change here
     public long findCount() {
         String queryString = Constant.GET_QUALIFICATIONS_COUNT;
         TypedQuery<Long> query = entityManager.createQuery(queryString, Long.class);

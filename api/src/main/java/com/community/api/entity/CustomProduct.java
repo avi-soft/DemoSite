@@ -1,21 +1,22 @@
 package com.community.api.entity;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
-import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.catalog.domain.ProductImpl;
 import org.springframework.lang.Nullable;
 
-import javax.persistence.*;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.util.Date;
-import java.util.List;
 
 @Entity
 @Table(name = "custom_product")
@@ -47,7 +48,7 @@ public class CustomProduct extends ProductImpl {
     @Column(name = "exam_date_to")
     protected Date examDateTo;
 
-    @Column(name = "last_modified" )
+    @Column(name = "last_modified")
     protected Date modifiedDate;
 
     @ManyToOne
@@ -91,17 +92,17 @@ public class CustomProduct extends ProductImpl {
     protected Date lateDateToPayFee;
 
     @Nullable
-    @Column(name = "admit_card_date_from" )
+    @Column(name = "admit_card_date_from")
     protected Date admitCardDateFrom;
 
     @Nullable
-    @Column(name = "admit_card_date_to" )
+    @Column(name = "admit_card_date_to")
     protected Date admitCardDateTo;
 
-    @Column(name = "modification_date_from" )
+    @Column(name = "modification_date_from")
     protected Date modificationDateFrom;
 
-    @Column(name = "modification_date_to" )
+    @Column(name = "modification_date_to")
     protected Date modificationDateTo;
 
     @Column(name = "download_notification_link")
@@ -120,7 +121,7 @@ public class CustomProduct extends ProductImpl {
     protected Qualification qualification;
 
     @ManyToOne
-    @JoinColumn(name ="stream_id")
+    @JoinColumn(name = "stream_id")
     protected CustomStream stream;
 
     @ManyToOne
