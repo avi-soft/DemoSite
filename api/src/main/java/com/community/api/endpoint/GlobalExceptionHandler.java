@@ -31,11 +31,9 @@ import java.util.List;
 
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(value = {  HttpRequestMethodNotSupportedException.class })
+    @ExceptionHandler(value = { HttpRequestMethodNotSupportedException.class })
     public ResponseEntity<ErrorResponse> handleNotFoundRequests(Exception ex, WebRequest request) {
-
-        return generateErrorResponse("Invalid request body", HttpStatus.BAD_REQUEST,ex.getMessage());
-
+        return generateErrorResponse("Invalid request method", HttpStatus.BAD_REQUEST, ex.getMessage());
     }
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<Object> handleConstraintViolation(ConstraintViolationException ex) {
@@ -52,12 +50,13 @@ public class GlobalExceptionHandler {
                 .body(Collections.singletonMap("message", errorMessage.toString()));
     }
 
+
     @ExceptionHandler(value = NoHandlerFoundException.class)
     public ResponseEntity<ErrorResponse> handleNoHandlerFoundException(NoHandlerFoundException ex, WebRequest request) {
         return generateErrorResponse("Invalid request body", HttpStatus.BAD_REQUEST,ex.getMessage());
     }
 
-    public ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body, HttpHeaders headers, HttpStatus status, WebRequest request) {
+     public ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body, HttpHeaders headers, HttpStatus status, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setMessage("Internal Server Error");
         errorResponse.setStatus_code(status.value());
@@ -107,7 +106,11 @@ public class GlobalExceptionHandler {
         return generateErrorResponse("Runtime exception" , HttpStatus.INTERNAL_SERVER_ERROR,ex.getMessage());
 
     }
-
+    @ExceptionHandler(value = { MissingServletRequestParameterException.class })
+    public ResponseEntity<ErrorResponse> handleMissingParams(MissingServletRequestParameterException ex, WebRequest request) {
+        String message = "Missing required parameter: " + ex.getParameterName();
+        return generateErrorResponse(message, HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
     public static ResponseEntity<ErrorResponse> generateErrorResponse(String message, HttpStatus status,String trace) {
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setMessage(message);

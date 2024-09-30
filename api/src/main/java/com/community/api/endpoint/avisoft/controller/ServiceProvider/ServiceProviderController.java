@@ -258,6 +258,21 @@ public class ServiceProviderController {
     }
 
 
+    @GetMapping("/filter-service-provider")
+    public ResponseEntity<?> filterServiceProvider(@RequestParam(required = false) String state,
+                                                   @RequestParam(required = false) String district,
+                                                   @RequestParam(required = false) String first_name,
+                                                   @RequestParam(required = false) String last_name,
+                                                   @RequestParam(required = false) String mobileNumber) {
+        try {
+
+            return ResponseService.generateSuccessResponse("Service Providers", serviceProviderService.searchServiceProviderBasedOnGivenFields(state, district, first_name, last_name, mobileNumber), HttpStatus.OK);
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseService.generateErrorResponse("Some issue in fetching service provider details " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
     @GetMapping("/show-referred-candidates/{service_provider_id}")
     public ResponseEntity<?> showRefferedCandidates (@PathVariable Long service_provider_id){
         try {

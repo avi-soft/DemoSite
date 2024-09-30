@@ -134,16 +134,18 @@ public class QualificationDetailsService
             throw new EntityAlreadyExistsException("Qualification details with id " + qualification.getQualification_id() + " already exists");
         }
 
-        if (Objects.nonNull(qualification.getQualification_id())) {
-            List<DocumentType> qualifications = qualificationService.getAllQualifications();
-            Integer examinationToAdd = null;
 
-            for (DocumentType examination : qualifications) {
-                if ((examination.getDocument_type_id())==qualification.getQualification_id()) {
-                    examinationToAdd = examination.getDocument_type_id();
-                    break;
-                }
-            }
+       if (Objects.nonNull(qualification.getQualification_id())) {
+           List<DocumentType> qualifications = qualificationService.getAllQualifications();
+           Integer examinationToAdd = null;
+
+           for (DocumentType examination : qualifications) {
+               if ((examination.getDocument_type_id())==qualification.getQualification_id()) {
+                   examinationToAdd = examination.getDocument_type_id();
+                   break;
+               }
+           }
+
 
             if (examinationToAdd == null) {
                 throw new ExaminationDoesNotExistsException("Qualification with id " + qualification.getQualification_id() + " does not exist");

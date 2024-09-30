@@ -5,6 +5,9 @@ import com.community.api.entity.CustomApplicationScope;
 import com.community.api.entity.CustomJobGroup;
 import com.community.api.entity.CustomProductState;
 import com.community.api.entity.CustomReserveCategory;
+import com.community.api.entity.CustomTicketStatus;
+import com.community.api.entity.CustomTicketState;
+import com.community.api.entity.CustomTicketType;
 import com.community.api.entity.Districts;
 import com.community.api.entity.Qualification;
 import com.community.api.entity.Role;
@@ -63,6 +66,8 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(new CustomReserveCategory(3L, "ST", "Schedule Tribe", false));
             entityManager.persist(new CustomReserveCategory(4L, "OBC", "Other Backward Caste", false));
         }
+
+
 
 
         if (entityManager.createQuery("SELECT COUNT(r) FROM Role r", Long.class).getSingleResult() == 0) {

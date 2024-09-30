@@ -56,10 +56,12 @@ public class QualificationService {
             throw new IllegalArgumentException("Qualification description cannot be empty");
         }
 
+
         List<DocumentType> qualifications = qualificationService.getAllQualifications();
         for (DocumentType existingQualification : qualifications) {
             if (existingQualification.getDocument_type_name().equalsIgnoreCase(qualification.getQualification_name())) {
                 throw new IllegalArgumentException("Qualification with the same name already exists");
+
             }
         }
         qualificationToBeSaved.setQualification_id(id);

@@ -25,11 +25,13 @@ public class NotificationController
     @Autowired
     ResponseService responseService;
 
+
     @PostMapping("/notify/{customerId}")
     public ResponseEntity<?> notifyCustomer(@PathVariable Long customerId) throws Exception {
         try
         {
             notificationService.notifyCustomer(customerId);
+
         }
         catch (CustomerDoesNotExistsException customerDoesNotExistsException)
         {

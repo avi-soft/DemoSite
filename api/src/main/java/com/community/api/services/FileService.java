@@ -19,11 +19,12 @@ public class FileService {
      * @return The URL to access the file.
      */
 
+
     private static String baseURL = "http://192.168.0.187:8645";
+
     public String getFileUrl(String filePath, HttpServletRequest request) {
         String normalizedFilePath = filePath.replace("\\", "/");
         String encodedFilePath = URLEncoder.encode(normalizedFilePath, StandardCharsets.UTF_8);
-
 
         return baseURL + "/"  + normalizedFilePath;
     }
@@ -44,6 +45,8 @@ public class FileService {
 
         return baseURL + "/" + encodedFilePath.toString();
     }
+
+
 
 
 }

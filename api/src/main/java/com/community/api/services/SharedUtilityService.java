@@ -87,6 +87,8 @@ public class SharedUtilityService {
         EXCEEDS_NESTED_SIZE,
         INVALID_TYPE
     }
+
+
     public Map<String,Object> breakReferenceForCustomer(Customer customer)
     {
         Map<String,Object>customerDetails=new HashMap<>();
@@ -136,7 +138,11 @@ public class SharedUtilityService {
         customerDetails.put("city", customCustomer.getCity());
         customerDetails.put("district", customCustomer.getDistrict());
         customerDetails.put("pincode", customCustomer.getPincode());
+<<<<<<< HEAD
         customerDetails.put("residentialAddress",customCustomer.getResidentialAddress());
+=======
+        customerDetails.put("residentialAddress",customCustomer.getResidentailAddress());
+>>>>>>> 1c7e635c6711214887fd7b60500569a6bb6a32bd
       /*  customerDetails.put("qualificationDetails",customCustomer.getQualificationDetailsList());
         customerDetails.put("documentList",customCustomer.getDocumentList());
         List<Map<String,Object>>listOfSavedProducts=new ArrayList<>();*/

@@ -144,7 +144,9 @@ public class ServiceProviderTestController {
         } catch (EntityDoesNotExistsException e) {
             return responseService.generateErrorResponse("Service provider not found: " + e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
+
             exceptionHandling.handleException(e);
+
             return responseService.generateErrorResponse("Some issue in fetching service provider tests: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
@@ -158,7 +160,9 @@ public class ServiceProviderTestController {
         } catch (EntityDoesNotExistsException e) {
             return responseService.generateErrorResponse("Service provider not found: " + e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
+
             exceptionHandling.handleException(e);
+
             return responseService.generateErrorResponse("Some issue in fetching service provider completed test: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
@@ -173,7 +177,9 @@ public class ServiceProviderTestController {
             return responseService.generateErrorResponse("Service provider not found: " + e.getMessage(), HttpStatus.NOT_FOUND);
         }
         catch (Exception e) {
+
             exceptionHandling.handleException(e);
+
             return responseService.generateErrorResponse("Some issue in adding image score " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }

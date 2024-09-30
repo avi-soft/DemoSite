@@ -1,21 +1,29 @@
 package com.community.api.endpoint.serviceProvider;
 
 
-import com.community.api.entity.*;
-import com.community.api.utils.ServiceProviderDocument;
+
+import com.community.api.entity.Privileges;
+import com.community.api.entity.ResizedImage;
+import com.community.api.entity.ServiceProviderAddress;
+import com.community.api.entity.ServiceProviderInfra;
+import com.community.api.entity.ServiceProviderLanguage;
+import com.community.api.entity.ServiceProviderRank;
+import com.community.api.entity.ServiceProviderTest;
+import com.community.api.entity.ServiceProviderTestStatus;
+import com.community.api.entity.Skill;
 import com.community.api.utils.Document;
-import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.community.api.utils.ServiceProviderDocument;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import io.micrometer.core.lang.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+<<<<<<< HEAD
 import org.broadleafcommerce.profile.core.domain.Address;
 import org.ehcache.impl.serialization.ByteArraySerializer;
+=======
+>>>>>>> 1c7e635c6711214887fd7b60500569a6bb6a32bd
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
@@ -23,7 +31,6 @@ import javax.persistence.*;
 import javax.validation.constraints.*;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 @Entity
 @Table(name = "service_provider")
@@ -46,9 +53,10 @@ public class ServiceProviderEntity  {
     private String last_name;
     //@TODO-countryCode to country_code for both customer and service provider
     private String country_code;
+
     private String father_name;
 
-    private Date date_of_birth;
+    private String date_of_birth;
 
     private String aadhaar_number;
 
@@ -98,11 +106,7 @@ public class ServiceProviderEntity  {
 //    @Column(name = "cFormPhoto", columnDefinition="BLOB")
 //    @OneToOne(cascade = CascadeType.ALL)
 //    @JoinColumn(name = "c_form_photo_id")
-
-  /*  @OneToOne(cascade = CascadeType.ALL)
-    private Document cFormPhoto;*/
-
-   /*@OneToMany(cascade = CascadeType.ALL,orphanRemoval = true)
+ /*@OneToMany(cascade = CascadeType.ALL,orphanRemoval = true)
     private List<Equipment> equipment;*/
 
     private Boolean has_technical_knowledge;
@@ -135,6 +139,14 @@ public class ServiceProviderEntity  {
     @OneToOne(cascade = CascadeType.ALL,orphanRemoval = true)
     @JoinColumn(name = "status_id", referencedColumnName = "status_id")
     private ServiceProviderStatus status;
+
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}) // Only persist/merge, no REMOVE
+    @JoinColumn(name="test_status_id", referencedColumnName = "test_status_id")
+    private ServiceProviderTestStatus testStatus;
+
+    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}) // Only persist/merge, no REMOVE
+    @JoinColumn(name="rank_id", referencedColumnName = "rank_id")
+    private ServiceProviderRank ranking;
 
     @ManyToMany
     @JoinTable(
@@ -173,12 +185,20 @@ public class ServiceProviderEntity  {
 
 
     private String token;
+    @Column
+    private Integer totalSkillTestPoints;
 
  @Column
  private Integer totalSkillTestPoints;
 
+<<<<<<< HEAD
  @OneToMany(mappedBy = "serviceProviderEntity", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
  @Fetch(FetchMode.SUBSELECT)
  private List<ServiceProviderDocument> documents;
+=======
+    @OneToMany(mappedBy = "serviceProviderEntity", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
+    @Fetch(FetchMode.SUBSELECT)
+    private List<ServiceProviderDocument> documents;
+>>>>>>> 1c7e635c6711214887fd7b60500569a6bb6a32bd
 
 }

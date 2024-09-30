@@ -221,6 +221,8 @@ public class CustomerEndpoint {
                 customCustomer.setDistrict(districtService.findDistrictById(Integer.parseInt(customerDetails.getDistrict())));
                 Map<String, Object> addressMap = new HashMap<>();
 
+                addressMap.put("address", customerDetails.getResidentailAddress());
+
                 addressMap.put("state", districtService.findStateById(Integer.parseInt(customerDetails.getState())));
                 addressMap.put("city", districtService.findDistrictById(Integer.parseInt(customerDetails.getDistrict())));
                 addressMap.put("district", customerDetails.getDistrict());
@@ -277,6 +279,7 @@ public class CustomerEndpoint {
                         Map<String, Object> qualificationInfo = new HashMap<>();
 
                         // Fetch the qualification by qualification_id
+
 //                        Qualification qualification = em.find(Qualification.class, qualificationDetail.getQualification_id());
                         Object id = qualificationDetail.getQualification_id();
                         Long qualificationId = id instanceof Long ? (Long) id : Long.valueOf((Integer) id);
@@ -1040,6 +1043,26 @@ public class CustomerEndpoint {
         }
     }
 
+    @Transactional
+    @PostMapping("/set-referrer/{customer_id}/{service_provider_id}")
+    public ResponseEntity<?> setReferrerForCustomer(@PathVariable Long customer_id, @PathVariable Long service_provider_id) {
+        try {
+            CustomCustomer customCustomer = entityManager.find(CustomCustomer.class, customer_id);
+            if (customCustomer == null)
+                return ResponseService.generateErrorResponse("Customer not found", HttpStatus.NOT_FOUND);
+            ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, service_provider_id);
+            if (serviceProvider == null)
+                return ResponseService.generateErrorResponse("Service Provider not found", HttpStatus.NOT_FOUND);
+            if (customCustomer.getReferrerServiceProvider() != null)
+                return ResponseService.generateErrorResponse("Referrer already set", HttpStatus.NOT_FOUND);
+            customCustomer.setReferrerServiceProvider(serviceProvider);
+            entityManager.merge(customCustomer);
+            return ResponseService.generateSuccessResponse("Referrer Set", sharedUtilityService.serviceProviderDetailsMap(serviceProvider), HttpStatus.OK);
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseService.generateErrorResponse("Error setting customer's referrer " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
 
 
 }

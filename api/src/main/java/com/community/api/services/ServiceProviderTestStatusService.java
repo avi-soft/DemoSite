@@ -62,4 +62,8 @@ public class ServiceProviderTestStatusService {
             return responseService.generateErrorResponse("Error updating test status", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 1c7e635c6711214887fd7b60500569a6bb6a32bd
