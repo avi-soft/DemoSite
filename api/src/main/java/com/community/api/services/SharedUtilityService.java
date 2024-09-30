@@ -3,10 +3,8 @@ package com.community.api.services;
 import com.community.api.component.Constant;
 import com.community.api.endpoint.customer.AddressDTO;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
-import com.community.api.entity.CustomCustomer;
-import com.community.api.entity.CustomProduct;
-import com.community.api.entity.CustomerAddressDTO;
-import com.community.api.entity.Skill;
+import com.community.api.entity.*;
+import com.community.api.utils.DocumentType;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import org.broadleafcommerce.core.catalog.domain.Product;
@@ -32,6 +30,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class SharedUtilityService {
@@ -231,6 +230,37 @@ public class SharedUtilityService {
 /*        serviceProviderDetails.put("privileges", serviceProvider.getPrivileges());
         serviceProviderDetails.put("spAddresses", serviceProvider.getSpAddresses());*/
         return serviceProviderDetails;
+    }
+
+    public List<Map<String, Object>> mapQualifications(List<QualificationDetails> qualificationDetails) {
+        return qualificationDetails.stream()
+                .map(qualificationDetail -> {
+                    Map<String, Object> qualificationInfo = new HashMap<>();
+
+                    // Fetch the qualification by qualification_id
+                    DocumentType qualification = entityManager.find(DocumentType.class, qualificationDetail.getQualification_id());
+
+                    // Populate the map with necessary fields from qualificationDetail
+                    qualificationInfo.put("institution_name", qualificationDetail.getInstitution_name());
+                    qualificationInfo.put("year_of_passing", qualificationDetail.getYear_of_passing());
+                    qualificationInfo.put("board_or_university", qualificationDetail.getBoard_or_university());
+                    qualificationInfo.put("subject_name", qualificationDetail.getSubject_name());
+                    qualificationInfo.put("stream",qualificationDetail.getStream());
+                    qualificationInfo.put("examination_roll_number",qualificationDetail.getExamination_role_number());
+                    qualificationInfo.put("examination_registration_number",qualificationDetail.getExamination_registration_number());
+                    qualificationInfo.put("grade_or_percentage_value", qualificationDetail.getGrade_or_percentage_value());
+                    qualificationInfo.put("marks_total", qualificationDetail.getTotal_marks());
+                    qualificationInfo.put("marks_obtained", qualificationDetail.getMarks_obtained());
+
+                    // Replace the qualification_id with qualification_name
+                    if (qualification != null) {
+                        qualificationInfo.put("qualification_name", qualification.getDocument_type_name());
+                    } else {
+                        qualificationInfo.put("qualification_name", "Unknown Qualification");
+                    }
+
+                    return qualificationInfo;
+                }).collect(Collectors.toList());
     }
 
 
