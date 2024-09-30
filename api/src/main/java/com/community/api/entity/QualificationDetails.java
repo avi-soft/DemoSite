@@ -73,7 +73,7 @@ public class QualificationDetails {
     private Integer qualification_id;
 
     @AssertTrue(message = "Total marks cannot be less than marks obtained")
-    private boolean isMarksTotalValid() {
+    private Boolean isMarksTotalValid() {
         return total_marks >= marks_obtained;
     }
 

@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
+import javax.transaction.Transactional;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.time.ZonedDateTime;
@@ -136,7 +137,9 @@ public class SharedUtilityService {
         customerDetails.put("city", customCustomer.getCity());
         customerDetails.put("district", customCustomer.getDistrict());
         customerDetails.put("pincode", customCustomer.getPincode());
-        customerDetails.put("residentialAddress",customCustomer.getResidentailAddress());
+
+        customerDetails.put("residentialAddress",customCustomer.getResidentialAddress());
+
       /*  customerDetails.put("qualificationDetails",customCustomer.getQualificationDetailsList());
         customerDetails.put("documentList",customCustomer.getDocumentList());
         List<Map<String,Object>>listOfSavedProducts=new ArrayList<>();*/
@@ -186,7 +189,7 @@ public class SharedUtilityService {
             return ValidationResult.SUCCESS;
 
         }
-
+    @Transactional
     public Map<String,Object> serviceProviderDetailsMap(ServiceProviderEntity serviceProvider)
     {
         Map<String,Object>serviceProviderDetails=new HashMap<>();

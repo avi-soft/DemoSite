@@ -126,6 +126,7 @@ public class TestController {
 
         }
     }
+
     @PostMapping("rename-column-to-a-table/rename")
     @Transactional
     public String renameColumn(@RequestParam String entityName, @RequestParam String oldColumnName, @RequestParam String newColumnName) {
@@ -138,6 +139,7 @@ public class TestController {
             return "Error occurred while altering the Document table";
         }
     }
+
 
     @PostMapping("/add-column-to-a-table/{entityName}/{columnName}/{dataType}")
     @Transactional
@@ -161,7 +163,9 @@ public class TestController {
     }
     @PostMapping("/test-sanitizer")
     public ResponseEntity<?> testSanitizer(@RequestBody Map<String,Object>map) {
+
        return ResponseService.generateSuccessResponse("Sanitized map",sanitizerService.sanitizeInputMap(map),HttpStatus.OK);
+
     }
     @GetMapping("/download-file-test")
     public void downloadFile( HttpServletRequest request, HttpServletResponse response) {
