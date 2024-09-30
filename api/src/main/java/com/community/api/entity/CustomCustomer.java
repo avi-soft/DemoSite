@@ -134,8 +134,6 @@ public class CustomCustomer extends CustomerImpl {
     @Column(name = "secondary_mobile_number")
     private String secondaryMobileNumber;
 
-    @Column(name = "show_contact_details")
-    private Boolean show_my_contact_details=false;
 
     @Nullable
     @Column(name = "whatsapp_number")

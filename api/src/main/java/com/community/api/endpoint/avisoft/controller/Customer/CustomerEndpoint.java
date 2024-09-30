@@ -204,16 +204,21 @@ public class CustomerEndpoint {
             customCustomer.setQualificationDetailsList(customCustomer.getQualificationDetailsList());
             customCustomer.setCountryCode(customCustomer.getCountryCode());
 
-            if (details.containsKey("firstName") && details.containsKey("lastName")) {
-                if (!details.get("firstName").toString().isEmpty())
-                    customCustomer.setFirstName((String) details.get("firstName"));
-                else
-                    errorMessages.add("first name cannot be null");
-                if (!details.get("lastName").toString().isEmpty())
-                    customCustomer.setLastName((String) details.get("lastName"));
-                else
-                    errorMessages.add("last name cannot be null");
+
+            if (details.containsKey("firstName")&&!details.get("firstName").toString().isEmpty()) {
+                customCustomer.setFirstName((String) details.get("firstName"));
+            } else if (details.containsKey("firstName")&&details.get("firstName").toString().isEmpty())
+            {
+                errorMessages.add("First name cannot be null");
             }
+            if (details.containsKey("lastName")&&!details.get("lastName").toString().isEmpty())
+                customCustomer.setLastName((String) details.get("lastName"));
+            else if (details.containsKey("lastName")&&details.get("lastName").toString().isEmpty())
+            {
+                errorMessages.add("Last name cannot be null");
+            }
+
+
 
             if (details.containsKey("emailAddress") && ((String) details.get("emailAddress")).isEmpty())
                 errorMessages.add("email Address cannot be null");

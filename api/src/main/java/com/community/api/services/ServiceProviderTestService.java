@@ -102,10 +102,11 @@ public class ServiceProviderTestService {
         String imageUrl = fileService.getFileUrl(test.getDownloaded_image().getFile_path(),request);
 
         Map<String, Object> response = new HashMap<>();
-        String imageValidation = "Only images between 500KB and 2MB are allowed";
+        String min = "500KB" ;
+        String max = "2MB" ;
         response.put("test", test);
-        response.put("imageValidation", imageValidation);
-
+        response.put("min", min);
+        response.put("max", max);
         response.put("downloadImageUrl", imageUrl);
 
         return response;
