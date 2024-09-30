@@ -1,4 +1,5 @@
 package com.community.api.entity;
+import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
@@ -23,6 +24,7 @@ public class QualificationDetails {
 
 //    @Min(value = 1900, message = "Year of passing should not be before 1900")
 //    @Max(value = 9999, message = "Year of passing should be a valid 4-digit year")
+    @NotNull(message = "Year of passing is required")
     @Column(name = "year_of_passing", nullable = false)
     private Long year_of_passing;
 
@@ -32,11 +34,25 @@ public class QualificationDetails {
     @Column(name = "board_or_university", nullable = false)
     private String board_or_university;
 
-    @NotBlank(message = "Subject stream is required")
-    @Size(max = 255, message = "Subject stream should not exceed 255 characters")
-    @Pattern(regexp = "^[^\\d]*$", message = "Subject stream cannot contain numeric values")
-    @Column(name = "subject_stream", nullable = false)
-    private String subject_stream;
+    @NotNull(message = "Examination Role Number is required")
+    @Column(name = "examination_role_number", nullable = false)
+    private Long examination_role_number;
+
+    @NotNull(message = "Examination Registration Number is required")
+    @Column(name = "examination_registration_number")
+    private Long examination_registration_number;
+
+    @NotBlank(message = "Subject name is required")
+    @Size(max = 255, message = "Subject name should not exceed 255 characters")
+    @Pattern(regexp = "^[^\\d]*$", message = "Subject name cannot contain numeric values")
+    @Column(name = "subject_name", nullable = false)
+    private String subject_name;
+
+    @NotBlank(message = "Stream is required")
+    @Size(max = 255, message = "Stream should not exceed 255 characters")
+    @Pattern(regexp = "^[^\\d]*$", message = "Stream cannot contain numeric values")
+    @Column(name = "stream", nullable = false)
+    private String stream;
 
     @NotBlank(message = "Grade or percentage value is required")
     @Pattern(regexp = "^(100|[1-9]?[0-9](\\\\.\\\\d*)?)$|^[A-Za-z]+$", message = "Grade or percentage value must be either a number  (up to 100) or a valid grade")
@@ -52,6 +68,7 @@ public class QualificationDetails {
     @Column(name = "marks_obtained", nullable = false)
     private Long marks_obtained;
 
+    @NotNull(message = "Qualification id is required")
     @Column(name = "qualification_id", nullable = false)
     private Integer qualification_id;
 
@@ -64,9 +81,14 @@ public class QualificationDetails {
 //    private boolean isYearOfPassingValid() {
 //        return year_of_passing <= Year.now().getValue();
 //    }
-    @JsonBackReference
+    @JsonBackReference("qualificationDetailsList-customer")
     @ManyToOne
     @JoinColumn(name = "custom_customer_id")
     private CustomCustomer custom_customer;
+
+    @JsonBackReference
+    @ManyToOne
+    @JoinColumn(name = "service_provider_id")
+    private ServiceProviderEntity service_provider;
 
 }
