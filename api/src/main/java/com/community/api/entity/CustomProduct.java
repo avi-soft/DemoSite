@@ -144,4 +144,8 @@ public class CustomProduct extends ProductImpl {
     @Column(name = "notifying_authority")
     protected String notifyingAuthority;
 
+    @NotNull
+    @Column(name = "created_date")
+    protected Date createdDate;
+
 }

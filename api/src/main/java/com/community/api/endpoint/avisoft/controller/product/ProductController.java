@@ -77,12 +77,12 @@ import static com.community.api.component.Constant.*;
 @RequestMapping(value = "/product-custom", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
 public class ProductController extends CatalogEndpoint {
 
-    public static final String TENTATIVEDATEAFTERACTIVEENDDATE = "BOTH TENTATIVE EXAMINATION DATA MUST BE AFTER ACTIVE END DATE";
-    public static final String TENTATIVEEXAMDATETOAFTEREXAMDATEFROM = "TENTATIVE EXAM DATE TO MUST BE EITHER EQUAL OR BEFORE OF TENTATIVE EXAM DATE FROM";
-    public static final String TENTATIVEEXAMDATEAFTERACTIVEENDDATE = "TENTATIVE EXAMINATION DATE MUST BE AFTER ACTIVE END DATE";
-    public static final String POSTLESSTHANORZERO = "NUMBER OF POST CANNOT BE LESS THAN OR EQUAL TO ZERO";
-    public static final String PRODUCTNOTFOUND = "PRODUCT NOT FOUND";
-    public static final String PRODUCTFOUNDSUCCESSFULLY = "PRODUCTS FOUND SUCCESSFULLY";
+    public static final String TENTATIVEDATEAFTERACTIVEENDDATE = "Both tentative examination data must be after active end date.";
+    public static final String TENTATIVEEXAMDATETOAFTEREXAMDATEFROM = "Tentative exam date to must be either equal or before of tentative exam date from.";
+    public static final String TENTATIVEEXAMDATEAFTERACTIVEENDDATE = "Tentative examination date must be after active end date.";
+    public static final String POSTLESSTHANORZERO = "Number of post cannot be less than or equal to zero.";
+    public static final String PRODUCTNOTFOUND = "Product not found.";
+    public static final String PRODUCTFOUNDSUCCESSFULLY = "Products found successfully";
 
     private final ExceptionHandlingService exceptionHandlingService;
     private final EntityManager entityManager;
@@ -149,10 +149,10 @@ public class ProductController extends CatalogEndpoint {
 
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); // Set active start date to current date and time in "yyyy-MM-dd HH:mm:ss" format
             String formattedDate = dateFormat.format(new Date());
-            Date activeStartDate = dateFormat.parse(formattedDate);
+            Date currentDate = dateFormat.parse(formattedDate);
 
             Sku sku = catalogService.createSku(); // Create a new Sku Object
-            sku.setActiveStartDate(activeStartDate);
+            sku.setActiveStartDate(addProductDto.getActiveStartDate());
             sku.setName(addProductDto.getMetaTitle());
             sku.setQuantityAvailable(addProductDto.getQuantity());
             sku.setDescription(addProductDto.getMetaDescription());
@@ -191,7 +191,7 @@ public class ProductController extends CatalogEndpoint {
             Role role = productService.getRoleByToken(authHeader);
             Long creatorUserId = productService.getUserIdByToken(authHeader);
 
-            productService.saveCustomProduct(product, addProductDto, customProductState, role, creatorUserId, product.getActiveStartDate()); // Save external product with provided dates and get status code
+            productService.saveCustomProduct(product, addProductDto, customProductState, role, creatorUserId, product.getActiveStartDate(), currentDate); // Save external product with provided dates and get status code
             productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getReservedCategory(), product);
             productReserveCategoryBornBeforeAfterRefService.saveBornBeforeAndBornAfter(addProductDto.getReservedCategory(), product);
 
