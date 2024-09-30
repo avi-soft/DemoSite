@@ -133,6 +133,60 @@ public class SharedUtilityService {
         customerDetails.put("secondaryMobileNumber", customCustomer.getSecondaryMobileNumber());
         customerDetails.put("whatsappNumber", customCustomer.getWhatsappNumber());
         customerDetails.put("secondaryEmail", customCustomer.getSecondaryEmail());
+        customerDetails.put("mothers_name", customCustomer.getMothersName());
+        customerDetails.put("date_of_birth", customCustomer.getDob());
+        customerDetails.put("adhar_number", customCustomer.getAdharNumber());
+        customerDetails.put("category_issue_date", customCustomer.getCategoryIssueDate());
+        customerDetails.put("height_cms", customCustomer.getHeightCms());
+        customerDetails.put("weight_kgs", customCustomer.getWeightKgs());
+        customerDetails.put("chest_size_cms", customCustomer.getChestSizeCms());
+        customerDetails.put("shoe_size_inches", customCustomer.getShoeSizeInches());
+        customerDetails.put("waist_size_cms", customCustomer.getWaistSizeCms());
+        customerDetails.put("can_swim", customCustomer.getCanSwim());
+        customerDetails.put("proficiency_in_sports_national_level", customCustomer.getProficiencyInSportsNationalLevel());
+        customerDetails.put("first_choice_exam_city", customCustomer.getFirstChoiceExamCity());
+        customerDetails.put("second_choice_exam_city", customCustomer.getSecondChoiceExamCity());
+        customerDetails.put("third_choice_exam_city", customCustomer.getThirdChoiceExamCity());
+        customerDetails.put("mphil_passed", customCustomer.getMphilPassed());
+        customerDetails.put("phd_passed", customCustomer.getPhdPassed());
+        customerDetails.put("number_of_attempts", customCustomer.getNumberOfAttempts());
+        customerDetails.put("work_experience", customCustomer.getWorkExperience());
+        customerDetails.put("category_valid_upto", customCustomer.getCategoryValidUpto());
+        customerDetails.put("religion", customCustomer.getReligion());
+        customerDetails.put("belongs_to_minority", customCustomer.getBelongsToMinority());
+        customerDetails.put("secondary_mobile_number", customCustomer.getSecondaryMobileNumber());
+        customerDetails.put("whatsapp_number", customCustomer.getWhatsappNumber());
+        customerDetails.put("secondary_email", customCustomer.getSecondaryEmail());
+        customerDetails.put("disability_handicapped", customCustomer.getDisability());
+        customerDetails.put("is_ex_service_man", customCustomer.getExService());
+        customerDetails.put("is_married", customCustomer.getIsMarried());
+        customerDetails.put("visible_identification_mark_1", customCustomer.getIdentificationMark1());
+        customerDetails.put("visible_identification_mark_2", customCustomer.getIdentificationMark2());
+
+        Map<String,String>currentAddress=new HashMap<>();
+        Map<String,String>permanentAddress=new HashMap<>();
+        for(CustomerAddress customerAddress:customer.getCustomerAddresses())
+        {
+            if(customerAddress.getAddressName().equals("CURRENT_ADDRESS"))
+            {
+                currentAddress.put("state", customerAddress.getAddress().getStateProvinceRegion());
+                currentAddress.put("city", customerAddress.getAddress().getCity());
+                currentAddress.put("district", customerAddress.getAddress().getCounty());
+                currentAddress.put("pincode", customerAddress.getAddress().getPostalCode());
+                currentAddress.put("Address line",customerAddress.getAddress().getAddressLine1());
+            }
+            if(customerAddress.getAddressName().equals("PERMANENT_ADDRESS"))
+            {
+                permanentAddress.put("state", customerAddress.getAddress().getStateProvinceRegion());
+                permanentAddress.put("city", customerAddress.getAddress().getCity());
+                permanentAddress.put("district", customerAddress.getAddress().getCounty());
+                permanentAddress.put("pincode", customerAddress.getAddress().getPostalCode());
+                permanentAddress.put("Address line",customerAddress.getAddress().getAddressLine1());
+            }
+
+        }
+        customerDetails.put("currentAddress",currentAddress);
+        customerDetails.put("permanentAddress",permanentAddress);
         customerDetails.put("state", customCustomer.getState());
         customerDetails.put("city", customCustomer.getCity());
         customerDetails.put("district", customCustomer.getDistrict());
