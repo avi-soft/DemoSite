@@ -612,12 +612,10 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
                 Map<String,Object> serviceProviderResponse= sharedUtilityService.serviceProviderDetailsMap(existingServiceProvider);
                 if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
-<<<<<<< HEAD
+
 
                                         Map<String, Object> responseBody = createAuthResponse(existingToken, serviceProviderResponse).getBody();
-=======
-                    Map<String, Object> responseBody = createAuthResponse(existingToken, serviceProviderResponse).getBody();
->>>>>>> 1c7e635c6711214887fd7b60500569a6bb6a32bd
+
 
                     return ResponseEntity.ok(responseBody);
                 } else {

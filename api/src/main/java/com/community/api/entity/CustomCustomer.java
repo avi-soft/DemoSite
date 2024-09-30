@@ -152,8 +152,7 @@ public class CustomCustomer extends CustomerImpl {
     @Nullable
     private String token;
 
-    @Column(name = "residential_address")
-    private String residentailAddress;
+
 
     @Column(name = "disability_handicapped")
     private boolean disability=false;
