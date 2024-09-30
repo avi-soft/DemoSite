@@ -8,6 +8,7 @@ import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.Qualification;
 import com.community.api.entity.CustomProduct;
+import com.community.api.entity.QualificationDetails;
 import com.community.api.services.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.exception.ExceptionHandlingService;
@@ -277,6 +278,7 @@ public class CustomerEndpoint {
             CustomerImpl customer = em.find(CustomerImpl.class, customerId);  // Assuming you retrieve the base Customer entity
             Map<String, Object> customerDetails = sharedUtilityService.breakReferenceForCustomer(customer);
             // Fetch qualification details and replace qualification_id with qualification_name
+
             List<Map<String, Object>> qualificationsWithNames = customCustomer.getQualificationDetailsList().stream()
                     .map(qualificationDetail -> {
                         // Create a new map to store qualification information
@@ -295,7 +297,7 @@ public class CustomerEndpoint {
                         qualificationInfo.put("institution_name", qualificationDetail.getInstitution_name());
                         qualificationInfo.put("year_of_passing", qualificationDetail.getYear_of_passing());
                         qualificationInfo.put("board_or_university", qualificationDetail.getBoard_or_university());
-                        qualificationInfo.put("subject_stream", qualificationDetail.getSubject_stream());
+                        qualificationInfo.put("subject_stream", qualificationDetail.getStream());
                         qualificationInfo.put("grade_or_percentage_value", qualificationDetail.getGrade_or_percentage_value());
                         qualificationInfo.put("marks_total", qualificationDetail.getTotal_marks());
                         qualificationInfo.put("marks_obtained", qualificationDetail.getMarks_obtained());
@@ -309,6 +311,7 @@ public class CustomerEndpoint {
 
                         return qualificationInfo;
                     }).collect(Collectors.toList());
+
 
             customerDetails.put("qualificationDetails", qualificationsWithNames);
 

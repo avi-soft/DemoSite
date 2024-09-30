@@ -127,6 +127,20 @@ public class TestController {
         }
     }
 
+    @PostMapping("rename-column-to-a-table/rename")
+    @Transactional
+    public String renameColumn(@RequestParam String entityName, @RequestParam String oldColumnName, @RequestParam String newColumnName) {
+        String sql = "Alter table "+ entityName + " rename column " +oldColumnName + " to " + newColumnName;
+        try {
+            entityManager.createNativeQuery(sql).executeUpdate();
+            return "Column name successfully renamed from " + oldColumnName + " to " + newColumnName;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Error occurred while altering the Document table";
+        }
+    }
+
+
     @PostMapping("/add-column-to-a-table/{entityName}/{columnName}/{dataType}")
     @Transactional
     public String addColumn(@PathVariable String entityName,@PathVariable String columnName,@PathVariable String dataType) {

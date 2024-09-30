@@ -7,11 +7,17 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.broadleafcommerce.rest.api.wrapper.MediaWrapper;
 import com.community.api.entity.CustomApplicationScope;
+import com.community.api.entity.CustomGender;
 import com.community.api.entity.CustomJobGroup;
 import com.community.api.entity.CustomProduct;
 import com.community.api.entity.CustomProductState;
 import com.community.api.entity.CustomReserveCategory;
+import com.community.api.entity.CustomSector;
+import com.community.api.entity.CustomStream;
+import com.community.api.entity.CustomSubject;
+import com.community.api.entity.Qualification;
 import com.community.api.entity.Role;
+import com.community.api.entity.StateCode;
 import com.community.api.services.ReserveCategoryService;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
@@ -20,14 +26,13 @@ import org.broadleafcommerce.common.rest.api.wrapper.APIWrapper;
 import org.broadleafcommerce.common.rest.api.wrapper.BaseWrapper;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.common.persistence.Status;
-import org.springframework.beans.factory.annotation.Autowired;
 
 
 @Data
 @NoArgsConstructor
 public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Product> {
 
-    @JsonProperty("id")
+    @JsonProperty("product_id")
     protected Long id;
     @JsonProperty("meta_title")
     protected String metaTitle;
@@ -67,8 +72,8 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
     protected List<ReserveCategoryDto> reserveCategoryDtoList = new ArrayList<>();
     @JsonProperty("platform_fee")
     protected Double platformFee;
-    @JsonProperty("notifying_authority")
-    protected String notifyingAuthority;
+    @JsonProperty("state")
+    protected StateCode state;
     @JsonProperty("custom_application_scope")
     protected CustomApplicationScope customApplicationScope;
     @JsonProperty("custom_product_state")
@@ -96,7 +101,39 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
     @JsonProperty("exam_date_to")
     protected Date examDateTo;
 
-    public void wrapDetailsAddProduct(Product product, AddProductDto addProductDto, CustomJobGroup customJobGroup, CustomProductState customProductState, CustomApplicationScope customApplicationScope, Long creatorUserId, Role creatorRole, ReserveCategoryService reserveCategoryService) {
+    @JsonProperty("last_date_to_pay_fee")
+    Date lateDateToPayFee;
+    @JsonProperty("admit_card_date_from")
+    Date admitCardDateFrom;
+    @JsonProperty("admit_card_date_to")
+    Date adminCardDateTo;
+    @JsonProperty("modification_date_from")
+    Date modificationDateFrom;
+    @JsonProperty("modification_date_to")
+    Date modificationDateTo;
+    @JsonProperty("download_notification_link")
+    String downloadNotificationLink;
+    @JsonProperty("download_syllabus_link")
+    String downloadSyllabusLink;
+    @JsonProperty("form_complexity")
+    Long formComplexity;
+    @JsonProperty("qualification")
+    Qualification qualification;
+    @JsonProperty("sector")
+    CustomSector customSector;
+    @JsonProperty("genderSpecific")
+    CustomGender customGender;
+    @JsonProperty("stream")
+    CustomStream customStream;
+    @JsonProperty("subject")
+    CustomSubject customSubject;
+    @JsonProperty("selection_criteria")
+    String selectionCriteria;
+
+    @JsonProperty("notifying_authority")
+    String notifyingAuthority;
+
+    public void wrapDetailsAddProduct(Product product, AddProductDto addProductDto, CustomJobGroup customJobGroup, CustomProductState customProductState, CustomApplicationScope customApplicationScope, Long creatorUserId, Role creatorRole, ReserveCategoryService reserveCategoryService, StateCode notifyingAuthority, CustomGender customGender, CustomSector customSector, Qualification qualification, CustomStream customStream, CustomSubject customSubject) throws Exception {
 
         this.id = product.getId();
         this.metaTitle = product.getMetaTitle();
@@ -134,7 +171,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         }
 
         this.platformFee = addProductDto.getPlatformFee();
-        this.notifyingAuthority = addProductDto.notifyingAuthority;
+        this.notifyingAuthority = addProductDto.getNotifyingAuthority();
 
         this.customApplicationScope = customApplicationScope;
         this.customJobGroup = customJobGroup;
@@ -151,6 +188,21 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.examDateFrom = addProductDto.getExamDateFrom();
         this.examDateTo = addProductDto.getExamDateTo();
 
+        this.lateDateToPayFee = addProductDto.getLastDateToPayFee();
+        this.admitCardDateFrom = addProductDto.getAdmitCardDateFrom();
+        this.adminCardDateTo = addProductDto.getAdmitCardDateTo();
+        this.modificationDateFrom = addProductDto.getModificationDateFrom();
+        this.modificationDateTo = addProductDto.getModificationDateTo();
+        this.downloadNotificationLink = addProductDto.getDownloadNotificationLink();
+        this.downloadSyllabusLink = addProductDto.getDownloadSyllabusLink();
+        this.formComplexity = addProductDto.getFormComplexity();
+
+        this.customGender = customGender;
+        this.customSector = customSector;
+        this.qualification = qualification;
+        this.customStream = customStream;
+        this.customSubject = customSubject;
+        this.selectionCriteria = addProductDto.getSelectionCriteria();
         if (product.getDefaultCategory() != null) {
             this.defaultCategoryId = product.getDefaultCategory().getId();
         }
@@ -176,7 +228,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
 
         this.displayTemplate = customProduct.getDisplayTemplate();
         this.platformFee = customProduct.getPlatformFee();
-        this.notifyingAuthority = customProduct.getNotifyingAuthority();
+        this.state = customProduct.getState();
 
         this.customApplicationScope = customProduct.getCustomApplicationScope();
         this.customJobGroup = customProduct.getJobGroup();
@@ -194,6 +246,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.advertiserUrl = customProduct.getAdvertiserUrl();
         this.examDateFrom = customProduct.getExamDateFrom();
         this.examDateTo = customProduct.getExamDateTo();
+        this.notifyingAuthority = customProduct.getNotifyingAuthority();
 
         if (customProduct.getDefaultCategory() != null) {
             this.defaultCategoryId = customProduct.getDefaultCategory().getId();
@@ -219,6 +272,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
 
         this.displayTemplate = customProduct.getDisplayTemplate();
         this.platformFee = customProduct.getPlatformFee();
+        this.state = customProduct.getState();
         this.notifyingAuthority = customProduct.getNotifyingAuthority();
 
         this.customApplicationScope = customProduct.getCustomApplicationScope();

@@ -8,11 +8,19 @@ import com.community.api.dto.ReserveCategoryDto;
 import com.community.api.dto.CustomProductWrapper;
 
 import com.community.api.entity.CustomApplicationScope;
+import com.community.api.entity.CustomGender;
 import com.community.api.entity.CustomJobGroup;
 import com.community.api.entity.CustomProduct;
 import com.community.api.entity.CustomProductState;
 
+import com.community.api.entity.CustomSector;
+import com.community.api.entity.CustomStream;
+import com.community.api.entity.CustomSubject;
+import com.community.api.entity.Qualification;
 import com.community.api.entity.Role;
+import com.community.api.entity.StateCode;
+import com.community.api.services.DistrictService;
+import com.community.api.services.ProductGenderPhysicalRequirementService;
 import com.community.api.services.ResponseService;
 import org.broadleafcommerce.common.persistence.Status;
 
@@ -55,9 +63,7 @@ import javax.transaction.Transactional;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static com.community.api.component.Constant.*;
 
@@ -92,6 +98,12 @@ public class ProductController extends CatalogEndpoint {
     private final ReserveCategoryDtoService reserveCategoryDtoService;
 
     @Autowired
+    DistrictService districtService;
+
+    @Autowired
+    ProductGenderPhysicalRequirementService productGenderPhysicalRequirementService;
+
+    @Autowired
     public ProductController(ExceptionHandlingService exceptionHandlingService, EntityManager entityManager, JwtUtil jwtTokenUtil, ProductService productService, RoleService roleService, JobGroupService jobGroupService, ProductStateService productStateService, ApplicationScopeService applicationScopeService, ProductReserveCategoryBornBeforeAfterRefService productReserveCategoryBornBeforeAfterRefService, ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService, ReserveCategoryService reserveCategoryService, ReserveCategoryDtoService reserveCategoryDtoService) {
         this.exceptionHandlingService = exceptionHandlingService;
         this.entityManager = entityManager;
@@ -122,10 +134,6 @@ public class ProductController extends CatalogEndpoint {
             }
 
             Category category = productService.validateCategory(categoryId);
-            if (category == null || ((Status) category).getArchived() != 'Y') {
-                ResponseService.generateErrorResponse("CATEGORY NOT FOUND", HttpStatus.NOT_FOUND);
-            }
-
             productService.addProductDtoValidation(addProductDto);
 
             Product product = catalogService.createProduct(ProductType.PRODUCT);
@@ -150,21 +158,35 @@ public class ProductController extends CatalogEndpoint {
             sku.setDescription(addProductDto.getMetaDescription());
             sku.setActiveEndDate(addProductDto.getActiveEndDate());
             sku.setDefaultProduct(product);
-//            catalogService.saveSku(sku); // this was creating duplicate entries in the db.
 
             CustomJobGroup customJobGroup = productService.validateCustomJobGroup(addProductDto.getJobGroup());
             if (customJobGroup == null) {
-                ResponseService.generateErrorResponse("CUSTOM JOB GROUP NOT FOUND", HttpStatus.NOT_FOUND);
+                ResponseService.generateErrorResponse("Custom job group not found.", HttpStatus.NOT_FOUND);
             }
 
             CustomProductState customProductState = productStateService.getProductStateByName(PRODUCT_STATE_NEW);
             if (customProductState == null) {
-                ResponseService.generateErrorResponse("CUSTOM PRODUCT STATE NOT FOUND", HttpStatus.NOT_FOUND);
+                ResponseService.generateErrorResponse("Custom product state not found.", HttpStatus.NOT_FOUND);
             }
 
             product.setDefaultSku(sku); // Set default SKU in the product
 
             productService.validateReserveCategory(addProductDto);
+            CustomGender customGender = productService.validateGenderSpecificField(addProductDto);
+            CustomSector customSector = productService.validateSector(addProductDto);
+
+            productService.validateSelectionCriteria(addProductDto);
+
+            Qualification qualification = productService.validateQualification(addProductDto);
+            CustomStream customStream = productService.validateStream(addProductDto);
+            CustomSubject customSubject = productService.validateSubject(addProductDto);
+
+            productService.validateAdmitCardDates(addProductDto);
+            productService.validateModificationDates(addProductDto);
+            productService.validateLastDateToPayFee(addProductDto);
+
+            productService.validateLinks(addProductDto);
+            productService.validateFormComplexity(addProductDto);
 
             Role role = productService.getRoleByToken(authHeader);
             Long creatorUserId = productService.getUserIdByToken(authHeader);
@@ -173,14 +195,25 @@ public class ProductController extends CatalogEndpoint {
             productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getReservedCategory(), product);
             productReserveCategoryBornBeforeAfterRefService.saveBornBeforeAndBornAfter(addProductDto.getReservedCategory(), product);
 
-            CustomProductWrapper wrapper = new CustomProductWrapper();
             CustomJobGroup jobGroup = jobGroupService.getJobGroupById(addProductDto.getJobGroup());
             CustomApplicationScope applicationScope = applicationScopeService.getApplicationScopeById(addProductDto.getApplicationScope());
 
-            wrapper.wrapDetailsAddProduct(product, addProductDto, jobGroup, customProductState, applicationScope, creatorUserId, role, reserveCategoryService);
+            StateCode notifyingAuthority = null;
+            if (addProductDto.getState() != null) {
+                notifyingAuthority = districtService.getStateByStateId(addProductDto.getState());
+            }
+
+            productService.validatePhysicalRequirement(addProductDto);
+            productGenderPhysicalRequirementService.savePhysicalRequirement(addProductDto.getPhysicalRequirement(), product);
+
+            CustomProductWrapper wrapper = new CustomProductWrapper();
+            wrapper.wrapDetailsAddProduct(product, addProductDto, jobGroup, customProductState, applicationScope, creatorUserId, role, reserveCategoryService, notifyingAuthority, customGender, customSector, qualification, customStream, customSubject);
 
             return ResponseService.generateSuccessResponse("PRODUCT ADDED SUCCESSFULLY", wrapper, HttpStatus.OK);
 
+        } catch (NumberFormatException numberFormatException) {
+            exceptionHandlingService.handleException(numberFormatException);
+            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + numberFormatException.getMessage(), HttpStatus.NOT_FOUND);
         } catch (IllegalArgumentException illegalArgumentException) {
             exceptionHandlingService.handleException(illegalArgumentException);
             return ResponseService.generateErrorResponse(illegalArgumentException.getMessage(), HttpStatus.BAD_REQUEST);
@@ -211,7 +244,7 @@ public class ProductController extends CatalogEndpoint {
             }
 
             // Validations and checks.
-            if(addProductDto.getReservedCategory() != null) {
+            if (addProductDto.getReservedCategory() != null) {
                 productService.validateReserveCategory(addProductDto);
                 productService.deleteOldReserveCategoryMapping(customProduct);
             }
@@ -229,16 +262,18 @@ public class ProductController extends CatalogEndpoint {
             productService.validateExamDateFromAndExamDateTo(addProductDto, customProduct);
             productService.validateProductState(addProductDto, customProduct, authHeader);
 
-            customProduct.setModifiedDate(new Date());
+//            customProduct.setModifiedDate(new Date());
             customProduct.setModifierRole(roleService.getRoleByRoleId(jwtTokenUtil.extractRoleId(authHeader.substring(7))));
             customProduct.setModifierUserId(jwtTokenUtil.extractId(authHeader.substring(7)));
 
-            entityManager.persist(customProduct);
+            entityManager.merge(customProduct);
 
             Product product = catalogService.findProductById(customProduct.getId());
 
-            productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getReservedCategory(), product);
-            productReserveCategoryBornBeforeAfterRefService.saveBornBeforeAndBornAfter(addProductDto.getReservedCategory(), product);
+            if (addProductDto.getReservedCategory() != null) {
+                productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getReservedCategory(), product);
+                productReserveCategoryBornBeforeAfterRefService.saveBornBeforeAndBornAfter(addProductDto.getReservedCategory(), product);
+            }
 
             List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(productId);
 
@@ -246,6 +281,9 @@ public class ProductController extends CatalogEndpoint {
             wrapper.wrapDetails(customProduct, reserveCategoryDtoList);
             return ResponseService.generateSuccessResponse("Product Updated Successfully", wrapper, HttpStatus.OK);
 
+        } catch (NumberFormatException numberFormatException) {
+            exceptionHandlingService.handleException(numberFormatException);
+            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + numberFormatException.getMessage(), HttpStatus.NOT_FOUND);
         } catch (IllegalArgumentException illegalArgumentException) {
             exceptionHandlingService.handleException(illegalArgumentException);
             return ResponseService.generateErrorResponse(illegalArgumentException.getMessage(), HttpStatus.BAD_REQUEST);
@@ -290,7 +328,10 @@ public class ProductController extends CatalogEndpoint {
 
         } catch (NumberFormatException numberFormatException) {
             exceptionHandlingService.handleException(numberFormatException);
-            return ResponseService.generateErrorResponse(Constant.NUMBER_FORMAT_EXCEPTION + ": " + numberFormatException.getMessage(), HttpStatus.BAD_REQUEST);
+            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + numberFormatException.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException illegalArgumentException) {
+            exceptionHandlingService.handleException(illegalArgumentException);
+            return ResponseService.generateErrorResponse(Constant.NUMBER_FORMAT_EXCEPTION + ": " + illegalArgumentException.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -302,7 +343,6 @@ public class ProductController extends CatalogEndpoint {
     public ResponseEntity<?> retrieveProducts() {
 
         try {
-
             if (catalogService == null) {
                 return ResponseService.generateErrorResponse(Constant.CATALOG_SERVICE_NOT_INITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
             }
@@ -333,6 +373,12 @@ public class ProductController extends CatalogEndpoint {
 
             return ResponseService.generateSuccessResponse(PRODUCTFOUNDSUCCESSFULLY, responses, HttpStatus.OK);
 
+        } catch (NumberFormatException numberFormatException) {
+            exceptionHandlingService.handleException(numberFormatException);
+            return ResponseService.generateErrorResponse(SOME_EXCEPTION_OCCURRED + ": " + numberFormatException.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException illegalArgumentException) {
+            exceptionHandlingService.handleException(illegalArgumentException);
+            return ResponseService.generateErrorResponse(SOME_EXCEPTION_OCCURRED + ": " + illegalArgumentException.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -361,10 +407,13 @@ public class ProductController extends CatalogEndpoint {
 
         } catch (NumberFormatException numberFormatException) {
             exceptionHandlingService.handleException(numberFormatException);
-            return ResponseService.generateErrorResponse(Constant.NUMBER_FORMAT_EXCEPTION + ": " + numberFormatException.getMessage(), HttpStatus.BAD_REQUEST);
+            return ResponseService.generateErrorResponse(SOME_EXCEPTION_OCCURRED + ": " + numberFormatException.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException illegalArgumentException) {
+            exceptionHandlingService.handleException(illegalArgumentException);
+            return ResponseService.generateErrorResponse(SOME_EXCEPTION_OCCURRED + ": " + illegalArgumentException.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseService.generateErrorResponse(SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -463,7 +512,6 @@ public class ProductController extends CatalogEndpoint {
             @RequestParam(value = "reserve_categories", required = false) List<Long> reserveCategories) {
 
         try {
-            // Call the service to get filtered products
             List<CustomProduct> products = productService.filterProducts(state, categories, reserveCategories, title, fee, post, dateFrom, dateTo);
 
             if (products.isEmpty()) {
@@ -487,9 +535,16 @@ public class ProductController extends CatalogEndpoint {
 
             return ResponseService.generateSuccessResponse("PRODUCTS RETRIEVED SUCCESSFULLY", responses, HttpStatus.OK);
 
+        } catch (NumberFormatException numberFormatException) {
+            exceptionHandlingService.handleException(numberFormatException);
+            return ResponseService.generateErrorResponse(SOME_EXCEPTION_OCCURRED + ": " + numberFormatException.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException illegalArgumentException) {
+            exceptionHandlingService.handleException(illegalArgumentException);
+            return ResponseService.generateErrorResponse(SOME_EXCEPTION_OCCURRED + ": " + illegalArgumentException.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return ResponseService.generateErrorResponse("SOME EXCEPTION OCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 }

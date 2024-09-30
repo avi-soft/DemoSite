@@ -2,19 +2,14 @@ package com.community.api.endpoint.serviceProvider;
 
 
 
-import com.community.api.entity.Privileges;
-import com.community.api.entity.ResizedImage;
-import com.community.api.entity.ServiceProviderAddress;
-import com.community.api.entity.ServiceProviderInfra;
-import com.community.api.entity.ServiceProviderLanguage;
-import com.community.api.entity.ServiceProviderRank;
-import com.community.api.entity.ServiceProviderTest;
-import com.community.api.entity.ServiceProviderTestStatus;
-import com.community.api.entity.Skill;
+import com.community.api.entity.*;
 import com.community.api.utils.Document;
 import com.community.api.utils.ServiceProviderDocument;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import io.micrometer.core.lang.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,6 +22,7 @@ import javax.persistence.*;
 import javax.validation.constraints.*;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "service_provider")
@@ -53,7 +49,7 @@ public class ServiceProviderEntity  {
     private String father_name;
 
     private String date_of_birth;
-
+    @Size(min = 12, max = 12)
     private String aadhaar_number;
 
     @Size(min = 10, max = 10)
@@ -190,5 +186,10 @@ public class ServiceProviderEntity  {
  @Fetch(FetchMode.SUBSELECT)
  private List<ServiceProviderDocument> documents;
 
+
+    @Nullable
+    @JsonManagedReference
+    @OneToMany(mappedBy = "service_provider", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<QualificationDetails> qualificationDetailsList;
 
 }
