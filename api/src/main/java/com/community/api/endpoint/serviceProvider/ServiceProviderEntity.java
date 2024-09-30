@@ -52,7 +52,7 @@ public class ServiceProviderEntity  {
     private String father_name;
 
     private String date_of_birth;
-
+    @Size(min = 12, max = 12)
     private String aadhaar_number;
 
     @Size(min = 10, max = 10)
