@@ -142,13 +142,13 @@ public class CustomCustomer extends CustomerImpl {
     private String pincode;
 
     @Column(name = "disability_handicapped")
-    private boolean disability=false;
+    private Boolean disability=false;
 
     @Column(name = "is_ex_service_man")
-    private boolean exService=false;
+    private Boolean exService=false;
 
     @Column(name = "is_married")
-    private boolean isMarried=false;
+    private Boolean isMarried=false;
 
     @Column(name = "visible_identification_mark_1")
     private String identificationMark1;

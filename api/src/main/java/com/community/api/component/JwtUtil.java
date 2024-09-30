@@ -258,4 +258,15 @@ public class JwtUtil {
             throw new RuntimeException("Error in JWT token", e);
         }
     }
+
+    public void validateAuthHeader(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Authorization header is missing or invalid.");
+        }
+    }
+
+    public Long getTokenUserId(String authHeader) {
+        String jwtToken = authHeader.substring(7);
+        return extractId(jwtToken);
+    }
 }
