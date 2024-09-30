@@ -143,11 +143,9 @@ public class ServiceProviderTestService {
             String maxImageSize= ImageSizeConfig.convertBytesToReadableSize(Constant.MAX_FILE_SIZE);
             test.setIs_image_test_passed(false);
             entityManager.merge(test);
-<<<<<<< HEAD
+
             throw new IllegalArgumentException("Resized image size should be between " + minImageSize + " and " + maxImageSize);
-=======
-            throw new IllegalArgumentException("Image size should be between " + minImageSize + " and " + maxImageSize);
->>>>>>> 1c7e635c6711214887fd7b60500569a6bb6a32bd
+
         }
 
         // Validate the image size using saveDocuments method logic
@@ -285,11 +283,9 @@ public class ServiceProviderTestService {
             String maxImageSize= ImageSizeConfig.convertBytesToReadableSize(Constant.MAX_FILE_SIZE);
             test.setIs_image_test_passed(false);
             entityManager.merge(test);
-<<<<<<< HEAD
+
             throw new IllegalArgumentException("Signature image size should be between " + minImageSize + " and " + maxImageSize);
-=======
-            throw new IllegalArgumentException("Image size should be between " + minImageSize + " and " + maxImageSize);
->>>>>>> 1c7e635c6711214887fd7b60500569a6bb6a32bd
+
         }
         // Use the saveDocuments method to validate and store the signature image
         ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(signatureFile, "Signature Image", serviceProviderId, "SERVICE_PROVIDER");
@@ -476,13 +472,10 @@ public class ServiceProviderTestService {
 
         serviceProvider.setTotalSkillTestPoints(serviceProviderTest.getImage_test_scores() + serviceProviderTest.getTyping_test_scores());
         entityManager.merge(serviceProvider);
-<<<<<<< HEAD
-        return ResponseService.generateSuccessResponse("Image test scores updated successfully",serviceProviderTest,HttpStatus.OK);
-    }
-=======
+
                 return ResponseService.generateSuccessResponse("Image test scores updated successfully",serviceProviderTest,HttpStatus.OK);
             }
->>>>>>> 1c7e635c6711214887fd7b60500569a6bb6a32bd
+
 
     private boolean validateResizedImage(ServiceProviderTest test) throws IOException {
         Image downloadedImage = test.getDownloaded_image();
