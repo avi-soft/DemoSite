@@ -463,7 +463,6 @@ public class ProductController extends CatalogEndpoint {
             @RequestParam(value = "reserve_categories", required = false) List<Long> reserveCategories) {
 
         try {
-            // Call the service to get filtered products
             List<CustomProduct> products = productService.filterProducts(state, categories, reserveCategories, title, fee, post, dateFrom, dateTo);
 
             if (products.isEmpty()) {

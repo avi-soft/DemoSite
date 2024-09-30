@@ -44,6 +44,7 @@ public class ServiceProviderEntity  {
 
     private String user_name;
 
+    @Pattern(regexp = "^[a-zA-Z]+$", message = "First name must contain only alphabets")
     private String first_name;
 
     private String last_name;
@@ -57,6 +58,7 @@ public class ServiceProviderEntity  {
     private String aadhaar_number;
 
     @Size(min = 10, max = 10)
+    @Pattern(regexp = "^[A-Z]{5}\\d{4}\\{A-Z}{1}$", message = "Invalid format. Use 5 uppercase letters, 4 digits, and 1 uppercase letter.")
     private String pan_number;
    /* @OneToOne(cascade = CascadeType.ALL)
     private Document personal_photo;*/

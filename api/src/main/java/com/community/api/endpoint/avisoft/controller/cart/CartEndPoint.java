@@ -99,10 +99,11 @@ public class CartEndPoint extends BaseEndpoint {
     @RequestMapping(value = "empty", method = RequestMethod.DELETE)
     public ResponseEntity<?> emptyTheCart(@RequestParam Long customer_id) { //@TODO-empty cart should remove each item one by one
         try {
+            Long id = Long.valueOf(customer_id);
             if (isAnyServiceNull()) {
                 return ResponseService.generateErrorResponse("One or more Serivces not initialized", HttpStatus.INTERNAL_SERVER_ERROR);
                 }
-            if(customer_id==null)
+            if(id==null)
                 return ResponseService.generateErrorResponse("Customer Id not specified",HttpStatus.BAD_REQUEST);
             Customer customer = customerService.readCustomerById(customer_id);//finding the customer to get cart associated with it
             Order cart = null;
@@ -136,6 +137,8 @@ public class CartEndPoint extends BaseEndpoint {
                 } else
                     return ResponseService.generateErrorResponse("Error removing all items from cart", HttpStatus.INTERNAL_SERVER_ERROR);
             }
+        }catch (NumberFormatException e) {
+            return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error removing all items from cart : " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -146,10 +149,12 @@ public class CartEndPoint extends BaseEndpoint {
     @RequestMapping(value = "add-to-cart", method = RequestMethod.POST)
     public ResponseEntity<?> addToCart(@RequestParam long customerId, @RequestParam long productId) {
         try {
+            Long id = Long.valueOf(customerId);
             if (isAnyServiceNull()) {
                 return ResponseService.generateErrorResponse("One or more Services not initialized", HttpStatus.INTERNAL_SERVER_ERROR);
             }
-
+            if(id==null)
+                return ResponseService.generateErrorResponse("Customer Id not specified",HttpStatus.BAD_REQUEST);
             Customer customer = customerService.readCustomerById(customerId);
             if (customer == null) {
                 return ResponseService.generateErrorResponse("Customer not found for this Id", HttpStatus.NOT_FOUND);
@@ -187,6 +192,8 @@ public class CartEndPoint extends BaseEndpoint {
             responseBody.put("order_id", cart.getId());
             responseBody.put("added_product_id", orderItem.getOrderItemAttributes().get("productId").getValue());
             return ResponseService.generateSuccessResponse("Cart updated", responseBody, HttpStatus.OK);
+        }catch (NumberFormatException e) {
+            return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return ResponseService.generateErrorResponse("Error adding item to cart : " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -195,6 +202,9 @@ public class CartEndPoint extends BaseEndpoint {
     @RequestMapping(value = "number-of-items", method = RequestMethod.GET)
     public ResponseEntity<?> retrieveCartItemsCount(@RequestParam long customerId, @RequestParam Long orderId) {
         try {
+            Long id = Long.valueOf(customerId);
+            if(id==null)
+                return ResponseService.generateErrorResponse("Customer Id not specified",HttpStatus.BAD_REQUEST);
             if (isAnyServiceNull()) {
                 return ResponseService.generateErrorResponse("One or more Serivces not initialized", HttpStatus.INTERNAL_SERVER_ERROR);
             }
@@ -208,6 +218,8 @@ public class CartEndPoint extends BaseEndpoint {
                     return ResponseService.generateErrorResponse("No items found", HttpStatus.NOT_FOUND);
             } else
                 return ResponseService.generateErrorResponse("Customer not found", HttpStatus.NOT_FOUND);
+        }catch (NumberFormatException e) {
+            return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error retrieving cart", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -218,6 +230,9 @@ public class CartEndPoint extends BaseEndpoint {
     @RequestMapping(value = "preview-cart", method = RequestMethod.GET)
     public ResponseEntity<?> retrieveCartItems(@RequestParam long customerId, @RequestParam Long orderId) {
         try {
+            Long id = Long.valueOf(customerId);
+            if(id==null)
+                return ResponseService.generateErrorResponse("Customer Id not specified",HttpStatus.BAD_REQUEST);
             Double subTotal = 0.0;
             if (isAnyServiceNull()) {
                 return ResponseService.generateErrorResponse("One or more Serivces not initialized", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -248,6 +263,8 @@ public class CartEndPoint extends BaseEndpoint {
                 return ResponseService.generateSuccessResponse("Cart items", response, HttpStatus.OK);
             } else
                 return ResponseService.generateErrorResponse("No items in cart", HttpStatus.NOT_FOUND);
+        }catch (NumberFormatException e) {
+            return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error retrieving cart Items", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -261,6 +278,9 @@ public class CartEndPoint extends BaseEndpoint {
             @RequestParam Long orderId,
             @RequestParam Long orderItemId) {
         try {
+            Long id = Long.valueOf(customerId);
+            if(id==null)
+                return ResponseService.generateErrorResponse("Customer Id not specified",HttpStatus.BAD_REQUEST);
             if (isAnyServiceNull()) {
                 return ResponseService.generateErrorResponse("One or more Services not initialized", HttpStatus.INTERNAL_SERVER_ERROR);
             }
@@ -273,15 +293,30 @@ public class CartEndPoint extends BaseEndpoint {
             if (cart == null || cart.getOrderItems() == null) {
                 return ResponseService.generateErrorResponse("Cart Empty", HttpStatus.NOT_FOUND);
             }
-
+            OrderItem orderItemToRemove=null;
+            for(OrderItem orderItem:cart.getOrderItems())
+            {
+                if(orderItem.getId().equals(orderItemId)) {
+                    orderItemToRemove = orderItem;
+                    break;
+                }
+            }
+            long pid=Long.parseLong(orderItemToRemove.getOrderItemAttributes().get("productId").getValue());
+            CustomProduct customProduct=entityManager.find(CustomProduct.class,pid);
+            if (customProduct != null) {
+                if (!customCustomer.getCartRecoveryLog().contains(customProduct))
+                    customCustomer.getCartRecoveryLog().add(customProduct);
+            }
             boolean itemRemoved = cartService.removeItemFromCart(cart, orderItemId);
             /*OrderItem orderItem=entityManager.find(OrderItem.class,orderItemId);*/
-
-            if (itemRemoved) {
+            if(itemRemoved)
+            {
                 return ResponseService.generateSuccessResponse("Item Removed", null, HttpStatus.OK);
             } else {
                 return ResponseService.generateErrorResponse("Error removing item from cart: item not present in cart", HttpStatus.NOT_FOUND);
             }
+        }catch (NumberFormatException e) {
+            return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error deleting", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -292,6 +327,9 @@ public class CartEndPoint extends BaseEndpoint {
     @RequestMapping(value = "place-order/{customerId}", method = RequestMethod.POST)
     public ResponseEntity<?> placeOrder(@PathVariable long customerId) {
         try {
+            Long id = Long.valueOf(customerId);
+            if(id==null)
+                return ResponseService.generateErrorResponse("Customer Id not specified",HttpStatus.BAD_REQUEST);
             Map<String, Object> responseMap = new HashMap<>();
             List<Order> individualOrders = new ArrayList<>();
             Customer customer = customerService.readCustomerById(customerId);
@@ -334,15 +372,21 @@ public class CartEndPoint extends BaseEndpoint {
                 }
                 entityManager.merge(cart);
                 return ResponseService.generateSuccessResponse("Order Placed", cart.getId(), HttpStatus.OK);
+        }catch (NumberFormatException e) {
+            return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error placing order "+e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     @RequestMapping(value ="cart-recovery-log/{customerId}",method = RequestMethod.GET)
-    public ResponseEntity<?>getCartRecoveryLog(@PathVariable long customerId)
+    public ResponseEntity<?>getCartRecoveryLog(@PathVariable Long customerId)
     {
             try{
+                Long id = Long.valueOf(customerId);
+                if(id==null)
+                    return ResponseService.generateErrorResponse("Customer Id not specified",HttpStatus.BAD_REQUEST);
+
                 CustomCustomer customCustomer=entityManager.find(CustomCustomer.class,customerId);
                 if(customCustomer==null)
                     return ResponseService.generateErrorResponse("Cannot find customer for this id",HttpStatus.NOT_FOUND);
@@ -352,6 +396,8 @@ public class CartEndPoint extends BaseEndpoint {
                     productList.add(sharedUtilityService.createProductResponseMap(product,null));
                 }
                 return ResponseService.generateSuccessResponse("Cart Recovery Log : ",productList,HttpStatus.OK);
+            }catch (NumberFormatException e) {
+                return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
             }catch (Exception e) {
                 exceptionHandling.handleException(e);
                 return ResponseService.generateErrorResponse("Error fetching recovery log", HttpStatus.INTERNAL_SERVER_ERROR);
