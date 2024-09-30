@@ -15,6 +15,7 @@ import com.community.api.utils.Document;
 import com.community.api.utils.ServiceProviderDocument;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.micrometer.core.lang.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -44,27 +45,32 @@ public class ServiceProviderEntity  {
 
     private String user_name;
 
-    @Pattern(regexp = "^[a-zA-Z]+$", message = "First name must contain only alphabets")
+    @Pattern(regexp = "^[a-zA-Z]+( [a-zA-Z]+)*$", message = "First name must contain only alphabets")
     private String first_name;
-
+    @Pattern(regexp = "^[a-zA-Z]+( [a-zA-Z]+)*$", message = "Last name must contain only alphabets")
     private String last_name;
     //@TODO-countryCode to country_code for both customer and service provider
     private String country_code;
 
+    @Pattern(regexp = "^[a-zA-Z]+( [a-zA-Z]+)*$", message = "Father's name must contain only alphabets")
     private String father_name;
 
+    @Pattern(regexp = "^(0[1-9]|[12][0-9]|3[01])-(0[1-9]|1[0-2])-(\\d{4})$", message = "Date of birth must be in the format DD-MM-YYYY")
     private String date_of_birth;
 
+    @Pattern(regexp = "^[0-9]{12}$", message = "Aadhaar number must be a 12-digit numeric value")
+    @Size(min = 12, max = 12, message = "Aadhaar number must be exactly 12 digits long")
     private String aadhaar_number;
 
+    @Nullable
     @Size(min = 10, max = 10)
-    @Pattern(regexp = "^[A-Z]{5}\\d{4}\\{A-Z}{1}$", message = "Invalid format. Use 5 uppercase letters, 4 digits, and 1 uppercase letter.")
+    @Pattern(regexp = "^[A-Z]{5}\\d{4}[A-Z]{1}$", message = "Invalid format. Use 5 uppercase letters, 4 digits, and 1 uppercase letter.")
     private String pan_number;
-   /* @OneToOne(cascade = CascadeType.ALL)
-    private Document personal_photo;*/
+
     @Size(min = 9, max = 13)
     private String mobileNumber;
     private String otp;
+    @Nullable
     @Size(min = 9, max = 13)
     private String secondary_mobile_number;
     private int role;
@@ -73,18 +79,20 @@ public class ServiceProviderEntity  {
     @Email
     private String primary_email;
 
+    @Nullable
     @Email
     private String secondary_email;
     private String password;
     private Boolean is_running_business_unit;
 
+    @Nullable
     private String business_name;
-
+    @Nullable
     private String business_location;
-
+    @Nullable
     @Email
     private String business_email;
-
+    @Nullable
     private Integer number_of_employees;
 
 //    @Lob
@@ -94,9 +102,9 @@ public class ServiceProviderEntity  {
 //    @JoinColumn(name = "business_photo_id")
    /* @OneToOne(cascade = CascadeType.ALL)
     private Document business_photo;*/
-
+    @Nullable
     private Boolean isCFormAvailable;
-
+    @Nullable
     private String registration_number;
 
 //    @Lob

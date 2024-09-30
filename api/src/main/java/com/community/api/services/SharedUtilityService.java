@@ -285,8 +285,16 @@ public class SharedUtilityService {
         serviceProviderDetails.put("spAddresses", serviceProvider.getSpAddresses());*/
         return serviceProviderDetails;
     }
-
-
+    public Map<String,Object> trimStringValues(Map<String, Object> map) {
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            if (entry.getValue() instanceof String) {
+                // Trim the string and update the map
+                String trimmedValue = ((String) entry.getValue()).trim();
+                entry.setValue(trimmedValue);
+            }
+        }
+        return map;
+    }
 
 }
 

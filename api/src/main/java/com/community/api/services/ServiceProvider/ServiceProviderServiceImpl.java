@@ -120,6 +120,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     @Transactional
     public ResponseEntity<?> updateServiceProvider(Long userId, Map<String, Object> updates)  {
         try{
+            updates=sharedUtilityService.trimStringValues(updates);
             List<String> errorMessages=new ArrayList<>();
         // Find existing ServiceProviderEntity
         ServiceProviderEntity existingServiceProvider = entityManager.find(ServiceProviderEntity.class, userId);
@@ -245,11 +246,16 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 field.setAccessible(true);
                 if(newValue.toString().isEmpty() && !isNullable)
                     errorMessages.add(fieldName+ " cannot be null");
+                if(newValue.toString().isEmpty()&& isNullable)
+                    continue;
                 if (field.isAnnotationPresent(Size.class)) {
                     Size sizeAnnotation = field.getAnnotation(Size.class);
                     int min = sizeAnnotation.min();
                     int max = sizeAnnotation.max();
                     if(newValue.toString().length()>max||newValue.toString().length()<min) {
+                        if(max==min)
+                            errorMessages.add(fieldName + " size should be of size " + max);
+                        else
                         errorMessages.add(fieldName + " size should be in between " + min + " " + max);
                         continue;
                     }
