@@ -95,92 +95,13 @@ public class ProductService {
     @PersistenceContext
     private EntityManager entityManager;
 
-/*    public void saveCustomProduct(Product product, AddProductDto addProductDto, CustomProductState productState, Role role, Long creatorUserId, Date modifiedDate) {
-
-        String sql = "INSERT INTO custom_product (product_id, exam_date_from, exam_date_to, go_live_date, platform_fee, priority_level, application_scope_id, job_group_id, product_state_id" +
-                ", creator_role_id, creator_user_id, notifying_authority, last_modified, advertiser_url, domicile_required" +
-                ", admit_card_date_from" +
-                ", admit_card_date_to" +
-                ", modification_date_from" +
-                ", modification_date_to" +
-                ", last_date_to_pay_fee" +
-                ", download_notification_link" +
-                ", download_syllabus_link" +
-                ", form_complexity" +
-                ", gender_specific_id" +
-                ", sector_id" +
-                ", selection_criteria" +
-                ", qualification_id" +
-                ", stream_id" +
-                ", subject_id" +
-                ") " +
-                "VALUES (:productId, :examDateFrom, :examDateTo, :goLiveDate, :platformFee, :priorityLevel, :applicationScopeId, :jobGroupId, :productStateId" +
-                ", :roleId, :userId, :notifyingAuthority, :modifiedDate, :advertiserUrl, :domicileRequired" +
-                ", :admitCardDateFrom" +
-                ", :admitCardDateTo" +
-                ", :modificationDateFrom" +
-                ", :modificationDateTo" +
-                ", :lastDateToPayFee" +
-                ", :downloadNotificationLink" +
-                ", :downloadSyllabusLink" +
-                ", :formComplexity" +
-                ", :genderSpecificId" +
-                ", :sectorId" +
-                ", :selectionCriteria" +
-                ", :qualificationId" +
-                ", :streamId" +
-                ", :subjectId" +
-                ")";
-
-        try {
-
-            entityManager.createNativeQuery(sql)
-                    .setParameter("productId", product)
-                    .setParameter("examDateFrom", addProductDto.getExamDateFrom() != null ? new Timestamp(addProductDto.getExamDateFrom().getTime()) : null)
-                    .setParameter("examDateTo",  addProductDto.getExamDateTo() != null ? new Timestamp(addProductDto.getExamDateTo().getTime()) : null)
-                    .setParameter("goLiveDate", addProductDto.getGoLiveDate() != null ? new Timestamp(addProductDto.getGoLiveDate().getTime()) : null)
-                    .setParameter("platformFee", addProductDto.getPlatformFee())
-                    .setParameter("priorityLevel", addProductDto.getPriorityLevel())
-                    .setParameter("applicationScopeId", addProductDto.getApplicationScope())
-                    .setParameter("jobGroupId", addProductDto.getJobGroup())
-                    .setParameter("productStateId", productState.getProductStateId())
-                    .setParameter("roleId", role.getRole_id())
-                    .setParameter("userId", creatorUserId)
-                    .setParameter("notifyingAuthority", addProductDto.getNotifyingAuthority())
-                    .setParameter("modifiedDate", modifiedDate)
-                    .setParameter("advertiserUrl", addProductDto.getAdvertiserUrl())
-                    .setParameter("domicileRequired", addProductDto.getDomicileRequired())
-
-                    .setParameter("admitCardDateFrom", (addProductDto.getAdmitCardDateFrom() != null) ? new Timestamp(addProductDto.getAdmitCardDateFrom().getTime()) : null)
-                    .setParameter("admitCardDateTo",  addProductDto.getAdmitCardDateTo() != null ? new Timestamp(addProductDto.getAdmitCardDateTo().getTime()) : null)
-                    .setParameter("modificationDateFrom", addProductDto.getModificationDateFrom() != null ? new Timestamp(addProductDto.getModificationDateFrom().getTime()) : null)
-                    .setParameter("modificationDateTo", addProductDto.getModificationDateTo() != null ? new Timestamp(addProductDto.getModificationDateTo().getTime()) : null)
-                    .setParameter("lastDateToPayFee", addProductDto.getLastDateToPayFee() != null ? new Timestamp(addProductDto.getLastDateToPayFee().getTime()) : null)
-                    .setParameter("downloadNotificationLink", addProductDto.getDownloadNotificationLink())
-                    .setParameter("downloadSyllabusLink", addProductDto.getDownloadSyllabusLink())
-                    .setParameter("formComplexity", addProductDto.getFormComplexity())
-                    .setParameter("genderSpecificId", addProductDto.getGenderSpecific())
-                    .setParameter("sectorId", addProductDto.getSector())
-                    .setParameter("selectionCriteria", addProductDto.getSelectionCriteria())
-                    .setParameter("qualificationId", addProductDto.getQualification())
-                    .setParameter("streamId", addProductDto.getStream())
-                    .setParameter("subjectId", addProductDto.getSubject())
-                    .executeUpdate();
-
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to save Custom Product: " + e.getMessage(), e);
-        }
-    }*/
-
     public void saveCustomProduct(Product product, AddProductDto addProductDto, CustomProductState productState, Role role, Long creatorUserId, Date modifiedDate) {
-
 
         try {
 
             // Start building the SQL query
-            StringBuilder sql = new StringBuilder("INSERT INTO custom_product (product_id");
-            StringBuilder values = new StringBuilder("VALUES (:productId");
-
+            StringBuilder sql = new StringBuilder("INSERT INTO custom_product (product_id, creator_user_id, creator_role_id, modified_date");
+            StringBuilder values = new StringBuilder("VALUES (:productId, :creatorUserId, :role, :modifiedDate");
 
             // Dynamically add columns and values based on non-null fields
             if (addProductDto.getExamDateFrom() != null) {
@@ -288,9 +209,13 @@ public class ProductService {
 
             // Complete the SQL statement
             sql.append(") ").append(values).append(")");
+
             // Create the query
             var query = entityManager.createNativeQuery(sql.toString())
-                    .setParameter("productId", product);
+                    .setParameter("productId", product)
+                    .setParameter("creatorUserId", creatorUserId)
+                    .setParameter("role", role)
+                    .setParameter("modifiedDate", modifiedDate);
 
             // Set parameters conditionally
             if (addProductDto.getExamDateFrom() != null) {
@@ -385,9 +310,14 @@ public class ProductService {
 
 
     public List<CustomProduct> getCustomProducts() {
-        String sql = "SELECT * FROM custom_product";
+        try{
+            String sql = "SELECT * FROM custom_product";
+            return entityManager.createNativeQuery(sql, CustomProduct.class).getResultList();
 
-        return entityManager.createNativeQuery(sql, CustomProduct.class).getResultList();
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            throw new RuntimeException("Failed to retrieve CustomProducts: " + exception.getMessage(), exception);
+        }
     }
 
     public CustomProduct getCustomProductByCustomProductId(Long productId) {
