@@ -42,4 +42,6 @@ public class ServiceProviderRankController {
         }
         return responseService.generateResponse(HttpStatus.OK, "Service Provider Test Rank List Retrieved Successfully", serviceProviderTestRankList);
     }
+
 }
+

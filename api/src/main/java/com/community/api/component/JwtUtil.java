@@ -26,11 +26,16 @@ public class JwtUtil {
 
     private ExceptionHandlingImplement exceptionHandling;
     private RoleService roleService;
-    private String secretKeyString = "DASYWgfhMLL0np41rKFAGminD1zb5DlwDzE1WwnP8es=";
+
+//    private String secretKeyString ;
+private String secretKeyString = "DASYWgfhMLL0np41rKFAGminD1zb5DlwDzE1WwnP8es=";
+
     private Key secretKey;
     private EntityManager entityManager;
     private TokenBlacklist tokenBlacklist;
     private CustomerService customerService;
+
+
 
     @Autowired
     public void setExceptionHandling(ExceptionHandlingImplement exceptionHandling) {
@@ -57,7 +62,6 @@ public class JwtUtil {
         this.customerService = customerService;
     }
 
-    @PostConstruct
     public void init() {
         try {
             byte[] secretKeyBytes = DatatypeConverter.parseBase64Binary(secretKeyString);
@@ -65,17 +69,16 @@ public class JwtUtil {
             if (secretKeyBytes.length * 8 < 256) {
                 throw new IllegalArgumentException("Key length is less than 256 bits.");
             }
+
             this.secretKey = Keys.hmacShaKeyFor(secretKeyBytes);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             throw new RuntimeException("Error generating JWT token", e);
         }
+
     }
 
-   /* @PostConstruct
-    public void init() {
-        this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-    }*/
+
 
     public String generateToken(Long id, Integer role, String ipAddress, String userAgent) {
         try {
@@ -117,8 +120,10 @@ public class JwtUtil {
                 throw new IllegalArgumentException("Token is required");
             }
 
+
             if (isTokenExpired(token)) {
                 throw new ExpiredJwtException(null, null, "Token is expired");
+
             }
             return Jwts.parserBuilder()
                     .setSigningKey(secretKey)
@@ -241,7 +246,9 @@ public class JwtUtil {
             }
             if (isTokenExpired(token)) {
 
+
                 throw new ExpiredJwtException(null, null, "Token is expired");
+
 
             }
             return Jwts.parserBuilder()

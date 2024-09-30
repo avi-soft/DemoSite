@@ -148,7 +148,9 @@ public class TestController {
     }
     @PostMapping("/test-sanitizer")
     public ResponseEntity<?> testSanitizer(@RequestBody Map<String,Object>map) {
+
        return ResponseService.generateSuccessResponse("Sanitized map",sanitizerService.sanitizeInputMap(map),HttpStatus.OK);
+
     }
     @GetMapping("/download-file-test")
     public void downloadFile( HttpServletRequest request, HttpServletResponse response) {

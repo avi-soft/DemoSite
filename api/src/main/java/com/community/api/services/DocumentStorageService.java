@@ -185,8 +185,7 @@ public class DocumentStorageService {
     public void saveAllDocumentTypes() {
 
         DocumentType[] documents = {
-            
-       
+
                 new DocumentType(14,"MATRICULATION", "Completed secondary education or equivalent"),
                 new DocumentType( 15,"INTERMEDIATE", "Completed higher secondary education or equivalent"),
                 new DocumentType(16,"BACHELORS", "Completed undergraduate degree program education "),
@@ -198,6 +197,7 @@ public class DocumentStorageService {
                 new DocumentType(23,"BUSSINESS_PHOTO", "A Standard proof of Running Bussiness"),
                 new DocumentType(24,"PERSONAL_PHOTO", "A Personal Photgraph of SP")
             };
+
 
 
 
@@ -305,5 +305,7 @@ public class DocumentStorageService {
     public void saveTypingText(TypingText typingText) {
         entityManager.persist(typingText);
     }
+
+
 
 }
