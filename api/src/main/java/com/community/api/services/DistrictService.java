@@ -6,6 +6,7 @@ import com.community.api.entity.Districts;
 import com.community.api.entity.StateCode;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
@@ -50,6 +51,8 @@ public class DistrictService {
 
             List<StateCode> stateCode = query.getResultList();
             return stateCode.get(0);
+        } catch (NumberFormatException numberFormatException) {
+            throw new NumberFormatException("NUMBER FORMAT EXCEPTION: " + numberFormatException.getMessage());
         } catch (Exception exception) {
             exceptionHandling.handleException(exception);
             throw new Exception("SOME EXCEPTION OCCURED: "+ exception.getMessage());

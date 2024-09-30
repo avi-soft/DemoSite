@@ -68,9 +68,10 @@ public class CustomProduct extends ProductImpl {
     protected Long userId;
 
     @ManyToOne
-    @JoinColumn(name = "notifying_authority")
-    protected StateCode notifyingAuthority;
+    @JoinColumn(name = "state_id")
+    protected StateCode state;
 
+    @NotNull
     @Column(name = "advertiser_url")
     protected String advertiserUrl;
 
@@ -116,6 +117,7 @@ public class CustomProduct extends ProductImpl {
     @Max(value = 5, message = "Value must be between 1 and 5")
     protected Long formComplexity;
 
+    @NotNull
     @ManyToOne
     @JoinColumn(name = "qualification_id")
     protected Qualification qualification;
@@ -138,5 +140,8 @@ public class CustomProduct extends ProductImpl {
     @ManyToOne
     @JoinColumn(name = "sector_id")
     protected CustomSector sector;
+
+    @Column(name = "notifying_authority")
+    protected String notifyingAuthority;
 
 }

@@ -55,8 +55,8 @@ public class AddProductDto {
     @JsonProperty("physical_requirement")
     List<AddPhysicalRequirementDto> physicalRequirement;
 
-    @JsonProperty("notifying_authority_id")
-    Integer notifyingAuthority;
+    @JsonProperty("state_id")
+    Integer state;
     @JsonProperty("quantity")
     Integer quantity;
     @JsonProperty("advertiser_url")
@@ -105,5 +105,8 @@ public class AddProductDto {
     String selectionCriteria;
     @JsonProperty("sector_id")
     Long sector;
+
+    @JsonProperty("notifying_authority")
+    String notifyingAuthority;
 
 }

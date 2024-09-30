@@ -108,15 +108,15 @@ public class ProductGenderPhysicalRequirementService {
                     query.setParameter(i + 5, parameters.get(i + 4));
                 }
 
-//                Query query = entityManager.createNativeQuery(Constant.ADD_PRODUCT_GENDER_PHYSICAL_REQUIREMENT);
-//
-//                query.setParameter("productId", product.getId());
-//                query.setParameter("genderId", customGender.getGenderId());
-//                query.setParameter("height", height);
-//                query.setParameter("weight", weight);
-//                query.setParameter("shoeSize", shoeSize);
-//                query.setParameter("waistSize", waistSize);
-//                query.setParameter("chestSize", chestSize);
+/*                Query query = entityManager.createNativeQuery(Constant.ADD_PRODUCT_GENDER_PHYSICAL_REQUIREMENT);
+
+                query.setParameter("productId", product.getId());
+                query.setParameter("genderId", customGender.getGenderId());
+                query.setParameter("height", height);
+                query.setParameter("weight", weight);
+                query.setParameter("shoeSize", shoeSize);
+                query.setParameter("waistSize", waistSize);
+                query.setParameter("chestSize", chestSize);*/
 
                 int affectedRows = query.executeUpdate();
 

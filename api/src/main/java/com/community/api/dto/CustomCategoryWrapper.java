@@ -45,6 +45,7 @@ public class CustomCategoryWrapper extends BaseWrapper implements APIWrapper<Cat
     protected String urlKey;
     @JsonProperty("active_start_date")
     protected Date activeStartDate;
+
     @JsonProperty("active_end_date")
     protected Date activeEndDate;
     @JsonProperty("archived")

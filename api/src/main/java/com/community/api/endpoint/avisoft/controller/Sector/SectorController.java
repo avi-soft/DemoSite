@@ -72,6 +72,9 @@ public class SectorController {
                 return ResponseService.generateErrorResponse("NO SECTOR FOUND", HttpStatus.NOT_FOUND);
             }
             return ResponseService.generateSuccessResponse("SECTORS FOUND", sector, HttpStatus.OK);
+        } catch (NumberFormatException numberFormatException) {
+            exceptionHandlingService.handleException(numberFormatException);
+            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + numberFormatException.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);

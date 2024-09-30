@@ -18,7 +18,6 @@ import com.community.api.entity.CustomSubject;
 import com.community.api.entity.Qualification;
 import com.community.api.entity.Role;
 import com.community.api.entity.StateCode;
-import com.community.api.services.DistrictService;
 import com.community.api.services.ReserveCategoryService;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
@@ -27,7 +26,6 @@ import org.broadleafcommerce.common.rest.api.wrapper.APIWrapper;
 import org.broadleafcommerce.common.rest.api.wrapper.BaseWrapper;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.common.persistence.Status;
-import org.springframework.beans.factory.annotation.Autowired;
 
 
 @Data
@@ -74,8 +72,8 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
     protected List<ReserveCategoryDto> reserveCategoryDtoList = new ArrayList<>();
     @JsonProperty("platform_fee")
     protected Double platformFee;
-    @JsonProperty("notifying_authority")
-    protected StateCode notifyingAuthority;
+    @JsonProperty("state")
+    protected StateCode state;
     @JsonProperty("custom_application_scope")
     protected CustomApplicationScope customApplicationScope;
     @JsonProperty("custom_product_state")
@@ -132,6 +130,9 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
     @JsonProperty("selection_criteria")
     String selectionCriteria;
 
+    @JsonProperty("notifying_authority")
+    String notifyingAuthority;
+
     public void wrapDetailsAddProduct(Product product, AddProductDto addProductDto, CustomJobGroup customJobGroup, CustomProductState customProductState, CustomApplicationScope customApplicationScope, Long creatorUserId, Role creatorRole, ReserveCategoryService reserveCategoryService, StateCode notifyingAuthority, CustomGender customGender, CustomSector customSector, Qualification qualification, CustomStream customStream, CustomSubject customSubject) throws Exception {
 
         this.id = product.getId();
@@ -170,7 +171,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         }
 
         this.platformFee = addProductDto.getPlatformFee();
-        this.notifyingAuthority = notifyingAuthority;
+        this.notifyingAuthority = addProductDto.getNotifyingAuthority();
 
         this.customApplicationScope = customApplicationScope;
         this.customJobGroup = customJobGroup;
@@ -227,7 +228,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
 
         this.displayTemplate = customProduct.getDisplayTemplate();
         this.platformFee = customProduct.getPlatformFee();
-        this.notifyingAuthority = customProduct.getNotifyingAuthority();
+        this.notifyingAuthority = customProduct.getState();
 
         this.customApplicationScope = customProduct.getCustomApplicationScope();
         this.customJobGroup = customProduct.getJobGroup();
@@ -270,7 +271,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
 
         this.displayTemplate = customProduct.getDisplayTemplate();
         this.platformFee = customProduct.getPlatformFee();
-        this.notifyingAuthority = customProduct.getNotifyingAuthority();
+        this.notifyingAuthority = customProduct.getState();
 
         this.customApplicationScope = customProduct.getCustomApplicationScope();
         this.customJobGroup = customProduct.getJobGroup();

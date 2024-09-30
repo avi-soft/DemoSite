@@ -100,8 +100,8 @@ public class ProductService {
         try {
 
             // Start building the SQL query
-            StringBuilder sql = new StringBuilder("INSERT INTO custom_product (product_id, creator_user_id, creator_role_id, last_modified");
-            StringBuilder values = new StringBuilder("VALUES (:productId, :creatorUserId, :role, :lastModified");
+            StringBuilder sql = new StringBuilder("INSERT INTO custom_product (product_id, creator_user_id, creator_role_id, last_modified, product_state_id, state_id");
+            StringBuilder values = new StringBuilder("VALUES (:productId, :creatorUserId, :role, :lastModified, :productState, :state");
 
             // Dynamically add columns and values based on non-null fields
             if (addProductDto.getExamDateFrom() != null) {
@@ -113,9 +113,6 @@ public class ProductService {
                 sql.append(", exam_date_to");
                 values.append(", :examDateTo");
             }
-
-            sql.append(", product_state_id");
-            values.append(", :productState");
 
             if (addProductDto.getGoLiveDate() != null) {
                 sql.append(", go_live_date");
@@ -226,6 +223,7 @@ public class ProductService {
             }
 
             query.setParameter("productState", productState);
+            query.setParameter("state", addProductDto.getState());
 
             if (addProductDto.getExamDateTo() != null) {
                 query.setParameter("examDateTo", new Timestamp(addProductDto.getExamDateTo().getTime()));
@@ -298,6 +296,7 @@ public class ProductService {
             if (addProductDto.getSubject() != null) {
                 query.setParameter("subjectId", addProductDto.getSubject());
             }
+
 
             // Execute the update
             query.executeUpdate();
@@ -520,6 +519,12 @@ public class ProductService {
                 addProductDto.setPlatformFee(DEFAULT_PLATFORM_FEE);
             }
 
+            if(addProductDto.getNotifyingAuthority() == null || addProductDto.getNotifyingAuthority().trim().isEmpty()){
+                throw new IllegalArgumentException("Notifying authority cannot be null");
+            }else {
+                addProductDto.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
+            }
+
             if (addProductDto.getPriorityLevel() != null) {
                 if (addProductDto.getPriorityLevel() <= 0 || addProductDto.getPriorityLevel() > 5) {
                     throw new IllegalArgumentException("Priority level must lie between 1-5.");
@@ -608,8 +613,8 @@ public class ProductService {
 
             if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_CENTER)) {
 
-                if (addProductDto.getNotifyingAuthority() != null) {
-                    throw new IllegalArgumentException("Notifying authority cannot be given if application scope " + applicationScope.getApplicationScope());
+                if (addProductDto.getState() != null) {
+                    throw new IllegalArgumentException("State cannot be given if application scope " + applicationScope.getApplicationScope());
                 }
                 if (addProductDto.getDomicileRequired() != null && addProductDto.getDomicileRequired()) {
                     throw new IllegalArgumentException("Domicile required cannot be true if application scope " + applicationScope.getApplicationScope());
@@ -617,17 +622,17 @@ public class ProductService {
                 addProductDto.setDomicileRequired(false);
 
             } else if (applicationScope.getApplicationScope().equals(APPLICATION_SCOPE_STATE)) {
-                if (addProductDto.getDomicileRequired() == null || addProductDto.getNotifyingAuthority() == null) {
-                    throw new IllegalArgumentException("For application scope: " + applicationScope.getApplicationScope() + " domicile and notifying authority cannot be null.");
+                if (addProductDto.getDomicileRequired() == null || addProductDto.getState() == null) {
+                    throw new IllegalArgumentException("For application scope: " + applicationScope.getApplicationScope() + " domicile and state cannot be null.");
                 }
 
-                if (addProductDto.getNotifyingAuthority() <= 0) {
-                    throw new IllegalArgumentException("Notifying authority cannot be <= 0.");
+                if (addProductDto.getState() <= 0) {
+                    throw new IllegalArgumentException("State cannot be <= 0.");
                 }
 
-                StateCode notifyingAuthority = districtService.getStateByStateId(addProductDto.getNotifyingAuthority());
-                if (notifyingAuthority == null) {
-                    throw new NoSuchElementException("Notifying authority not found.");
+                StateCode state = districtService.getStateByStateId(addProductDto.getState());
+                if (state == null) {
+                    throw new NoSuchElementException("State not found.");
                 }
             }
 
@@ -855,11 +860,11 @@ public class ProductService {
                 if (applicationScope == null) {
                     throw new IllegalArgumentException("NO APPLICATION SCOPE EXISTS WITH THIS ID");
                 } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE) && customProduct.getCustomApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE)) {
-                    if (addProductDto.getNotifyingAuthority() != null && districtService.getStateByStateId(addProductDto.getNotifyingAuthority()) != null) {
-                        customProduct.setNotifyingAuthority(districtService.getStateByStateId(addProductDto.getNotifyingAuthority()));
+                    if (addProductDto.getState() != null && districtService.getStateByStateId(addProductDto.getState()) != null) {
+                        customProduct.setState(districtService.getStateByStateId(addProductDto.getState()));
                         customProduct.setCustomApplicationScope(applicationScope);
                     } else {
-                        throw new IllegalArgumentException("NOTIFYING AUTHORITY NOT FOUND");
+                        throw new IllegalArgumentException("STATE NOT FOUND");
                     }
 
                     if (addProductDto.getDomicileRequired() != null) {
@@ -867,28 +872,28 @@ public class ProductService {
                         customProduct.setCustomApplicationScope(applicationScope);
                     }
                 } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE) && customProduct.getCustomApplicationScope().getApplicationScope().equals(Constant.APPLICATION_SCOPE_CENTER)) {
-                    if (addProductDto.getNotifyingAuthority() == null || addProductDto.getDomicileRequired() == null) {
-                        throw new IllegalArgumentException("DOMICILE AND NOTIFYING AUTHORITY ARE REQUIRED FIELDS FOR STATE APPLICATION SCOPE");
+                    if (addProductDto.getState() == null || addProductDto.getDomicileRequired() == null) {
+                        throw new IllegalArgumentException("DOMICILE AND STATE ARE REQUIRED FIELDS FOR STATE APPLICATION SCOPE");
                     }
 
-                    if (districtService.getStateByStateId(addProductDto.getNotifyingAuthority()) != null) {
-                        customProduct.setNotifyingAuthority(districtService.getStateByStateId(addProductDto.getNotifyingAuthority()));
+                    if (districtService.getStateByStateId(addProductDto.getState()) != null) {
+                        customProduct.setState(districtService.getStateByStateId(addProductDto.getState()));
                     } else {
-                        throw new IllegalArgumentException("NOTIFYING AUTHORITY IS NOT FOUND");
+                        throw new IllegalArgumentException("STATE IS NOT FOUND");
                     }
                     customProduct.setDomicileRequired(addProductDto.getDomicileRequired());
                     customProduct.setCustomApplicationScope(applicationScope);
                 } else if (applicationScope.getApplicationScope().equals(APPLICATION_SCOPE_CENTER)) {
-                    if (addProductDto.getNotifyingAuthority() != null) {
-                        throw new IllegalArgumentException("NOTIFYING AUTHORITY NOT REQUIRED IN CASE OF CENTER LEVEL APPLICATION SCOPE");
+                    if (addProductDto.getState() != null) {
+                        throw new IllegalArgumentException("STATE NOT REQUIRED IN CASE OF CENTER LEVEL APPLICATION SCOPE");
                     }
                     if (addProductDto.getDomicileRequired() != null && addProductDto.getDomicileRequired()) {
                         throw new IllegalArgumentException("DOMICILE IS NOT REQUIRED IN CASE OF CENTER APPLICATION SCOPE");
                     }
 
                     addProductDto.setDomicileRequired(false);
-                    addProductDto.setNotifyingAuthority(null);
-                    customProduct.setNotifyingAuthority(null);
+                    addProductDto.setState(null);
+                    customProduct.setState(null);
                     customProduct.setDomicileRequired(addProductDto.getDomicileRequired());
                     customProduct.setCustomApplicationScope(applicationScope);
                 }

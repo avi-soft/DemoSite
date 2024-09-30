@@ -199,8 +199,8 @@ public class ProductController extends CatalogEndpoint {
             CustomApplicationScope applicationScope = applicationScopeService.getApplicationScopeById(addProductDto.getApplicationScope());
 
             StateCode notifyingAuthority = null;
-            if (addProductDto.getNotifyingAuthority() != null) {
-                notifyingAuthority = districtService.getStateByStateId(addProductDto.getNotifyingAuthority());
+            if (addProductDto.getState() != null) {
+                notifyingAuthority = districtService.getStateByStateId(addProductDto.getState());
             }
 
             productService.validatePhysicalRequirement(addProductDto);
