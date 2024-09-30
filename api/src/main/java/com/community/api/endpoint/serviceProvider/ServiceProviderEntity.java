@@ -19,6 +19,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
@@ -166,6 +167,14 @@ public class ServiceProviderEntity  {
     @OneToMany(mappedBy = "service_provider", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
     private List<ServiceProviderTest> serviceProviderTests;
 
+/* @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}) // Only persist/merge, no REMOVE
+ @JoinColumn(name="test_status_id", referencedColumnName = "test_status_id")
+ private ServiceProviderTestStatus testStatus;*/
+
+/* @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}) // Only persist/merge, no REMOVE
+ @JoinColumn(name="rank_id", referencedColumnName = "rank_id")
+ private ServiceProviderRank ranking;*/
+
     @JsonIgnore
     @OneToMany(mappedBy = "serviceProvider", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ResizedImage> resizedImages;
@@ -176,8 +185,10 @@ public class ServiceProviderEntity  {
     private Integer totalSkillTestPoints;
 
 
-    @OneToMany(mappedBy = "serviceProviderEntity", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
-    @Fetch(FetchMode.SUBSELECT)
-    private List<ServiceProviderDocument> documents;
+
+ @OneToMany(mappedBy = "serviceProviderEntity", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
+ @Fetch(FetchMode.SUBSELECT)
+ private List<ServiceProviderDocument> documents;
+
 
 }

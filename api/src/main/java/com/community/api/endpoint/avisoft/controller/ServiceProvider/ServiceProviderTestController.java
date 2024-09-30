@@ -96,6 +96,7 @@ public class ServiceProviderTestController {
         }
         catch (Exception e)
         {
+            exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Something went wrong",HttpStatus.BAD_REQUEST);
         }
     }
@@ -107,7 +108,7 @@ public class ServiceProviderTestController {
             Map<String,Object> test = testService.uploadSignatureImage(serviceProviderId,testId, resizedSignature,request);
             return responseService.generateResponse(HttpStatus.OK,"Signature image is uploaded",test);
         }
-         catch (EntityDoesNotExistsException e)
+        catch (EntityDoesNotExistsException e)
         {
             return ResponseService.generateErrorResponse("Service Provider does not exist",HttpStatus.NOT_FOUND);
         }
@@ -121,6 +122,7 @@ public class ServiceProviderTestController {
         }
         catch (Exception e)
         {
+            exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Something went wrong",HttpStatus.BAD_REQUEST);
         }
     }
@@ -142,6 +144,9 @@ public class ServiceProviderTestController {
         } catch (EntityDoesNotExistsException e) {
             return responseService.generateErrorResponse("Service provider not found: " + e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
+
+            exceptionHandling.handleException(e);
+
             return responseService.generateErrorResponse("Some issue in fetching service provider tests: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
@@ -155,6 +160,9 @@ public class ServiceProviderTestController {
         } catch (EntityDoesNotExistsException e) {
             return responseService.generateErrorResponse("Service provider not found: " + e.getMessage(), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
+
+            exceptionHandling.handleException(e);
+
             return responseService.generateErrorResponse("Some issue in fetching service provider completed test: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
@@ -169,6 +177,9 @@ public class ServiceProviderTestController {
             return responseService.generateErrorResponse("Service provider not found: " + e.getMessage(), HttpStatus.NOT_FOUND);
         }
         catch (Exception e) {
+
+            exceptionHandling.handleException(e);
+
             return responseService.generateErrorResponse("Some issue in adding image score " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }

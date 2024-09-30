@@ -192,8 +192,7 @@ public class DocumentStorageService {
     public void saveAllDocumentTypes() {
 
         DocumentType[] documents = {
-            
-       
+
                 new DocumentType(14,"MATRICULATION", "Completed secondary education or equivalent"),
                 new DocumentType( 15,"INTERMEDIATE", "Completed higher secondary education or equivalent"),
                 new DocumentType(16,"BACHELORS", "Completed undergraduate degree program education "),
@@ -205,6 +204,7 @@ public class DocumentStorageService {
                 new DocumentType(23,"BUSSINESS_PHOTO", "A Standard proof of Running Bussiness"),
                 new DocumentType(24,"PERSONAL_PHOTO", "A Personal Photgraph of SP")
             };
+
 
 
 
@@ -313,6 +313,7 @@ public class DocumentStorageService {
         entityManager.persist(typingText);
     }
 
+
     public void uploadFile(MultipartFile file, String documentType, Long customerId, String role) throws IOException {
         try {
             String url = fileServerUrl + "/files/upload";
@@ -374,6 +375,7 @@ public class DocumentStorageService {
         }
         return  fileName;
     }
+
 
 
 }

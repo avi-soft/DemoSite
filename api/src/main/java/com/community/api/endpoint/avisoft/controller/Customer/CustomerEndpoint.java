@@ -224,7 +224,9 @@ public class CustomerEndpoint {
                 customCustomer.setState(districtService.findStateById(Integer.parseInt(customerDetails.getState())));
                 customCustomer.setDistrict(districtService.findDistrictById(Integer.parseInt(customerDetails.getDistrict())));
                 Map<String, Object> addressMap = new HashMap<>();
-                addressMap.put("address", customerDetails.getResidentailAddress());
+
+                addressMap.put("address", customerDetails.getResidentialAddress());
+
                 addressMap.put("state", districtService.findStateById(Integer.parseInt(customerDetails.getState())));
                 addressMap.put("city", districtService.findDistrictById(Integer.parseInt(customerDetails.getDistrict())));
                 addressMap.put("district", customerDetails.getDistrict());
@@ -281,7 +283,13 @@ public class CustomerEndpoint {
                         Map<String, Object> qualificationInfo = new HashMap<>();
 
                         // Fetch the qualification by qualification_id
-                        Qualification qualification = em.find(Qualification.class, qualificationDetail.getQualification_id());
+
+//                        Qualification qualification = em.find(Qualification.class, qualificationDetail.getQualification_id());
+                        Object id = qualificationDetail.getQualification_id();
+                        Long qualificationId = id instanceof Long ? (Long) id : Long.valueOf((Integer) id);
+                        Qualification qualification = em.find(Qualification.class, qualificationId);
+
+
 
                         // Populate the map with necessary fields from qualificationDetail
                         qualificationInfo.put("institution_name", qualificationDetail.getInstitution_name());
@@ -1422,5 +1430,6 @@ public class CustomerEndpoint {
             return ResponseService.generateErrorResponse("Error setting customer's referrer " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
+
 
 }

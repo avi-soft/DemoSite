@@ -34,37 +34,39 @@ public class QualificationService {
                 .getResultList();
 //        List<Qualification> qualifications = query.getResultList();
         return qualifications;
-}
+    }
     @Transactional
     public Qualification addQualification(@RequestBody Qualification qualification) {
-            Qualification qualificationToBeSaved =new Qualification();
-            long id = findCount() + 1;
-            if (qualification.getQualification_name() == null || qualification.getQualification_name().trim().isEmpty()) {
-                throw new IllegalArgumentException("Qualification name cannot be empty or consist only of whitespace");
-            }
-            if (qualification.getQualification_description() == null || qualification.getQualification_description().trim().isEmpty()) {
+        Qualification qualificationToBeSaved =new Qualification();
+        long id = findCount() + 1;
+        if (qualification.getQualification_name() == null || qualification.getQualification_name().trim().isEmpty()) {
+            throw new IllegalArgumentException("Qualification name cannot be empty or consist only of whitespace");
+        }
+        if (qualification.getQualification_description() == null || qualification.getQualification_description().trim().isEmpty()) {
             throw new IllegalArgumentException("Qualification description cannot be empty or consist only of whitespace");
-            }
-            if (!qualification.getQualification_name().matches("^[a-zA-Z ]+$")) {
-                throw new IllegalArgumentException("Qualification name cannot contain numeric values or special characters");
-            }
-            if (!(qualification.getQualification_description() instanceof String)) {
-                throw new IllegalArgumentException("Qualification description must be a string");
-            }
-            String description = qualification.getQualification_description();
-            if (description.isEmpty()) {
-                throw new IllegalArgumentException("Qualification description cannot be empty");
-            }
+        }
+        if (!qualification.getQualification_name().matches("^[a-zA-Z ]+$")) {
+            throw new IllegalArgumentException("Qualification name cannot contain numeric values or special characters");
+        }
+        if (!(qualification.getQualification_description() instanceof String)) {
+            throw new IllegalArgumentException("Qualification description must be a string");
+        }
+        String description = qualification.getQualification_description();
+        if (description.isEmpty()) {
+            throw new IllegalArgumentException("Qualification description cannot be empty");
+        }
 
-            List<DocumentType> qualifications = qualificationService.getAllQualifications();
-            for (DocumentType existingQualification : qualifications) {
-                if (existingQualification.getDocument_type_name().equalsIgnoreCase(qualification.getQualification_name())) {
-                    throw new IllegalArgumentException("Qualification with the same name already exists");
-                }
+
+        List<DocumentType> qualifications = qualificationService.getAllQualifications();
+        for (DocumentType existingQualification : qualifications) {
+            if (existingQualification.getDocument_type_name().equalsIgnoreCase(qualification.getQualification_name())) {
+                throw new IllegalArgumentException("Qualification with the same name already exists");
+
             }
-            qualificationToBeSaved.setQualification_id(id);
-            qualificationToBeSaved.setQualification_name(qualification.getQualification_name());
-            qualificationToBeSaved.setQualification_description(qualification.getQualification_description());
+        }
+        qualificationToBeSaved.setQualification_id(id);
+        qualificationToBeSaved.setQualification_name(qualification.getQualification_name());
+        qualificationToBeSaved.setQualification_description(qualification.getQualification_description());
         entityManager.persist(qualificationToBeSaved);
         return qualificationToBeSaved;
     }

@@ -86,19 +86,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
-    } catch (ExpiredJwtException e) {
-        handleException(response, HttpServletResponse.SC_UNAUTHORIZED, "JWT token is expired");
-        logger.error("ExpiredJwtException caught: {}", e.getMessage());
-    } catch (MalformedJwtException e) {
-        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JWT token");
-        exceptionHandling.handleException(e);
-        logger.error("MalformedJwtException caught: {}", e.getMessage());
-    } catch (Exception e) {
-        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
-        exceptionHandling.handleException(e);
+        } catch (ExpiredJwtException e) {
+            handleException(response, HttpServletResponse.SC_UNAUTHORIZED, "JWT token is expired");
+            logger.error("ExpiredJwtException caught: {}", e.getMessage());
+        } catch (MalformedJwtException e) {
+            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JWT token");
+            exceptionHandling.handleException(e);
+            logger.error("MalformedJwtException caught: {}", e.getMessage());
+        } catch (Exception e) {
+            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+            exceptionHandling.handleException(e);
 
-        logger.error("Exception caught: {}", e.getMessage());
-    }
+            logger.error("Exception caught: {}", e.getMessage());
+        }
 
     }
 
@@ -189,7 +189,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     return true;
                 }
             } else if (roleService.findRoleName(jwtUtil.extractRoleId(jwt)).equals(Constant.roleServiceProvider)) {
-              serviceProvider=entityManager.find(ServiceProviderEntity.class,id);
+                serviceProvider=entityManager.find(ServiceProviderEntity.class,id);
                 if (serviceProvider != null && jwtUtil.validateToken(jwt, ipAdress, User_Agent)) {
                     UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                             serviceProvider.getService_provider_id(), null, new ArrayList<>());
