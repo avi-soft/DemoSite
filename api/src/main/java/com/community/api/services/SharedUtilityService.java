@@ -10,7 +10,9 @@ import com.community.api.entity.Skill;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import org.broadleafcommerce.core.catalog.domain.Product;
+import org.broadleafcommerce.core.order.domain.Order;
 import org.broadleafcommerce.core.order.domain.OrderItem;
+import org.broadleafcommerce.core.order.service.OrderService;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.domain.CustomerAddress;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +44,9 @@ public class SharedUtilityService {
     public void setEntityManager(EntityManager entityManager) {
         this.entityManager = entityManager;
     }
+
+    @Autowired
+    public OrderService orderService;
 
     @Autowired
     public void setProductReserveCategoryFeePostRefService(ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService) {
@@ -117,10 +122,14 @@ public class SharedUtilityService {
         customerDetails.put("loggedIn", customer.isLoggedIn());
         customerDetails.put("transientProperties", customer.getTransientProperties());
         CustomCustomer customCustomer=entityManager.find(CustomCustomer.class,customer.getId());
-
-            customerDetails.put("mobileNumber", customCustomer.getMobileNumber());
-            customerDetails.put("secondaryMobileNumber", customCustomer.getSecondaryMobileNumber());
-            customerDetails.put("whatsappNumber", customCustomer.getWhatsappNumber());
+        Order cart=orderService.findCartForCustomer(customer);
+        if(cart!=null)
+        customerDetails.put("orderId",cart.getId());
+        else
+            customerDetails.put("orderId",null);
+        customerDetails.put("mobileNumber", customCustomer.getMobileNumber());
+        customerDetails.put("secondaryMobileNumber", customCustomer.getSecondaryMobileNumber());
+        customerDetails.put("whatsappNumber", customCustomer.getWhatsappNumber());
 
         customerDetails.put("countryCode", customCustomer.getCountryCode());
         customerDetails.put("otp", customCustomer.getOtp());

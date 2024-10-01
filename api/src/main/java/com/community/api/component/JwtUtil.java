@@ -62,6 +62,7 @@ private String secretKeyString = "DASYWgfhMLL0np41rKFAGminD1zb5DlwDzE1WwnP8es=";
         this.customerService = customerService;
     }
 
+    @PostConstruct
     public void init() {
         try {
             byte[] secretKeyBytes = DatatypeConverter.parseBase64Binary(secretKeyString);

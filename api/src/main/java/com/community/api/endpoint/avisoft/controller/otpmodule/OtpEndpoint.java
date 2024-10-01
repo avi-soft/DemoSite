@@ -181,8 +181,8 @@ public class OtpEndpoint {
                     em.persist(existingCustomer);
 
 
-                    String existingToken = (String) session.getAttribute(tokenKey);
-                    if (jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
+                    String existingToken = existingCustomer.getToken();
+                    if (existingToken!= null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
 
                         ApiResponse response = new ApiResponse(existingToken,sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
                         return ResponseEntity.ok(response);
