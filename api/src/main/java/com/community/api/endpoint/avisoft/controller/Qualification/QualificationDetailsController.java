@@ -38,14 +38,14 @@ public class QualificationDetailsController
         this.roleService = roleService;
     }
 
-    @PostMapping("/add/{customCustomerId}")
-    public ResponseEntity<?> addQualificationDetail(@PathVariable Long customCustomerId , @Valid @RequestBody QualificationDetails qualificationDetails, @RequestHeader(value = "Authorization") String authHeader) throws EntityAlreadyExistsException, ExaminationDoesNotExistsException, CustomerDoesNotExistsException {
+    @PostMapping("/add/{id}")
+    public ResponseEntity<?> addQualificationDetail(@PathVariable Long id , @Valid @RequestBody QualificationDetails qualificationDetails, @RequestHeader(value = "Authorization") String authHeader) throws EntityAlreadyExistsException, ExaminationDoesNotExistsException, CustomerDoesNotExistsException {
         String role=null;
         try{
             String jwtToken = authHeader.substring(7);
             Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
              role = roleService.getRoleByRoleId(roleId).getRole_name();
-            QualificationDetails newQualificationDetails = qualificationDetailsService.addQualificationDetails(customCustomerId , qualificationDetails,role);
+            QualificationDetails newQualificationDetails = qualificationDetailsService.addQualificationDetails(id , qualificationDetails,role);
             return ResponseService.generateSuccessResponse("Qualification Details is added successfully for "+role,newQualificationDetails,HttpStatus.CREATED);
         }
         catch (CustomerDoesNotExistsException e)
@@ -71,15 +71,15 @@ public class QualificationDetailsController
         }
     }
 
-    @GetMapping("/get-by-customer-id/{customCustomerId}")
-    public ResponseEntity<?> getQualificationDetailsById(@PathVariable Long customCustomerId, @RequestHeader(value = "Authorization") String authHeader) throws CustomerDoesNotExistsException ,EntityDoesNotExistsException{
+    @GetMapping("/get-by-id/{id}")
+    public ResponseEntity<?> getQualificationDetailsById(@PathVariable Long id, @RequestHeader(value = "Authorization") String authHeader) throws CustomerDoesNotExistsException ,EntityDoesNotExistsException{
         String role=null;
         try
         {
             String jwtToken = authHeader.substring(7);
             Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
              role = roleService.getRoleByRoleId(roleId).getRole_name();
-            List<Map<String, Object>> qualificationDetails = qualificationDetailsService.getQualificationDetailsByCustomerId(customCustomerId,role);
+            List<Map<String, Object>> qualificationDetails = qualificationDetailsService.getQualificationDetailsByCustomerId(id,role);
             if(qualificationDetails.isEmpty())
             {
                 return ResponseService.generateSuccessResponse("Qualification Details list is empty for "+role,qualificationDetails,HttpStatus.OK);
@@ -100,15 +100,15 @@ public class QualificationDetailsController
         }
     }
 
-    @DeleteMapping("/delete/{customCustomerId}/{qualificationDetailId}")
-    public ResponseEntity<?> deleteQualificationDetailById(@PathVariable Long customCustomerId, @PathVariable Long qualificationDetailId,@RequestHeader(value = "Authorization") String authHeader) throws EntityDoesNotExistsException, CustomerDoesNotExistsException {
+    @DeleteMapping("/delete/{id}/{qualificationDetailId}")
+    public ResponseEntity<?> deleteQualificationDetailById(@PathVariable Long id, @PathVariable Long qualificationDetailId,@RequestHeader(value = "Authorization") String authHeader) throws EntityDoesNotExistsException, CustomerDoesNotExistsException {
         String role=null;
         try
         {
             String jwtToken = authHeader.substring(7);
             Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
              role = roleService.getRoleByRoleId(roleId).getRole_name();
-            QualificationDetails qualificationDetailsToDelete = qualificationDetailsService.deleteQualificationDetail(customCustomerId,qualificationDetailId,role);
+            QualificationDetails qualificationDetailsToDelete = qualificationDetailsService.deleteQualificationDetail(id,qualificationDetailId,role);
             return responseService.generateResponse(HttpStatus.OK,"Qualification Detail is deleted successfully for "+ role, qualificationDetailsToDelete);
         }
         catch (CustomerDoesNotExistsException e)
@@ -130,15 +130,15 @@ public class QualificationDetailsController
         }
     }
 
-    @PutMapping("/update/{customCustomerId}/{qualificationDetailId}")
-    public ResponseEntity<?> updateQualificationDetailById(@PathVariable Long customCustomerId, @PathVariable Long qualificationDetailId, @Valid @RequestBody UpdateQualificationDto qualification,@RequestHeader(value = "Authorization") String authHeader) throws EntityDoesNotExistsException, EntityAlreadyExistsException, ExaminationDoesNotExistsException, CustomerDoesNotExistsException {
+    @PutMapping("/update/{id}/{qualificationDetailId}")
+    public ResponseEntity<?> updateQualificationDetailById(@PathVariable Long id, @PathVariable Long qualificationDetailId, @Valid @RequestBody UpdateQualificationDto qualification,@RequestHeader(value = "Authorization") String authHeader) throws EntityDoesNotExistsException, EntityAlreadyExistsException, ExaminationDoesNotExistsException, CustomerDoesNotExistsException {
         String role=null;
         try
         {
             String jwtToken = authHeader.substring(7);
             Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
              role = roleService.getRoleByRoleId(roleId).getRole_name();
-            QualificationDetails qualificationDetailsToUpdate = qualificationDetailsService.updateQualificationDetail( customCustomerId,qualificationDetailId,qualification,role);
+            QualificationDetails qualificationDetailsToUpdate = qualificationDetailsService.updateQualificationDetail( id,qualificationDetailId,qualification,role);
             return responseService.generateResponse(HttpStatus.OK,"Qualification Detail is updated successfully for "+ role, qualificationDetailsToUpdate);
         }
         catch (CustomerDoesNotExistsException e)
