@@ -105,4 +105,32 @@ public class Constant {
     public static final String GET_TICKET_STATE_BY_TICKET_STATUS_ID = "SELECT c FROM CustomTicketStatus c WHERE c.ticketStatusId = :ticketStatusId";
     public static final String GET_SP_REFERRED_CANDIDATES="Select s.customer_id from customer_referrer s Where s.service_provider_id =:service_provider_id";
     public static final Double DEFAULT_PLATFORM_FEE = 10d;
+
+    public static final String GET_ALL_REJECTION_STATUS = "SELECT c FROM CustomProductRejectionStatus c";
+    public static final String GET_REJECTION_STATUS_BY_REJECTION_ID = "SELECT c FROM CustomProductRejectionStatus c WHERE c.rejectionStatusId = :rejectionStatusId";
+    public static final String GET_STATE_BY_STATE_ID = "SELECT c FROM StateCode c WHERE c.state_id = :stateId";
+
+    public static final String GET_ALL_GENDER = "SELECT c FROM CustomGender c";
+    public static final String GET_GENDER_BY_GENDER_ID = "SELECT c FROM CustomGender c WHERE c.genderId = :genderId";
+    public static final Double MAX_HEIGHT = 300d;
+    public static final Double MIN_HEIGHT = 50d;
+    public static final Double MAX_WEIGHT = 700d;
+    public static final Double MIN_WEIGHT = 2d;
+    public static final Double MAX_SHOE_SIZE = 12d;
+    public static final Double MIN_SHOE_SIZE = 2d;
+    public static final Double MAX_WAIST_SIZE = 120d;
+    public static final Double MIN_WAIST_SIZE = 10d;
+    public static final Double MAX_CHEST_SIZE = 125d;
+    public static final Double MIN_CHEST_SIZE = 20d;
+
+    public static final String GET_PRODUCT_GENDER_PHYSICAL_REQUIREMENT = "SELECT c FROM CustomProductGenderPhysicalRequirement c WHERE c.customProduct = :customProduct";
+
+    public static final String GET_ALL_SUBJECT = "SELECT c FROM CustomSubject c";
+    public static final String GET_ALL_STREAM = "SELECT c FROM CustomStream c";
+    public static final String GET_SUBJECT_BY_SUBJECT_ID = "SELECT c FROM CustomSubject c WHERE c.subjectId = :subjectId";
+    public static final String GET_STREAM_BY_STREAM_ID = "SELECT c FROM CustomStream c WHERE c.streamId = :streamId";
+    public static final String GET_ALL_SECTOR = "SELECT c FROM CustomSector c";
+    public static final String GET_SECTOR_BY_SECTOR_ID = "SELECT c FROM CustomSector c WHERE c.sectorId = :sectorId";
+    public static final String GET_QUALIFICATION_BY_ID = "SELECT c FROM Qualification c WHERE c.qualification_id = :qualificationId";
+
 }

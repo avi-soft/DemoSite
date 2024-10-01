@@ -2,6 +2,7 @@ package com.community.api.endpoint.serviceProvider;
 
 
 
+
 import com.community.api.entity.Privileges;
 import com.community.api.entity.ResizedImage;
 import com.community.api.entity.ServiceProviderAddress;
@@ -11,9 +12,12 @@ import com.community.api.entity.ServiceProviderRank;
 import com.community.api.entity.ServiceProviderTest;
 import com.community.api.entity.ServiceProviderTestStatus;
 import com.community.api.entity.Skill;
+import com.community.api.entity.*;
 import com.community.api.utils.ServiceProviderDocument;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.micrometer.core.lang.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -41,6 +45,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "service_provider")
@@ -73,11 +78,13 @@ public class ServiceProviderEntity  {
 
     @Pattern(regexp = "^[0-9]{12}$", message = "Aadhaar number must be a 12-digit numeric value")
     @Size(min = 12, max = 12, message = "Aadhaar number must be exactly 12 digits long")
+    @Size(min = 12, max = 12)
     private String aadhaar_number;
 
     @Nullable
     @Size(min = 10, max = 10)
     @Pattern(regexp = "^[A-Z]{5}\\d{4}[A-Z]{1}$", message = "Invalid format. Use 5 uppercase letters, 4 digits, and 1 uppercase letter.")
+
     private String pan_number;
 
     @Size(min = 9, max = 13)
@@ -203,5 +210,10 @@ public class ServiceProviderEntity  {
  @Fetch(FetchMode.SUBSELECT)
  private List<ServiceProviderDocument> documents;
 
+
+    @Nullable
+    @JsonManagedReference
+    @OneToMany(mappedBy = "service_provider", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<QualificationDetails> qualificationDetailsList;
 
 }

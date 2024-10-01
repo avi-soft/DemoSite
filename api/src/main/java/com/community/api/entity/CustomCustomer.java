@@ -3,6 +3,7 @@ package com.community.api.entity;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.utils.Document;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.micrometer.core.lang.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -154,11 +155,13 @@ public class CustomCustomer extends CustomerImpl {
     private List<CustomProduct>savedForms;
 
     @Nullable
+    @JsonManagedReference("qualificationDetailsList-customer")
     @OneToMany(mappedBy = "custom_customer", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<QualificationDetails> qualificationDetailsList;
+    private List<QualificationDetails> qualificationDetailsList;
 
     @Nullable
-    @OneToMany(mappedBy = "custom_customer", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
+    @JsonManagedReference("documents-customer")
+    @OneToMany(mappedBy = "custom_customer", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.LAZY)
     private List<Document> documents;
 
     @Nullable
@@ -171,6 +174,7 @@ public class CustomCustomer extends CustomerImpl {
 
     @Nullable
     private String token;
+
 
 
     @Column(name = "disability_handicapped")
@@ -189,6 +193,7 @@ public class CustomCustomer extends CustomerImpl {
     private String identificationMark2;
 
     @Nullable
+//    @JsonManagedReference("referrerServiceProvider-customer")
     @OneToOne(fetch = FetchType.LAZY)
     @JoinTable(
             name = "customer_referrer",
