@@ -8,6 +8,7 @@ import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.Qualification;
 import com.community.api.entity.CustomProduct;
+import com.community.api.entity.QualificationDetails;
 import com.community.api.services.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.exception.ExceptionHandlingService;
@@ -15,6 +16,7 @@ import com.community.api.utils.Document;
 import com.community.api.utils.DocumentType;
 import com.community.api.utils.ServiceProviderDocument;
 import io.micrometer.core.lang.Nullable;
+import org.apache.commons.fileupload.FileUploadException;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.broadleafcommerce.profile.core.domain.Address;
@@ -25,12 +27,13 @@ import org.broadleafcommerce.profile.core.service.AddressService;
 import org.broadleafcommerce.profile.core.service.CustomerAddressService;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
+import org.springframework.http.converter.HttpMessageConversionException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.Column;
@@ -39,6 +42,7 @@ import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
+import javax.validation.constraints.Size;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.util.*;
@@ -62,6 +66,9 @@ public class CustomerEndpoint {
     private AddressService addressService;
     private CustomerAddressService customerAddressService;
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private DocumentStorageService fileUploadService;
 
     @Autowired
     private static SharedUtilityService sharedUtilityServiceApi;
@@ -157,108 +164,196 @@ public class CustomerEndpoint {
 
     @Transactional
     @RequestMapping(value = "update", method = RequestMethod.POST)
-    public ResponseEntity<?> updateCustomer(@RequestBody Map<String,Object>details, @RequestParam Long customerId) {
-
+    public ResponseEntity<?> updateCustomer(@RequestBody Map<String, Object> details, @RequestParam Long customerId) {
         try {
+            List<String> errorMessages = new ArrayList<>();
+            for(String key:details.keySet())
+            {
+                if(details.get(key).toString().isEmpty()) {
+                    details.remove(key);
+                    errorMessages.add(key + "cannot be null");
+                }
+            }
+            if (!errorMessages.isEmpty()) {
+                return ResponseService.generateErrorResponse("List of Failed validations: " + errorMessages.toString(), HttpStatus.BAD_REQUEST);
+            }
             if (customerService == null) {
                 return ResponseService.generateErrorResponse("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
-            CustomCustomer customerDetails=entityManager.find(CustomCustomer.class,customerId);
-            Set<String> fieldNames = details.keySet();
+
             CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
+            Customer customer=customerService.readCustomerById(customerId);
             if (customCustomer == null) {
                 return ResponseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
-
             }
-            if (customerDetails.getMobileNumber() != null) {
-                if (customCustomerService.isValidMobileNumber(customerDetails.getMobileNumber()) == false) {
-                    return ResponseService.generateErrorResponse("Cannot update phoneNumber", HttpStatus.INTERNAL_SERVER_ERROR);
 
+            // Validate mobile number
+            String mobileNumber = (String) details.get("mobileNumber");
+            if (mobileNumber != null && !customCustomerService.isValidMobileNumber(mobileNumber)) {
+                return ResponseService.generateErrorResponse("Cannot update phoneNumber", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            // Check for existing username and email
+            String username = (String) details.get("username");
+            String emailAddress = (String) details.get("emailAddress");
+            Customer existingCustomerByUsername = (username != null) ? customerService.readCustomerByUsername(username) : null;
+            Customer existingCustomerByEmail = (emailAddress != null) ? customerService.readCustomerByEmail(emailAddress) : null;
+
+            if ((existingCustomerByUsername != null && !existingCustomerByUsername.getId().equals(customerId)) ||
+                    (existingCustomerByEmail != null && !existingCustomerByEmail.getId().equals(customerId))) {
+                return ResponseService.generateErrorResponse("Email or Username already in use", HttpStatus.BAD_REQUEST);
+            }
+
+            // Update customer fields
+            customCustomer.setId(customerId);
+            customCustomer.setMobileNumber(mobileNumber);
+            customCustomer.setQualificationDetailsList(customCustomer.getQualificationDetailsList());
+            customCustomer.setCountryCode(customCustomer.getCountryCode());
+
+            if (details.containsKey("firstName") && details.containsKey("lastName")) {
+                if (!details.get("firstName").toString().isEmpty())
+                    customCustomer.setFirstName((String) details.get("firstName"));
+                else
+                    errorMessages.add("first name cannot be null");
+                if (!details.get("lastName").toString().isEmpty())
+                    customCustomer.setLastName((String) details.get("lastName"));
+                else
+                    errorMessages.add("last name cannot be null");
+            }
+
+            if (details.containsKey("emailAddress") && ((String) details.get("emailAddress")).isEmpty())
+                errorMessages.add("email Address cannot be null");
+            if (details.containsKey("emailAddress") && !((String) details.get("emailAddress")).isEmpty())
+                customCustomer.setEmailAddress(emailAddress);
+            // Handle dynamic fields
+            details.remove("firstName");
+            details.remove("lastName");
+            details.remove("emailAddress");
+            String state = (String) details.get("currentState");
+            String district = (String) details.get("currentDistrict");
+            String pincode = (String) details.get("currentPincode");
+            if (state != null && district != null && pincode != null) {
+                boolean updated=false;
+                for (CustomerAddress customerAddress : customer.getCustomerAddresses()) {
+                    if (customerAddress.getAddressName().equals("CURRENT_ADDRESS")) {
+                        customerAddress.getAddress().setAddressLine1((String) details.get("currentAddress"));
+                        customerAddress.getAddress().setStateProvinceRegion(districtService.findStateById(Integer.parseInt(state)));
+                        customerAddress.getAddress().setCounty(districtService.findDistrictById(Integer.parseInt(district)));
+                        customerAddress.getAddress().setPostalCode(pincode);
+                        customerAddress.getAddress().setCity((String) details.get("currentCity"));
+                        updated = true;
+                        entityManager.merge(customerAddress);
+                        break;
+                    }
                 }
-            }
-            Customer existingCustomerByUsername = null;
-            Customer existingCustomerByEmail = null;
-            if (customerDetails.getUsername() != null) {
-                existingCustomerByUsername = customerService.readCustomerByUsername(customerDetails.getUsername());
-            }
-
-            if (customerDetails.getEmailAddress() != null) {
-                existingCustomerByEmail = customerService.readCustomerByEmail(customerDetails.getEmailAddress());
-            }
-            if ((existingCustomerByUsername != null) || existingCustomerByEmail != null) {
-                if (existingCustomerByUsername != null && !existingCustomerByUsername.getId().equals(customerId)) {
-                    return ResponseService.generateErrorResponse("Cannot update phoneNumber", HttpStatus.INTERNAL_SERVER_ERROR);
-
+                    if(!updated) {
+                        Map<String, Object> addressMap = new HashMap<>();
+                        addressMap.put("address", details.get("currentAddress"));
+                        addressMap.put("state", districtService.findStateById(Integer.parseInt(state)));
+                        addressMap.put("city", details.get("currentCity"));
+                        addressMap.put("district", districtService.findDistrictById(Integer.parseInt(district)));
+                        addressMap.put("pinCode", pincode);
+                        addressMap.put("addressName", "CURRENT_ADDRESS");
+                        addAddress(customerId, addressMap);
+                    }
                 }
-                if (existingCustomerByEmail != null && !existingCustomerByEmail.getId().equals(customerId)) {
-                    return ResponseService.generateErrorResponse("Email not available", HttpStatus.BAD_REQUEST);
+                details.remove("currentState");
+                details.remove("currentDistrict");
+                details.remove("currentAddress");
+                details.remove("currentPincode");
+                details.remove("currentCity");
+                state = (String) details.get("permanentState");
+                district = (String) details.get("permanentDistrict");
+                pincode = (String) details.get("permanentPincode");
+                if (state != null && district != null && pincode != null) {
+                    boolean updated = false;
+                    for (CustomerAddress customerAddress : customer.getCustomerAddresses()) {
+
+                        if (customerAddress.getAddressName().equals("PERMANENT_ADDRESS")) {
+                            System.out.println("1");
+                            customerAddress.getAddress().setAddressLine1((String) details.get("permanentAddress"));
+                            customerAddress.getAddress().setStateProvinceRegion(districtService.findStateById(Integer.parseInt(state)));
+                            customerAddress.getAddress().setCounty(districtService.findDistrictById(Integer.parseInt(district)));
+                            customerAddress.getAddress().setPostalCode(pincode);
+                            customerAddress.getAddress().setCity((String) details.get("permanentCity"));
+                            updated = true;
+                            entityManager.merge(customerAddress);
+                            break;
+                        }
+                    }
+                    if (!updated) {
+                        Map<String, Object> addressMap = new HashMap<>();
+                        addressMap.put("address", details.get("permanentAddress"));
+                        addressMap.put("state", districtService.findStateById(Integer.parseInt(state)));
+                        addressMap.put("city", details.get("permanentCity"));
+                        addressMap.put("district", districtService.findDistrictById(Integer.parseInt(district)));
+                        addressMap.put("pinCode", pincode);
+                        addressMap.put("addressName", "PERMANENT_ADDRESS");
+                        addAddress(customerId, addressMap);
+                    }
                 }
-            }
-            customerDetails.setId(customerId);
-            customerDetails.setMobileNumber(customCustomer.getMobileNumber());
-            customerDetails.setQualificationDetailsList(customCustomer.getQualificationDetailsList());
+                details.remove("permanentState");
+                details.remove("permanentDistrict");
+                details.remove("permanentAddress");
+                details.remove("permanentPincode");
+                details.remove("permanentCity");
 
-            customerDetails.setCountryCode(customCustomer.getCountryCode());
-            Customer customer = customerService.readCustomerById(customerId);
-            List<String> errorMessages = new ArrayList<>();
-            //using reflections
-            for (Field field : CustomCustomer.class.getDeclaredFields()) {
-         /*       Column columnAnnotation = field.getAnnotation(Column.class);
-                boolean isColumnNotNull = (columnAnnotation != null && !columnAnnotation.nullable());
-                // Check if the field has the @Nullable annotation
-                boolean isNullable = field.isAnnotationPresent(Nullable.class);*/
-                field.setAccessible(true);
-                Object newValue = field.get(customerDetails);
-               /* if (newValue == null && !isNullable)
-                    errorMessages.add(field.getName() + " cannot be null");*/
-                if (newValue != null) {
-                    field.set(customCustomer, newValue);
+                for (Map.Entry<String, Object> entry : details.entrySet()) {
+                    String fieldName = entry.getKey();
+                    Object newValue = entry.getValue();
+                    Field field = CustomCustomer.class.getDeclaredField(fieldName);
+                    field.setAccessible(true);
+                    Column columnAnnotation = field.getAnnotation(Column.class);
+                    boolean isColumnNotNull = (columnAnnotation != null && !columnAnnotation.nullable());
+                    // Check if the field has the @Nullable annotation
+                    boolean isNullable = field.isAnnotationPresent(Nullable.class);
+                    field.setAccessible(true);
+                    if (newValue.toString().isEmpty() && !isNullable) {
+                        errorMessages.add(fieldName + " cannot be null");
+                        continue;
+                    }
+                    // Validate not null
+
+                    // Validate size if applicable
+                    if (field.isAnnotationPresent(Size.class)) {
+                        Size sizeAnnotation = field.getAnnotation(Size.class);
+                        int min = sizeAnnotation.min();
+                        int max = sizeAnnotation.max();
+                        if (newValue.toString().length() > max || newValue.toString().length() < min) {
+                            errorMessages.add(fieldName + " size should be between " + min + " and " + max);
+                            continue;
+                        }
+                    }
+
+                    // Set value if type is compatible
+                    if (newValue != null && field.getType().isAssignableFrom(newValue.getClass())) {
+                        field.set(customCustomer, newValue);
+                    }
                 }
-            }
+                if (!errorMessages.isEmpty()) {
+                    return ResponseService.generateErrorResponse("List of Failed validations: " + errorMessages.toString(), HttpStatus.BAD_REQUEST);
+                }
 
-            if (customerDetails.getState() != null && customerDetails.getDistrict() != null && customerDetails.getPincode() != null) {
-                customCustomer.setState(districtService.findStateById(Integer.parseInt(customerDetails.getState())));
-                customCustomer.setDistrict(districtService.findDistrictById(Integer.parseInt(customerDetails.getDistrict())));
-                Map<String, Object> addressMap = new HashMap<>();
-                addressMap.put("address", customerDetails.getResidentailAddress());
-                addressMap.put("state", districtService.findStateById(Integer.parseInt(customerDetails.getState())));
-                addressMap.put("city", districtService.findDistrictById(Integer.parseInt(customerDetails.getDistrict())));
-                addressMap.put("district", customerDetails.getDistrict());
-                addressMap.put("pinCode", customerDetails.getPincode());
-                addressMap.put("addressName", "Residential Address");
-                addAddress(customerId, addressMap);
-            }
-            if (customerDetails.getFirstName() != null && customerDetails.getLastName() != null) {
-                customer.setFirstName(customerDetails.getFirstName());
-                customer.setLastName(customerDetails.getLastName());
-            } else if (customerDetails.getFirstName() == null || customerDetails.getLastName() == null) {
-                if (customerDetails.getFirstName() == null)
-                    errorMessages.add("First Name cannot be null");
-                if (customCustomer.getLastName() == null)
-                    errorMessages.add("Last Name cannot be null");
-            }
-            if (customerDetails.getEmailAddress() != null) {
-                customer.setEmailAddress(customerDetails.getEmailAddress());
-            }
-           /* if (!errorMessages.isEmpty())
-                return ResponseService.generateErrorResponse("List of Failed validations : " + errorMessages.toString(), HttpStatus.BAD_REQUEST);*/
-            em.merge(customCustomer);
-            return ResponseService.generateSuccessResponse("User details updated successfully : ", sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK);
+                em.merge(customCustomer);
+                return ResponseService.generateSuccessResponse("User details updated successfully", sharedUtilityService.breakReferenceForCustomer(customCustomer), HttpStatus.OK);
 
-        } catch (Exception e) {
-            exceptionHandling.handleException(e);
-            return ResponseService.generateErrorResponse("Error updating", HttpStatus.INTERNAL_SERVER_ERROR);
+            }catch(NoSuchFieldException e)
+            {
+                return ResponseService.generateErrorResponse("No such field present :" + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        catch(Exception e){
+                exceptionHandling.handleException(e);
+                return ResponseService.generateErrorResponse("Error updating " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            }
         }
-    }
-    public  boolean isFieldPresent(Class<?> clazz, String fieldName) {
-        try {
-            Field field = clazz.getDeclaredField(fieldName);
-            return field != null; // Field exists
-        } catch (NoSuchFieldException e) {
-            return false; // Field does not exist
+        public boolean isFieldPresent (Class < ? > clazz, String fieldName){
+            try {
+                Field field = clazz.getDeclaredField(fieldName);
+                return field != null; // Field exists
+            } catch (NoSuchFieldException e) {
+                return false; // Field does not exist
+            }
         }
-    }
-
 
     @Transactional
     @RequestMapping(value = "/get-customer-details/{customerId}", method = RequestMethod.GET)
@@ -271,19 +366,24 @@ public class CustomerEndpoint {
             CustomerImpl customer = em.find(CustomerImpl.class, customerId);  // Assuming you retrieve the base Customer entity
             Map<String, Object> customerDetails = sharedUtilityService.breakReferenceForCustomer(customer);
             // Fetch qualification details and replace qualification_id with qualification_name
+
             List<Map<String, Object>> qualificationsWithNames = customCustomer.getQualificationDetailsList().stream()
                     .map(qualificationDetail -> {
                         // Create a new map to store qualification information
                         Map<String, Object> qualificationInfo = new HashMap<>();
-
                         // Fetch the qualification by qualification_id
-                        Qualification qualification = em.find(Qualification.class, qualificationDetail.getQualification_id());
+
+                        //Qualification qualification = em.find(Qualification.class, qualificationDetail.getQualification_id());
+                        Object id = qualificationDetail.getQualification_id();
+                        Long qualificationId = id instanceof Long ? (Long) id : Long.valueOf((Integer) id);
+                        Qualification qualification = em.find(Qualification.class, qualificationId);
+
 
                         // Populate the map with necessary fields from qualificationDetail
                         qualificationInfo.put("institution_name", qualificationDetail.getInstitution_name());
                         qualificationInfo.put("year_of_passing", qualificationDetail.getYear_of_passing());
                         qualificationInfo.put("board_or_university", qualificationDetail.getBoard_or_university());
-                        qualificationInfo.put("subject_stream", qualificationDetail.getSubject_stream());
+                        qualificationInfo.put("subject_stream", qualificationDetail.getStream());
                         qualificationInfo.put("grade_or_percentage_value", qualificationDetail.getGrade_or_percentage_value());
                         qualificationInfo.put("marks_total", qualificationDetail.getTotal_marks());
                         qualificationInfo.put("marks_obtained", qualificationDetail.getMarks_obtained());
@@ -297,6 +397,7 @@ public class CustomerEndpoint {
 
                         return qualificationInfo;
                     }).collect(Collectors.toList());
+
 
             customerDetails.put("qualificationDetails", qualificationsWithNames);
 
@@ -313,7 +414,6 @@ public class CustomerEndpoint {
     @PostMapping("/upload-documents")
     public ResponseEntity<?> uploadDocuments(
             @RequestParam Long customerId,
-//            @RequestParam Map<String, MultipartFile> files,
             @RequestParam("files") List<MultipartFile> files,
             @RequestParam("fileTypes") List<Integer> fileTypes,
             @RequestParam(value = "removeFileTypes", required = false) Boolean removeFileTypes,
@@ -324,10 +424,19 @@ public class CustomerEndpoint {
                 return ResponseService.generateErrorResponse("Authorization header is missing or invalid.", HttpStatus.UNAUTHORIZED);
             }
 
+            if (customerId == null || files == null || fileTypes == null) {
+                return ResponseService.generateErrorResponse("Invalid request parameters.", HttpStatus.BAD_REQUEST);
+            }
+
             String jwtToken = authHeader.substring(7);
+
             Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
             Long tokenUserId = jwtTokenUtil.extractId(jwtToken);
+
             String role = roleService.getRoleByRoleId(roleId).getRole_name();
+            if (role == null) {
+                return ResponseService.generateErrorResponse("Role not found for this user.", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
 
             if (!customerId.equals(tokenUserId)) {
                 return ResponseService.generateErrorResponse("Unauthorized request.", HttpStatus.UNAUTHORIZED);
@@ -353,8 +462,6 @@ public class CustomerEndpoint {
 
 
                 for (Map.Entry<Integer, List<MultipartFile>> entry : groupedFiles.entrySet()) {
-                   /* Integer fileNameId = Integer.parseInt(entry.getKey());
-                    MultipartFile file = entry.getValue();*/
                     Integer fileNameId = entry.getKey();
                     List<MultipartFile> fileList = entry.getValue();
                     for (MultipartFile file : fileList) {
@@ -388,21 +495,17 @@ public class CustomerEndpoint {
                             ));
                         }
 
+                        fileUploadService.uploadFile(file, documentTypeObj.getDocument_type_name(), customerId, role);
 
-                        documentStorageService.saveDocuments(file, documentTypeObj.getDocument_type_name(), customerId, role);
+
                         if (removeFileTypes != null && removeFileTypes) {
+
                             if (existingDocument != null && fileNameId != 13) {
                                 if (existingDocument != null) {
                                     String filePath = existingDocument.getFilePath();
 
-
                                     if (filePath != null) {
-                                        String absolutePath = System.getProperty("user.dir") + "/../test/" + filePath;
-                                        File oldFile = new File(absolutePath);
-
-                                        if (oldFile.exists()) {
-                                            oldFile.delete();
-                                        }
+                                        fileUploadService.deleteFile( customerId,  documentTypeObj.getDocument_type_name(),  existingDocument.getName(),  role);
                                     }
 
                                     existingDocument.setDocumentType(null);
@@ -410,7 +513,7 @@ public class CustomerEndpoint {
                                     existingDocument.setName(null);
                                     em.persist(existingDocument);
 
-                                    deletedDocumentMessages.add("File for document type '" + documentTypeObj.getDocument_type_name() + "' has been deleted.");
+                                    deletedDocumentMessages.add( documentTypeObj.getDocument_type_name() + "' has been deleted.");
                                 }
                                 continue;
                             }
@@ -434,32 +537,13 @@ public class CustomerEndpoint {
                             } else if (existingDocument13 != null) {
                                 String filePath = existingDocument13.getFilePath();
                                 if (removeFileTypes != null && removeFileTypes && newFileName!=null ) {
-                                    String absolutePath = System.getProperty("user.dir") + "/../test/" + filePath;
-                                    File oldFile = new File(absolutePath);
-                                    oldFile.delete();
-                                    existingDocument13.setFilePath(null);
-                                    existingDocument13.setName(null);
-                                    existingDocument13.setCustom_customer(null);
-                                    em.merge(existingDocument);
-                                    deletedDocumentMessages.add( documentTypeObj.getDocument_type_name() + "' has been deleted.");
-
+                                    fileUploadService.deleteFile( customerId,  documentTypeObj.getDocument_type_name(),  existingDocument.getName(),  role);
                                 }
-                            }
-                            if (existingDocument != null) {
-                                String filePath = existingDocument.getFilePath();
-                                if (removeFileTypes != null && removeFileTypes) {
-                                    if (filePath != null) {
-
-                                        String absolutePath = System.getProperty("user.dir") + "/../test/" + filePath;
-                                        File oldFile = new File(absolutePath);
-                                        String oldFileName = oldFile.getName();
-
-                                        oldFile.delete();
-                                        existingDocument.setFilePath(null);
-                                        existingDocument.setName(null);
-                                        em.merge(existingDocument);
-                                    }
-                                }
+                                existingDocument13.setFilePath(null);
+                                existingDocument13.setName(null);
+                                existingDocument13.setCustom_customer(null);
+                                em.merge(existingDocument);
+                                deletedDocumentMessages.add( documentTypeObj.getDocument_type_name() + "' has been deleted.");
                             }
                         }
                         // If the file is not empty and a document already exists, update the document
@@ -473,11 +557,8 @@ public class CustomerEndpoint {
                                 String newFileName = file.getOriginalFilename();
 
                                 if (!newFileName.equals(oldFileName)) {
-
-                                    oldFile.delete();
-
+                                    fileUploadService.deleteFile( customerId,  documentTypeObj.getDocument_type_name(),  existingDocument.getName(),  role);
                                     documentStorageService.updateOrCreateDocument(existingDocument, file, documentTypeObj, customerId, role);
-
                                 }
                             }
                         } else {
@@ -506,12 +587,8 @@ public class CustomerEndpoint {
                 List<String> deletedDocumentMessages = new ArrayList<>();
 
                 // Handle file uploads and deletions
-              /*  for (Map.Entry<String, MultipartFile> entry : files.entrySet()) {
-                    Integer fileNameId = Integer.parseInt(entry.getKey());
-                    MultipartFile file = entry.getValue();*/
+
                 for (Map.Entry<Integer, List<MultipartFile>> entry : groupedFiles.entrySet()) {
-                   /* Integer fileNameId = Integer.parseInt(entry.getKey());
-                    MultipartFile file = entry.getValue();*/
                     Integer fileNameId = entry.getKey();
                     List<MultipartFile> fileList = entry.getValue();
                     for (MultipartFile file : fileList) {
@@ -544,8 +621,9 @@ public class CustomerEndpoint {
                                     "message", "Invalid file type: " + file.getOriginalFilename()
                             ));
                         }
-                        documentStorageService.saveDocuments(file, documentTypeObj.getDocument_type_name(), customerId, role);
+//                        documentStorageService.saveDocuments(file, documentTypeObj.getDocument_type_name(), customerId, role);
 
+                        fileUploadService.uploadFile(file, documentTypeObj.getDocument_type_name(), customerId, role);
 
                         if (removeFileTypes != null && removeFileTypes) {
                             if (existingDocument != null && fileNameId != 13) {
@@ -553,12 +631,7 @@ public class CustomerEndpoint {
 
                                     String filePath = existingDocument.getFilePath();
                                     if (filePath != null) {
-                                        String absolutePath = System.getProperty("user.dir") + "/../test/" + filePath;
-                                        File oldFile = new File(absolutePath);
-
-                                        if (oldFile.exists()) {
-                                            oldFile.delete();
-                                        }
+                                        fileUploadService.deleteFile( customerId,  documentTypeObj.getDocument_type_name(),  existingDocument.getName(),  role);
                                     }
                                     existingDocument.setDocumentType(null);
                                     existingDocument.setName(null);
@@ -590,21 +663,16 @@ public class CustomerEndpoint {
                             }
 
                             else if (existingDocument13 != null) {
-                                String filePath = existingDocument13.getFilePath();
                                 if (removeFileTypes != null && removeFileTypes && newFileName!=null ) {
-
-                                    String absolutePath = System.getProperty("user.dir") + "/../test/" + filePath;
-                                    File oldFile = new File(absolutePath);
-
-                                    oldFile.delete();
-                                    existingDocument13.setFilePath(null);
-                                    existingDocument13.setName(null);
-                                    existingDocument13.setServiceProviderEntity(null);
-
-                                    em.merge(existingDocument13);
-                                    deletedDocumentMessages.add( documentTypeObj.getDocument_type_name() + "' has been deleted.");
+                                    fileUploadService.deleteFile( customerId,  documentTypeObj.getDocument_type_name(),  existingDocument.getName(),  role);
 
                                 }
+                                existingDocument13.setFilePath(null);
+                                existingDocument13.setName(null);
+                                existingDocument13.setServiceProviderEntity(null);
+
+                                em.merge(existingDocument13);
+                                deletedDocumentMessages.add( documentTypeObj.getDocument_type_name() + "' has been deleted.");
                             }
 
 
@@ -619,7 +687,9 @@ public class CustomerEndpoint {
                                 String oldFileName = oldFile.getName();
                                 String newFileName = file.getOriginalFilename();
                                 if (!newFileName.equals(oldFileName)) {
-                                    oldFile.delete();
+//                                    oldFile.delete();
+                                    fileUploadService.deleteFile( customerId,  documentTypeObj.getDocument_type_name(),  existingDocument.getName(),  role);
+
                                     documentStorageService.updateOrCreateServiceProvider(existingDocument, file, documentTypeObj, customerId, role);
                                 }
                             }
@@ -645,8 +715,6 @@ public class CustomerEndpoint {
             return ResponseService.generateErrorResponse("Error updating documents: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-
     @Transactional
     @RequestMapping(value = "update-username", method = RequestMethod.POST)
     public ResponseEntity<?> updateCustomerUsername(@RequestBody Map<String, Object> updates, @RequestParam Long customerId) {
@@ -729,38 +797,40 @@ public class CustomerEndpoint {
 
     @Transactional
     @RequestMapping(value = "delete", method = RequestMethod.DELETE)
-    public ResponseEntity<?> updateCustomer(@RequestParam Long customerId) {
+    public ResponseEntity<?> deleteCustomer(@RequestParam String customerId) {
         try {
+            Long id = Long.valueOf(customerId);
             if (customerService == null) {
                 return ResponseService.generateErrorResponse(ApiConstants.CUSTOMER_SERVICE_NOT_INITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
-
             }
-            Customer customer = customerService.readCustomerById(customerId);
+
+            Customer customer = customerService.readCustomerById(id);
             if (customer != null) {
-                customerService.deleteCustomer(customerService.readCustomerById(customerId));
+                customerService.deleteCustomer(customer);
                 return ResponseService.generateSuccessResponse("Record Deleted Successfully", "", HttpStatus.OK);
-
             } else {
-                return ResponseService.generateErrorResponse("No Records found for this ID " + customerId, HttpStatus.NOT_FOUND);
-
+                return ResponseService.generateErrorResponse("No Records found for this ID " + id, HttpStatus.NOT_FOUND);
             }
+        } catch (NumberFormatException e) {
+            return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
-            return ResponseService.generateErrorResponse("Some issue in deleting customer " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-
-
+            return ResponseService.generateErrorResponse("Some issue in deleting customer: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
 
     @Transactional
     @RequestMapping(value = "add-address", method = RequestMethod.POST)
     public ResponseEntity<?> addAddress(@RequestParam Long customerId, @RequestBody Map<String, Object> addressDetails) {
         try {
+            Long id = Long.valueOf(customerId);
             if (customerService == null) {
                 return ResponseService.generateErrorResponse("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            Customer customer = customerService.readCustomerById(customerId);
+            Customer customer = customerService.readCustomerById(id);
             if (customer != null) {
                 CustomerAddress newAddress = customerAddressService.create();
                 Address address = addressService.create();
@@ -775,8 +845,9 @@ public class CustomerEndpoint {
                 List<CustomerAddress> addressLists = customer.getCustomerAddresses();
                 addressLists.add(newAddress);
                 customer.setCustomerAddresses(addressLists);
-                em.merge(customer);
-
+                if(!addressDetails.containsKey("inFunctionCall"))
+                    em.merge(customer);
+                addressDetails.remove("inFunctionCall");
                 //using reflections
                 AddressDTO addressDTO = new AddressDTO();
                 for (Map.Entry<String, Object> entry : addressDetails.entrySet()) {
@@ -802,6 +873,8 @@ public class CustomerEndpoint {
                 return ResponseService.generateErrorResponse("No Records found for this ID", HttpStatus.NOT_FOUND);
 
             }
+        }catch (NumberFormatException e) {
+            return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error saving Address", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -813,11 +886,12 @@ public class CustomerEndpoint {
     @RequestMapping(value = "retrieve-address", method = RequestMethod.GET)
     public ResponseEntity<?> retrieveAddressList(@RequestParam Long customerId) {
         try {
+            Long customerID = Long.valueOf(customerId);
             if (customerService == null) {
                 return ResponseService.generateErrorResponse("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
 
             }
-            Customer customer = customerService.readCustomerById(customerId);
+            Customer customer = customerService.readCustomerById(customerID);
             if (customer != null) {
                 List<CustomerAddress> addressList = customer.getCustomerAddresses();
                 List<AddressDTO> listOfAddresses = new ArrayList<>();
@@ -832,6 +906,8 @@ public class CustomerEndpoint {
             }
 
 
+        }catch (NumberFormatException e) {
+            return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error in retreiving Address", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -843,11 +919,12 @@ public class CustomerEndpoint {
     @RequestMapping(value = "address-details", method = RequestMethod.GET)
     public ResponseEntity<?> retrieveAddressList(@RequestParam Long customerId, @RequestParam Long addressId) {
         try {
+            Long customerID = Long.valueOf(customerId);
             if (customerService == null) {
                 return ResponseService.generateErrorResponse("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
 
             }
-            Customer customer = customerService.readCustomerById(customerId);
+            Customer customer = customerService.readCustomerById(customerID);
             CustomerAddress customerAddress = customerAddressService.readCustomerAddressById(addressId);
             if (customerAddress == null) {
                 return ResponseService.generateErrorResponse("Address not found", HttpStatus.NOT_FOUND);
@@ -855,6 +932,8 @@ public class CustomerEndpoint {
                 return ResponseService.generateSuccessResponse("Address details : ", makeAddressDTO(customerAddress), HttpStatus.OK);
 
             }
+        }catch (NumberFormatException e) {
+            return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error saving Address", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -900,7 +979,9 @@ public class CustomerEndpoint {
     public ResponseEntity<?>saveForm(@PathVariable long customer_id,@RequestParam long product_id)
     {
         try{
-            CustomCustomer customer=entityManager.find(CustomCustomer.class,customer_id);
+            Long id = Long.valueOf(customer_id);
+
+            CustomCustomer customer=entityManager.find(CustomCustomer.class,id);
             if(customer==null)
             {
                 return ResponseService.generateErrorResponse("Customer not found",HttpStatus.NOT_FOUND);
@@ -919,7 +1000,10 @@ public class CustomerEndpoint {
             Map<String,Object>responseBody=new HashMap<>();
             Map<String,Object>formBody=sharedUtilityService.createProductResponseMap(product,null);
             return ResponseService.generateSuccessResponse("Form Saved",formBody,HttpStatus.OK);
-        } catch (Exception e) {
+        }
+        catch (NumberFormatException e) {
+            return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
+        }catch (Exception e) {
             return ResponseService.generateErrorResponse("Error saving Form : "+e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -948,6 +1032,8 @@ public class CustomerEndpoint {
             Map<String,Object>responseBody=new HashMap<>();
             Map<String,Object>formBody=sharedUtilityService.createProductResponseMap(product,null);
             return ResponseService.generateSuccessResponse("Form Removed",formBody,HttpStatus.OK);
+        }catch (NumberFormatException e) {
+            return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             return ResponseService.generateErrorResponse("Error removing Form : "+e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -965,6 +1051,8 @@ public class CustomerEndpoint {
                 listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product, null));
             }
             return ResponseService.generateSuccessResponse("Forms saved : ", listOfSavedProducts, HttpStatus.OK);
+        }catch (NumberFormatException e) {
+            return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -984,6 +1072,8 @@ public class CustomerEndpoint {
                 listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product, null));
             }
             return ResponseService.generateSuccessResponse("Forms saved : ", listOfSavedProducts, HttpStatus.OK);
+        }catch (NumberFormatException e) {
+            return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return ResponseService.generateErrorResponse("SOME EXCEPTION OCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -1050,10 +1140,13 @@ public class CustomerEndpoint {
             customCustomer.setReferrerServiceProvider(serviceProvider);
             entityManager.merge(customCustomer);
             return ResponseService.generateSuccessResponse("Referrer Set", sharedUtilityService.serviceProviderDetailsMap(serviceProvider), HttpStatus.OK);
+        }catch (NumberFormatException e) {
+            return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error setting customer's referrer " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
+
 
 }

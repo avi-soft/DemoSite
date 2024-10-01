@@ -29,4 +29,6 @@ public class ServiceProviderRankService {
         List<ServiceProviderRank> serviceProviderRankList = query.getResultList();
         return serviceProviderRankList;
     }
+
 }
+

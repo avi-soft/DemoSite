@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import javax.annotation.PostConstruct;
 import javax.persistence.EntityManager;
@@ -26,11 +27,16 @@ public class JwtUtil {
 
     private ExceptionHandlingImplement exceptionHandling;
     private RoleService roleService;
-    private String secretKeyString = "DASYWgfhMLL0np41rKFAGminD1zb5DlwDzE1WwnP8es=";
+
+//    private String secretKeyString ;
+private String secretKeyString = "DASYWgfhMLL0np41rKFAGminD1zb5DlwDzE1WwnP8es=";
+
     private Key secretKey;
     private EntityManager entityManager;
     private TokenBlacklist tokenBlacklist;
     private CustomerService customerService;
+
+
 
     @Autowired
     public void setExceptionHandling(ExceptionHandlingImplement exceptionHandling) {
@@ -65,17 +71,16 @@ public class JwtUtil {
             if (secretKeyBytes.length * 8 < 256) {
                 throw new IllegalArgumentException("Key length is less than 256 bits.");
             }
+
             this.secretKey = Keys.hmacShaKeyFor(secretKeyBytes);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             throw new RuntimeException("Error generating JWT token", e);
         }
+
     }
 
-   /* @PostConstruct
-    public void init() {
-        this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
-    }*/
+
 
     public String generateToken(Long id, Integer role, String ipAddress, String userAgent) {
         try {
@@ -117,8 +122,10 @@ public class JwtUtil {
                 throw new IllegalArgumentException("Token is required");
             }
 
+
             if (isTokenExpired(token)) {
                 throw new ExpiredJwtException(null, null, "Token is expired");
+
             }
             return Jwts.parserBuilder()
                     .setSigningKey(secretKey)
@@ -241,7 +248,9 @@ public class JwtUtil {
             }
             if (isTokenExpired(token)) {
 
+
                 throw new ExpiredJwtException(null, null, "Token is expired");
+
 
             }
             return Jwts.parserBuilder()
@@ -257,5 +266,16 @@ public class JwtUtil {
             exceptionHandling.handleException(e);
             throw new RuntimeException("Error in JWT token", e);
         }
+    }
+
+    public void validateAuthHeader(String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            throw new IllegalArgumentException("Authorization header is missing or invalid.");
+        }
+    }
+
+    public Long getTokenUserId(String authHeader) {
+        String jwtToken = authHeader.substring(7);
+        return extractId(jwtToken);
     }
 }

@@ -109,7 +109,9 @@ public class DocumentEndpoint {
 
             if (exam != null && !exam.isEmpty()) {
                 documentTypes = entityManager.createQuery(
+
                         "SELECT dt FROM DocumentType dt WHERE dt.description LIKE :exam", DocumentType.class)
+
                         .setParameter("exam", "%" + "Completed" + "%")
                         .getResultList();
             } else {
