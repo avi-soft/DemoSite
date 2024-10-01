@@ -206,7 +206,7 @@ public class CustomerEndpoint {
 
             // Update customer fields
             customCustomer.setId(customerId);
-            customCustomer.setMobileNumber(mobileNumber);
+            customCustomer.setMobileNumber(customCustomer.getMobileNumber());
             customCustomer.setQualificationDetailsList(customCustomer.getQualificationDetailsList());
             customCustomer.setCountryCode(customCustomer.getCountryCode());
 

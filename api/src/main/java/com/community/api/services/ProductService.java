@@ -100,8 +100,8 @@ public class ProductService {
         try {
 
             // Start building the SQL query
-            StringBuilder sql = new StringBuilder("INSERT INTO custom_product (product_id, creator_user_id, creator_role_id, last_modified, product_state_id, state_id, current_date");
-            StringBuilder values = new StringBuilder("VALUES (:productId, :creatorUserId, :role, :lastModified, :productState, :state, :currentDate");
+            StringBuilder sql = new StringBuilder("INSERT INTO custom_product (product_id, creator_user_id, creator_role_id, last_modified, product_state_id, created_date");
+            StringBuilder values = new StringBuilder("VALUES (:productId, :creatorUserId, :role, :lastModified, :productState, :currentDate");
 
             // Dynamically add columns and values based on non-null fields
             if (addProductDto.getExamDateFrom() != null) {
@@ -117,11 +117,6 @@ public class ProductService {
             if (addProductDto.getGoLiveDate() != null) {
                 sql.append(", go_live_date");
                 values.append(", :goLiveDate");
-            }
-
-            if(addProductDto.getActiveStartDate() != null) {
-                sql.append(", active_start_date");
-                values.append(", :activeStartDate");
             }
 
             if (addProductDto.getPlatformFee() != null) {
@@ -152,6 +147,11 @@ public class ProductService {
             if (addProductDto.getModificationDateTo() != null) {
                 sql.append(", modification_date_to");
                 values.append(", :modificationDateTo");
+            }
+
+            if(addProductDto.getState() != null) {
+                sql.append(", state_id");
+                values.append(", :state");
             }
 
             if (addProductDto.getLastDateToPayFee() != null) {
@@ -225,15 +225,15 @@ public class ProductService {
                 query.setParameter("examDateFrom", new Timestamp(addProductDto.getExamDateFrom().getTime()));
             }
 
-            if(addProductDto.getActiveStartDate() != null) {
-                query.setParameter("activeStartDate", new Timestamp(addProductDto.getActiveStartDate().getTime()));
-            }
             if (addProductDto.getJobGroup() != null) {
                 query.setParameter("jobGroup", addProductDto.getJobGroup());
             }
 
             query.setParameter("productState", productState);
-            query.setParameter("state", addProductDto.getState());
+
+            if(addProductDto.getState() != null) {
+                query.setParameter("state", addProductDto.getState());
+            }
 
             if (addProductDto.getExamDateTo() != null) {
                 query.setParameter("examDateTo", new Timestamp(addProductDto.getExamDateTo().getTime()));

@@ -298,6 +298,7 @@ public class SharedUtilityService {
                     DocumentType qualification = entityManager.find(DocumentType.class, qualificationDetail.getQualification_id());
 
                     // Populate the map with necessary fields from qualificationDetail
+                    qualificationInfo.put("qualification_detail_id",qualificationDetail.getId());
                     qualificationInfo.put("institution_name", qualificationDetail.getInstitution_name());
                     qualificationInfo.put("year_of_passing", qualificationDetail.getYear_of_passing());
                     qualificationInfo.put("board_or_university", qualificationDetail.getBoard_or_university());
