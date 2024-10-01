@@ -41,6 +41,11 @@ public class ServiceProviderEntity  {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long service_provider_id;
 
+    @Column
+    private String type;
+
+    private Integer totalScore;
+
     private String user_name;
 
     private String first_name;

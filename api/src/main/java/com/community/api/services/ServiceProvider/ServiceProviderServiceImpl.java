@@ -127,6 +127,22 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             errorMessages.add("ServiceProvider with ID " + userId + " not found");
         }
 
+            if (updates.containsKey("type")) {
+                String typeStr = (String) updates.get("type");
+
+                // Validate that the type value is either "Professional" or "Individual"
+                if(typeStr==null || typeStr.trim().isEmpty())
+                {
+                    return responseService.generateErrorResponse("Service Provider type cannot be null or empty", HttpStatus.BAD_REQUEST);
+                }
+                if (!typeStr.equalsIgnoreCase("PROFESSIONAL") && !typeStr.equalsIgnoreCase("INDIVIDUAL")) {
+                    return responseService.generateErrorResponse("Invalid value for 'type'. Allowed values are 'PROFESSIONAL' or 'INDIVIDUAL'.", HttpStatus.BAD_REQUEST);
+                }
+                existingServiceProvider.setType(typeStr.toUpperCase());
+                updates.remove("type");
+            }
+
+
         // Validate and check for unique constraints
         ServiceProviderEntity existingSPByUsername = null;
         ServiceProviderEntity existingSPByEmail = null;
