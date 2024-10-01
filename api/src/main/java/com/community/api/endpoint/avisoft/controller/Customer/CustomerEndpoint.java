@@ -401,7 +401,19 @@ public class CustomerEndpoint {
 
             customerDetails.put("qualificationDetails", qualificationsWithNames);
 
-            customerDetails.put("documents", customCustomer.getDocuments());
+            List<Document> filteredDocuments = new ArrayList<>();
+
+            for (Document document : customCustomer.getDocuments()) {
+                if (document.getFilePath() != null && document.getDocumentType() != null) {
+                    filteredDocuments.add(document);
+                }
+            }
+
+            if (!filteredDocuments.isEmpty()) {
+                customerDetails.put("documents", filteredDocuments);
+            }
+
+
             return responseService.generateSuccessResponse("User details retrieved successfully", customerDetails, HttpStatus.OK);
 
         } catch (Exception e) {
@@ -1106,11 +1118,9 @@ public class CustomerEndpoint {
             @RequestParam(defaultValue = "0") int offset,
             @RequestParam(defaultValue = "10") int limit) {
         try {
-            // Calculate the start position for pagination
+
             int startPosition = offset * limit;
-            // Create the query
             TypedQuery<CustomCustomer> query = entityManager.createQuery(Constant.GET_ALL_CUSTOMERS, CustomCustomer.class);
-            // Apply pagination
             query.setFirstResult(startPosition);
             query.setMaxResults(limit);
             List<Map> results = new ArrayList<>();
