@@ -3,20 +3,25 @@ package com.community.api.services;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.IndividualServiceProvider;
 import com.community.api.entity.ProfessionalServiceProvider;
+import com.community.api.entity.ServiceProviderRank;
+import com.community.api.services.ServiceProvider.ServiceProviderRankService;
 import io.swagger.models.auth.In;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
+import java.util.List;
 import java.util.Map;
 
 @Service
 public class RankingService
 {
     private EntityManager entityManager;
-    public RankingService(EntityManager entityManager)
+    private ServiceProviderRankService serviceProviderRankService;
+    public RankingService(EntityManager entityManager, ServiceProviderRankService serviceProviderRankService)
     {
         this.entityManager = entityManager;
+        this.serviceProviderRankService=serviceProviderRankService;
     }
     @Transactional
     public void giveScoresToServiceProvider(Long serviceProviderId, Map<String, Integer> scoreMap)
@@ -48,7 +53,8 @@ public class RankingService
             Integer totalScore = calculateProfessionalServiceProviderScore(scoreMap);
             totalScore= totalScore+professionalServiceProviderToGiveScore.getTotalSkillTestPoints();
             serviceProviderEntity.setTotalScore(totalScore);
-            serviceProviderEntity.setRank(assignRankingForProfessional(totalScore));
+
+            serviceProviderEntity.setRanking(assignRankingForProfessional(totalScore));
         }
         else
         {
@@ -92,14 +98,20 @@ public class RankingService
     }
 
     private String assignRankingForProfessional(Integer totalScore) {
-        if (totalScore >= 75) {
-            return "1a";
-        } else if (totalScore >= 50) {
-            return "1b";
-        } else if (totalScore >= 25) {
-            return "1c";
-        } else {
-            return "1d";
-        }
+        List<ServiceProviderRank> professionalServiceProviderRanks= serviceProviderRankService.getAllRank();
+
+            if (totalScore >= 75) {
+                for(ServiceProviderRank serviceProviderRank:professionalServiceProviderRanks)
+                {
+
+                }
+            } else if (totalScore >= 50) {
+                return "1b";
+            } else if (totalScore >= 25) {
+                return "1c";
+            } else {
+                return "1d";
+            }
+
     }
 }

@@ -351,11 +351,14 @@ public class CommandLineService implements CommandLineRunner {
         count = entityManager.createQuery("SELECT count(e) FROM ServiceProviderRank e", Long.class).getSingleResult();
 
         if (count == 0) {
-            entityManager.persist(new ServiceProviderRank(1L, "Exceptional", "The service provider's performance was outstanding, meeting all criteria at the highest level.", now, now, "SUPER_ADMIN"));
-            entityManager.persist(new ServiceProviderRank(2L, "High", "The service provider's performance was above average and met most of the criteria.", now, now, "SUPER_ADMIN"));
-            entityManager.persist(new ServiceProviderRank(3L, "Medium", "The service provider's performance was acceptable, meeting average expectations.", now, now, "SUPER_ADMIN"));
-            entityManager.persist(new ServiceProviderRank(4L, "Average", "The service provider's performance was satisfactory but could improve in certain areas.", now, now, "SUPER_ADMIN"));
-            entityManager.persist(new ServiceProviderRank(5L, "Low", "The service provider's performance did not meet the required criteria.", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderRank(1L, "1a", "The PROFESSIONAL service provider's score is between 75-100 points", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderRank(2L, "1b", "The PROFESSIONAL service provider's score is between 50-75 points", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderRank(3L, "1c", "The PROFESSIONAL service provider's score is between 25-50 points", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderRank(4L, "1d", "The PROFESSIONAL service provider's score is between 0-25 points", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderRank(5L, "2a", "The INDIVIDUAL service provider's score is between 75-100 points", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderRank(6L, "2b", "The INDIVIDUAL service provider's score is between 50-75 points", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderRank(7L, "2c", "The INDIVIDUAL service provider's score is between 25-50 points", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderRank(8L, "2d", "The INDIVIDUAL service provider's score is between 0-25 points", now, now, "SUPER_ADMIN"));
         }
     }
 }
