@@ -279,7 +279,7 @@ public class SharedUtilityService {
         serviceProviderDetails.put("cgpa", serviceProvider.getCgpa());
         serviceProviderDetails.put("latitude", serviceProvider.getLatitude());
         serviceProviderDetails.put("longitude", serviceProvider.getLongitude());
-        serviceProviderDetails.put("rank", serviceProvider.getRank());
+        serviceProviderDetails.put("rank", serviceProvider.getRanking());
         serviceProviderDetails.put("signedUp", serviceProvider.getSignedUp());
        /* serviceProviderDetails.put("skills", serviceProvider.getSkills());*/
        /* serviceProviderDetails.put("infra", serviceProvider.getInfra());

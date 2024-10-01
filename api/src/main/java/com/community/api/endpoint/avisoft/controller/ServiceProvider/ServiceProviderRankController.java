@@ -11,11 +11,12 @@ import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 
 import java.util.List;
+import java.util.Map;
 
 import static com.community.api.component.Constant.FIND_ALL_SERVICE_PROVIDER_TEST_RANK_QUERY;
 
 @RestController
-@RequestMapping("/service-provider-test-rank")
+@RequestMapping("/service-provider-rank")
 public class ServiceProviderRankController {
 
     private EntityManager entityManager;
@@ -42,6 +43,21 @@ public class ServiceProviderRankController {
         }
         return responseService.generateResponse(HttpStatus.OK, "Service Provider Test Rank List Retrieved Successfully", serviceProviderTestRankList);
     }
+        @PostMapping("give-score/{serviceProviderId}")
+        public ResponseEntity<?> giveScoresToServiceProvider(
+                @PathVariable Long serviceProviderId,
+                @RequestBody Map<String, Integer> scoreMap) {
 
+            try {
+                serviceProviderRankService.giveScoresToServiceProvider(serviceProviderId, scoreMap);
+                return ResponseService.generateSuccessResponse("Scores updated successfully for service provider with ID: " + serviceProviderId,scoreMap,HttpStatus.OK);
+            } catch (IllegalArgumentException e) {
+                return ResponseService.generateErrorResponse(e.getMessage(),HttpStatus.BAD_REQUEST);
+            } catch (Exception e) {
+                exceptionHandling.handleException(e);
+                return ResponseService.generateErrorResponse("Something went wrong",HttpStatus.BAD_REQUEST);
+            }
+        }
 }
+
 

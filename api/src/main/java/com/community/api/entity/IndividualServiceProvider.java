@@ -6,12 +6,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.persistence.Column;
+import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
 @Entity
 @Setter
 @Getter
 @NoArgsConstructor
+@DiscriminatorValue("INDIVIDUAL")
 public class IndividualServiceProvider extends ServiceProviderEntity
 {
     @Column(name = "business_unit_infra_score")
