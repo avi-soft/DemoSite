@@ -11,7 +11,6 @@ import com.community.api.entity.ServiceProviderRank;
 import com.community.api.entity.ServiceProviderTest;
 import com.community.api.entity.ServiceProviderTestStatus;
 import com.community.api.entity.Skill;
-import com.community.api.utils.Document;
 import com.community.api.utils.ServiceProviderDocument;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -20,13 +19,27 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
-
-import javax.persistence.*;
-import javax.validation.constraints.*;
-import java.util.Date;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
+import javax.validation.constraints.Email;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.Pattern;
+import javax.validation.constraints.Size;
 import java.util.List;
 
 @Entity
@@ -72,17 +85,20 @@ public class ServiceProviderEntity  {
     private String otp;
     @Nullable
     @Size(min = 9, max = 13)
+    @Pattern(regexp="^[6789]\\d{9}$",message = "Mobile number should be 10 digits in length and should begin with either 6,7,8,9")
     private String secondary_mobile_number;
     private int role;
     @Size(min = 9, max = 13)
+    @Pattern(regexp="^d{10}$",message = "Whatsapp number should be 10 digits in length")
     private String whatsapp_number;
-    @Email
+    /*@Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",message = "Please enter a valid email address.")*/
     private String primary_email;
 
     @Nullable
-    @Email
+    /*@Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Please enter a valid email address.")*/
     private String secondary_email;
     private String password;
+    @Nullable
     private Boolean is_running_business_unit;
 
     @Nullable
@@ -95,25 +111,12 @@ public class ServiceProviderEntity  {
     @Nullable
     private Integer number_of_employees;
 
-//    @Lob
-//    @Basic(fetch = FetchType.LAZY)
-//    @Column(name = "businessPhoto", columnDefinition="BLOB")
-//    @OneToOne(cascade = CascadeType.ALL)
-//    @JoinColumn(name = "business_photo_id")
-   /* @OneToOne(cascade = CascadeType.ALL)
-    private Document business_photo;*/
     @Nullable
     private Boolean isCFormAvailable;
     @Nullable
     private String registration_number;
 
-//    @Lob
-//    @Basic(fetch = FetchType.LAZY)
-//    @Column(name = "cFormPhoto", columnDefinition="BLOB")
-//    @OneToOne(cascade = CascadeType.ALL)
-//    @JoinColumn(name = "c_form_photo_id")
- /*@OneToMany(cascade = CascadeType.ALL,orphanRemoval = true)
-    private List<Equipment> equipment;*/
+
 
     private Boolean has_technical_knowledge;
 
