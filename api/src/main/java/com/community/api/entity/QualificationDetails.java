@@ -2,6 +2,7 @@ package com.community.api.entity;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +13,7 @@ import javax.validation.constraints.*;
 @Data
 @NoArgsConstructor
 @Table(name = "qualification_details")
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class QualificationDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,12 +36,12 @@ public class QualificationDetails {
     @Column(name = "board_or_university", nullable = false)
     private String board_or_university;
 
-    @NotNull(message = "Examination Role Number is required")
-    @Column(name = "examination_role_number", nullable = false)
+//    @NotNull(message = "Examination Role Number is required")
+    @Column(name = "examination_role_number",nullable = true)
     private Long examination_role_number;
 
-    @NotNull(message = "Examination Registration Number is required")
-    @Column(name = "examination_registration_number")
+//    @NotNull(message = "Examination Registration Number is required")
+    @Column(name = "examination_registration_number",nullable = true)
     private Long examination_registration_number;
 
     @NotBlank(message = "Subject name is required")
