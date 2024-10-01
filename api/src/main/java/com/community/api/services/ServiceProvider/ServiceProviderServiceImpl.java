@@ -202,9 +202,9 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             serviceProviderAddress.setPincode((String) updates.get("pincode"));
             serviceProviderAddress.setDistrict((String) updates.get("district"));
             serviceProviderAddress.setState((String) updates.get("state"));
-            serviceProviderAddress.setCity((String) updates.get("city"));
+            /*serviceProviderAddress.setCity((String) updates.get("city"));*/
             serviceProviderAddress.setAddress_line((String) updates.get("residential_address"));
-            if (serviceProviderAddress.getAddress_line() != null || serviceProviderAddress.getCity() != null || serviceProviderAddress.getDistrict() != null || serviceProviderAddress.getState() != null || serviceProviderAddress.getPincode() != null) {
+            if (serviceProviderAddress.getAddress_line() != null/* || serviceProviderAddress.getCity() != null*/ || serviceProviderAddress.getDistrict() != null || serviceProviderAddress.getState() != null || serviceProviderAddress.getPincode() != null) {
                 addAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress);
             }
         }else if(updates.containsKey("district") && updates.containsKey("state") && !existingServiceProvider.getSpAddresses().isEmpty()) {
@@ -217,7 +217,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             serviceProviderAddressDTO.setAddress_line((String) updates.get("residential_address"));
             serviceProviderAddressDTO.setPincode((String) updates.get("pincode"));
             serviceProviderAddressDTO.setServiceProviderEntity(existingServiceProvider);
-            serviceProviderAddressDTO.setCity((String) updates.get("city"));
+            /*serviceProviderAddressDTO.setCity((String) updates.get("city"));*/
             for (String error : updateAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress, serviceProviderAddressDTO))
             {
                 errorMessages.add(error);
@@ -785,8 +785,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                     addressToupdate.setDistrict(districtService.findDistrictById(Integer.parseInt(dto.getDistrict())));
                 if(dto.getAddress_line()!=null&& !dto.getAddress_line().isEmpty())
                     addressToupdate.setAddress_line(dto.getAddress_line());
-                if(dto.getCity()!=null && !dto.getCity().isEmpty())
-                    addressToupdate.setCity(dto.getCity());
+               /* if(dto.getCity()!=null && !dto.getCity().isEmpty())
+                    addressToupdate.setCity(dto.getCity());*/
                 if(dto.getPincode()!=null && !dto.getPincode().isEmpty())
                     addressToupdate.setPincode(dto.getPincode());
                 existingServiceProvider.setSpAddresses(addresses);

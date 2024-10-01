@@ -54,6 +54,7 @@ public class ServiceProviderEntity  {
 
  @Size(min = 10, max = 10)
  @Pattern(regexp = "^[A-Z]{5}\\d{4}\\{A-Z}{1}$", message = "Invalid format. Use 5 uppercase letters, 4 digits, and 1 uppercase letter.")
+ @Nullable
  private String pan_number;
  /* @OneToOne(cascade = CascadeType.ALL)
   private Document personal_photo;*/
