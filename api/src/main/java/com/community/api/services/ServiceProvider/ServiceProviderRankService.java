@@ -43,8 +43,6 @@ public class ServiceProviderRankService {
         {
             throw new IllegalArgumentException("The service provider with id "+serviceProviderId+" does not exist");
         }
-        System.out.println("-------------------------------------------------------------------------------");
-        System.out.println(serviceProviderEntity instanceof ProfessionalServiceProvider);
         if (serviceProviderEntity instanceof ProfessionalServiceProvider) {
 
             ProfessionalServiceProvider professionalServiceProviderToGiveScore= (ProfessionalServiceProvider) serviceProviderEntity;
@@ -63,9 +61,13 @@ public class ServiceProviderRankService {
             if (scoreMap.containsKey("staff_score")) {
                 professionalServiceProviderToGiveScore.setStaff_score(scoreMap.get("staff_score"));
             }
+            entityManager.merge(professionalServiceProviderToGiveScore);
 
             Integer totalScore = calculateProfessionalServiceProviderScore(scoreMap);
-            totalScore= totalScore+professionalServiceProviderToGiveScore.getTotalSkillTestPoints();
+            if(professionalServiceProviderToGiveScore.getTotalSkillTestPoints()!=null)
+            {
+                totalScore= totalScore+professionalServiceProviderToGiveScore.getTotalSkillTestPoints();
+            }
             serviceProviderEntity.setTotalScore(totalScore);
             ServiceProviderRank serviceProviderRank= assignRankingForProfessional(totalScore);
             if(serviceProviderRank==null)
@@ -93,10 +95,12 @@ public class ServiceProviderRankService {
                 individualServiceProviderToGiveScore.setPart_time_or_full_time_score(scoreMap.get("part_time_or_full_time_score"));
             }
 
+            entityManager.merge(individualServiceProviderToGiveScore);
+
             Integer totalScore = calculateProfessionalServiceProviderScore(scoreMap);
             totalScore= totalScore+individualServiceProviderToGiveScore.getTotalSkillTestPoints();
             serviceProviderEntity.setTotalScore(totalScore);
-            ServiceProviderRank serviceProviderRank= assignRankingForProfessional(totalScore);
+            ServiceProviderRank serviceProviderRank= assignRankingForIndividual(totalScore);
             if(serviceProviderRank==null)
             {
                 throw new IllegalArgumentException("Service Provider Rank is not found for assigning a rank to the Individual ServiceProvider");
@@ -126,11 +130,24 @@ public class ServiceProviderRankService {
         if (totalScore >= 75) {
             return searchServiceProviderRank(professionalServiceProviderRanks,"1a");
         } else if (totalScore >= 50) {
-            return searchServiceProviderRank(professionalServiceProviderRanks,"2a");
+            return searchServiceProviderRank(professionalServiceProviderRanks,"1b");
         } else if (totalScore >= 25) {
-            return searchServiceProviderRank(professionalServiceProviderRanks,"3a");
+            return searchServiceProviderRank(professionalServiceProviderRanks,"1c");
         } else {
-            return searchServiceProviderRank(professionalServiceProviderRanks,"4a");
+            return searchServiceProviderRank(professionalServiceProviderRanks,"1d");
+        }
+    }
+    private ServiceProviderRank assignRankingForIndividual(Integer totalScore) {
+        List<ServiceProviderRank> professionalServiceProviderRanks= getAllRank();
+
+        if (totalScore >= 75) {
+            return searchServiceProviderRank(professionalServiceProviderRanks,"2a");
+        } else if (totalScore >= 50) {
+            return searchServiceProviderRank(professionalServiceProviderRanks,"2b");
+        } else if (totalScore >= 25) {
+            return searchServiceProviderRank(professionalServiceProviderRanks,"2c");
+        } else {
+            return searchServiceProviderRank(professionalServiceProviderRanks,"2d");
         }
     }
 
