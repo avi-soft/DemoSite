@@ -109,6 +109,11 @@ public class ProductService {
                 values.append(", :examDateFrom");
             }
 
+            if(addProductDto.getAdvertiserUrl() != null) {
+                sql.append(", advertiser_url");
+                values.append(", :advertiserUrl");
+            }
+
             if (addProductDto.getExamDateTo() != null) {
                 sql.append(", exam_date_to");
                 values.append(", :examDateTo");
@@ -223,6 +228,10 @@ public class ProductService {
             // Set parameters conditionally
             if (addProductDto.getExamDateFrom() != null) {
                 query.setParameter("examDateFrom", new Timestamp(addProductDto.getExamDateFrom().getTime()));
+            }
+
+            if(addProductDto.getAdvertiserUrl() != null) {
+                query.setParameter("advertiserUrl", addProductDto.getAdvertiserUrl());
             }
 
             if (addProductDto.getJobGroup() != null) {

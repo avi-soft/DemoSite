@@ -135,7 +135,6 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
     String selectionCriteria;
     @JsonProperty("created_date")
     Date createdDate;
-
     @JsonProperty("notifying_authority")
     String notifyingAuthority;
 
@@ -151,7 +150,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.categoryName = product.getDefaultCategory().getName();
         this.priorityLevel = addProductDto.getPriorityLevel();
         this.archived = 'N';
-        this.createdDate = createdDate;
+        this.createdDate = currentDate;
 
         this.promoMessage = product.getPromoMessage();
         this.activeGoLiveDate = addProductDto.getGoLiveDate();
@@ -281,6 +280,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.id = customProduct.getId();
         this.metaTitle = customProduct.getMetaTitle();
         this.displayTemplate = customProduct.getDisplayTemplate();
+        this.createdDate = customProduct.getCreatedDate();
         this.longDescription = customProduct.getLongDescription();
         this.active = customProduct.isActive();
         this.quantity = customProduct.getDefaultSku().getQuantityAvailable();
@@ -295,7 +295,6 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.url = customProduct.getUrl();
         this.metaDescription = customProduct.getMetaDescription();
 
-        this.displayTemplate = customProduct.getDisplayTemplate();
         this.platformFee = customProduct.getPlatformFee();
         this.state = customProduct.getState();
         this.notifyingAuthority = customProduct.getNotifyingAuthority();
@@ -314,6 +313,23 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
 
         this.examDateFrom = customProduct.getExamDateFrom();
         this.examDateTo = customProduct.getExamDateTo();
+        this.selectionCriteria = customProduct.getSelectionCriteria();
+        this.notifyingAuthority = customProduct.getNotifyingAuthority();
+        this.formComplexity = customProduct.getFormComplexity();
+        this.downloadNotificationLink = customProduct.getDownloadNotificationLink();
+        this.downloadSyllabusLink = customProduct.getDownloadSyllabusLink();
+        this.modificationDateFrom = customProduct.getModificationDateFrom();
+        this.modificationDateTo = customProduct.getModificationDateTo();
+        this.admitCardDateFrom = customProduct.getAdmitCardDateFrom();
+        this.adminCardDateTo = customProduct.getAdmitCardDateTo();
+        this.lateDateToPayFee = customProduct.getLateDateToPayFee();
+        this.domicileRequired = customProduct.getDomicileRequired();
+        this.modifiedDate = customProduct.getModifiedDate();
+        this.qualification = customProduct.getQualification();
+        this.customSector = customProduct.getSector();
+        this.customStream = customProduct.getStream();
+        this.customSubject = customProduct.getSubject();
+        this.customGender = customProduct.getGenderSpecific();
 
         if (customProduct.getDefaultCategory() != null) {
             this.defaultCategoryId = customProduct.getDefaultCategory().getId();
