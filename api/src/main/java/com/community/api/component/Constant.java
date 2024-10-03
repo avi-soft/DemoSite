@@ -126,7 +126,7 @@ public class Constant {
     public static final Double MAX_CHEST_SIZE = 125d;
     public static final Double MIN_CHEST_SIZE = 20d;
 
-    public static final String GET_PRODUCT_GENDER_PHYSICAL_REQUIREMENT = "SELECT c FROM CustomProductGenderPhysicalRequirement c WHERE c.customProduct = :customProduct";
+    public static final String GET_PRODUCT_GENDER_PHYSICAL_REQUIREMENT = "SELECT c FROM CustomProductGenderPhysicalRequirementRef c WHERE c.customProduct = :customProduct";
 
     public static final String GET_ALL_SUBJECT = "SELECT c FROM CustomSubject c";
     public static final String GET_ALL_STREAM = "SELECT c FROM CustomStream c";

@@ -92,6 +92,8 @@ public class ProductService {
     StreamService streamService;
     @Autowired
     SubjectService subjectService;
+    @Autowired
+    ProductGenderPhysicalRequirementService productGenderPhysicalRequirementService;
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -1220,6 +1222,16 @@ public class ProductService {
         try {
             productReserveCategoryFeePostRefService.removeProductReserveCategoryFeeAndPostByProductId(customProduct);
             productReserveCategoryBornBeforeAfterRefService.removeProductReserveCategoryBornBeforeAfterByProductId(customProduct);
+            return true;
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            throw new Exception("SOME EXCEPTION OCCURRED: " + exception.getMessage());
+        }
+    }
+
+    public boolean deleteOldPhysicalRequirement(CustomProduct customProduct) throws Exception {
+        try{
+            productGenderPhysicalRequirementService.removeProductGenderPhysicalRequirementByProductId(customProduct);
             return true;
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
