@@ -1,7 +1,7 @@
 package com.community.api.endpoint.serviceProvider;
 
-
-
+import com.community.api.entity.*;
+import com.community.api.utils.Document;
 
 import com.community.api.entity.Privileges;
 import com.community.api.entity.ResizedImage;
@@ -57,11 +57,26 @@ import java.util.Set;
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class ServiceProviderEntity  {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long service_provider_id;
+ @Id
+ @GeneratedValue(strategy = GenerationType.IDENTITY)
+ private Long service_provider_id;
 
-    private String user_name;
+ private String user_name;
+ 
+
+
+
+
+//    @Lob
+//    @Basic(fetch = FetchType.LAZY)
+//    @Column(name = "businessPhoto", columnDefinition="BLOB")
+//    @OneToOne(cascade = CascadeType.ALL)
+//    @JoinColumn(name = "business_photo_id")
+   /* @OneToOne(cascade = CascadeType.ALL)
+    private Document business_photo;*/
+
+
+
 
     @Pattern(regexp = "^[a-zA-Z]+( [a-zA-Z]+)*$", message = "First name must contain only alphabets")
     private String first_name;
@@ -125,67 +140,68 @@ public class ServiceProviderEntity  {
 
 
 
-    private Boolean has_technical_knowledge;
 
-    @Min(0)
-    private Integer work_experience_in_months;
+ private Boolean has_technical_knowledge;
 
-    private String highest_qualification;
-    private String name_of_institute;
-    private String year_of_passing;
-    private String board_or_university;
-    private String total_marks;
-    private String marks_obtained;
-    private String cgpa;
-    private double latitude,longitude;
-    private int rank;
-    private int signedUp=0;
+ @Min(0)
+ private Integer work_experience_in_months;
 
-    @ManyToMany
-    @JoinTable(
-            name = "service_provider_skill", // The name of the join table
-            joinColumns = @JoinColumn(name = "service_provider_id"), // Foreign key for ServiceProvider
-            inverseJoinColumns = @JoinColumn(name = "skill_id")) // Foreign key for Skill
-    private List<Skill> skills;
+ private String highest_qualification;
+ private String name_of_institute;
+ private String year_of_passing;
+ private String board_or_university;
+ private String total_marks;
+ private String marks_obtained;
+ private String cgpa;
+ private double latitude,longitude;
+ private int rank;
+ private int signedUp=0;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-    @JoinColumn(name = "service_provider_id")
-    private List<ServiceProviderAddress> spAddresses;
+ @ManyToMany
+ @JoinTable(
+         name = "service_provider_skill", // The name of the join table
+         joinColumns = @JoinColumn(name = "service_provider_id"), // Foreign key for ServiceProvider
+         inverseJoinColumns = @JoinColumn(name = "skill_id")) // Foreign key for Skill
+ private List<Skill> skills;
 
-    @OneToOne(cascade = CascadeType.ALL,orphanRemoval = true)
-    @JoinColumn(name = "status_id", referencedColumnName = "status_id")
-    private ServiceProviderStatus status;
+ @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+ @JoinColumn(name = "service_provider_id")
+ private List<ServiceProviderAddress> spAddresses;
 
-    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}) // Only persist/merge, no REMOVE
-    @JoinColumn(name="test_status_id", referencedColumnName = "test_status_id")
-    private ServiceProviderTestStatus testStatus;
+ @OneToOne(cascade = CascadeType.ALL,orphanRemoval = true)
+ @JoinColumn(name = "status_id", referencedColumnName = "status_id")
+ private ServiceProviderStatus status;
 
-    @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}) // Only persist/merge, no REMOVE
-    @JoinColumn(name="rank_id", referencedColumnName = "rank_id")
-    private ServiceProviderRank ranking;
+ @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}) // Only persist/merge, no REMOVE
+ @JoinColumn(name="test_status_id", referencedColumnName = "test_status_id")
+ private ServiceProviderTestStatus testStatus;
 
-    @ManyToMany
-    @JoinTable(
-            name = "service_provider_privileges", // The name of the join table
-            joinColumns = @JoinColumn(name = "service_provider_id"), // Foreign key for ServiceProvider
-            inverseJoinColumns = @JoinColumn(name = "privilege_id")) // Foreign key for Privilege
-    private List<Privileges> privileges;
-    @ManyToMany
-    @JoinTable(
-            name = "service_provider_infra", // The name of the join table
-            joinColumns = @JoinColumn(name = "service_provider_id"), // Foreign key for ServiceProvider
-            inverseJoinColumns = @JoinColumn(name = "infra_id")) // Foreign key for Skill
-    private List<ServiceProviderInfra> infra;
-    @ManyToMany
-    @JoinTable(
-            name = "service_provider_languages", // The name of the join table
-            joinColumns = @JoinColumn(name = "service_provider_id"), // Foreign key for ServiceProvider
-            inverseJoinColumns = @JoinColumn(name = "language_id")) // Foreign key for Skill
-    private List<ServiceProviderLanguage> languages;
+ @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}) // Only persist/merge, no REMOVE
+ @JoinColumn(name="rank_id", referencedColumnName = "rank_id")
+ private ServiceProviderRank ranking;
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "service_provider", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
-    private List<ServiceProviderTest> serviceProviderTests;
+ @ManyToMany
+ @JoinTable(
+         name = "service_provider_privileges", // The name of the join table
+         joinColumns = @JoinColumn(name = "service_provider_id"), // Foreign key for ServiceProvider
+         inverseJoinColumns = @JoinColumn(name = "privilege_id")) // Foreign key for Privilege
+ private List<Privileges> privileges;
+ @ManyToMany
+ @JoinTable(
+         name = "service_provider_infra", // The name of the join table
+         joinColumns = @JoinColumn(name = "service_provider_id"), // Foreign key for ServiceProvider
+         inverseJoinColumns = @JoinColumn(name = "infra_id")) // Foreign key for Skill
+ private List<ServiceProviderInfra> infra;
+ @ManyToMany
+ @JoinTable(
+         name = "service_provider_languages", // The name of the join table
+         joinColumns = @JoinColumn(name = "service_provider_id"), // Foreign key for ServiceProvider
+         inverseJoinColumns = @JoinColumn(name = "language_id")) // Foreign key for Skill
+ private List<ServiceProviderLanguage> languages;
+
+ @JsonIgnore
+ @OneToMany(mappedBy = "service_provider", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
+ private List<ServiceProviderTest> serviceProviderTests;
 
 /* @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}) // Only persist/merge, no REMOVE
  @JoinColumn(name="test_status_id", referencedColumnName = "test_status_id")
@@ -195,25 +211,26 @@ public class ServiceProviderEntity  {
  @JoinColumn(name="rank_id", referencedColumnName = "rank_id")
  private ServiceProviderRank ranking;*/
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "serviceProvider", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ResizedImage> resizedImages;
+ @JsonIgnore
+ @OneToMany(mappedBy = "serviceProvider", cascade = CascadeType.ALL, orphanRemoval = true)
+ private List<ResizedImage> resizedImages;
 
 
-    private String token;
-    @Column
-    private Integer totalSkillTestPoints;
+ private String token;
+ @Column
+ private Integer totalSkillTestPoints;
 
 
 
  @OneToMany(mappedBy = "serviceProviderEntity", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
  @Fetch(FetchMode.SUBSELECT)
  private List<ServiceProviderDocument> documents;
-
-
-    @Nullable
-    @JsonManagedReference
-    @OneToMany(mappedBy = "service_provider", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<QualificationDetails> qualificationDetailsList;
+ 
+ @Nullable
+ @JsonManagedReference
+ @OneToMany(mappedBy = "service_provider", cascade = CascadeType.ALL, orphanRemoval = true)
+ private List<QualificationDetails> qualificationDetailsList;
 
 }
+
+

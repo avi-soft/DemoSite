@@ -78,7 +78,7 @@ public class QualificationDetailsController
         {
             String jwtToken = authHeader.substring(7);
             Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
-             role = roleService.getRoleByRoleId(roleId).getRole_name();
+            role = roleService.getRoleByRoleId(roleId).getRole_name();
             List<Map<String, Object>> qualificationDetails = qualificationDetailsService.getQualificationDetailsByCustomerId(id,role);
             if(qualificationDetails.isEmpty())
             {
@@ -107,7 +107,8 @@ public class QualificationDetailsController
         {
             String jwtToken = authHeader.substring(7);
             Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
-             role = roleService.getRoleByRoleId(roleId).getRole_name();
+            role = roleService.getRoleByRoleId(roleId).getRole_name();
+
             QualificationDetails qualificationDetailsToDelete = qualificationDetailsService.deleteQualificationDetail(id,qualificationDetailId,role);
             return responseService.generateResponse(HttpStatus.OK,"Qualification Detail is deleted successfully for "+ role, qualificationDetailsToDelete);
         }
@@ -137,7 +138,7 @@ public class QualificationDetailsController
         {
             String jwtToken = authHeader.substring(7);
             Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
-             role = roleService.getRoleByRoleId(roleId).getRole_name();
+            role = roleService.getRoleByRoleId(roleId).getRole_name();
             QualificationDetails qualificationDetailsToUpdate = qualificationDetailsService.updateQualificationDetail( id,qualificationDetailId,qualification,role);
             return responseService.generateResponse(HttpStatus.OK,"Qualification Detail is updated successfully for "+ role, qualificationDetailsToUpdate);
         }
