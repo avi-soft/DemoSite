@@ -116,7 +116,9 @@ public class ServiceProviderTestService {
 
 
         Map<String, Object> response = new HashMap<>();
+        String imageValidation = "Only images between 500KB and 2MB are allowed";
         response.put("test", test);
+        response.put("imageValidation", imageValidation);
         response.put("downloadImageUrl", imageUrl);
         response.put("requiredMinImageSize",minImageSize);
         response.put("requiredMaxImageSize",maxImageSize);
@@ -159,7 +161,11 @@ public class ServiceProviderTestService {
             String maxImageSize= ImageSizeConfig.convertBytesToReadableSize(Constant.MAX_FILE_SIZE);
             test.setIs_image_test_passed(false);
             entityManager.merge(test);
-            throw new IllegalArgumentException("Image size should be between " + minImageSize + " and " + maxImageSize);
+
+
+            throw new IllegalArgumentException("Resized image size should be between " + minImageSize + " and " + maxImageSize);
+
+
         }
 
         // Validate the image size using saveDocuments method logic
@@ -240,9 +246,10 @@ public class ServiceProviderTestService {
         }
         ServiceProviderTest test =null;
         List<ServiceProviderTest> serviceProviderTestList = serviceProvider.getServiceProviderTests();
+
         for(ServiceProviderTest serviceProviderTest: serviceProviderTestList)
         {
-            if(testId==serviceProviderTest.getTest_id())
+            if(testId.equals(serviceProviderTest.getTest_id()))
             {
                 test=serviceProviderTest;
                 break;
@@ -296,7 +303,8 @@ public class ServiceProviderTestService {
             String maxImageSize= ImageSizeConfig.convertBytesToReadableSize(Constant.MAX_FILE_SIZE);
             test.setIs_image_test_passed(false);
             entityManager.merge(test);
-            throw new IllegalArgumentException("Image size should be between " + minImageSize + " and " + maxImageSize);
+
+            throw new IllegalArgumentException("Signature image size should be between " + minImageSize + " and " + maxImageSize);
         }
         // Use the saveDocuments method to validate and store the signature image
         ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(signatureFile, "Signature Image", serviceProviderId, "SERVICE_PROVIDER");
@@ -483,8 +491,10 @@ public class ServiceProviderTestService {
 
         serviceProvider.setTotalSkillTestPoints(serviceProviderTest.getImage_test_scores() + serviceProviderTest.getTyping_test_scores());
         entityManager.merge(serviceProvider);
+
                 return ResponseService.generateSuccessResponse("Image test scores updated successfully",serviceProviderTest,HttpStatus.OK);
             }
+
 
     private boolean validateResizedImage(ServiceProviderTest test) throws IOException {
         Image downloadedImage = test.getDownloaded_image();

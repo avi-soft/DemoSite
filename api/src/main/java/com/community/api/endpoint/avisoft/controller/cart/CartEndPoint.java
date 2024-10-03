@@ -340,9 +340,11 @@ public class CartEndPoint extends BaseEndpoint {
         }
     }
     @RequestMapping(value ="cart-recovery-log/{customerId}",method = RequestMethod.GET)
-    public ResponseEntity<?>getCartRecoveryLog(@PathVariable long customerId)
+    public ResponseEntity<?>getCartRecoveryLog(@PathVariable Long customerId)
     {
             try{
+                if(customerId==null)
+                    return ResponseService.generateErrorResponse("Please provide the customer id",HttpStatus.BAD_REQUEST);
                 CustomCustomer customCustomer=entityManager.find(CustomCustomer.class,customerId);
                 if(customCustomer==null)
                     return ResponseService.generateErrorResponse("Cannot find customer for this id",HttpStatus.NOT_FOUND);

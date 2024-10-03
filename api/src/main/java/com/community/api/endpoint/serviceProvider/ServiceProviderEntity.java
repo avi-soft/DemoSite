@@ -2,23 +2,19 @@ package com.community.api.endpoint.serviceProvider;
 
 
 
-import com.community.api.entity.Privileges;
-import com.community.api.entity.ResizedImage;
-import com.community.api.entity.ServiceProviderAddress;
-import com.community.api.entity.ServiceProviderInfra;
-import com.community.api.entity.ServiceProviderLanguage;
-import com.community.api.entity.ServiceProviderRank;
-import com.community.api.entity.ServiceProviderTest;
-import com.community.api.entity.ServiceProviderTestStatus;
-import com.community.api.entity.Skill;
+import com.community.api.entity.*;
 import com.community.api.utils.Document;
 import com.community.api.utils.ServiceProviderDocument;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import io.micrometer.core.lang.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
@@ -26,6 +22,7 @@ import javax.persistence.*;
 import javax.validation.constraints.*;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "service_provider")
@@ -52,10 +49,11 @@ public class ServiceProviderEntity  {
     private String father_name;
 
     private String date_of_birth;
-
+    @Size(min = 12, max = 12)
     private String aadhaar_number;
 
     @Size(min = 10, max = 10)
+    /*@Pattern(regexp = "^[A-Z]{5}\\d{4}\\{A-Z}{1}$", message = "Invalid format. Use 5 uppercase letters, 4 digits, and 1 uppercase letter.")*/
     private String pan_number;
    /* @OneToOne(cascade = CascadeType.ALL)
     private Document personal_photo;*/
@@ -166,6 +164,14 @@ public class ServiceProviderEntity  {
     @OneToMany(mappedBy = "service_provider", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
     private List<ServiceProviderTest> serviceProviderTests;
 
+/* @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}) // Only persist/merge, no REMOVE
+ @JoinColumn(name="test_status_id", referencedColumnName = "test_status_id")
+ private ServiceProviderTestStatus testStatus;*/
+
+/* @OneToOne(cascade = {CascadeType.PERSIST, CascadeType.MERGE}) // Only persist/merge, no REMOVE
+ @JoinColumn(name="rank_id", referencedColumnName = "rank_id")
+ private ServiceProviderRank ranking;*/
+
     @JsonIgnore
     @OneToMany(mappedBy = "serviceProvider", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ResizedImage> resizedImages;
@@ -176,8 +182,15 @@ public class ServiceProviderEntity  {
     private Integer totalSkillTestPoints;
 
 
-    @OneToMany(mappedBy = "serviceProviderEntity", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
-    @Fetch(FetchMode.SUBSELECT)
-    private List<ServiceProviderDocument> documents;
+
+ @OneToMany(mappedBy = "serviceProviderEntity", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
+ @Fetch(FetchMode.SUBSELECT)
+ private List<ServiceProviderDocument> documents;
+
+
+    @Nullable
+    @JsonManagedReference
+    @OneToMany(mappedBy = "service_provider", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<QualificationDetails> qualificationDetailsList;
 
 }
