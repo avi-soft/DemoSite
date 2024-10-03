@@ -6,9 +6,11 @@ import com.community.api.entity.Districts;
 import com.community.api.entity.StateCode;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import java.util.List;
 
@@ -41,5 +43,19 @@ public class DistrictService {
     public List<StateCode> findStateList() {
         TypedQuery<StateCode> query = entityManager.createQuery(Constant.GET_STATES_LIST, StateCode.class);
         return query.getResultList();
+    }
+    public StateCode getStateByStateId(int stateId) throws Exception {
+        try{
+            Query query = entityManager.createQuery(Constant.GET_STATE_BY_STATE_ID, StateCode.class);
+            query.setParameter("stateId", stateId);
+
+            List<StateCode> stateCode = query.getResultList();
+            return stateCode.get(0);
+        } catch (NumberFormatException numberFormatException) {
+            throw new NumberFormatException("NUMBER FORMAT EXCEPTION: " + numberFormatException.getMessage());
+        } catch (Exception exception) {
+            exceptionHandling.handleException(exception);
+            throw new Exception("SOME EXCEPTION OCCURED: "+ exception.getMessage());
+        }
     }
 }

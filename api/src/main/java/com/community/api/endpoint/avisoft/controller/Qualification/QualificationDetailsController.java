@@ -44,7 +44,7 @@ public class QualificationDetailsController
         try{
             String jwtToken = authHeader.substring(7);
             Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
-            role = roleService.getRoleByRoleId(roleId).getRole_name();
+             role = roleService.getRoleByRoleId(roleId).getRole_name();
             QualificationDetails newQualificationDetails = qualificationDetailsService.addQualificationDetails(id , qualificationDetails,role);
             return ResponseService.generateSuccessResponse("Qualification Details is added successfully for "+role,newQualificationDetails,HttpStatus.CREATED);
         }
@@ -108,6 +108,7 @@ public class QualificationDetailsController
             String jwtToken = authHeader.substring(7);
             Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
             role = roleService.getRoleByRoleId(roleId).getRole_name();
+
             QualificationDetails qualificationDetailsToDelete = qualificationDetailsService.deleteQualificationDetail(id,qualificationDetailId,role);
             return responseService.generateResponse(HttpStatus.OK,"Qualification Detail is deleted successfully for "+ role, qualificationDetailsToDelete);
         }

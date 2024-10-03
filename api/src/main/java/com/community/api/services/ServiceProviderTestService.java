@@ -100,13 +100,14 @@ public class ServiceProviderTestService {
         entityManager.merge(serviceProvider);
 
         String imageUrl = fileService.getFileUrl(test.getDownloaded_image().getFile_path(),request);
-
+        String imageValidation = "Only images between 500KB and 2MB are allowed";
         Map<String, Object> response = new HashMap<>();
         String min = "500KB" ;
         String max = "2MB" ;
         response.put("test", test);
         response.put("min", min);
         response.put("max", max);
+        response.put("imageValidation", imageValidation);
         response.put("downloadImageUrl", imageUrl);
 
         return response;
@@ -148,7 +149,9 @@ public class ServiceProviderTestService {
             test.setIs_image_test_passed(false);
             entityManager.merge(test);
 
+
             throw new IllegalArgumentException("Resized image size should be between " + minImageSize + " and " + maxImageSize);
+
 
         }
 
@@ -289,7 +292,6 @@ public class ServiceProviderTestService {
             entityManager.merge(test);
 
             throw new IllegalArgumentException("Signature image size should be between " + minImageSize + " and " + maxImageSize);
-
         }
         // Use the saveDocuments method to validate and store the signature image
         ResponseEntity<Map<String, Object>> savedResponse = documentStorageService.saveDocuments(signatureFile, "Signature Image", serviceProviderId, "SERVICE_PROVIDER");

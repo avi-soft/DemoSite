@@ -191,6 +191,9 @@ public class SharedUtilityService {
         }
         customerDetails.put("currentAddress",currentAddress);
         customerDetails.put("permanentAddress",permanentAddress);
+
+
+
       /*  customerDetails.put("qualificationDetails",customCustomer.getQualificationDetailsList());
         customerDetails.put("documentList",customCustomer.getDocumentList());
         List<Map<String,Object>>listOfSavedProducts=new ArrayList<>();*/
@@ -286,6 +289,16 @@ public class SharedUtilityService {
         return serviceProviderDetails;
     }
 
+    public Map<String,Object> trimStringValues(Map<String, Object> map) {
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            if (entry.getValue() instanceof String) {
+                // Trim the string and update the map
+                String trimmedValue = ((String) entry.getValue()).trim();
+                entry.setValue(trimmedValue);
+            }
+        }
+        return map;
+    }
     public List<Map<String, Object>> mapQualifications(List<QualificationDetails> qualificationDetails) {
         return qualificationDetails.stream()
                 .map(qualificationDetail -> {
