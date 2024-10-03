@@ -10,6 +10,7 @@ import com.community.api.entity.CustomApplicationScope;
 import com.community.api.entity.CustomGender;
 import com.community.api.entity.CustomJobGroup;
 import com.community.api.entity.CustomProduct;
+import com.community.api.entity.CustomProductGenderPhysicalRequirementRef;
 import com.community.api.entity.CustomProductState;
 import com.community.api.entity.CustomReserveCategory;
 import com.community.api.entity.CustomSector;
@@ -70,6 +71,9 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
 
     @JsonProperty("reserve_category_dto_list")
     protected List<ReserveCategoryDto> reserveCategoryDtoList = new ArrayList<>();
+    @JsonProperty("physical_attribute_list")
+    protected List<PhysicalRequirementDto> physicalRequirementDtoList = new ArrayList<>();
+
     @JsonProperty("platform_fee")
     protected Double platformFee;
     @JsonProperty("state")
@@ -169,6 +173,21 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
             reserveCategoryDto.setBornAfter(addProductDto.getReservedCategory().get(i).getBornAfter());
 
             reserveCategoryDtoList.add(reserveCategoryDto);
+        }
+
+        if(addProductDto.getPhysicalRequirement() != null) {
+            for(int i=0; i<addProductDto.getPhysicalRequirement().size(); i++){
+                PhysicalRequirementDto physicalRequirementDto = new PhysicalRequirementDto();
+                physicalRequirementDto.setProductId(product.getId());
+                physicalRequirementDto.setGenderId(addProductDto.getPhysicalRequirement().get(i).getGenderId());
+                physicalRequirementDto.setHeight(addProductDto.getPhysicalRequirement().get(i).getHeight());
+                physicalRequirementDto.setWeight(addProductDto.getPhysicalRequirement().get(i).getWeight());
+                physicalRequirementDto.setWaistSize(addProductDto.getPhysicalRequirement().get(i).getWaistSize());
+                physicalRequirementDto.setShoeSize(addProductDto.getPhysicalRequirement().get(i).getShoeSize());
+                physicalRequirementDto.setChestSize(addProductDto.getPhysicalRequirement().get(i).getChestSize());
+
+                physicalRequirementDtoList.add(physicalRequirementDto);
+            }
         }
 
         this.platformFee = addProductDto.getPlatformFee();

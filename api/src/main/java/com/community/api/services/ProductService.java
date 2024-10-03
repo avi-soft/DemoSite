@@ -654,12 +654,18 @@ public class ProductService {
             }
 
             return true;
+        } catch (IllegalArgumentException illegalArgumentException){
+            exceptionHandlingService.handleException(illegalArgumentException);
+            throw new IllegalArgumentException(illegalArgumentException.getMessage() + "\n");
+        } catch (NoSuchElementException noSuchElementException) {
+            exceptionHandlingService.handleException(noSuchElementException);
+            throw new IllegalArgumentException(noSuchElementException.getMessage() + "\n");
         } catch (ParseException parseException) {
             exceptionHandlingService.handleException(parseException);
             throw new ParseException(parseException.getMessage() + "\n", parseException.getErrorOffset());
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            throw new Exception("Exception caught while validating: " + exception.getMessage() + "\n");
+            throw new Exception(exception.getMessage() + "\n");
         }
     }
 
@@ -924,14 +930,19 @@ public class ProductService {
         }
     }
 
-    public Boolean validateAndSetActiveEndDateAndGoLiveDateFields(AddProductDto addProductDto, CustomProduct customProduct) throws Exception {
+    public Boolean validateAndSetActiveEndDateAndGoLiveDateFields(AddProductDto addProductDto, CustomProduct customProduct, Date createdDate) throws Exception {
         try {
             if (addProductDto.getActiveEndDate() != null && addProductDto.getGoLiveDate() != null) {
 
                 dateFormat.parse(dateFormat.format(addProductDto.getActiveEndDate()));
                 dateFormat.parse(dateFormat.format(addProductDto.getGoLiveDate()));
 
-                if (!addProductDto.getActiveEndDate().after(customProduct.getActiveStartDate())) {
+                if(!addProductDto.getGoLiveDate().before(addProductDto.getActiveEndDate()) || !addProductDto.getActiveStartDate().before(addProductDto.getActiveEndDate())) {
+                    throw new IllegalArgumentException("GO LIVE DATE AND ACTIVE START DATE BE OF PAST COMPARE TO ACTIVE END DATE");
+                }else if(addProductDto.getGoLiveDate().before(createdDate)){
+                    throw new IllegalArgumentException("GO LIVE DATE HAS TO OF PAST OF CURRENT DATE");
+                }
+                else if (!addProductDto.getActiveEndDate().after(customProduct.getActiveStartDate())) {
                     throw new IllegalArgumentException("ACTIVE END DATE CANNOT BE BEFORE OR EQUAL OF ACTIVE START DATE");
                 } else if (!addProductDto.getActiveEndDate().after(addProductDto.getGoLiveDate()) || !addProductDto.getGoLiveDate().after(customProduct.getActiveStartDate())) {
                     throw new IllegalArgumentException("GO LIVE DATE CANNOT BE BEFORE OR EQUAL OF GO LIVE DATE AND BEFORE OR EQUAL OF ACTIVE START DATE");
@@ -1192,6 +1203,9 @@ public class ProductService {
                 }
             }
             return true;
+        } catch (IllegalArgumentException illegalArgumentException) {
+            exceptionHandlingService.handleException(illegalArgumentException);
+            throw new IllegalArgumentException(illegalArgumentException.getMessage());
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             throw new Exception("SOME EXCEPTION OCCURRED: " + exception.getMessage());
@@ -1415,7 +1429,9 @@ public class ProductService {
             if(addProductDto.getGenderSpecific() != null) {
                 gender = genderService.getGenderByGenderId(addProductDto.getGenderSpecific());
             }
-
+            if(addProductDto.getPhysicalRequirement() == null) {
+                return true;
+            }
             if (!addProductDto.getPhysicalRequirement().isEmpty()) {
                 Set<Long> genderId = new HashSet<>();
 
@@ -1506,7 +1522,7 @@ public class ProductService {
         try {
             if (addProductDto.getSelectionCriteria() != null) {
                 if (addProductDto.getSelectionCriteria().trim().isEmpty()) {
-                    throw new IllegalArgumentException("Selection criteria cannot be null");
+                    throw new IllegalArgumentException("Selection criteria cannot be emptyse");
                 }
                 addProductDto.setSelectionCriteria(addProductDto.getSelectionCriteria().trim());
             }
