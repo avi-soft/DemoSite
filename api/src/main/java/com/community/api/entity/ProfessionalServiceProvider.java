@@ -5,10 +5,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
-import javax.persistence.Entity;
-import javax.persistence.Version;
+import javax.persistence.*;
 
 @Entity
 @Setter
@@ -37,8 +34,5 @@ public class ProfessionalServiceProvider extends ServiceProviderEntity
 
     @Column(name = "image_upload_score")
     private Integer image_upload_score;
-
-    @Version
-    private long version=0;
 
 }

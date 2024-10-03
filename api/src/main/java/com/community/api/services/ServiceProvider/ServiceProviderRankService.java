@@ -36,81 +36,88 @@ public class ServiceProviderRankService {
     }
 
     @Transactional
-    public void giveScoresToServiceProvider(Long serviceProviderId, Map<String, Integer> scoreMap)
-    {
-        ServiceProviderEntity serviceProviderEntity= entityManager.find(ServiceProviderEntity.class,serviceProviderId);
-        if(serviceProviderEntity==null)
-        {
-            throw new IllegalArgumentException("The service provider with id "+serviceProviderId+" does not exist");
+    public void giveScoresToServiceProvider(Long serviceProviderId, Map<String, Integer> scoreMap) {
+        ServiceProviderEntity serviceProviderEntity = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
+        if (serviceProviderEntity == null) {
+            throw new IllegalArgumentException("The service provider with id " + serviceProviderId + " does not exist");
         }
+
         if (serviceProviderEntity instanceof ProfessionalServiceProvider) {
+            ProfessionalServiceProvider professionalServiceProvider = (ProfessionalServiceProvider) serviceProviderEntity;
 
-            ProfessionalServiceProvider professionalServiceProviderToGiveScore= (ProfessionalServiceProvider) serviceProviderEntity;
-            if (scoreMap.containsKey("business_unit_infra_score")) {
-                professionalServiceProviderToGiveScore.setBusiness_unit_infra_score(scoreMap.get("business_unit_infra_score"));
-            }
-            if (scoreMap.containsKey("qualification_score")) {
-                professionalServiceProviderToGiveScore.setQualification_score(scoreMap.get("qualification_score"));
-            }
-            if (scoreMap.containsKey("work_experience_score")) {
-                professionalServiceProviderToGiveScore.setWork_experience_score(scoreMap.get("work_experience_score"));
-            }
-            if (scoreMap.containsKey("technical_expertise_score")) {
-                professionalServiceProviderToGiveScore.setTechnical_expertise_score(scoreMap.get("technical_expertise_score"));
-            }
-            if (scoreMap.containsKey("staff_score")) {
-                professionalServiceProviderToGiveScore.setStaff_score(scoreMap.get("staff_score"));
-            }
-            entityManager.merge(professionalServiceProviderToGiveScore);
+            // Update scores
+            updateScores(professionalServiceProvider, scoreMap);
 
+            // Calculate total score
             Integer totalScore = calculateProfessionalServiceProviderScore(scoreMap);
-            if(professionalServiceProviderToGiveScore.getTotalSkillTestPoints()!=null)
-            {
-                totalScore= totalScore+professionalServiceProviderToGiveScore.getTotalSkillTestPoints();
+            if (professionalServiceProvider.getTotalSkillTestPoints() != null) {
+                totalScore += professionalServiceProvider.getTotalSkillTestPoints();
             }
-            serviceProviderEntity.setTotalScore(totalScore);
-            ServiceProviderRank serviceProviderRank= assignRankingForProfessional(totalScore);
-            if(serviceProviderRank==null)
-            {
+            professionalServiceProvider.setTotalScore(totalScore);
+
+            // Assign ranking
+            ServiceProviderRank serviceProviderRank = assignRankingForProfessional(totalScore);
+            if (serviceProviderRank == null) {
                 throw new IllegalArgumentException("Service Provider Rank is not found for assigning a rank to the Professional ServiceProvider");
             }
-            serviceProviderEntity.setRanking(serviceProviderRank);
+            professionalServiceProvider.setRanking(serviceProviderRank);
+
+            // Let JPA handle the versioning
+            entityManager.flush();
         }
-        else
-        {
-            IndividualServiceProvider individualServiceProviderToGiveScore= (IndividualServiceProvider) serviceProviderEntity;
-            if (scoreMap.containsKey("business_unit_infra_score")) {
-                individualServiceProviderToGiveScore.setBusiness_unit_infra_score(scoreMap.get("business_unit_infra_score"));
-            }
-            if (scoreMap.containsKey("qualification_score")) {
-                individualServiceProviderToGiveScore.setQualification_score(scoreMap.get("qualification_score"));
-            }
-            if (scoreMap.containsKey("work_experience_score")) {
-                individualServiceProviderToGiveScore.setWork_experience_score(scoreMap.get("work_experience_score"));
-            }
-            if (scoreMap.containsKey("technical_expertise_score")) {
-                individualServiceProviderToGiveScore.setTechnical_expertise_score(scoreMap.get("technical_expertise_score"));
-            }
-            if (scoreMap.containsKey("staff_score")) {
-                individualServiceProviderToGiveScore.setPart_time_or_full_time_score(scoreMap.get("part_time_or_full_time_score"));
-            }
-
-            entityManager.merge(individualServiceProviderToGiveScore);
-
-            Integer totalScore = calculateProfessionalServiceProviderScore(scoreMap);
-            totalScore= totalScore+individualServiceProviderToGiveScore.getTotalSkillTestPoints();
-            serviceProviderEntity.setTotalScore(totalScore);
-            ServiceProviderRank serviceProviderRank= assignRankingForIndividual(totalScore);
-            if(serviceProviderRank==null)
-            {
-                throw new IllegalArgumentException("Service Provider Rank is not found for assigning a rank to the Individual ServiceProvider");
-            }
-            serviceProviderEntity.setRanking(serviceProviderRank);
-
-        }
+//        else
+//        {
+//            IndividualServiceProvider individualServiceProviderToGiveScore= (IndividualServiceProvider) serviceProviderEntity;
+//            if (scoreMap.containsKey("business_unit_infra_score")) {
+//                individualServiceProviderToGiveScore.setBusiness_unit_infra_score(scoreMap.get("business_unit_infra_score"));
+//            }
+//            if (scoreMap.containsKey("qualification_score")) {
+//                individualServiceProviderToGiveScore.setQualification_score(scoreMap.get("qualification_score"));
+//            }
+//            if (scoreMap.containsKey("work_experience_score")) {
+//                individualServiceProviderToGiveScore.setWork_experience_score(scoreMap.get("work_experience_score"));
+//            }
+//            if (scoreMap.containsKey("technical_expertise_score")) {
+//                individualServiceProviderToGiveScore.setTechnical_expertise_score(scoreMap.get("technical_expertise_score"));
+//            }
+//            if (scoreMap.containsKey("staff_score")) {
+//                individualServiceProviderToGiveScore.setPart_time_or_full_time_score(scoreMap.get("part_time_or_full_time_score"));
+//            }
+//
+//            entityManager.merge(individualServiceProviderToGiveScore);
+//
+//            Integer totalScore = calculateProfessionalServiceProviderScore(scoreMap);
+//            totalScore= totalScore+individualServiceProviderToGiveScore.getTotalSkillTestPoints();
+//            serviceProviderEntity.setTotalScore(totalScore);
+//            ServiceProviderRank serviceProviderRank= assignRankingForIndividual(totalScore);
+//            if(serviceProviderRank==null)
+//            {
+//                throw new IllegalArgumentException("Service Provider Rank is not found for assigning a rank to the Individual ServiceProvider");
+//            }
+//            serviceProviderEntity.setRanking(serviceProviderRank);
+//
+//        }
         // Persist the updated service provider entity
-        entityManager.merge(serviceProviderEntity);
+//        entityManager.merge(serviceProviderEntity);
+//          entityManager.persist();
+    }
 
+    private void updateScores(ProfessionalServiceProvider provider, Map<String, Integer> scoreMap) {
+        if (scoreMap.containsKey("business_unit_infra_score")) {
+            provider.setBusiness_unit_infra_score(scoreMap.get("business_unit_infra_score"));
+        }
+        if (scoreMap.containsKey("qualification_score")) {
+            provider.setQualification_score(scoreMap.get("qualification_score"));
+        }
+        if (scoreMap.containsKey("work_experience_score")) {
+            provider.setWork_experience_score(scoreMap.get("work_experience_score"));
+        }
+        if (scoreMap.containsKey("technical_expertise_score")) {
+            provider.setTechnical_expertise_score(scoreMap.get("technical_expertise_score"));
+        }
+        if (scoreMap.containsKey("staff_score")) {
+            provider.setStaff_score(scoreMap.get("staff_score"));
+        }
     }
 
     private Integer calculateProfessionalServiceProviderScore(Map<String, Integer> scoreMap) {
@@ -123,20 +130,20 @@ public class ServiceProviderRankService {
 
         return businessUnitScore + workExperienceScore + qualificationScore + technicalExpertiseScore + staffScore ;
     }
-
-    private ServiceProviderRank assignRankingForProfessional(Integer totalScore) {
-        List<ServiceProviderRank> professionalServiceProviderRanks= getAllRank();
-
-        if (totalScore >= 75) {
-            return searchServiceProviderRank(professionalServiceProviderRanks,"1a");
-        } else if (totalScore >= 50) {
-            return searchServiceProviderRank(professionalServiceProviderRanks,"1b");
-        } else if (totalScore >= 25) {
-            return searchServiceProviderRank(professionalServiceProviderRanks,"1c");
-        } else {
-            return searchServiceProviderRank(professionalServiceProviderRanks,"1d");
-        }
-    }
+//
+//    private ServiceProviderRank assignRankingForProfessional(Integer totalScore) {
+//        List<ServiceProviderRank> professionalServiceProviderRanks= getAllRank();
+//
+//        if (totalScore >= 75) {
+//            return searchServiceProviderRank(professionalServiceProviderRanks,"1a");
+//        } else if (totalScore >= 50) {
+//            return searchServiceProviderRank(professionalServiceProviderRanks,"1b");
+//        } else if (totalScore >= 25) {
+//            return searchServiceProviderRank(professionalServiceProviderRanks,"1c");
+//        } else {
+//            return searchServiceProviderRank(professionalServiceProviderRanks,"1d");
+//        }
+//    }
     private ServiceProviderRank assignRankingForIndividual(Integer totalScore) {
         List<ServiceProviderRank> professionalServiceProviderRanks= getAllRank();
 

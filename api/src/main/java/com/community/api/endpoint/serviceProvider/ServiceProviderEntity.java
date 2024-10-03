@@ -122,7 +122,14 @@ public class ServiceProviderEntity  {
     private String cgpa;
     private double latitude,longitude;
     private int signedUp=0;
-
+    private Integer businessUnitInfraScore;
+    private Integer workExperienceScore;
+    private Integer qualificationScore;
+    private Integer technicalExpertiseScore;
+    private Integer staffScore;
+    private Integer writtenTestScore;
+    private Integer imageUploadScore;
+    private Integer fullTimeOrPartTime;
     @ManyToMany
     @JoinTable(
             name = "service_provider_skill", // The name of the join table

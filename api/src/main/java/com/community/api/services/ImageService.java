@@ -36,6 +36,8 @@ import static com.community.api.services.DocumentStorageService.isValidFileType;
 public class ImageService {
     @Autowired
     private EntityManager entityManager;
+    @Autowired
+    private DocumentStorageService fileUploadService;
 
     public ImageService(EntityManager entityManager) {
         this.entityManager = entityManager;
@@ -46,20 +48,20 @@ public class ImageService {
     public Image saveImage(MultipartFile file) throws Exception {
 
         // Define the base path where images will be saved
-        String currentDir = System.getProperty("user.dir");
-        String testDirPath = currentDir + "/../test/";
+//        String currentDir = System.getProperty("user.dir");
+//        String testDirPath = currentDir + "/../test/";
 
-        String db_path = "avisoftdocument/SERVICE_PROVIDER/Random Images";
+        String db_path = "avisoftdocument/SERVICE_PROVIDER/1/Random_Images";
         // Define the directory structure
-        File avisoftDir = new File(testDirPath +db_path);
+//        File avisoftDir = new File(testDirPath +db_path);
 
         // Create the directory if it doesn't exist
-        if (!avisoftDir.exists()) {
-            avisoftDir.mkdirs();
-        }
-
-
-        String filePath = avisoftDir + File.separator + file.getOriginalFilename();
+//        if (!avisoftDir.exists()) {
+//            avisoftDir.mkdirs();
+//        }
+//
+//
+//        String filePath = avisoftDir + File.separator + file.getOriginalFilename();
 
         String dbPath = db_path + File.separator + file.getOriginalFilename();
         if (!isValidFileType(file)) {
@@ -72,12 +74,8 @@ public class ImageService {
 
         byte[] fileBytes = file.getBytes();
 
-        try {
-            File destFile = new File(filePath);
-            FileUtils.writeByteArrayToFile(destFile, file.getBytes());
-        } catch (IOException e) {
-            throw new Exception("Failed to save the file", e);
-        }
+        fileUploadService.uploadFile(file, "Random_Images", 1L, "SERVICE_PROVIDER");
+
 
         // Create and populate the Image entity
         Image image = new Image();

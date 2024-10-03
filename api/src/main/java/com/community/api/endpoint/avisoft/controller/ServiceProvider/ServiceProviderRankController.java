@@ -43,6 +43,7 @@ public class ServiceProviderRankController {
         }
         return responseService.generateResponse(HttpStatus.OK, "Service Provider Test Rank List Retrieved Successfully", serviceProviderTestRankList);
     }
+
         @PostMapping("give-score/{serviceProviderId}")
         public ResponseEntity<?> giveScoresToServiceProvider(
                 @PathVariable Long serviceProviderId,
