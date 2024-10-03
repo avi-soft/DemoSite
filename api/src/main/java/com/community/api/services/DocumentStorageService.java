@@ -314,7 +314,7 @@ public class DocumentStorageService {
     }
 
 
-    public void uploadFileOnFileServer(MultipartFile file, String documentType, Long customerId, String role) throws IOException {
+    public void uploadFileOnFileServer(MultipartFile file, String documentType, String customerId, String role) throws IOException {
         try {
             String url = fileServerUrl + "/files/upload";
 
