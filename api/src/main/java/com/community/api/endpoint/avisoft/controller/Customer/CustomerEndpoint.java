@@ -507,7 +507,7 @@ public class CustomerEndpoint {
                             ));
                         }
 
-                        fileUploadService.uploadFile(file, documentTypeObj.getDocument_type_name(), customerId, role);
+                        fileUploadService.uploadFileOnFileServer(file, documentTypeObj.getDocument_type_name(), customerId, role);
 
 
                         if (removeFileTypes != null && removeFileTypes) {
@@ -635,7 +635,7 @@ public class CustomerEndpoint {
                         }
 //                        documentStorageService.saveDocuments(file, documentTypeObj.getDocument_type_name(), customerId, role);
 
-                        fileUploadService.uploadFile(file, documentTypeObj.getDocument_type_name(), customerId, role);
+                        fileUploadService.uploadFileOnFileServer(file, documentTypeObj.getDocument_type_name(), customerId, role);
 
                         if (removeFileTypes != null && removeFileTypes) {
                             if (existingDocument != null && fileNameId != 13) {

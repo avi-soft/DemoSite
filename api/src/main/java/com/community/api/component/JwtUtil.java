@@ -67,7 +67,6 @@ private String secretKeyString = "DASYWgfhMLL0np41rKFAGminD1zb5DlwDzE1WwnP8es=";
     public void init() {
         try {
             byte[] secretKeyBytes = DatatypeConverter.parseBase64Binary(secretKeyString);
-            System.out.println("Decoded key length (bytes): " + secretKeyBytes.length);
             if (secretKeyBytes.length * 8 < 256) {
                 throw new IllegalArgumentException("Key length is less than 256 bits.");
             }
