@@ -5,6 +5,7 @@ import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.Image;
 import com.community.api.services.ImageService;
 import com.community.api.services.ResponseService;
+import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,9 @@ public class ImageController
     @Autowired
     EntityManager entityManager;
 
+    @Autowired
+    ExceptionHandlingImplement exceptionHandlingImplement;
+
     @PostMapping("/upload")
     public ResponseEntity<?> uploadImage(@RequestParam("file") MultipartFile file) {
         try {
@@ -38,6 +42,23 @@ public class ImageController
             return ResponseService.generateErrorResponse(e.getMessage(),HttpStatus.BAD_REQUEST);
         }
     }
+    @PostMapping("/upload-all")
+    public ResponseEntity<?> uploadImages(@RequestParam("files") List<MultipartFile> files) {
+        try {
+            // Call the updated service method to save multiple images
+            List<Image> savedImages = imageService.saveImages(files);
+
+            // Return a success response with the list of saved images
+            return ResponseService.generateSuccessResponse("Images are saved", savedImages, HttpStatus.OK);
+        } catch (IOException e) {
+            // Handle IO exception and return error response
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            // Handle general exceptions and return error response
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+
 
     @GetMapping("/get-all")
     public ResponseEntity<?> getAllRandomImages()
@@ -49,7 +70,4 @@ public class ImageController
        }
        return ResponseService.generateSuccessResponse("Image list is found",randomImages,HttpStatus.OK);
     }
-
-
-
 }

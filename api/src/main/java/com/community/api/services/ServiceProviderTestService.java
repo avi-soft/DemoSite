@@ -41,7 +41,7 @@ public class ServiceProviderTestService {
     @Autowired
     private FileService fileService;
 
-    @Value("${image.size.min}")
+    @Value("${skill.test.required.image.size.min}")
     private String minImageSize;
 
     public ServiceProviderTestService(EntityManager entityManager) {
@@ -63,7 +63,19 @@ public class ServiceProviderTestService {
                 throw new IllegalArgumentException("Test Status id "+ Constant.TEST_COMPLETED_STATUS+" Not found so cannot start test of ServiceProvider");
             }
             Long testStatus= serviceProviderTestStatus.getTest_status_id();
-            if(serviceProvider.getTestStatus().getTest_status_id()==testStatus )
+            if(!serviceProvider.getServiceProviderTests().isEmpty() && serviceProvider.getTestStatus().getTest_status_id().equals(Constant.INITIAL_TEST_STATUS))
+            {
+                ServiceProviderTest test= serviceProvider.getServiceProviderTests().get(0);
+                String imageUrl = fileService.getFileUrl(test.getDownloaded_image().getFile_path(),request);
+                String maxImageSize= ImageSizeConfig.convertBytesToReadableSize(Constant.MAX_FILE_SIZE);
+                Map<String, Object> response = new HashMap<>();
+                response.put("test", test);
+                response.put("downloadImageUrl", imageUrl);
+                response.put("requiredMinImageSize",minImageSize);
+                response.put("requiredMaxImageSize",maxImageSize);
+                return response;
+            }
+            if(serviceProvider.getTestStatus().getTest_status_id().equals(testStatus) )
             {
                 throw new IllegalArgumentException("Skill Test has already been submitted.You cannot start a new test.");
             }
@@ -73,7 +85,7 @@ public class ServiceProviderTestService {
             {
                 throw new IllegalArgumentException("Test Status id "+ Constant.APPROVED_TEST+" Not found so cannot start test of ServiceProvider");
             }
-            if(serviceProvider.getTestStatus().getTest_status_id()==serviceProviderTestStatusForApproved.getTest_status_id())
+            if(serviceProvider.getTestStatus().getTest_status_id().equals(serviceProviderTestStatusForApproved.getTest_status_id()))
             {
                 throw new IllegalArgumentException("Skill Test has already been approved. No need to start test again.");
             }
@@ -100,10 +112,14 @@ public class ServiceProviderTestService {
         entityManager.merge(serviceProvider);
 
         String imageUrl = fileService.getFileUrl(test.getDownloaded_image().getFile_path(),request);
+        String maxImageSize= ImageSizeConfig.convertBytesToReadableSize(Constant.MAX_FILE_SIZE);
+
 
         Map<String, Object> response = new HashMap<>();
         response.put("test", test);
         response.put("downloadImageUrl", imageUrl);
+        response.put("requiredMinImageSize",minImageSize);
+        response.put("requiredMaxImageSize",maxImageSize);
 
         return response;
     }
