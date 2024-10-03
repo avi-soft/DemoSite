@@ -92,11 +92,11 @@ public class ServiceProviderEntity  {
     private String otp;
     @Nullable
     @Size(min = 9, max = 13)
-    @Pattern(regexp="^[6789]\\d{9}$",message = "Mobile number should be 10 digits in length and should begin with either 6,7,8,9")
+    @Pattern(regexp="^[6789]\\d{9,13}$",message = "Mobile number should be 10 digits in length and should begin with either 6,7,8,9")
     private String secondary_mobile_number;
     private int role;
     @Size(min = 9, max = 13)
-    @Pattern(regexp="^\\d{10}$",message = "Whatsapp number should be 10 digits in length")
+    @Pattern(regexp = "^\\d{9,13}$", message = "WhatsApp number should be between 9 and 13 digits in length")
     private String whatsapp_number;
     /*@Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",message = "Please enter a valid email address.")*/
     private String primary_email;
