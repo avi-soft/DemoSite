@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
+import javax.transaction.Transactional;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.time.ZonedDateTime;
@@ -66,6 +67,7 @@ public class SharedUtilityService {
             productDetails.put("order_item_id",orderItem.getId());
         productDetails.put("product_id", product.getId());
         productDetails.put("url", product.getUrl());
+        productDetails.put("meta_title",product.getName());
         productDetails.put("url_key", product.getUrlKey());
         productDetails.put("platform_fee",customProduct.getPlatformFee());
         productDetails.put("display_template", product.getDisplayTemplate());
@@ -86,7 +88,7 @@ public class SharedUtilityService {
         INVALID_TYPE
     }
 
-
+    @Transactional
     public Map<String,Object> breakReferenceForCustomer(Customer customer)
     {
         Map<String,Object>customerDetails=new HashMap<>();
@@ -133,7 +135,7 @@ public class SharedUtilityService {
         customerDetails.put("category", customCustomer.getCategory());
         customerDetails.put("subcategory", customCustomer.getSubcategory());
         customerDetails.put("domicile", customCustomer.getDomicile());
-
+        customerDetails.put("documents",customCustomer.getDocuments());
         customerDetails.put("secondaryEmail", customCustomer.getSecondaryEmail());
         customerDetails.put("mothers_name", customCustomer.getMothersName());
         customerDetails.put("date_of_birth", customCustomer.getDob());
