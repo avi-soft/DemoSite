@@ -256,7 +256,7 @@ public class ProductController extends CatalogEndpoint {
             Date currentDate = dateFormat.parse(formattedDate); // Convert formatted date string back to Date
             customProduct.setModifiedDate(currentDate);
 
-            productService.validateAndSetActiveEndDateAndGoLiveDateFields(addProductDto, customProduct);
+            productService.validateAndSetActiveEndDateAndGoLiveDateFields(addProductDto, customProduct, currentDate);
 
             productService.validateAndSetExamDateFromAndExamDateToFields(addProductDto, customProduct);
             productService.validateExamDateFromAndExamDateTo(addProductDto, customProduct);
@@ -286,7 +286,7 @@ public class ProductController extends CatalogEndpoint {
             return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + numberFormatException.getMessage(), HttpStatus.NOT_FOUND);
         } catch (IllegalArgumentException illegalArgumentException) {
             exceptionHandlingService.handleException(illegalArgumentException);
-            return ResponseService.generateErrorResponse(illegalArgumentException.getMessage(), HttpStatus.BAD_REQUEST);
+            return ResponseService.generateErrorResponse("Illegal Argument Exception: " + illegalArgumentException.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -386,6 +386,7 @@ public class ProductController extends CatalogEndpoint {
     }
 
     @DeleteMapping("/delete/{productId}")
+    @Transactional
     public ResponseEntity<?> deleteProduct(@PathVariable("productId") String productIdPath) {
         try {
 
