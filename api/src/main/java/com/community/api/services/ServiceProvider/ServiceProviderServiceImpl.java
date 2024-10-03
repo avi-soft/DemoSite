@@ -320,10 +320,10 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 errorMessages.add(fieldNames[i] + " cannot be empty");
             }
         }
-        String pattern = "^\\d{6}$";
+        String pattern = Constant.PINCODE_REGEXP;
         if(!java.util.regex.Pattern.matches(pattern,pincode))
             errorMessages.add("Pincode should contain only numbers and should be of length 6");
-       /* pattern = "^[A-Za-z\\s]+$";
+       /* pattern = Constant.CITY_REGEXP;
         if(!java.util.regex.Pattern.matches(pattern, city))
             errorMessages.add("Field city should only contain letters");*/
         return errorMessages;

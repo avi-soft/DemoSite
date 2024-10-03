@@ -116,12 +116,8 @@ public class SharedUtilityService {
         customerDetails.put("loggedIn", customer.isLoggedIn());
         customerDetails.put("transientProperties", customer.getTransientProperties());
         CustomCustomer customCustomer=entityManager.find(CustomCustomer.class,customer.getId());
-        if(customCustomer.getShow_my_contact_details().equals(true))
-        {
-            customerDetails.put("mobileNumber", customCustomer.getMobileNumber());
-            customerDetails.put("secondaryMobileNumber", customCustomer.getSecondaryMobileNumber());
-            customerDetails.put("whatsappNumber", customCustomer.getWhatsappNumber());
-        }
+        customerDetails.put("mobileNumber", customCustomer.getMobileNumber());
+        customerDetails.put("secondaryMobileNumber", customCustomer.getSecondaryMobileNumber());customerDetails.put("whatsappNumber", customCustomer.getWhatsappNumber());
         customerDetails.put("countryCode", customCustomer.getCountryCode());
         customerDetails.put("otp", customCustomer.getOtp());
         customerDetails.put("fathersName", customCustomer.getFathersName());
