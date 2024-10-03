@@ -314,7 +314,7 @@ public class DocumentStorageService {
     }
 
 
-    public void uploadFile(MultipartFile file, String documentType, Long customerId, String role) throws IOException {
+    public void uploadFileOnFileServer(MultipartFile file, String documentType, Long customerId, String role) throws IOException {
         try {
             String url = fileServerUrl + "/files/upload";
 
@@ -322,18 +322,18 @@ public class DocumentStorageService {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
-            MultiValueMap<String, Object> map = new LinkedMultiValueMap<>();
+            MultiValueMap<String, Object> multiValueMap = new LinkedMultiValueMap<>();
             ByteArrayResource contentsAsResource = new ByteArrayResource(file.getBytes()) {
                 @Override
                 public String getFilename() {
                     return filename;
                 }
             };
-            map.add("file", contentsAsResource);
-            map.add("documentType", documentType);
-            map.add("customerId", customerId);
-            map.add("role", role);
-            HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(map, headers);
+            multiValueMap.add("file", contentsAsResource);
+            multiValueMap.add("documentType", documentType);
+            multiValueMap.add("customerId", customerId);
+            multiValueMap.add("role", role);
+            HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(multiValueMap, headers);
 
             restTemplate.postForObject(url, request, String.class);
 
@@ -348,13 +348,12 @@ public class DocumentStorageService {
             String url = fileServerUrl + "/files/delete?customerId=" + customerId +
                     "&documentType=" + documentType + "&fileName=" + fileName + "&role=" + role;
 
-            System.out.println(url + "url" );
 
-            ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.DELETE, null, String.class);
+           ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.DELETE, null, String.class);
 
             String deletedFilePath = response.getBody();
             if (deletedFilePath != null && !deletedFilePath.isEmpty()) {
-
+                    System.out.println("File deleted: " + deletedFilePath);
             } else {
                 throw new IOException("No file path returned from server.");
             }
