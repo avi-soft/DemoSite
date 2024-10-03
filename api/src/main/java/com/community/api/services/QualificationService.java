@@ -37,6 +37,7 @@ public class QualificationService {
 //        List<Qualification> qualifications = query.getResultList();
         return qualifications;
     }
+//    @todo:- Need to work on add qualification function so that entries should be inserted in document table also make sure to add one exam text in dscription
     @Transactional
     public Qualification addQualification(@RequestBody Qualification qualification) {
         Qualification qualificationToBeSaved =new Qualification();
