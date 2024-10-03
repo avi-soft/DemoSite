@@ -96,7 +96,7 @@ public class ServiceProviderEntity  {
     private String secondary_mobile_number;
     private int role;
     @Size(min = 9, max = 13)
-    @Pattern(regexp="^d{10}$",message = "Whatsapp number should be 10 digits in length")
+    @Pattern(regexp="^\\d{10}$",message = "Whatsapp number should be 10 digits in length")
     private String whatsapp_number;
     /*@Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",message = "Please enter a valid email address.")*/
     private String primary_email;
