@@ -113,10 +113,8 @@ public class ServiceProviderTestService {
 
         String imageUrl = fileService.getFileUrl(test.getDownloaded_image().getFile_path(),request);
         String maxImageSize= ImageSizeConfig.convertBytesToReadableSize(Constant.MAX_FILE_SIZE);
-
-
-        Map<String, Object> response = new HashMap<>();
         String imageValidation = "Only images between 500KB and 2MB are allowed";
+        Map<String, Object> response = new HashMap<>();
         response.put("test", test);
         response.put("imageValidation", imageValidation);
         response.put("downloadImageUrl", imageUrl);

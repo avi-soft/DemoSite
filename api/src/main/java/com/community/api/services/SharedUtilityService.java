@@ -67,6 +67,7 @@ public class SharedUtilityService {
             productDetails.put("order_item_id",orderItem.getId());
         productDetails.put("product_id", product.getId());
         productDetails.put("url", product.getUrl());
+        productDetails.put("meta_title",product.getName());
         productDetails.put("url_key", product.getUrlKey());
         productDetails.put("platform_fee",customProduct.getPlatformFee());
         productDetails.put("display_template", product.getDisplayTemplate());
@@ -87,7 +88,7 @@ public class SharedUtilityService {
         INVALID_TYPE
     }
 
-
+    @Transactional
     public Map<String,Object> breakReferenceForCustomer(Customer customer)
     {
         Map<String,Object>customerDetails=new HashMap<>();
@@ -117,8 +118,12 @@ public class SharedUtilityService {
         customerDetails.put("loggedIn", customer.isLoggedIn());
         customerDetails.put("transientProperties", customer.getTransientProperties());
         CustomCustomer customCustomer=entityManager.find(CustomCustomer.class,customer.getId());
+
+            customerDetails.put("mobileNumber", customCustomer.getMobileNumber());
+            customerDetails.put("secondaryMobileNumber", customCustomer.getSecondaryMobileNumber());
+            customerDetails.put("whatsappNumber", customCustomer.getWhatsappNumber());
+
         customerDetails.put("countryCode", customCustomer.getCountryCode());
-        customerDetails.put("mobileNumber", customCustomer.getMobileNumber());
         customerDetails.put("otp", customCustomer.getOtp());
         customerDetails.put("fathersName", customCustomer.getFathersName());
         customerDetails.put("mothersName", customCustomer.getMothersName());
@@ -130,8 +135,7 @@ public class SharedUtilityService {
         customerDetails.put("category", customCustomer.getCategory());
         customerDetails.put("subcategory", customCustomer.getSubcategory());
         customerDetails.put("domicile", customCustomer.getDomicile());
-        customerDetails.put("secondaryMobileNumber", customCustomer.getSecondaryMobileNumber());
-        customerDetails.put("whatsappNumber", customCustomer.getWhatsappNumber());
+        customerDetails.put("documents",customCustomer.getDocuments());
         customerDetails.put("secondaryEmail", customCustomer.getSecondaryEmail());
         customerDetails.put("mothers_name", customCustomer.getMothersName());
         customerDetails.put("date_of_birth", customCustomer.getDob());
@@ -187,12 +191,8 @@ public class SharedUtilityService {
         }
         customerDetails.put("currentAddress",currentAddress);
         customerDetails.put("permanentAddress",permanentAddress);
-        customerDetails.put("state", customCustomer.getState());
-        customerDetails.put("city", customCustomer.getCity());
-        customerDetails.put("district", customCustomer.getDistrict());
-        customerDetails.put("pincode", customCustomer.getPincode());
 
-        customerDetails.put("residentialAddress",customCustomer.getResidentialAddress());
+
 
       /*  customerDetails.put("qualificationDetails",customCustomer.getQualificationDetailsList());
         customerDetails.put("documentList",customCustomer.getDocumentList());
@@ -243,7 +243,7 @@ public class SharedUtilityService {
             return ValidationResult.SUCCESS;
 
         }
-    @Transactional
+
     public Map<String,Object> serviceProviderDetailsMap(ServiceProviderEntity serviceProvider)
     {
         Map<String,Object>serviceProviderDetails=new HashMap<>();
@@ -289,6 +289,16 @@ public class SharedUtilityService {
         return serviceProviderDetails;
     }
 
+    public Map<String,Object> trimStringValues(Map<String, Object> map) {
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            if (entry.getValue() instanceof String) {
+                // Trim the string and update the map
+                String trimmedValue = ((String) entry.getValue()).trim();
+                entry.setValue(trimmedValue);
+            }
+        }
+        return map;
+    }
     public List<Map<String, Object>> mapQualifications(List<QualificationDetails> qualificationDetails) {
         return qualificationDetails.stream()
                 .map(qualificationDetail -> {
