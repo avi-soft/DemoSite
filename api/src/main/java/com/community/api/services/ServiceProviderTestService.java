@@ -40,8 +40,10 @@ public class ServiceProviderTestService {
     private DocumentStorageService documentStorageService;
     @Autowired
     private FileService fileService;
+    @Autowired
+    private DocumentStorageService fileUploadService;
 
-    @Value("${image.size.min}")
+    @Value("${skill.test.required.image.size.min}")
     private String minImageSize;
 
     public ServiceProviderTestService(EntityManager entityManager) {
@@ -63,7 +65,21 @@ public class ServiceProviderTestService {
                 throw new IllegalArgumentException("Test Status id "+ Constant.TEST_COMPLETED_STATUS+" Not found so cannot start test of ServiceProvider");
             }
             Long testStatus= serviceProviderTestStatus.getTest_status_id();
-            if(serviceProvider.getTestStatus().getTest_status_id()==testStatus )
+            if(!serviceProvider.getServiceProviderTests().isEmpty() && serviceProvider.getTestStatus().getTest_status_id().equals(Constant.INITIAL_TEST_STATUS))
+            {
+                ServiceProviderTest test= serviceProvider.getServiceProviderTests().get(0);
+                String imageUrl = fileService.getFileUrl(test.getDownloaded_image().getFile_path(),request);
+                String maxImageSize= ImageSizeConfig.convertBytesToReadableSize(Constant.MAX_FILE_SIZE);
+                String imageValidation = "Only images between "+minImageSize+" and "+maxImageSize+" are allowed";
+                Map<String, Object> response = new HashMap<>();
+                response.put("test", test);
+                response.put("imageValidation", imageValidation);
+                response.put("downloadImageUrl", imageUrl);
+                response.put("requiredMinImageSize",minImageSize);
+                response.put("requiredMaxImageSize",maxImageSize);
+                return response;
+            }
+            if(serviceProvider.getTestStatus().getTest_status_id().equals(testStatus) )
             {
                 throw new IllegalArgumentException("Skill Test has already been submitted.You cannot start a new test.");
             }
@@ -73,7 +89,7 @@ public class ServiceProviderTestService {
             {
                 throw new IllegalArgumentException("Test Status id "+ Constant.APPROVED_TEST+" Not found so cannot start test of ServiceProvider");
             }
-            if(serviceProvider.getTestStatus().getTest_status_id()==serviceProviderTestStatusForApproved.getTest_status_id())
+            if(serviceProvider.getTestStatus().getTest_status_id().equals(serviceProviderTestStatusForApproved.getTest_status_id()))
             {
                 throw new IllegalArgumentException("Skill Test has already been approved. No need to start test again.");
             }
@@ -100,12 +116,14 @@ public class ServiceProviderTestService {
         entityManager.merge(serviceProvider);
 
         String imageUrl = fileService.getFileUrl(test.getDownloaded_image().getFile_path(),request);
-
+        String maxImageSize= ImageSizeConfig.convertBytesToReadableSize(Constant.MAX_FILE_SIZE);
+        String imageValidation = "Only images between "+minImageSize+" and "+maxImageSize+" are allowed";
         Map<String, Object> response = new HashMap<>();
-        String imageValidation = "Only images between 500KB and 2MB are allowed";
         response.put("test", test);
         response.put("imageValidation", imageValidation);
         response.put("downloadImageUrl", imageUrl);
+        response.put("requiredMinImageSize",minImageSize);
+        response.put("requiredMaxImageSize",maxImageSize);
 
         return response;
     }
@@ -169,25 +187,13 @@ public class ServiceProviderTestService {
             test.setResized_image(resizedImage);
         }
 
-        String currentDir = System.getProperty("user.dir");
-        String testDirPath = currentDir + "/../test/";
 
-        String db_path = "avisoftdocument/SERVICE_PROVIDER/Resized_Images";
-        // Define the directory structure
-        File avisoftDir = new File(testDirPath +db_path);
-
-        // Create the directory if it doesn't exist
-        if (!avisoftDir.exists()) {
-            avisoftDir.mkdirs();
-        }
-
-
-        String filePath = avisoftDir + File.separator + resizedFile.getOriginalFilename();
-
-        String dbPath = db_path + File.separator + resizedFile.getOriginalFilename();
+        String db_path ="avisoftdocument/SERVICE_PROVIDER/Resized/Resized_Images";
+        String dbPath=db_path+File.separator+ resizedFile.getOriginalFilename();
 
         String fileUrl = fileService.getFileUrl(dbPath, request);
 
+        fileUploadService.uploadFileOnFileServer(resizedFile, "Resized_Images", "Resized", "SERVICE_PROVIDER");
         // Set file metadata in the ResizedImage object
         resizedImage.setFile_name(fileName);
         resizedImage.setFile_type(resizedFile.getContentType());
@@ -195,12 +201,6 @@ public class ServiceProviderTestService {
         resizedImage.setImage_data(resizedFile.getBytes());
         resizedImage.setServiceProvider(serviceProvider);
 
-        try {
-            File destFile = new File(filePath);
-            FileUtils.writeByteArrayToFile(destFile, resizedFile.getBytes());
-        } catch (IOException e) {
-            throw new IllegalArgumentException("Failed to save the file", e);
-        }
 
         // Set the image data and validate the resized image
         test.setResized_image_data(resizedFile.getBytes());
@@ -307,22 +307,10 @@ public class ServiceProviderTestService {
             test.setSignature_image(signatureImage);
         }
 
-        String currentDir = System.getProperty("user.dir");
-        String testDirPath = currentDir + "/../test/";
+        String db_path ="avisoftdocument/SERVICE_PROVIDER/Signature/Signature_Images";
+        String dbPath= db_path+File.separator+signatureFile.getOriginalFilename();
 
-        String db_path = "avisoftdocument/SERVICE_PROVIDER/Signature_Images";
-        // Define the directory structure
-        File avisoftDir = new File(testDirPath +db_path);
-
-        // Create the directory if it doesn't exist
-        if (!avisoftDir.exists()) {
-            avisoftDir.mkdirs();
-        }
-
-
-        String filePath = avisoftDir + File.separator + signatureFile.getOriginalFilename();
-
-        String dbPath = db_path + File.separator + signatureFile.getOriginalFilename();
+        fileUploadService.uploadFileOnFileServer(signatureFile, "Signature_Images", "Signature", "SERVICE_PROVIDER");
 
         String fileUrl = fileService.getFileUrl(dbPath, request);
 
@@ -333,20 +321,13 @@ public class ServiceProviderTestService {
         signatureImage.setImage_data(signatureFile.getBytes());
         signatureImage.setServiceProvider(serviceProvider);
 
-//         Save the file to the specified path
-        try {
-            File destFile = new File(filePath);
-            FileUtils.writeByteArrayToFile(destFile, signatureFile.getBytes());
-        } catch (IOException e) {
-            throw new Exception("Failed to save the file", e);
-        }
         test.setIs_test_completed(true);
         test.setSubmitted_at(LocalDateTime.now());
         entityManager.merge(test);
         ServiceProviderTestStatus serviceProviderTestStatus = entityManager.find(ServiceProviderTestStatus.class, Constant.TEST_COMPLETED_STATUS);
         if(serviceProviderTestStatus==null)
         {
-            throw new IllegalArgumentException("Test status with id 2 does not exists");
+            throw new IllegalArgumentException("Test status with id status 'completed test' does not exists");
         }
         serviceProvider.setTestStatus(serviceProviderTestStatus);
         entityManager.merge(serviceProvider);
