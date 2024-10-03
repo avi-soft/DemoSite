@@ -47,7 +47,7 @@ public class ImageService {
     @Transactional
     public Image saveImage(MultipartFile file) throws Exception {
 
-        String db_path = "avisoftdocument/SERVICE_PROVIDER/1/Random_Images/Random";
+        String db_path = "avisoftdocument/SERVICE_PROVIDER/Random/Random_Images";
 
 
         String dbPath = db_path + File.separator + file.getOriginalFilename();
