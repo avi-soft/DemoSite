@@ -226,7 +226,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
         //removing key for address
         updates.remove("residential_address");
-        updates.remove("city");
+       /* updates.remove("city");*/
         updates.remove("state");
         updates.remove("district");
         updates.remove("pincode");
