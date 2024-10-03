@@ -134,4 +134,5 @@ public class Constant {
     public static final String GET_QUALIFICATION_BY_ID = "SELECT c FROM Qualification c WHERE c.qualification_id = :qualificationId";
     public static final String PINCODE_REGEXP="^\\d{6}$";
     public static final String CITY_REGEXP="^[A-Za-z\\\\s]+$";
+    public static final String EMAIL_REGEXP="^[\\w-\\.]+@[\\w-]+\\.[a-zA-Z]{2,}$";
 }

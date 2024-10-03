@@ -69,7 +69,8 @@ public class CustomCustomer extends CustomerImpl {
     @Column(name = "category")
     private String category; //@TODO -make it int for using in cart
 
-
+    @Column(name = "hide_phone_number")
+    private Boolean hidePhoneNumber=false;
 
     @Column(name = "category_issue_date", insertable = false, updatable = false)
     private String categoryIssueDate;
