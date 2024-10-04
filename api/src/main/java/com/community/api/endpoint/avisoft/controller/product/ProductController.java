@@ -331,7 +331,9 @@ public class ProductController extends CatalogEndpoint {
                 CustomProductWrapper wrapper = new CustomProductWrapper();
 
                 List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(productId);
-                wrapper.wrapDetails(customProduct, reserveCategoryDtoList);
+                List<PhysicalRequirementDto> physicalRequirementDtoList = physicalRequirementDtoService.getPhysicalRequirementDto(productId);
+
+                wrapper.wrapDetails(customProduct, reserveCategoryDtoList, physicalRequirementDtoList);
                 return ResponseService.generateSuccessResponse("PRODUCT FOUND", wrapper, HttpStatus.OK);
 
             } else {
@@ -525,6 +527,16 @@ public class ProductController extends CatalogEndpoint {
             @RequestParam(value = "reserve_categories", required = false) List<Long> reserveCategories) {
 
         try {
+
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); // Set active start date to current date and time in "yyyy-MM-dd HH:mm:ss" format
+            if(dateFrom != null) {
+                String formattedDateFrom = dateFormat.format(dateFrom);
+                dateFrom = dateFormat.parse(formattedDateFrom);
+            }
+            if(dateTo != null) {
+                String formattedDateTo = dateFormat.format(dateTo);
+                dateTo = dateFormat.parse(formattedDateTo);
+            }
             List<CustomProduct> products = productService.filterProducts(state, categories, reserveCategories, title, fee, post, dateFrom, dateTo);
 
             if (products.isEmpty()) {

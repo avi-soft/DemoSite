@@ -67,9 +67,6 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(new CustomReserveCategory(4L, "OBC", "Other Backward Caste", false));
         }
 
-
-
-
         if(entityManager.createQuery("SELECT COUNT(c) FROM CustomProductRejectionStatus c", Long.class).getSingleResult() == 0) {
             entityManager.merge(new CustomProductRejectionStatus(1L, "TO-BE-MODIFIED", "Product needs modification to get approved."));
             entityManager.merge(new CustomProductRejectionStatus(2L, "DUPLICATE", "There is already a product present with these details."));
@@ -218,7 +215,6 @@ public class CommandLineService implements CommandLineRunner {
         count = entityManager.createQuery("SELECT COUNT(s) FROM StateCode s", Long.class).getSingleResult();
 
         if (count == 0) {
-
 
             // Insert data into the StateCode table
             entityManager.persist(new StateCode(1, "Andhra Pradesh", "AP"));
