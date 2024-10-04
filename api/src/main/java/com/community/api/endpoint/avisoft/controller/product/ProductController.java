@@ -313,7 +313,7 @@ public class ProductController extends CatalogEndpoint {
                 return ResponseService.generateErrorResponse(PRODUCTNOTFOUND, HttpStatus.NOT_FOUND);
             }
 
-            List<Map<String, CustomProductWrapper>> responses = new ArrayList<>();
+            List<CustomProductWrapper> responses = new ArrayList<>();
             for (Product product : products) {
 
                 // finding customProduct that resembles with productId.
@@ -326,12 +326,7 @@ public class ProductController extends CatalogEndpoint {
                         CustomProductWrapper wrapper = new CustomProductWrapper();
                         wrapper.wrapDetails(customProduct);
 
-                        Map<String, CustomProductWrapper> productDetails = new HashMap<>();
-
-                        productDetails.put("key_" + customProduct.getId(), wrapper);
-                        productDetails.remove("key_" + customProduct.getId(), "reserveCategoryDtoList"); // gives us empty list
-
-                        responses.add(productDetails);
+                        responses.add(wrapper);
                     }
                 }
             }
@@ -388,7 +383,7 @@ public class ProductController extends CatalogEndpoint {
                 return ResponseService.generateErrorResponse(PRODUCTNOTFOUND, HttpStatus.NOT_FOUND);
             }
 
-            List<Map<String, CustomProductWrapper>> responses = new ArrayList<>();
+            List<CustomProductWrapper> responses = new ArrayList<>();
             for (Product product : products) {
 
                 // finding customProduct that resembles with productId.
@@ -401,12 +396,7 @@ public class ProductController extends CatalogEndpoint {
                         CustomProductWrapper wrapper = new CustomProductWrapper();
                         wrapper.wrapDetails(customProduct);
 
-                        Map<String, CustomProductWrapper> productDetails = new HashMap<>();
-
-                        productDetails.put("key_" + customProduct.getId(), wrapper);
-                        productDetails.remove("key_" + customProduct.getId(), "reserveCategoryDtoList"); // gives us empty list
-
-                        responses.add(productDetails);
+                        responses.add(wrapper);
                     }
 
                 }
@@ -435,7 +425,7 @@ public class ProductController extends CatalogEndpoint {
                 return ResponseService.generateErrorResponse(PRODUCTNOTFOUND, HttpStatus.NOT_FOUND);
             }
 
-            List<Map<String, CustomProductWrapper>> responses = new ArrayList<>();
+            List<CustomProductWrapper> responses = new ArrayList<>();
             for (Product product : products) {
 
                 // finding customProduct that resembles with productId.
@@ -448,12 +438,7 @@ public class ProductController extends CatalogEndpoint {
                         CustomProductWrapper wrapper = new CustomProductWrapper();
                         wrapper.wrapDetails(customProduct);
 
-                        Map<String, CustomProductWrapper> productDetails = new HashMap<>();
-
-                        productDetails.put("key_" + customProduct.getId(), wrapper);
-                        productDetails.remove("key_" + customProduct.getId(), "reserveCategoryDtoList"); // gives us empty list
-
-                        responses.add(productDetails);
+                        responses.add(wrapper);
                     }
                 }
             }
@@ -478,7 +463,6 @@ public class ProductController extends CatalogEndpoint {
             @RequestParam(value = "reserve_categories", required = false) List<Long> reserveCategories) {
 
         try {
-            // Call the service to get filtered products
             List<CustomProduct> products = productService.filterProducts(state, categories, reserveCategories, title, fee, post, dateFrom, dateTo);
 
             if (products.isEmpty()) {
@@ -497,7 +481,6 @@ public class ProductController extends CatalogEndpoint {
 
                         responses.add(wrapper);
                     }
-
                 }
             }
 

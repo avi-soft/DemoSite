@@ -26,4 +26,6 @@ public class ServiceProviderRank
     private String rank_description;
     private String created_at,updated_at,created_by;
 
+
 }
+

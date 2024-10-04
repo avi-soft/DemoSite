@@ -11,5 +11,7 @@ import lombok.Setter;
 @Setter
 public class UpdateTestStatus
 {
-    private Long test_status_id;
+
+   private Long test_status_id;
 }
+

@@ -18,12 +18,14 @@ import javax.persistence.Table;
 @Table(name = "service_provider_test_status")
 public class ServiceProviderTestStatus
 {
-    @Column(name = "test_status_id")
-    @Id
-    private Long test_status_id;
-    @Column(name = "test_status_name")
-    private String  test_status_name;
-    @Column(name = "test_status_description")
-    private String test_status_description;
-    private String created_at,updated_at,created_by;
+
+        @Column(name = "test_status_id")
+        @Id
+        private Long test_status_id;
+        @Column(name = "test_status_name")
+        private String  test_status_name;
+        @Column(name = "test_status_description")
+        private String test_status_description;
+        private String created_at,updated_at,created_by;
 }
+

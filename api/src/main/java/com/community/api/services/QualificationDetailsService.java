@@ -1,7 +1,10 @@
 package com.community.api.services;
 
+import com.community.api.component.Constant;
+import com.community.api.component.JwtUtil;
 import com.community.api.dto.UpdateQualificationDto;
 import com.community.api.endpoint.avisoft.controller.Qualification.QualificationController;
+import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.Qualification;
 import com.community.api.entity.QualificationDetails;
@@ -11,90 +14,82 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Service
-public class QualificationDetailsService
-{
+public class QualificationDetailsService {
     EntityManager entityManager;
     QualificationController qualificationController;
     QualificationService qualificationService;
-    public QualificationDetailsService(EntityManager entityManager, QualificationController qualificationController, QualificationService qualificationService)
-    {
-        this.entityManager=entityManager;
+    SharedUtilityService sharedUtilityService;
+
+    public QualificationDetailsService(EntityManager entityManager, QualificationController qualificationController, QualificationService qualificationService,SharedUtilityService sharedUtilityService) {
+        this.entityManager = entityManager;
         this.qualificationController = qualificationController;
         this.qualificationService = qualificationService;
+        this.sharedUtilityService = sharedUtilityService;
     }
+
     @Transactional
-    public QualificationDetails addQualificationDetails(Long customCustomerId, QualificationDetails qualificationDetails)
-            throws EntityAlreadyExistsException, ExaminationDoesNotExistsException, CustomerDoesNotExistsException{
+    public QualificationDetails addQualificationDetails(Long userId, QualificationDetails qualificationDetails, String roleName)
+            throws EntityAlreadyExistsException, ExaminationDoesNotExistsException, CustomerDoesNotExistsException {
 
-        CustomCustomer customCustomer = entityManager.find(CustomCustomer.class, customCustomerId);
-        if (customCustomer == null) {
-            throw new CustomerDoesNotExistsException("Customer does not exist with id " + customCustomerId);
+        if (roleName.equals(Constant.SERVICE_PROVIDER)) {
+            ServiceProviderEntity serviceProviderEntity = findServiceProviderById(userId);
+            checkIfQualificationAlreadyExists(userId, qualificationDetails.getQualification_id(), roleName);
+            List<DocumentType> qualifications = qualificationService.getAllQualifications();
+            Integer qualificationToAdd = findQualificationId(qualificationDetails.getQualification_id(), qualifications);
+            qualificationDetails.setQualification_id(qualificationToAdd);
+            qualificationDetails.setService_provider(serviceProviderEntity);
+            serviceProviderEntity.getQualificationDetailsList().add(qualificationDetails);
+            entityManager.persist(qualificationDetails);
+            return qualificationDetails;
         }
-        TypedQuery<QualificationDetails> query = entityManager.createQuery(
-                "SELECT q FROM QualificationDetails q WHERE q.custom_customer.id = :customerId AND q.qualification_id = :qualification_id",
-                QualificationDetails.class
-        );
-        query.setParameter("customerId", customCustomerId);
-        query.setParameter("qualification_id", qualificationDetails.getQualification_id());
-
-        QualificationDetails existingQualificationDetails = query.getResultStream().findFirst().orElse(null);
-
-        if (existingQualificationDetails != null ) {
-            throw new EntityAlreadyExistsException("Qualification with id " + qualificationDetails.getQualification_id() + " already exists");
-        }
+        CustomCustomer customCustomer = findCustomCustomerById(userId);
+        checkIfQualificationAlreadyExists(userId, qualificationDetails.getQualification_id(), roleName);
         List<DocumentType> qualifications = qualificationService.getAllQualifications();
-        Integer examinationToAdd=null;
-
-        for(DocumentType qualification : qualifications)
-        {
-            if(qualification.getDocument_type_id()== qualificationDetails.getQualification_id()) {
-                examinationToAdd= qualification.getDocument_type_id();
-                break;
-            }
-        }
-        if (examinationToAdd == null) {
-            throw new ExaminationDoesNotExistsException("Qualification with id " + qualificationDetails.getQualification_id() + " does not exist");
-        }
-        qualificationDetails.setQualification_id(examinationToAdd);
+        Integer qualificationToAdd = null;
+        qualificationToAdd = findQualificationId(qualificationDetails.getQualification_id(), qualifications);
+        qualificationDetails.setQualification_id(qualificationToAdd);
         qualificationDetails.setCustom_customer(customCustomer);
         customCustomer.getQualificationDetailsList().add(qualificationDetails);
         entityManager.persist(qualificationDetails);
         return qualificationDetails;
     }
 
-    public List<QualificationDetails> getQualificationDetailsByCustomerId(Long customCustomerId) throws  CustomerDoesNotExistsException,RuntimeException {
-        CustomCustomer customCustomer= entityManager.find(CustomCustomer.class,customCustomerId);
-        if(customCustomer==null)
-        {
-            throw new CustomerDoesNotExistsException("Customer does not exist with id "+ customCustomerId);
+    @Transactional
+    public List<Map<String, Object>> getQualificationDetailsByCustomerId(Long userId, String roleName) throws CustomerDoesNotExistsException, RuntimeException {
+        List<QualificationDetails> qualificationDetails;
+        if (roleName.equals(Constant.SERVICE_PROVIDER)) {
+            ServiceProviderEntity serviceProviderEntity = findServiceProviderById(userId);
+            qualificationDetails = serviceProviderEntity.getQualificationDetailsList();
+            return sharedUtilityService.mapQualifications(qualificationDetails);
         }
-        List<QualificationDetails> qualificationDetails = customCustomer.getQualificationDetailsList();
-        return qualificationDetails;
+        CustomCustomer customCustomer = findCustomCustomerById(userId);
+        qualificationDetails = customCustomer.getQualificationDetailsList();
+        return sharedUtilityService.mapQualifications(qualificationDetails);
     }
 
     @Transactional
-    public QualificationDetails deleteQualificationDetail(Long customCustomerId, Long qualificationId) throws EntityDoesNotExistsException, CustomerDoesNotExistsException {
-        CustomCustomer customCustomer= entityManager.find(CustomCustomer.class,customCustomerId);
-        if(customCustomer==null)
-        {
-            throw new CustomerDoesNotExistsException("Customer does not exist with id "+ customCustomerId);
+    public QualificationDetails deleteQualificationDetail(Long userId, Long qualificationId, String roleName) throws EntityDoesNotExistsException, CustomerDoesNotExistsException {
+        List<QualificationDetails> qualificationDetails;
+        if (roleName.equals(Constant.SERVICE_PROVIDER)) {
+            ServiceProviderEntity serviceProviderEntity = findServiceProviderById(userId);
+            qualificationDetails = serviceProviderEntity.getQualificationDetailsList();
+        } else {
+            CustomCustomer customCustomer = findCustomCustomerById(userId);
+            qualificationDetails = customCustomer.getQualificationDetailsList();
         }
-        List<QualificationDetails> qualificationDetails = customCustomer.getQualificationDetailsList();
-        QualificationDetails qualificationDetailsToDelete =null;
-        for(QualificationDetails qualificationDetails1 : qualificationDetails)
-        {
-            if(qualificationDetails1.getId()==qualificationId)
-            {
+
+        QualificationDetails qualificationDetailsToDelete = null;
+        for (QualificationDetails qualificationDetails1 : qualificationDetails) {
+            if (qualificationDetails1.getId().equals(qualificationId)) {
                 qualificationDetailsToDelete = qualificationDetails1;
                 break;
             }
         }
         if (qualificationDetailsToDelete == null) {
-            throw new EntityDoesNotExistsException("QualificationDetails with id " + qualificationId+ " does not exists");
+            throw new EntityDoesNotExistsException("QualificationDetails with id " + qualificationId + " does not exists");
         }
         qualificationDetails.remove(qualificationDetailsToDelete);
         entityManager.remove(qualificationDetailsToDelete);
@@ -102,54 +97,55 @@ public class QualificationDetailsService
     }
 
     @Transactional
-    public QualificationDetails updateQualificationDetail(Long customCustomerId, Long qualificationId, UpdateQualificationDto qualification) throws EntityDoesNotExistsException, EntityAlreadyExistsException, CustomerDoesNotExistsException, ExaminationDoesNotExistsException {
-        CustomCustomer customCustomer= entityManager.find(CustomCustomer.class,customCustomerId);
-        if(customCustomer==null)
-        {
-            throw new CustomerDoesNotExistsException("Customer does not exist with id "+ customCustomerId);
+    public QualificationDetails updateQualificationDetail(Long userId, Long qualificationId, UpdateQualificationDto qualification, String roleName) throws EntityDoesNotExistsException, EntityAlreadyExistsException, CustomerDoesNotExistsException, ExaminationDoesNotExistsException {
+        List<QualificationDetails> qualificationDetails;
+        if (roleName.equals(Constant.SERVICE_PROVIDER)) {
+            ServiceProviderEntity serviceProviderEntity = findServiceProviderById(userId);
+            qualificationDetails = serviceProviderEntity.getQualificationDetailsList();
+        } else {
+            CustomCustomer customCustomer = findCustomCustomerById(userId);
+            qualificationDetails = customCustomer.getQualificationDetailsList();
         }
-        List<QualificationDetails> qualificationDetails = customCustomer.getQualificationDetailsList();
-        QualificationDetails qualificationDetailsToUpdate =null;
-        for(QualificationDetails qualificationDetails1 : qualificationDetails)
-        {
-            if(qualificationDetails1.getId()==qualificationId)
-            {
+
+        QualificationDetails qualificationDetailsToUpdate = null;
+        for (QualificationDetails qualificationDetails1 : qualificationDetails) {
+            if (qualificationDetails1.getId().equals(qualificationId)) {
                 qualificationDetailsToUpdate = qualificationDetails1;
                 break;
             }
         }
         if (qualificationDetailsToUpdate == null) {
-            throw new EntityDoesNotExistsException("Qualification details with id " + qualificationId+ " does not exists");
+            throw new EntityDoesNotExistsException("Qualification details with id " + qualificationId + " does not exists");
+        }
+        String queryStr;
+
+        // Build the query string based on the entity type
+        if ("SERVICE_PROVIDER".equalsIgnoreCase(roleName)) {
+            queryStr = "SELECT q FROM QualificationDetails q WHERE q.service_provider.service_provider_id = :entityId AND q.qualification_id = :qualification_id";
+        } else if ("CUSTOMER".equalsIgnoreCase(roleName)) {
+            queryStr = "SELECT q FROM QualificationDetails q WHERE q.custom_customer.id = :entityId AND q.qualification_id = :qualification_id";
+        } else {
+            throw new IllegalArgumentException("Invalid entity type specified.");
         }
 
-        TypedQuery<QualificationDetails> query = entityManager.createQuery(
-                "SELECT q FROM QualificationDetails q WHERE q.custom_customer.id = :customerId AND q.qualification_id = :qualification_id",
-                QualificationDetails.class
-        );
-        query.setParameter("customerId", customCustomerId);
+        // Create the dynamic query based on the entity type
+        TypedQuery<QualificationDetails> query = entityManager.createQuery(queryStr, QualificationDetails.class);
+        query.setParameter("entityId", userId);
         query.setParameter("qualification_id", qualification.getQualification_id());
+
+        // Execute the query and check if qualification already exists
         QualificationDetails existingQualificationDetails = query.getResultStream().findFirst().orElse(null);
 
-        if (existingQualificationDetails != null && qualificationId!= existingQualificationDetails.getId()) {
+        if (existingQualificationDetails != null && !qualificationId.equals(existingQualificationDetails.getId())) {
             throw new EntityAlreadyExistsException("Qualification details with id " + qualification.getQualification_id() + " already exists");
         }
 
         if (Objects.nonNull(qualification.getQualification_id())) {
-            List<DocumentType> qualifications = qualificationService.getAllQualifications();
-            Integer examinationToAdd = null;
-
-            for (DocumentType examination : qualifications) {
-                if ((examination.getDocument_type_id())==qualification.getQualification_id()) {
-                    examinationToAdd = examination.getDocument_type_id();
-                    break;
-                }
-            }
-
-            if (examinationToAdd == null) {
-                throw new ExaminationDoesNotExistsException("Qualification with id " + qualification.getQualification_id() + " does not exist");
-            }
-            qualificationDetailsToUpdate.setQualification_id(examinationToAdd);
+            List<DocumentType> qualificationDetailsList = qualificationService.getAllQualifications();
+            Integer qualificationToAdd = findQualificationId(qualification.getQualification_id(), qualificationDetailsList);
+            qualificationDetailsToUpdate.setQualification_id(qualificationToAdd);
         }
+
         if (Objects.nonNull(qualification.getInstitution_name())) {
             qualificationDetailsToUpdate.setInstitution_name(qualification.getInstitution_name());
         }
@@ -162,8 +158,11 @@ public class QualificationDetailsService
         if (Objects.nonNull(qualification.getTotal_marks())) {
             qualificationDetailsToUpdate.setTotal_marks(qualification.getTotal_marks());
         }
-        if (Objects.nonNull(qualification.getSubject_stream())) {
-            qualificationDetailsToUpdate.setSubject_stream(qualification.getSubject_stream());
+        if (Objects.nonNull(qualification.getSubject_name())) {
+            qualificationDetailsToUpdate.setSubject_name(qualification.getSubject_name());
+        }
+        if (Objects.nonNull(qualification.getStream())) {
+            qualificationDetailsToUpdate.setStream(qualification.getStream());
         }
         if (Objects.nonNull(qualification.getGrade_or_percentage_value())) {
             qualificationDetailsToUpdate.setGrade_or_percentage_value(qualification.getGrade_or_percentage_value());
@@ -171,6 +170,62 @@ public class QualificationDetailsService
         if (Objects.nonNull(qualification.getYear_of_passing())) {
             qualificationDetailsToUpdate.setYear_of_passing(qualification.getYear_of_passing());
         }
+        if (Objects.nonNull(qualification.getExamination_role_number())) {
+            qualificationDetailsToUpdate.setExamination_role_number(qualification.getExamination_role_number());
+        }
+        if (Objects.nonNull(qualification.getExamination_registration_number())) {
+            qualificationDetailsToUpdate.setExamination_registration_number(qualification.getExamination_registration_number());
+        }
         return entityManager.merge(qualificationDetailsToUpdate);
+    }
+
+    private CustomCustomer findCustomCustomerById(Long customCustomerId) throws CustomerDoesNotExistsException {
+        CustomCustomer customCustomer = entityManager.find(CustomCustomer.class, customCustomerId);
+        if (customCustomer == null) {
+            throw new CustomerDoesNotExistsException("Customer does not exist with id " + customCustomerId);
+        }
+        return customCustomer;
+    }
+
+    private ServiceProviderEntity findServiceProviderById(Long serviceProviderId) throws CustomerDoesNotExistsException {
+        ServiceProviderEntity serviceProviderEntity = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
+        if (serviceProviderEntity == null) {
+            throw new CustomerDoesNotExistsException("ServiceProvider does not exist with id " + serviceProviderId);
+        }
+        return serviceProviderEntity;
+    }
+
+    private void checkIfQualificationAlreadyExists(Long entityId, Integer qualificationId, String entityType) throws EntityAlreadyExistsException {
+        String queryStr;
+
+        // Build the query string based on the entity type
+        if ("SERVICE_PROVIDER".equalsIgnoreCase(entityType)) {
+            queryStr = "SELECT q FROM QualificationDetails q WHERE q.service_provider.service_provider_id = :entityId AND q.qualification_id = :qualification_id";
+        } else if ("CUSTOMER".equalsIgnoreCase(entityType)) {
+            queryStr = "SELECT q FROM QualificationDetails q WHERE q.custom_customer.id = :entityId AND q.qualification_id = :qualification_id";
+        } else {
+            throw new IllegalArgumentException("Invalid entity type specified.");
+        }
+
+        // Create the dynamic query based on the entity type
+        TypedQuery<QualificationDetails> query = entityManager.createQuery(queryStr, QualificationDetails.class);
+        query.setParameter("entityId", entityId);
+        query.setParameter("qualification_id", qualificationId);
+
+        // Execute the query and check if qualification already exists
+        QualificationDetails existingQualification = query.getResultStream().findFirst().orElse(null);
+
+        if (existingQualification != null) {
+            throw new EntityAlreadyExistsException("Qualification with id " + qualificationId + " already exists for " + entityType.toLowerCase());
+        }
+    }
+
+    public Integer findQualificationId(Integer qualificationId, List<DocumentType> qualifications) throws ExaminationDoesNotExistsException {
+        for (DocumentType qualification : qualifications) {
+            if (qualification.getDocument_type_id().equals(qualificationId)) {
+                return qualification.getDocument_type_id();
+            }
+        }
+        throw new ExaminationDoesNotExistsException("Qualification with id " + qualificationId + " does not exist");
     }
 }
