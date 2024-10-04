@@ -29,6 +29,7 @@ import java.security.MessageDigest;
 import org.apache.commons.codec.binary.Hex;
 
 import static com.community.api.services.DocumentStorageService.isValidFileType;
+import static com.community.api.services.ServiceProviderTestService.areImagesVisuallyIdentical;
 
 @Service
 public class ImageService {
@@ -47,6 +48,24 @@ public class ImageService {
 
     @Transactional
     public Image saveImage(MultipartFile file) throws Exception {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalStateException("File is missing or empty");
+        }
+
+        byte[] uploadImageData = file.getBytes();
+        List<Image> images = getAllRandomImages();
+        for(Image image : images) {
+           byte[] imageData = image.getImage_data();
+           try{
+               boolean areImagesIdentical=areImagesVisuallyIdentical(uploadImageData, imageData);
+               if(areImagesIdentical) {
+                   throw new IllegalStateException("Image already exists");
+               }
+           }
+           catch (IOException e) {
+               throw new IllegalStateException("Error comparing images", e);
+           }
+        }
 
         String db_path = "avisoftdocument/SERVICE_PROVIDER/Random/Random_Images";
 
@@ -84,6 +103,24 @@ public class ImageService {
         List<Image> savedImages = new ArrayList<>();
 
         for (MultipartFile file : files) {
+            if (file == null || file.isEmpty()) {
+                throw new IllegalStateException("File is missing or empty");
+            }
+
+            byte[] uploadImageData = file.getBytes();
+            List<Image> images = getAllRandomImages();
+            for(Image image : images) {
+                byte[] imageData = image.getImage_data();
+                try{
+                    boolean areImagesIdentical=areImagesVisuallyIdentical(uploadImageData, imageData);
+                    if(areImagesIdentical) {
+                        throw new IllegalStateException("Image already exists");
+                    }
+                }
+                catch (IOException e) {
+                    throw new IllegalStateException("Error comparing images", e);
+                }
+            }
             // Construct file path
             String db_path = "avisoftdocument/SERVICE_PROVIDER/Random/Random_Images";
             String dbPath = db_path + File.separator + file.getOriginalFilename();
