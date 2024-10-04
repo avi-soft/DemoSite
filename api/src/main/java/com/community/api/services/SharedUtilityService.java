@@ -248,6 +248,7 @@ public class SharedUtilityService {
     {
         Map<String,Object>serviceProviderDetails=new HashMap<>();
         serviceProviderDetails.put("id", serviceProvider.getService_provider_id());
+        serviceProviderDetails.put("service_provider_id", serviceProvider.getService_provider_id());
         serviceProviderDetails.put("user_name", serviceProvider.getUser_name());
         serviceProviderDetails.put("first_name", serviceProvider.getFirst_name());
         serviceProviderDetails.put("last_name", serviceProvider.getLast_name());

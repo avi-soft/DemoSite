@@ -100,8 +100,6 @@
         <class>com.community.api.utils.ServiceProviderDocument</class>
         <class>com.community.api.entity.ServiceProviderTestStatus</class>
         <class>com.community.api.entity.ServiceProviderRank</class>
-        <class>com.community.api.entity.ProfessionalServiceProvider</class>
-        <class>com.community.api.entity.IndividualServiceProvider</class>
         <exclude-unlisted-classes/>
     </persistence-unit>
 
