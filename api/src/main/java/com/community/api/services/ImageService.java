@@ -49,7 +49,6 @@ public class ImageService {
 
         String db_path = "avisoftdocument/SERVICE_PROVIDER/Random/Random_Images";
 
-
         String dbPath = db_path + File.separator + file.getOriginalFilename();
         if (!isValidFileType(file)) {
             throw new IllegalArgumentException("Invalid file type. Only images are allowed.");
