@@ -3,7 +3,6 @@ package com.community.api.endpoint.avisoft.controller.product;
 import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
 import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
-import com.community.api.dto.AddPhysicalRequirementDto;
 import com.community.api.dto.AddProductDto;
 import com.community.api.dto.PhysicalRequirementDto;
 import com.community.api.dto.ReserveCategoryDto;

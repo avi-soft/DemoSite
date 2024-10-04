@@ -40,12 +40,12 @@ public class CommandLineService implements CommandLineRunner {
     public void run(String... args) throws Exception {
         // Check if data already exists to avoid duplication
         if (entityManager.createQuery("SELECT COUNT(c) FROM CustomProductState c", Long.class).getSingleResult() == 0) {
-            entityManager.persist(new CustomProductState(1L, "NEW"));
-            entityManager.persist(new CustomProductState(2L, "MODIFIED"));
-            entityManager.persist(new CustomProductState(3L, "APPROVED"));
-            entityManager.persist(new CustomProductState(4L, "REJECTED"));
-            entityManager.persist(new CustomProductState(5L, "LIVE"));
-            entityManager.persist(new CustomProductState(6L, "EXPIRED"));
+            entityManager.persist(new CustomProductState(1L, "NEW", "New State."));
+            entityManager.persist(new CustomProductState(2L, "MODIFIED", "Modified State."));
+            entityManager.persist(new CustomProductState(3L, "APPROVED", "Approved State."));
+            entityManager.persist(new CustomProductState(4L, "REJECTED", "Rejected State."));
+            entityManager.persist(new CustomProductState(5L, "LIVE", "Live State."));
+            entityManager.persist(new CustomProductState(6L, "EXPIRED", "Expired State."));
         }
 
         if(entityManager.createQuery("SELECT COUNT(c) FROM CustomJobGroup c", Long.class).getSingleResult() == 0) {
@@ -65,6 +65,7 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(new CustomReserveCategory(2L, "SC", "Schedule Caste", false));
             entityManager.persist(new CustomReserveCategory(3L, "ST", "Schedule Tribe", false));
             entityManager.persist(new CustomReserveCategory(4L, "OBC", "Other Backward Caste", false));
+            entityManager.persist(new CustomReserveCategory(5L, "OTHERS", "Others", false));
         }
 
         if(entityManager.createQuery("SELECT COUNT(c) FROM CustomProductRejectionStatus c", Long.class).getSingleResult() == 0) {
