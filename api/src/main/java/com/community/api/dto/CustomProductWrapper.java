@@ -133,11 +133,12 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
     CustomSubject customSubject;
     @JsonProperty("selection_criteria")
     String selectionCriteria;
-
+    @JsonProperty("created_date")
+    Date createdDate;
     @JsonProperty("notifying_authority")
     String notifyingAuthority;
 
-    public void wrapDetailsAddProduct(Product product, AddProductDto addProductDto, CustomJobGroup customJobGroup, CustomProductState customProductState, CustomApplicationScope customApplicationScope, Long creatorUserId, Role creatorRole, ReserveCategoryService reserveCategoryService, StateCode state, CustomGender customGender, CustomSector customSector, Qualification qualification, CustomStream customStream, CustomSubject customSubject) throws Exception {
+    public void wrapDetailsAddProduct(Product product, AddProductDto addProductDto, CustomJobGroup customJobGroup, CustomProductState customProductState, CustomApplicationScope customApplicationScope, Long creatorUserId, Role creatorRole, ReserveCategoryService reserveCategoryService, StateCode state, CustomGender customGender, CustomSector customSector, Qualification qualification, CustomStream customStream, CustomSubject customSubject, Date currentDate) throws Exception {
 
         this.id = product.getId();
         this.metaTitle = product.getMetaTitle();
@@ -149,6 +150,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.categoryName = product.getDefaultCategory().getName();
         this.priorityLevel = addProductDto.getPriorityLevel();
         this.archived = 'N';
+        this.createdDate = currentDate;
 
         this.promoMessage = product.getPromoMessage();
         this.activeGoLiveDate = addProductDto.getGoLiveDate();
@@ -274,7 +276,8 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
             this.defaultCategoryId = customProduct.getDefaultCategory().getId();
         }
     }
-    public void wrapDetails(CustomProduct customProduct) {
+
+    public void wrapDetails(CustomProduct customProduct, List<ReserveCategoryDto> reserveCategoryDtoList, List<PhysicalRequirementDto> physicalRequirementDtoList) {
         this.id = customProduct.getId();
         this.metaTitle = customProduct.getMetaTitle();
         this.displayTemplate = customProduct.getDisplayTemplate();
@@ -295,6 +298,68 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.displayTemplate = customProduct.getDisplayTemplate();
         this.platformFee = customProduct.getPlatformFee();
         this.state = customProduct.getState();
+
+        this.customApplicationScope = customProduct.getCustomApplicationScope();
+        this.customJobGroup = customProduct.getJobGroup();
+        this.customProductState = customProduct.getProductState();
+        this.reserveCategoryDtoList = reserveCategoryDtoList;
+        this.physicalRequirementDtoList = physicalRequirementDtoList;
+
+        this.modifiedDate = customProduct.getModifiedDate();
+
+        this.creatorUserId = customProduct.getUserId();
+        this.creatorRoleId = customProduct.getCreatoRole();
+        this.modifierUserId = customProduct.getModifierUserId();
+        this.modifierRoleId = customProduct.getModifierRole();
+
+        this.domicileRequired = customProduct.getDomicileRequired();
+        this.advertiserUrl = customProduct.getAdvertiserUrl();
+        this.examDateFrom = customProduct.getExamDateFrom();
+        this.examDateTo = customProduct.getExamDateTo();
+
+        this.lateDateToPayFee = customProduct.getLateDateToPayFee();
+        this.admitCardDateFrom = customProduct.getAdmitCardDateFrom();
+        this.adminCardDateTo = customProduct.getAdmitCardDateTo();
+        this.modificationDateFrom = customProduct.getModificationDateFrom();
+        this.modificationDateTo = customProduct.getModificationDateTo();
+        this.downloadNotificationLink = customProduct.getDownloadNotificationLink();
+        this.downloadSyllabusLink = customProduct.getDownloadSyllabusLink();
+        this.formComplexity = customProduct.getFormComplexity();
+
+        this.customGender = customProduct.getGenderSpecific();
+        this.customSector = customProduct.getSector();
+        this.qualification = customProduct.getQualification();
+        this.customStream = customProduct.getStream();
+        this.customSubject = customProduct.getSubject();
+        this.selectionCriteria = customProduct.getSelectionCriteria();
+        this.state = customProduct.getState();
+        this.notifyingAuthority = customProduct.getNotifyingAuthority();
+
+        if (customProduct.getDefaultCategory() != null) {
+            this.defaultCategoryId = customProduct.getDefaultCategory().getId();
+        }
+    }
+    public void wrapDetails(CustomProduct customProduct) {
+        this.id = customProduct.getId();
+        this.metaTitle = customProduct.getMetaTitle();
+        this.displayTemplate = customProduct.getDisplayTemplate();
+        this.createdDate = customProduct.getCreatedDate();
+        this.longDescription = customProduct.getLongDescription();
+        this.active = customProduct.isActive();
+        this.quantity = customProduct.getDefaultSku().getQuantityAvailable();
+        this.activeGoLiveDate = customProduct.getGoLiveDate();
+        this.categoryName = customProduct.getDefaultCategory().getName();
+        this.priorityLevel = customProduct.getPriorityLevel();
+        this.archived = customProduct.getArchived();
+        this.promoMessage = customProduct.getPromoMessage();
+        this.activeGoLiveDate = customProduct.getGoLiveDate();
+        this.activeEndDate = customProduct.getDefaultSku().getActiveEndDate();
+        this.activeStartDate = customProduct.getDefaultSku().getActiveStartDate();
+        this.url = customProduct.getUrl();
+        this.metaDescription = customProduct.getMetaDescription();
+
+        this.platformFee = customProduct.getPlatformFee();
+        this.state = customProduct.getState();
         this.notifyingAuthority = customProduct.getNotifyingAuthority();
 
         this.customApplicationScope = customProduct.getCustomApplicationScope();
@@ -311,6 +376,23 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
 
         this.examDateFrom = customProduct.getExamDateFrom();
         this.examDateTo = customProduct.getExamDateTo();
+        this.selectionCriteria = customProduct.getSelectionCriteria();
+        this.notifyingAuthority = customProduct.getNotifyingAuthority();
+        this.formComplexity = customProduct.getFormComplexity();
+        this.downloadNotificationLink = customProduct.getDownloadNotificationLink();
+        this.downloadSyllabusLink = customProduct.getDownloadSyllabusLink();
+        this.modificationDateFrom = customProduct.getModificationDateFrom();
+        this.modificationDateTo = customProduct.getModificationDateTo();
+        this.admitCardDateFrom = customProduct.getAdmitCardDateFrom();
+        this.adminCardDateTo = customProduct.getAdmitCardDateTo();
+        this.lateDateToPayFee = customProduct.getLateDateToPayFee();
+        this.domicileRequired = customProduct.getDomicileRequired();
+        this.modifiedDate = customProduct.getModifiedDate();
+        this.qualification = customProduct.getQualification();
+        this.customSector = customProduct.getSector();
+        this.customStream = customProduct.getStream();
+        this.customSubject = customProduct.getSubject();
+        this.customGender = customProduct.getGenderSpecific();
 
         if (customProduct.getDefaultCategory() != null) {
             this.defaultCategoryId = customProduct.getDefaultCategory().getId();
