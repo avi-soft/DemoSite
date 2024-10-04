@@ -61,7 +61,7 @@
 
         <exclude-unlisted-classes/>
     </persistence-unit>
-    
+
     <persistence-unit name="blSecurePU" transaction-type="RESOURCE_LOCAL">
         <non-jta-data-source>jdbc/webSecure</non-jta-data-source>
         <exclude-unlisted-classes/>
@@ -100,6 +100,8 @@
         <class>com.community.api.utils.ServiceProviderDocument</class>
         <class>com.community.api.entity.ServiceProviderTestStatus</class>
         <class>com.community.api.entity.ServiceProviderRank</class>
+        <class>com.community.api.entity.ProfessionalServiceProvider</class>
+        <class>com.community.api.entity.IndividualServiceProvider</class>
         <exclude-unlisted-classes/>
     </persistence-unit>
 
