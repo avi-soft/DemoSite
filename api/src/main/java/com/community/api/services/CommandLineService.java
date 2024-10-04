@@ -49,15 +49,15 @@ public class CommandLineService implements CommandLineRunner {
         }
 
         if(entityManager.createQuery("SELECT COUNT(c) FROM CustomJobGroup c", Long.class).getSingleResult() == 0) {
-            entityManager.persist(new CustomJobGroup(1L, 'A'));
-            entityManager.persist(new CustomJobGroup(2L, 'B'));
-            entityManager.persist(new CustomJobGroup(3L, 'C'));
-            entityManager.persist(new CustomJobGroup(4L, 'D'));
+            entityManager.persist(new CustomJobGroup(1L, 'A', "Executive Management"));
+            entityManager.persist(new CustomJobGroup(2L, 'B', "Professional and Technical"));
+            entityManager.persist(new CustomJobGroup(3L, 'C', "Administrative and Support"));
+            entityManager.persist(new CustomJobGroup(4L, 'D', "Entry-Level and Labor"));
         }
 
         if (entityManager.createQuery("SELECT COUNT(c) FROM CustomApplicationScope c", Long.class).getSingleResult() == 0) {
-            entityManager.persist(new CustomApplicationScope(1L, "STATE"));
-            entityManager.persist(new CustomApplicationScope(2L, "CENTER"));
+            entityManager.persist(new CustomApplicationScope(1L, "STATE", "State level operations."));
+            entityManager.persist(new CustomApplicationScope(2L, "CENTER", "Center level operations."));
         }
 
         if (entityManager.createQuery("SELECT COUNT(c) FROM CustomReserveCategory c", Long.class).getSingleResult() == 0) {

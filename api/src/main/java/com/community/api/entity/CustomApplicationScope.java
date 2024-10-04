@@ -26,4 +26,8 @@ public class CustomApplicationScope {
     @JsonProperty("application_scope")
     protected String applicationScope;
 
+    @Column(name="application_scope_description")
+    @JsonProperty("application_scope_description")
+    protected String applicationScopeDescription;
+
 }
