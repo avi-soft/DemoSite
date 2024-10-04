@@ -55,6 +55,8 @@ public class QualificationDetailsController
                 return ResponseService.generateErrorResponse("Service Provider does not exist",HttpStatus.NOT_FOUND);
             }
             return ResponseService.generateErrorResponse("Customer does not exist",HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
         catch (EntityAlreadyExistsException e)
         {
@@ -85,6 +87,8 @@ public class QualificationDetailsController
                 return ResponseService.generateSuccessResponse("Qualification Details list is empty for "+role,qualificationDetails,HttpStatus.OK);
             }
             return ResponseService.generateSuccessResponse("Qualification Details are found for "+role,qualificationDetails,HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
         catch (CustomerDoesNotExistsException e)
         {
@@ -118,6 +122,8 @@ public class QualificationDetailsController
                 return ResponseService.generateErrorResponse("Service Provider does not exist",HttpStatus.NOT_FOUND);
             }
             return ResponseService.generateErrorResponse("Customer does not exist",HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
         catch (EntityDoesNotExistsException e)
         {
@@ -148,6 +154,8 @@ public class QualificationDetailsController
                 return ResponseService.generateErrorResponse("Service Provider does not exist",HttpStatus.NOT_FOUND);
             }
             return ResponseService.generateErrorResponse("Customer does not exist",HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
         catch (ExaminationDoesNotExistsException e)
         {
