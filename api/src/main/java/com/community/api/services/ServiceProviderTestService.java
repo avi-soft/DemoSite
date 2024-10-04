@@ -7,6 +7,7 @@ import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.*;
 import com.community.api.entity.Image;
 import com.community.api.services.exception.EntityDoesNotExistsException;
+import com.community.api.services.exception.ExceptionHandlingImplement;
 import io.swagger.models.auth.In;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,11 +45,15 @@ public class ServiceProviderTestService {
     @Autowired
     private DocumentStorageService fileUploadService;
 
+    @Autowired
+    private ExceptionHandlingImplement exceptionHandlingImplement;
+
     @Value("${skill.test.required.image.size.min}")
     private String minImageSize;
 
-    public ServiceProviderTestService(EntityManager entityManager) {
+    public ServiceProviderTestService(EntityManager entityManager,ExceptionHandlingImplement exceptionHandlingImplement) {
         this.entityManager = entityManager;
+        this.exceptionHandlingImplement=exceptionHandlingImplement;
     }
 
     @Transactional
@@ -542,7 +547,7 @@ public class ServiceProviderTestService {
         }
         entityManager.merge(serviceProvider);
                 return ResponseService.generateSuccessResponse("Image test scores updated successfully",serviceProviderTest,HttpStatus.OK);
-            }
+    }
 
 
     private boolean validateResizedImage(ServiceProviderTest test) throws IOException {
@@ -702,9 +707,16 @@ public class ServiceProviderTestService {
         return null;
     }
     public  List<ServiceProviderRank> getAllRank() {
-        TypedQuery<ServiceProviderRank> query = entityManager.createQuery(Constant.FIND_ALL_SERVICE_PROVIDER_TEST_RANK_QUERY, ServiceProviderRank.class);
-        List<ServiceProviderRank> serviceProviderRankList = query.getResultList();
-        return serviceProviderRankList;
+        try
+        {
+            TypedQuery<ServiceProviderRank> query = entityManager.createQuery(Constant.FIND_ALL_SERVICE_PROVIDER_TEST_RANK_QUERY, ServiceProviderRank.class);
+            List<ServiceProviderRank> serviceProviderRankList = query.getResultList();
+            return serviceProviderRankList;
+        }
+        catch (Exception e) {
+            exceptionHandlingImplement.handleException(e);
+        }
+        return null;
     }
 }
 
