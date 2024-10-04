@@ -47,6 +47,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
 import javax.validation.ConstraintViolationException;
+import javax.validation.constraints.Email;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.UnsupportedEncodingException;
@@ -287,12 +288,31 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                             continue;
                         }
                     }
+                    if (field.isAnnotationPresent(Email.class)) {
+                        Email emailAnnotation=field.getAnnotation(Email.class);
+                        String message=emailAnnotation.message();
+                        if(fieldName.equals("primary_email"))
+                        {
+                            if(newValue.equals((String)updates.get("secondary_email"))||(existingServiceProvider.getSecondary_email()!=null&&newValue.equals(existingServiceProvider.getSecondary_email())))
+                                errorMessages.add("primary and secondary email cannot be same");
+                        }
+                        else if(fieldName.equals("secondary_email"))
+                        {
+                            if(newValue.equals((String)updates.get("primary_email"))||(existingServiceProvider.getPrimary_email()!=null&&newValue.equals(existingServiceProvider.getPrimary_email())))
+                                errorMessages.add("primary and secondary email cannot be same");
+                        }
+                        if(!sharedUtilityService.isValidEmail((String)newValue)) {
+                            errorMessages.add(message.replace("{field}", fieldName));
+                            continue;
+                        }
+                    }
+
                     if (field.isAnnotationPresent(Pattern.class)) {
                         Pattern patternAnnotation = field.getAnnotation(Pattern.class);
                         String regex = patternAnnotation.regexp();
                         String message = patternAnnotation.message(); // Get custom message
                         if (!newValue.toString().matches(regex)) {
-                            errorMessages.add(message.replace("{field}", fieldName)); // Use a placeholder
+                            errorMessages.add(fieldName+ "is invalid"); // Use a placeholder
                             continue;
                         }
                     }
@@ -321,6 +341,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             return ResponseService.generateErrorResponse("Error updating Service Provider : ", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
     public List<String> validateAddressFields(Map<String,Object>updates)
     {
         List<String> errorMessages = new ArrayList<>();
