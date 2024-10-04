@@ -40,7 +40,60 @@ public class ServiceProviderRankService {
             throw new IllegalArgumentException("The service provider with id " + serviceProviderId + " does not exist");
         }
 
-        if (serviceProviderEntity.getType().equalsIgnoreCase("PROFESSIONAL")) {
+        List<String> commonRequiredKeys = List.of(
+                "businessUnitInfraScore",
+                "qualificationScore",
+                "workExperienceScore",
+                "technicalExpertiseScore"
+        );
+
+        // Define specific required keys for PROFESSIONAL
+        List<String> professionalRequiredKeys = List.of("staffScore");
+
+        // Define specific required keys for INDIVIDUAL
+        List<String> individualRequiredKeys = List.of("partTimeOrFullTimeScore");
+
+        // Check that all common required keys are present
+        for (String key : commonRequiredKeys) {
+            if (!scoreMap.containsKey(key)) {
+                throw new IllegalArgumentException("Missing required score: " + key);
+            }
+            if (scoreMap.get(key) < 0) {
+                throw new IllegalArgumentException("Score " + key + " cannot be negative");
+            }
+        }
+
+        if(scoreMap.get("businessUnitInfraScore")>20)
+        {
+            throw new IllegalArgumentException("Business Unit Infra Score cannot be more than 20 points");
+        }
+        if(scoreMap.get("qualificationScore")>10)
+        {
+            throw new IllegalArgumentException("Qualification Score cannot be more than 10 points");
+        }
+        if(scoreMap.get("workExperienceScore")>20)
+        {
+            throw new IllegalArgumentException("Work Experience Score cannot be more than 20 points");
+        }
+        if(scoreMap.get("technicalExpertiseScore")>10)
+        {
+            throw new IllegalArgumentException("Technical Expertise Score cannot be more than 10 points");
+        }
+
+            if (serviceProviderEntity.getType().equalsIgnoreCase("PROFESSIONAL")) {
+
+            for (String key : professionalRequiredKeys) {
+                if (!scoreMap.containsKey(key)) {
+                    throw new IllegalArgumentException("Missing required score for Professional: " + key);
+                }
+                if (scoreMap.get(key) < 0) {
+                    throw new IllegalArgumentException("Score " + key + " cannot be negative");
+                }
+                if(scoreMap.get(key) >10)
+                {
+                    throw new IllegalArgumentException("Staff Score cannot be more than 10 points");
+                }
+            }
 
             updateScores(serviceProviderEntity, scoreMap);
             if(scoreMap.containsKey("staffScore"))
@@ -63,6 +116,19 @@ public class ServiceProviderRankService {
         }
         else
         {
+            for (String key : individualRequiredKeys) {
+                if (!scoreMap.containsKey(key)) {
+                    throw new IllegalArgumentException("Missing required score for Individual: " + key);
+                }
+                if (scoreMap.get(key) < 0) {
+                    throw new IllegalArgumentException("Score " + key + " cannot be negative");
+                }
+                if(scoreMap.get(key)>10)
+                {
+                    throw new IllegalArgumentException("Part Time or Full Time Score cannot be more than 10 points");
+                }
+            }
+
             updateScores(serviceProviderEntity,scoreMap);
             if (scoreMap.containsKey("partTimeOrFullTimeScore")) {
                 serviceProviderEntity.setPartTimeOrFullTimeScore(scoreMap.get("partTimeOrFullTimeScore"));

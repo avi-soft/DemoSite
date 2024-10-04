@@ -7,6 +7,7 @@ import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.*;
 import com.community.api.entity.Image;
 import com.community.api.services.exception.EntityDoesNotExistsException;
+import io.swagger.models.auth.In;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -420,6 +421,14 @@ public class ServiceProviderTestService {
         {
             return ResponseService.generateErrorResponse("Image Test Score cannot be null",HttpStatus.BAD_REQUEST);
         }
+        if(giveUploadedImageScoreDTO.getImage_test_scores()<0)
+        {
+            return ResponseService.generateErrorResponse("Image Upload Score cannot be a negative number",HttpStatus.BAD_REQUEST);
+        }
+        if(giveUploadedImageScoreDTO.getImage_test_scores()>15)
+        {
+            return ResponseService.generateErrorResponse("Image Upload Score cannot be greater than 15",HttpStatus.BAD_REQUEST);
+        }
         ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
         if (serviceProvider == null) {
             throw new EntityDoesNotExistsException("Service Provider not found");
@@ -458,8 +467,45 @@ public class ServiceProviderTestService {
         serviceProvider.setImageUploadScore(giveUploadedImageScoreDTO.getImage_test_scores());
         serviceProvider.setTotalSkillTestPoints(serviceProviderTest.getImage_test_scores() + serviceProviderTest.getTyping_test_scores());
 
-        entityManager.merge(serviceProvider);
+        Integer totalScore=serviceProvider.getWrittenTestScore()+giveUploadedImageScoreDTO.getImage_test_scores();
+        if(serviceProvider.getBusinessUnitInfraScore()!=null)
+        {
+            Integer businessUnitInfraScore= serviceProvider.getBusinessUnitInfraScore();
+            totalScore+=businessUnitInfraScore;
+        }
+        if(serviceProvider.getWorkExperienceScore()!=null)
+        {
+            Integer workExperienceScore= serviceProvider.getWorkExperienceScore();
+            totalScore+=workExperienceScore;
+        }
+        if(serviceProvider.getQualificationScore()!=null)
+        {
+            Integer qualificationScore= serviceProvider.getQualificationScore();
+            totalScore+=qualificationScore;
+        }
+        if(serviceProvider.getTechnicalExpertiseScore()!=null)
+        {
+            Integer technicalExpertiseScore= serviceProvider.getTechnicalExpertiseScore();
+            totalScore+=technicalExpertiseScore;
+        }
 
+        if(serviceProvider.getType().equalsIgnoreCase("PROFESSIONAL"))
+        {
+            if(serviceProvider.getStaffScore()!=null)
+            {
+                Integer staffScore= serviceProvider.getStaffScore();
+                totalScore+=staffScore;
+            }
+        }
+        else {
+            if(serviceProvider.getStaffScore()!=null)
+            {
+                Integer partTimeOrFullTimeScore= serviceProvider.getPartTimeOrFullTimeScore();
+                totalScore+=partTimeOrFullTimeScore;
+            }
+        }
+        serviceProvider.setTotalScore(totalScore);
+        entityManager.merge(serviceProvider);
                 return ResponseService.generateSuccessResponse("Image test scores updated successfully",serviceProviderTest,HttpStatus.OK);
             }
 
