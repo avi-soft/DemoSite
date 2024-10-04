@@ -35,7 +35,9 @@ public class StateController {
         try {
             List<StateCode> names= districtService.findStateList();
             return responseService.generateSuccessResponse("List Retrieved Successfully",names,HttpStatus.OK);
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }catch (Exception e) {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Error retrieving list",HttpStatus.INTERNAL_SERVER_ERROR);
         }

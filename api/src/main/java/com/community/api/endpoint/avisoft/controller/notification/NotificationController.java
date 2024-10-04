@@ -36,6 +36,8 @@ public class NotificationController
         catch (CustomerDoesNotExistsException customerDoesNotExistsException)
         {
             ResponseService.generateErrorResponse("Customer does not exist", HttpStatus.NOT_FOUND);
+        }catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
         catch (RuntimeException e)
         {

@@ -34,6 +34,8 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import static com.community.api.component.Constant.SOME_EXCEPTION_OCCURRED;
+
 @RestController
 @RequestMapping(value = "/category-custom")
 public class CategoryController extends CatalogEndpoint {
@@ -108,6 +110,12 @@ public class CategoryController extends CatalogEndpoint {
             wrapper.wrapDetailsCategory(category, null, request);
             return ResponseService.generateSuccessResponse("CATEGORY ADDED SUCCESSFULLY", wrapper, HttpStatus.OK);
 
+        } catch (NumberFormatException numberFormatException) {
+            exceptionHandlingService.handleException(numberFormatException);
+            return ResponseService.generateErrorResponse(SOME_EXCEPTION_OCCURRED + ": " + numberFormatException.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException illegalArgumentException) {
+            exceptionHandlingService.handleException(illegalArgumentException);
+            return ResponseService.generateErrorResponse(SOME_EXCEPTION_OCCURRED + ": " + illegalArgumentException.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return ResponseService.generateErrorResponse(SOMEEXCEPTIONOCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -182,9 +190,11 @@ public class CategoryController extends CatalogEndpoint {
 
         } catch (NumberFormatException numberFormatException) {
             exceptionHandlingService.handleException(numberFormatException);
-            return ResponseService.generateErrorResponse(numberFormatException.getMessage(), HttpStatus.BAD_REQUEST);
-        }
-        catch (Exception exception) {
+            return ResponseService.generateErrorResponse(SOME_EXCEPTION_OCCURRED + ": " + numberFormatException.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException illegalArgumentException) {
+            exceptionHandlingService.handleException(illegalArgumentException);
+            return ResponseService.generateErrorResponse(SOME_EXCEPTION_OCCURRED + ": " + illegalArgumentException.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return ResponseService.generateErrorResponse(SOMEEXCEPTIONOCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -212,6 +222,12 @@ public class CategoryController extends CatalogEndpoint {
                 return ResponseService.generateErrorResponse("CATEGORY NOT FOUND", HttpStatus.NOT_FOUND);
             }
 
+        } catch (NumberFormatException numberFormatException) {
+            exceptionHandlingService.handleException(numberFormatException);
+            return ResponseService.generateErrorResponse(SOME_EXCEPTION_OCCURRED + ": " + numberFormatException.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException illegalArgumentException) {
+            exceptionHandlingService.handleException(illegalArgumentException);
+            return ResponseService.generateErrorResponse(SOME_EXCEPTION_OCCURRED + ": " + illegalArgumentException.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return ResponseService.generateErrorResponse(SOMEEXCEPTIONOCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -271,6 +287,12 @@ public class CategoryController extends CatalogEndpoint {
             } else {
                 return ResponseService.generateErrorResponse("CATEGORY NOT FOUND.", HttpStatus.NOT_FOUND);
             }
+        } catch (NumberFormatException numberFormatException) {
+            exceptionHandlingService.handleException(numberFormatException);
+            return ResponseService.generateErrorResponse(SOME_EXCEPTION_OCCURRED + ": " + numberFormatException.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException illegalArgumentException) {
+            exceptionHandlingService.handleException(illegalArgumentException);
+            return ResponseService.generateErrorResponse(SOME_EXCEPTION_OCCURRED + ": " + illegalArgumentException.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return ResponseService.generateErrorResponse(SOMEEXCEPTIONOCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
