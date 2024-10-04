@@ -137,9 +137,11 @@ public class CartEndPoint extends BaseEndpoint {
                 } else
                     return ResponseService.generateErrorResponse("Error removing all items from cart", HttpStatus.INTERNAL_SERVER_ERROR);
             }
+
         }catch (NumberFormatException e) {
             return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
+
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error removing all items from cart : " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -192,9 +194,11 @@ public class CartEndPoint extends BaseEndpoint {
             responseBody.put("cart_id", cart.getId());
             responseBody.put("added_product_id", orderItem.getOrderItemAttributes().get("productId").getValue());
             return ResponseService.generateSuccessResponse("Cart updated", responseBody, HttpStatus.OK);
+
         }catch (NumberFormatException e) {
             return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
+
             return ResponseService.generateErrorResponse("Error adding item to cart : " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
@@ -218,8 +222,10 @@ public class CartEndPoint extends BaseEndpoint {
                     return ResponseService.generateErrorResponse("No items found", HttpStatus.NOT_FOUND);
             } else
                 return ResponseService.generateErrorResponse("Customer not found", HttpStatus.NOT_FOUND);
+
         }catch (NumberFormatException e) {
             return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
+
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error retrieving cart", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -268,8 +274,10 @@ public class CartEndPoint extends BaseEndpoint {
                 return ResponseService.generateSuccessResponse("Cart items", response, HttpStatus.OK);
             } else
                 return ResponseService.generateErrorResponse("No items in cart", HttpStatus.NOT_FOUND);
+
         }catch (NumberFormatException e) {
             return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
+
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error retrieving cart Items", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -323,9 +331,11 @@ public class CartEndPoint extends BaseEndpoint {
             } else {
                 return ResponseService.generateErrorResponse("Error removing item from cart: item not present in cart", HttpStatus.NOT_FOUND);
             }
+
         }catch (NumberFormatException e) {
             return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
+
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error deleting", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -380,9 +390,11 @@ public class CartEndPoint extends BaseEndpoint {
                 }
                 entityManager.merge(cart);
                 return ResponseService.generateSuccessResponse("Order Placed", cart.getId(), HttpStatus.OK);
+
         }catch (NumberFormatException e) {
             return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
+
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error placing order "+e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -404,9 +416,11 @@ public class CartEndPoint extends BaseEndpoint {
                     productList.add(sharedUtilityService.createProductResponseMap(product,null));
                 }
                 return ResponseService.generateSuccessResponse("Cart Recovery Log : ",productList,HttpStatus.OK);
+
             }catch (NumberFormatException e) {
                 return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
             }catch (Exception e) {
+
                 exceptionHandling.handleException(e);
                 return ResponseService.generateErrorResponse("Error fetching recovery log", HttpStatus.INTERNAL_SERVER_ERROR);
             }

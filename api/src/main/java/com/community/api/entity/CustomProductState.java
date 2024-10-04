@@ -26,6 +26,10 @@ public class CustomProductState {
     @JsonProperty("product_state")
     String productState;
 
+    @Column(name = "product_state_description")
+    @JsonProperty("product_state_description")
+    String productStateDescription;
+
 }
 
 

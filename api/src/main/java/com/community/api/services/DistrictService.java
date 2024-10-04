@@ -50,12 +50,19 @@ public class DistrictService {
             query.setParameter("stateId", stateId);
 
             List<StateCode> stateCode = query.getResultList();
+            if(stateCode.size() ==0 || stateCode == null){
+                throw new IllegalArgumentException("STATE NOT FOUND");
+            }
             return stateCode.get(0);
         } catch (NumberFormatException numberFormatException) {
-            throw new NumberFormatException("NUMBER FORMAT EXCEPTION: " + numberFormatException.getMessage());
+            exceptionHandling.handleException(numberFormatException);
+            throw new NumberFormatException("Number format exception: " + numberFormatException.getMessage());
+        } catch (IllegalArgumentException illegalArgumentException) {
+            exceptionHandling.handleException(illegalArgumentException);
+            throw new IllegalArgumentException(illegalArgumentException.getMessage());
         } catch (Exception exception) {
             exceptionHandling.handleException(exception);
-            throw new Exception("SOME EXCEPTION OCCURED: "+ exception.getMessage());
+            throw new Exception("Some Exception Occurred: " + exception.getMessage());
         }
     }
 }
