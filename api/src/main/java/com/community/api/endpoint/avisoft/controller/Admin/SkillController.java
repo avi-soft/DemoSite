@@ -46,7 +46,9 @@ public class SkillController {
                 }
                 skill=sanitizerService.sanitizeInputMap(skill);
                return skillService.addSkill(skill);
-        }catch (Exception exception)
+        }catch (IllegalArgumentException e) {
+                return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
+            }catch (Exception exception)
             {
                 exceptionHandling.handleException(exception);
                 return responseService.generateErrorResponse("Error saving skill : " + exception.getMessage(),HttpStatus.BAD_REQUEST);
@@ -56,6 +58,8 @@ public class SkillController {
     public ResponseEntity<?> getSkillList() {
         try{
             return responseService.generateSuccessResponse("List Fetched Successfully",skillService.findAllSkillList(),HttpStatus.OK);
+        }catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
         }catch (Exception exception)
         {
             exceptionHandling.handleException(exception);

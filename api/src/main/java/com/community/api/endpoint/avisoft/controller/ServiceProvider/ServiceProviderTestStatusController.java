@@ -37,12 +37,21 @@ public class ServiceProviderTestStatusController {
     @GetMapping("/get-all-service-provider-test-status")
 
     public ResponseEntity<?> getAllServiceProviderTestStatus() {
-        TypedQuery<ServiceProviderTestStatus> query = entityManager.createQuery(FIND_ALL_SERVICE_PROVIDER_TEST_STATUS_QUERY, ServiceProviderTestStatus.class);
-        List<ServiceProviderTestStatus> serviceProviderTestStatusList = query.getResultList();
-        if (serviceProviderTestStatusList.isEmpty()) {
-            return responseService.generateResponse(HttpStatus.OK, "Service Provider Test Status List is Empty", serviceProviderTestStatusList);
+
+        try{
+            TypedQuery<ServiceProviderTestStatus> query = entityManager.createQuery(FIND_ALL_SERVICE_PROVIDER_TEST_STATUS_QUERY, ServiceProviderTestStatus.class);
+            List<ServiceProviderTestStatus> serviceProviderTestStatusList = query.getResultList();
+            if (serviceProviderTestStatusList.isEmpty()) {
+                return responseService.generateResponse(HttpStatus.OK, "Service Provider Test Status List is Empty", serviceProviderTestStatusList);
+            }
+            return responseService.generateResponse(HttpStatus.OK, "Service Provider Test Status List Retrieved Successfully", serviceProviderTestStatusList);
+        } catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
+        } catch (Exception e){
+            exceptionHandling.handleException(e);
+            return responseService.generateErrorResponse("Some error fetching service provider test status: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return responseService.generateResponse(HttpStatus.OK, "Service Provider Test Status List Retrieved Successfully", serviceProviderTestStatusList);
+
     }
 
     @Transactional
@@ -50,6 +59,8 @@ public class ServiceProviderTestStatusController {
     public ResponseEntity<?> updateTestStatus(@RequestBody UpdateTestStatus updateTestStatus, @PathVariable Long serviceProviderId) {
         try {
             return serviceProviderTestStatusService.updateTestStatus(updateTestStatus,serviceProviderId);
+        }  catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Some error updating: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
