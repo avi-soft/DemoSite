@@ -249,7 +249,24 @@ public class ServiceProviderTestService {
         int typingTestScore = calculateTypingTestScore(test.getTyping_test_text(), typedText);
         test.setTyping_test_scores(typingTestScore);
         serviceProvider.setWrittenTestScore(typingTestScore);
-
+        serviceProvider.setTotalScore(typingTestScore);
+        if(serviceProvider.getType().equalsIgnoreCase("PROFESSIONAL"))
+        {
+            ServiceProviderRank serviceProviderRank= assignRankingForProfessional(serviceProvider.getTotalScore());
+            if(serviceProviderRank==null)
+            {
+                throw new IllegalArgumentException("Service Provider Rank is not found for assigning a rank to the Professional ServiceProvider");
+            }
+            serviceProvider.setRanking(serviceProviderRank);
+        }
+        else {
+            ServiceProviderRank serviceProviderRank= assignRankingForIndividual(serviceProvider.getTotalScore());
+            if(serviceProviderRank==null)
+            {
+                throw new IllegalArgumentException("Service Provider Rank is not found for assigning a rank to the Individual ServiceProvider");
+            }
+            serviceProvider.setRanking(serviceProviderRank);
+        }
         entityManager.merge(serviceProvider);
         return entityManager.merge(test);
 
@@ -467,7 +484,12 @@ public class ServiceProviderTestService {
         serviceProvider.setImageUploadScore(giveUploadedImageScoreDTO.getImage_test_scores());
         serviceProvider.setTotalSkillTestPoints(serviceProviderTest.getImage_test_scores() + serviceProviderTest.getTyping_test_scores());
 
-        Integer totalScore=serviceProvider.getWrittenTestScore()+giveUploadedImageScoreDTO.getImage_test_scores();
+        Integer totalScore=0;
+        totalScore+=giveUploadedImageScoreDTO.getImage_test_scores();
+        if(serviceProvider.getWrittenTestScore()!=null)
+        {
+             totalScore+=serviceProvider.getWrittenTestScore();
+        }
         if(serviceProvider.getBusinessUnitInfraScore()!=null)
         {
             Integer businessUnitInfraScore= serviceProvider.getBusinessUnitInfraScore();
@@ -496,15 +518,28 @@ public class ServiceProviderTestService {
                 Integer staffScore= serviceProvider.getStaffScore();
                 totalScore+=staffScore;
             }
+            serviceProvider.setTotalScore(totalScore);
+            ServiceProviderRank serviceProviderRank= assignRankingForProfessional(totalScore);
+            if(serviceProviderRank==null)
+            {
+                throw new IllegalArgumentException("Service Provider Rank is not found for assigning a rank to the Professional ServiceProvider");
+            }
+            serviceProvider.setRanking(serviceProviderRank);
         }
         else {
-            if(serviceProvider.getStaffScore()!=null)
+            if(serviceProvider.getPartTimeOrFullTimeScore()!=null)
             {
                 Integer partTimeOrFullTimeScore= serviceProvider.getPartTimeOrFullTimeScore();
                 totalScore+=partTimeOrFullTimeScore;
             }
+            serviceProvider.setTotalScore(totalScore);
+            ServiceProviderRank serviceProviderRank= assignRankingForIndividual(totalScore);
+            if(serviceProviderRank==null)
+            {
+                throw new IllegalArgumentException("Service Provider Rank is not found for assigning a rank to the Individual ServiceProvider");
+            }
+            serviceProvider.setRanking(serviceProviderRank);
         }
-        serviceProvider.setTotalScore(totalScore);
         entityManager.merge(serviceProvider);
                 return ResponseService.generateSuccessResponse("Image test scores updated successfully",serviceProviderTest,HttpStatus.OK);
             }
@@ -628,6 +663,48 @@ public class ServiceProviderTestService {
         int g2 = (rgb2 >> 8) & 0xff;
         int b2 = rgb2 & 0xff;
         return Math.abs(r1 - r2) + Math.abs(g1 - g2) + Math.abs(b1 - b2);
+    }
+    public ServiceProviderRank assignRankingForProfessional(Integer totalScore) {
+        List<ServiceProviderRank> professionalServiceProviderRanks= getAllRank();
+
+        if (totalScore >= 75) {
+            return searchServiceProviderRank(professionalServiceProviderRanks,"1a");
+        } else if (totalScore >= 50) {
+            return searchServiceProviderRank(professionalServiceProviderRanks,"1b");
+        } else if (totalScore >= 25) {
+            return searchServiceProviderRank(professionalServiceProviderRanks,"1c");
+        } else {
+            return searchServiceProviderRank(professionalServiceProviderRanks,"1d");
+        }
+    }
+    public ServiceProviderRank assignRankingForIndividual(Integer totalScore) {
+        List<ServiceProviderRank> professionalServiceProviderRanks= getAllRank();
+
+        if (totalScore >= 75) {
+            return searchServiceProviderRank(professionalServiceProviderRanks,"2a");
+        } else if (totalScore >= 50) {
+            return searchServiceProviderRank(professionalServiceProviderRanks,"2b");
+        } else if (totalScore >= 25) {
+            return searchServiceProviderRank(professionalServiceProviderRanks,"2c");
+        } else {
+            return searchServiceProviderRank(professionalServiceProviderRanks,"2d");
+        }
+    }
+    public  ServiceProviderRank searchServiceProviderRank(List<ServiceProviderRank> serviceProviderRankList,String rankValue)
+    {
+        for(ServiceProviderRank serviceProviderRank:serviceProviderRankList)
+        {
+            if(serviceProviderRank.getRank_name().equalsIgnoreCase(rankValue))
+            {
+                return serviceProviderRank;
+            }
+        }
+        return null;
+    }
+    public  List<ServiceProviderRank> getAllRank() {
+        TypedQuery<ServiceProviderRank> query = entityManager.createQuery(Constant.FIND_ALL_SERVICE_PROVIDER_TEST_RANK_QUERY, ServiceProviderRank.class);
+        List<ServiceProviderRank> serviceProviderRankList = query.getResultList();
+        return serviceProviderRankList;
     }
 }
 

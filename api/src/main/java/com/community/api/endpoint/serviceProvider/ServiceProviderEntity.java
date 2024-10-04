@@ -49,7 +49,7 @@ public class ServiceProviderEntity  {
  private Long service_provider_id;
 
     @Column
-    private String type;
+    private String type="PROFESSIONAL";
 
     private Integer totalScore;
 

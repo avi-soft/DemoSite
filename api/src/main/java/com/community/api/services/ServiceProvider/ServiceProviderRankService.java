@@ -27,7 +27,7 @@ public class ServiceProviderRankService {
     @Autowired
     private ResponseService responseService;
 
-    public List<ServiceProviderRank> getAllRank() {
+    public  List<ServiceProviderRank> getAllRank() {
         TypedQuery<ServiceProviderRank> query = entityManager.createQuery(Constant.FIND_ALL_SERVICE_PROVIDER_TEST_RANK_QUERY, ServiceProviderRank.class);
         List<ServiceProviderRank> serviceProviderRankList = query.getResultList();
         return serviceProviderRankList;
@@ -103,9 +103,14 @@ public class ServiceProviderRankService {
 
             // Calculate total score
             Integer totalScore = calculateProfessionalServiceProviderScore(scoreMap);
-            if (serviceProviderEntity.getTotalSkillTestPoints() != null) {
-                totalScore += serviceProviderEntity.getTotalSkillTestPoints();
-            }
+                if (serviceProviderEntity.getWrittenTestScore() != null) {
+                    totalScore += serviceProviderEntity.getWrittenTestScore();
+                }
+
+                if(serviceProviderEntity.getImageUploadScore() != null)
+                {
+                    totalScore+=serviceProviderEntity.getImageUploadScore();
+                }
             serviceProviderEntity.setTotalScore(totalScore);
             // Assign ranking
             ServiceProviderRank serviceProviderRank = assignRankingForProfessional(totalScore);
@@ -135,8 +140,13 @@ public class ServiceProviderRankService {
             }
 
             Integer totalScore = calculateIndividualServiceProviderScore(scoreMap);
-            if (serviceProviderEntity.getTotalSkillTestPoints() != null) {
-                totalScore += serviceProviderEntity.getTotalSkillTestPoints();
+            if (serviceProviderEntity.getWrittenTestScore() != null) {
+                totalScore += serviceProviderEntity.getWrittenTestScore();
+            }
+
+            if(serviceProviderEntity.getImageUploadScore() != null)
+            {
+                totalScore+=serviceProviderEntity.getImageUploadScore();
             }
             serviceProviderEntity.setTotalScore(totalScore);
             ServiceProviderRank serviceProviderRank= assignRankingForIndividual(totalScore);
