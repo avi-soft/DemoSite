@@ -80,23 +80,13 @@ public class ImageService {
 
     @Transactional
     public List<Image> saveImages(List<MultipartFile> files) throws Exception {
-        // Define the base path where images will be saved
-        String currentDir = System.getProperty("user.dir");
-        String testDirPath = currentDir + "/../test/";
-        String dbPathBase = "avisoftdocument/SERVICE_PROVIDER/Random Images";
-
-        // Define the directory structure
-        File avisoftDir = new File(testDirPath + dbPathBase);
-        if (!avisoftDir.exists()) {
-            avisoftDir.mkdirs();
-        }
 
         List<Image> savedImages = new ArrayList<>();
 
         for (MultipartFile file : files) {
             // Construct file path
-            String filePath = avisoftDir + File.separator + file.getOriginalFilename();
-            String dbPath = dbPathBase + File.separator + file.getOriginalFilename();
+            String db_path = "avisoftdocument/SERVICE_PROVIDER/Random/Random_Images";
+            String dbPath = db_path + File.separator + file.getOriginalFilename();
 
             // Validate the file type
             if (!isValidFileType(file)) {
@@ -112,20 +102,14 @@ public class ImageService {
 
             byte[] fileBytes = file.getBytes();
 
-            try {
-                // Save the file to disk
-                File destFile = new File(filePath);
-                FileUtils.writeByteArrayToFile(destFile, fileBytes);
-            } catch (IOException e) {
-                throw new Exception("Failed to save the file", e);
-            }
+            fileUploadService.uploadFileOnFileServer(file, "Random_Images", "Random", "SERVICE_PROVIDER");
 
             // Create and populate the Image entity
             Image image = new Image();
             image.setFile_name(file.getOriginalFilename());
             image.setFile_type(file.getContentType());
             image.setImage_data(fileBytes);
-            image.setFile_path(dbPath); // Store the file path in the database
+            image.setFile_path(dbPath);
 
             // Persist the image entity to the database
             entityManager.persist(image);
