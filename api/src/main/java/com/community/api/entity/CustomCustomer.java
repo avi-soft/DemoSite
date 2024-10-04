@@ -69,7 +69,8 @@ public class CustomCustomer extends CustomerImpl {
     @Column(name = "category")
     private String category; //@TODO -make it int for using in cart
 
-
+    @Column(name = "hide_phone_number")
+    private Boolean hidePhoneNumber=false;
 
     @Column(name = "category_issue_date", insertable = false, updatable = false)
     private String categoryIssueDate;
@@ -193,7 +194,7 @@ public class CustomCustomer extends CustomerImpl {
             name = "cart_recovery_log", // The name of the join table
             joinColumns = @JoinColumn(name = "customer_id"),
             inverseJoinColumns = @JoinColumn(name = "product_id"))
-        private List<CustomProduct> cartRecoveryLog;
+    private List<CustomProduct> cartRecoveryLog;
 
     @Nullable
     private String token;

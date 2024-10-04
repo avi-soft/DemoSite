@@ -13,11 +13,11 @@ import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 import java.io.File;
 import java.nio.file.AccessDeniedException;
-import java.util.Arrays;
-import java.util.Iterator;
+import java.util.*;
 
 import javax.persistence.EntityManager;
 import javax.persistence.EntityNotFoundException;
+import javax.persistence.TypedQuery;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.awt.image.BufferedImage;
@@ -25,8 +25,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ByteArrayInputStream;
 import java.security.MessageDigest;
-import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.codec.binary.Hex;
 
@@ -38,6 +36,9 @@ public class ImageService {
     private EntityManager entityManager;
     @Autowired
     private DocumentStorageService fileUploadService;
+
+    @Value("${spring.servlet.multipart.max-file-size}")
+    private String maxImageSize;
 
     public ImageService(EntityManager entityManager) {
         this.entityManager = entityManager;
@@ -53,9 +54,10 @@ public class ImageService {
         if (!isValidFileType(file)) {
             throw new IllegalArgumentException("Invalid file type. Only images are allowed.");
         }
-        if (file.getSize() < Constant.MAX_FILE_SIZE) {
-            String maxImageSize= ImageSizeConfig.convertBytesToReadableSize(Constant.MAX_FILE_SIZE);
-            throw new IllegalArgumentException("File size must be larger than "+maxImageSize);
+        long maxSizeInBytes = ImageSizeConfig.convertToBytes(maxImageSize);
+        if (file.getSize() < Constant.MAX_FILE_SIZE || file.getSize() > maxSizeInBytes) {
+            String minImageSize= ImageSizeConfig.convertBytesToReadableSize(Constant.MAX_FILE_SIZE);
+            throw new IllegalArgumentException("Image size should be between " + minImageSize + " and " + maxImageSize);
         }
 
         byte[] fileBytes = file.getBytes();
@@ -68,10 +70,83 @@ public class ImageService {
         image.setFile_name(file.getOriginalFilename());
         image.setFile_type(file.getContentType());
         image.setImage_data(fileBytes);
-        image.setFile_path(dbPath); // Store the file path in the database
+        image.setFile_path(dbPath);
 
         // Persist the image entity to the database
         entityManager.persist(image);
+        return image;
+    }
+
+    @Transactional
+    public List<Image> saveImages(List<MultipartFile> files) throws Exception {
+
+        List<Image> savedImages = new ArrayList<>();
+
+        for (MultipartFile file : files) {
+            // Construct file path
+            String db_path = "avisoftdocument/SERVICE_PROVIDER/Random/Random_Images";
+            String dbPath = db_path + File.separator + file.getOriginalFilename();
+
+            // Validate the file type
+            if (!isValidFileType(file)) {
+                throw new IllegalArgumentException("Invalid file type. Only images are allowed.");
+            }
+
+            // Validate the file size
+            long maxSizeInBytes = ImageSizeConfig.convertToBytes(maxImageSize);
+            if (file.getSize() < Constant.MAX_FILE_SIZE || file.getSize() > maxSizeInBytes) {
+                String minImageSize = ImageSizeConfig.convertBytesToReadableSize(Constant.MAX_FILE_SIZE);
+                throw new IllegalArgumentException("Image size should be between " + minImageSize + " and " + maxImageSize);
+            }
+
+            byte[] fileBytes = file.getBytes();
+
+            fileUploadService.uploadFileOnFileServer(file, "Random_Images", "Random", "SERVICE_PROVIDER");
+
+            // Create and populate the Image entity
+            Image image = new Image();
+            image.setFile_name(file.getOriginalFilename());
+            image.setFile_type(file.getContentType());
+            image.setImage_data(fileBytes);
+            image.setFile_path(dbPath);
+
+            // Persist the image entity to the database
+            entityManager.persist(image);
+            savedImages.add(image);
+        }
+
+        return savedImages;
+    }
+
+    @Transactional
+    public List<Image> deleteAllImages()
+    {
+        List<Image> images =getAllRandomImages();
+        for(Image image :images)
+        {
+            entityManager.remove(image);
+        }
+        return images;
+    }
+
+
+    @Transactional
+    public List<Image> getAllRandomImages()
+    {
+        TypedQuery<Image> typedQuery= entityManager.createQuery(Constant.GET_ALL_RANDOM_IMAGES,Image.class);
+        List<Image> images = typedQuery.getResultList();
+        return images;
+    }
+
+    @Transactional
+    public Image deleteImageById(Long imageId)
+    {
+        Image image = entityManager.find(Image.class, imageId);
+        if(image == null)
+        {
+            throw new EntityNotFoundException("Image not found with id : " + imageId);
+        }
+        entityManager.remove(image);
         return image;
     }
 }

@@ -10,6 +10,8 @@ public class Constant {
     public static final String FIND_ALL_QUALIFICATIONS_QUERY = "SELECT dt FROM DocumentType dt WHERE dt.description LIKE :exam";
     public static final String FIND_ALL_SERVICE_PROVIDER_TEST_STATUS_QUERY= "SELECT q FROM ServiceProviderTestStatus q";
     public static final String FIND_ALL_SERVICE_PROVIDER_TEST_RANK_QUERY= "SELECT q FROM ServiceProviderRank q";
+    public static final String GET_ALL_RANDOM_IMAGES="SELECT q FROM Image q";
+    public static final String GET_ALL_RANDOM_TYPING_TEXT="SELECT q FROM TypingText q";
     public static String PHONE_QUERY_SERVICE_PROVIDER = "SELECT c FROM ServiceProviderEntity c WHERE c.mobileNumber = :mobileNumber AND c.country_code = :country_code";
     public static String USERNAME_QUERY_SERVICE_PROVIDER = "SELECT c FROM ServiceProviderEntity c WHERE c.user_name = :username";
     public static final String ADMIN = "ADMIN";
@@ -51,6 +53,7 @@ public class Constant {
     public static String CATALOG_SERVICE_NOT_INITIALIZED = "Catalog service not initialized";
     public static String GET_STATES_LIST="Select s from StateCode s";
     public static String GET_QUALIFICATIONS_COUNT = "SELECT COUNT(*) FROM Qualification";
+    public static String GET_TYPING_TEXT_COUNT = "SELECT COUNT(*) FROM TypingText";
 
     public static String GET_ORDER_ITEM_PRODUCT="Select p.product_id from custom_order_item_product p where p.order_item_id =:orderItemId";
     public static String CANNOT_ADD_MORE_THAN_ONE_FORM="You can only add one of this form. Please choose a different form if you need more";
@@ -123,7 +126,7 @@ public class Constant {
     public static final Double MAX_CHEST_SIZE = 125d;
     public static final Double MIN_CHEST_SIZE = 20d;
 
-    public static final String GET_PRODUCT_GENDER_PHYSICAL_REQUIREMENT = "SELECT c FROM CustomProductGenderPhysicalRequirement c WHERE c.customProduct = :customProduct";
+    public static final String GET_PRODUCT_GENDER_PHYSICAL_REQUIREMENT = "SELECT c FROM CustomProductGenderPhysicalRequirementRef c WHERE c.customProduct = :customProduct";
 
     public static final String GET_ALL_SUBJECT = "SELECT c FROM CustomSubject c";
     public static final String GET_ALL_STREAM = "SELECT c FROM CustomStream c";
@@ -132,5 +135,7 @@ public class Constant {
     public static final String GET_ALL_SECTOR = "SELECT c FROM CustomSector c";
     public static final String GET_SECTOR_BY_SECTOR_ID = "SELECT c FROM CustomSector c WHERE c.sectorId = :sectorId";
     public static final String GET_QUALIFICATION_BY_ID = "SELECT c FROM Qualification c WHERE c.qualification_id = :qualificationId";
-
+    public static final String PINCODE_REGEXP="^\\d{6}$";
+    public static final String CITY_REGEXP="^[A-Za-z\\\\s]+$";
+    public static final String EMAIL_REGEXP="^[\\w-\\.]+@[\\w-]+\\.[a-zA-Z]{2,}$";
 }

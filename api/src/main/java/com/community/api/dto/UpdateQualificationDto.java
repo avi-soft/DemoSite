@@ -21,7 +21,6 @@ public class UpdateQualificationDto
 
     //    @Min(value = 1900, message = "Year of passing should not be before 1900")
 //    @Max(value = 9999, message = "Year of passing should be a valid 4-digit year")
-    @NotNull(message = "Year of passing is required")
     private Long year_of_passing;
 
     @NotBlank(message = "Board or University is required")
@@ -29,10 +28,8 @@ public class UpdateQualificationDto
     @Pattern(regexp = "^[^\\d]*$", message = "Board or University cannot contain numeric values")
     private String board_or_university;
 
-    @NotNull(message = "Examination Role Number is required")
     private Long examination_role_number;
 
-    @NotNull(message = "Examination Registration Number is required")
     private Long examination_registration_number;
 
     @NotBlank(message = "Subject name is required")

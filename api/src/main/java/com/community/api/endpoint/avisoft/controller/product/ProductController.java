@@ -3,7 +3,9 @@ package com.community.api.endpoint.avisoft.controller.product;
 import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
 import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
+import com.community.api.dto.AddPhysicalRequirementDto;
 import com.community.api.dto.AddProductDto;
+import com.community.api.dto.PhysicalRequirementDto;
 import com.community.api.dto.ReserveCategoryDto;
 import com.community.api.dto.CustomProductWrapper;
 
@@ -20,6 +22,7 @@ import com.community.api.entity.Qualification;
 import com.community.api.entity.Role;
 import com.community.api.entity.StateCode;
 import com.community.api.services.DistrictService;
+import com.community.api.services.PhysicalRequirementDtoService;
 import com.community.api.services.ProductGenderPhysicalRequirementService;
 import com.community.api.services.ResponseService;
 import org.broadleafcommerce.common.persistence.Status;
@@ -96,6 +99,7 @@ public class ProductController extends CatalogEndpoint {
     private final ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService;
     private final ReserveCategoryService reserveCategoryService;
     private final ReserveCategoryDtoService reserveCategoryDtoService;
+    private final PhysicalRequirementDtoService physicalRequirementDtoService;
 
     @Autowired
     DistrictService districtService;
@@ -104,7 +108,7 @@ public class ProductController extends CatalogEndpoint {
     ProductGenderPhysicalRequirementService productGenderPhysicalRequirementService;
 
     @Autowired
-    public ProductController(ExceptionHandlingService exceptionHandlingService, EntityManager entityManager, JwtUtil jwtTokenUtil, ProductService productService, RoleService roleService, JobGroupService jobGroupService, ProductStateService productStateService, ApplicationScopeService applicationScopeService, ProductReserveCategoryBornBeforeAfterRefService productReserveCategoryBornBeforeAfterRefService, ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService, ReserveCategoryService reserveCategoryService, ReserveCategoryDtoService reserveCategoryDtoService) {
+    public ProductController(ExceptionHandlingService exceptionHandlingService, EntityManager entityManager, JwtUtil jwtTokenUtil, ProductService productService, RoleService roleService, JobGroupService jobGroupService, ProductStateService productStateService, ApplicationScopeService applicationScopeService, ProductReserveCategoryBornBeforeAfterRefService productReserveCategoryBornBeforeAfterRefService, ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService, ReserveCategoryService reserveCategoryService, ReserveCategoryDtoService reserveCategoryDtoService, PhysicalRequirementDtoService physicalRequirementDtoService) {
         this.exceptionHandlingService = exceptionHandlingService;
         this.entityManager = entityManager;
         this.jwtTokenUtil = jwtTokenUtil;
@@ -117,6 +121,7 @@ public class ProductController extends CatalogEndpoint {
         this.productReserveCategoryFeePostRefService = productReserveCategoryFeePostRefService;
         this.reserveCategoryService = reserveCategoryService;
         this.reserveCategoryDtoService = reserveCategoryDtoService;
+        this.physicalRequirementDtoService = physicalRequirementDtoService;
     }
 
     @Transactional
@@ -207,7 +212,7 @@ public class ProductController extends CatalogEndpoint {
             productGenderPhysicalRequirementService.savePhysicalRequirement(addProductDto.getPhysicalRequirement(), product);
 
             CustomProductWrapper wrapper = new CustomProductWrapper();
-            wrapper.wrapDetailsAddProduct(product, addProductDto, jobGroup, customProductState, applicationScope, creatorUserId, role, reserveCategoryService, notifyingAuthority, customGender, customSector, qualification, customStream, customSubject);
+            wrapper.wrapDetailsAddProduct(product, addProductDto, jobGroup, customProductState, applicationScope, creatorUserId, role, reserveCategoryService, notifyingAuthority, customGender, customSector, qualification, customStream, customSubject, currentDate);
 
             return ResponseService.generateSuccessResponse("PRODUCT ADDED SUCCESSFULLY", wrapper, HttpStatus.OK);
 
@@ -249,6 +254,10 @@ public class ProductController extends CatalogEndpoint {
                 productService.deleteOldReserveCategoryMapping(customProduct);
             }
             productService.updateProductValidation(addProductDto, customProduct);
+            if(addProductDto.getPhysicalRequirement() != null) {
+                productService.validatePhysicalRequirement(addProductDto);
+                productService.deleteOldPhysicalRequirement(customProduct);
+            }
 
             // Validation of getActiveEndDate and getGoLiveDate.
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); // Set active start date to current date and time in "yyyy-MM-dd HH:mm:ss" format
@@ -256,13 +265,12 @@ public class ProductController extends CatalogEndpoint {
             Date currentDate = dateFormat.parse(formattedDate); // Convert formatted date string back to Date
             customProduct.setModifiedDate(currentDate);
 
-            productService.validateAndSetActiveEndDateAndGoLiveDateFields(addProductDto, customProduct);
+            productService.validateAndSetActiveEndDateAndGoLiveDateFields(addProductDto, customProduct, currentDate);
 
             productService.validateAndSetExamDateFromAndExamDateToFields(addProductDto, customProduct);
             productService.validateExamDateFromAndExamDateTo(addProductDto, customProduct);
             productService.validateProductState(addProductDto, customProduct, authHeader);
 
-//            customProduct.setModifiedDate(new Date());
             customProduct.setModifierRole(roleService.getRoleByRoleId(jwtTokenUtil.extractRoleId(authHeader.substring(7))));
             customProduct.setModifierUserId(jwtTokenUtil.extractId(authHeader.substring(7)));
 
@@ -274,11 +282,15 @@ public class ProductController extends CatalogEndpoint {
                 productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getReservedCategory(), product);
                 productReserveCategoryBornBeforeAfterRefService.saveBornBeforeAndBornAfter(addProductDto.getReservedCategory(), product);
             }
+            if(addProductDto.getPhysicalRequirement() != null) {
+                productGenderPhysicalRequirementService.savePhysicalRequirement(addProductDto.getPhysicalRequirement(), product);
+            }
 
             List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(productId);
+            List<PhysicalRequirementDto> physicalRequirementDtoList = physicalRequirementDtoService.getPhysicalRequirementDto(productId);
 
             CustomProductWrapper wrapper = new CustomProductWrapper();
-            wrapper.wrapDetails(customProduct, reserveCategoryDtoList);
+            wrapper.wrapDetails(customProduct, reserveCategoryDtoList, physicalRequirementDtoList);
             return ResponseService.generateSuccessResponse("Product Updated Successfully", wrapper, HttpStatus.OK);
 
         } catch (NumberFormatException numberFormatException) {
@@ -286,7 +298,7 @@ public class ProductController extends CatalogEndpoint {
             return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + numberFormatException.getMessage(), HttpStatus.NOT_FOUND);
         } catch (IllegalArgumentException illegalArgumentException) {
             exceptionHandlingService.handleException(illegalArgumentException);
-            return ResponseService.generateErrorResponse(illegalArgumentException.getMessage(), HttpStatus.BAD_REQUEST);
+            return ResponseService.generateErrorResponse("Illegal Argument Exception: " + illegalArgumentException.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -386,6 +398,7 @@ public class ProductController extends CatalogEndpoint {
     }
 
     @DeleteMapping("/delete/{productId}")
+    @Transactional
     public ResponseEntity<?> deleteProduct(@PathVariable("productId") String productIdPath) {
         try {
 
