@@ -32,8 +32,7 @@ public class ServiceProviderRankController {
         this.serviceProviderRankService = serviceProviderRankService;
     }
 
-
-    @GetMapping("/get-all-service-provider-test-rank")
+    @GetMapping("/get-all-service-provider-rank")
 
     public ResponseEntity<?> getAllServiceProviderRank() {
         TypedQuery<ServiceProviderRank> query = entityManager.createQuery(FIND_ALL_SERVICE_PROVIDER_TEST_RANK_QUERY, ServiceProviderRank.class);
@@ -44,33 +43,17 @@ public class ServiceProviderRankController {
         return responseService.generateResponse(HttpStatus.OK, "Service Provider Test Rank List Retrieved Successfully", serviceProviderTestRankList);
     }
 
-        @PostMapping("give-score/{serviceProviderId}")
-        public ResponseEntity<?> giveScoresToServiceProvider(
-                @PathVariable Long serviceProviderId,
-                @RequestBody Map<String, Integer> scoreMap) {
-
-            try {
-                serviceProviderRankService.giveScoresToServiceProvider(serviceProviderId, scoreMap);
-                return ResponseService.generateSuccessResponse("Scores updated successfully for service provider with ID: " + serviceProviderId,scoreMap,HttpStatus.OK);
-            } catch (IllegalArgumentException e) {
-                return ResponseService.generateErrorResponse(e.getMessage(),HttpStatus.BAD_REQUEST);
-            } catch (Exception e) {
-                exceptionHandling.handleException(e);
-                return ResponseService.generateErrorResponse("Something went wrong",HttpStatus.BAD_REQUEST);
-            }
+    @GetMapping("/get-score-card/{serviceProviderId}")
+    public ResponseEntity<?> getScoreCardToServiceProvider(@PathVariable Long serviceProviderId) {
+        try {
+            Map<String,Integer> scoreCard =serviceProviderRankService.getScoreCard(serviceProviderId);
+            return ResponseService.generateSuccessResponse("score card is retrieved successfully for service provider with ID: " + serviceProviderId,scoreCard , HttpStatus.OK);
         }
-
-        @GetMapping("/get-score-card/{serviceProviderId}")
-        public ResponseEntity<?> getScoreCardToServiceProvider(@PathVariable Long serviceProviderId) {
-            try {
-                Map<String,Integer> scoreCard =serviceProviderRankService.getScoreCard(serviceProviderId);
-                return ResponseService.generateSuccessResponse("score card is retrieved successfully for service provider with ID: " + serviceProviderId,scoreCard , HttpStatus.OK);
-            }
-            catch (Exception e) {
-                exceptionHandling.handleException(e);
-                return ResponseService.generateErrorResponse("Something went wrong",HttpStatus.BAD_REQUEST);
-            }
+        catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseService.generateErrorResponse("Something went wrong",HttpStatus.BAD_REQUEST);
         }
+    }
 }
 
 
