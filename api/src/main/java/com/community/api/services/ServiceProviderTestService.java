@@ -247,9 +247,11 @@ public class ServiceProviderTestService {
         // Calculate typing test score based on similarity between expected text and entered text
         int typingTestScore = calculateTypingTestScore(test.getTyping_test_text(), typedText);
         test.setTyping_test_scores(typingTestScore);
+        serviceProvider.setWrittenTestScore(typingTestScore);
 
-        // Persist the changes
+        entityManager.merge(serviceProvider);
         return entityManager.merge(test);
+
     }
 
     @Transactional
@@ -453,8 +455,9 @@ public class ServiceProviderTestService {
 
         serviceProviderTest.setImage_test_scores(giveUploadedImageScoreDTO.getImage_test_scores());
         entityManager.merge(serviceProviderTest);
-
+        serviceProvider.setImageUploadScore(giveUploadedImageScoreDTO.getImage_test_scores());
         serviceProvider.setTotalSkillTestPoints(serviceProviderTest.getImage_test_scores() + serviceProviderTest.getTyping_test_scores());
+
         entityManager.merge(serviceProvider);
 
                 return ResponseService.generateSuccessResponse("Image test scores updated successfully",serviceProviderTest,HttpStatus.OK);

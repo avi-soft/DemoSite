@@ -41,7 +41,6 @@ import java.util.Set;
 @Getter
 @Setter
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-@DiscriminatorColumn(name = "type", discriminatorType = DiscriminatorType.STRING)
 @Inheritance(strategy = InheritanceType.JOINED)
 public class ServiceProviderEntity  {
 
@@ -130,6 +129,8 @@ public class ServiceProviderEntity  {
     @Nullable
     private String registration_number;
 
+    private String partTimeOrFullTime;
+
     private Integer businessUnitInfraScore;
     private Integer workExperienceScore;
     private Integer qualificationScore;
@@ -137,7 +138,7 @@ public class ServiceProviderEntity  {
     private Integer staffScore;
     private Integer writtenTestScore;
     private Integer imageUploadScore;
-    private Integer fullTimeOrPartTime;
+    private Integer partTimeOrFullTimeScore;
     @ManyToMany
     @JoinTable(
             name = "service_provider_skill", // The name of the join table
