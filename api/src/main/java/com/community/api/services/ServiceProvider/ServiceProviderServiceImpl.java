@@ -59,6 +59,7 @@ import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -120,7 +121,10 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     @Transactional
     public ResponseEntity<?> updateServiceProvider(Long userId, Map<String, Object> updates)  {
         try{
+            updates=sharedUtilityService.trimStringValues(updates);
             List<String> errorMessages=new ArrayList<>();
+
+
         // Find existing ServiceProviderEntity
         ServiceProviderEntity existingServiceProvider = entityManager.find(ServiceProviderEntity.class, userId);
         if (existingServiceProvider == null) {
@@ -212,31 +216,38 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         updates.remove("skill_list");
         updates.remove("infra_list");
         updates.remove("language_list");
-        if (updates.containsKey("district") && updates.containsKey("state") && existingServiceProvider.getSpAddresses().isEmpty()) {
-            ServiceProviderAddress serviceProviderAddress = new ServiceProviderAddress();
-            serviceProviderAddress.setAddress_type_id(findAddressName("CURRENT_ADDRESS").getAddress_type_Id());
-            serviceProviderAddress.setPincode((String) updates.get("pincode"));
-            serviceProviderAddress.setDistrict((String) updates.get("district"));
-            serviceProviderAddress.setState((String) updates.get("state"));
-            serviceProviderAddress.setCity((String) updates.get("city"));
-            serviceProviderAddress.setAddress_line((String) updates.get("residential_address"));
-            if (serviceProviderAddress.getAddress_line() != null || serviceProviderAddress.getCity() != null || serviceProviderAddress.getDistrict() != null || serviceProviderAddress.getState() != null || serviceProviderAddress.getPincode() != null) {
-                addAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress);
-            }
-        }else if(updates.containsKey("district") && updates.containsKey("state") && !existingServiceProvider.getSpAddresses().isEmpty()) {
-            ServiceProviderAddress serviceProviderAddress = existingServiceProvider.getSpAddresses().get(0);
-            ServiceProviderAddress serviceProviderAddressDTO = new ServiceProviderAddress();
-            serviceProviderAddressDTO.setAddress_type_id(serviceProviderAddress.getAddress_type_id());
-            serviceProviderAddressDTO.setAddress_id(serviceProviderAddress.getAddress_id());
-            serviceProviderAddressDTO.setState((String) updates.get("state"));
-            serviceProviderAddressDTO.setDistrict((String) updates.get("state"));
-            serviceProviderAddressDTO.setAddress_line((String) updates.get("residential_address"));
-            serviceProviderAddressDTO.setPincode((String) updates.get("pincode"));
-            serviceProviderAddressDTO.setServiceProviderEntity(existingServiceProvider);
-            serviceProviderAddressDTO.setCity((String) updates.get("city"));
-            for (String error : updateAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress, serviceProviderAddressDTO))
+        if(updates.containsKey("district")&&updates.containsKey("state")/*&&updates.containsKey("city")*/&&updates.containsKey("pincode")&&updates.containsKey("residential_address"))
+        {
+            if(validateAddressFields(updates).isEmpty()) {
+                if (existingServiceProvider.getSpAddresses().isEmpty()) {
+                    ServiceProviderAddress serviceProviderAddress = new ServiceProviderAddress();
+                    serviceProviderAddress.setAddress_type_id(findAddressName("CURRENT_ADDRESS").getAddress_type_Id());
+                    serviceProviderAddress.setPincode((String) updates.get("pincode"));
+                    serviceProviderAddress.setDistrict((String) updates.get("district"));
+                    serviceProviderAddress.setState((String) updates.get("state"));
+                    /*serviceProviderAddress.setCity((String) updates.get("city"));*/
+                    serviceProviderAddress.setAddress_line((String) updates.get("residential_address"));
+                    if (serviceProviderAddress.getAddress_line() != null /*|| serviceProviderAddress.getCity() != null*/ || serviceProviderAddress.getDistrict() != null || serviceProviderAddress.getState() != null || serviceProviderAddress.getPincode() != null) {
+                        addAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress);
+                    }
+                } else {
+                    ServiceProviderAddress serviceProviderAddress = existingServiceProvider.getSpAddresses().get(0);
+                    ServiceProviderAddress serviceProviderAddressDTO = new ServiceProviderAddress();
+                    serviceProviderAddressDTO.setAddress_type_id(serviceProviderAddress.getAddress_type_id());
+                    serviceProviderAddressDTO.setAddress_id(serviceProviderAddress.getAddress_id());
+                    serviceProviderAddressDTO.setState((String) updates.get("state"));
+                    serviceProviderAddressDTO.setDistrict((String) updates.get("district"));
+                    serviceProviderAddressDTO.setAddress_line((String) updates.get("residential_address"));
+                    serviceProviderAddressDTO.setPincode((String) updates.get("pincode"));
+                    serviceProviderAddressDTO.setServiceProviderEntity(existingServiceProvider);
+                    /*serviceProviderAddressDTO.setCity((String) updates.get("city"));*/
+                    for (String error : updateAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress, serviceProviderAddressDTO)) {
+                        errorMessages.add(error);
+                    }
+                }
+            }else
             {
-                errorMessages.add(error);
+                errorMessages.addAll(validateAddressFields(updates));
             }
         }
 
@@ -261,22 +272,29 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 field.setAccessible(true);
                 if(newValue.toString().isEmpty() && !isNullable)
                     errorMessages.add(fieldName+ " cannot be null");
-                if (field.isAnnotationPresent(Size.class)) {
-                    Size sizeAnnotation = field.getAnnotation(Size.class);
-                    int min = sizeAnnotation.min();
-                    int max = sizeAnnotation.max();
-                    if(newValue.toString().length()>max||newValue.toString().length()<min) {
-                        errorMessages.add(fieldName + " size should be in between " + min + " " + max);
-                        continue;
+                if(newValue.toString().isEmpty()&& isNullable)
+                    continue;
+                if(newValue!=null) {
+                    if (field.isAnnotationPresent(Size.class)) {
+                        Size sizeAnnotation = field.getAnnotation(Size.class);
+                        int min = sizeAnnotation.min();
+                        int max = sizeAnnotation.max();
+                        if (newValue.toString().length() > max || newValue.toString().length() < min) {
+                            if (max == min)
+                                errorMessages.add(fieldName + " size should be of size " + max);
+                            else
+                                errorMessages.add(fieldName + " size should be in between " + min + " " + max);
+                            continue;
+                        }
                     }
-                }
-                if (field.isAnnotationPresent(Pattern.class)) {
-                    Pattern patternAnnotation = field.getAnnotation(Pattern.class);
-                    String regex = patternAnnotation.regexp();
-                    String message = patternAnnotation.message(); // Get custom message
-                    if (!newValue.toString().matches(regex)) {
-                        errorMessages.add(message.replace("{field}", fieldName)); // Use a placeholder
-                        continue;
+                    if (field.isAnnotationPresent(Pattern.class)) {
+                        Pattern patternAnnotation = field.getAnnotation(Pattern.class);
+                        String regex = patternAnnotation.regexp();
+                        String message = patternAnnotation.message(); // Get custom message
+                        if (!newValue.toString().matches(regex)) {
+                            errorMessages.add(message.replace("{field}", fieldName)); // Use a placeholder
+                            continue;
+                        }
                     }
                 }
                 field.setAccessible(true);
@@ -302,6 +320,29 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error updating Service Provider : ", HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+    public List<String> validateAddressFields(Map<String,Object>updates)
+    {
+        List<String> errorMessages = new ArrayList<>();
+        String state = (String) updates.get("state");
+        String district = (String) updates.get("district");
+        String pincode = (String) updates.get("pincode");
+       /* String city = (String) updates.get("city");*/
+        String residentialAddress = (String) updates.get("residential_address");
+        String[] fieldNames = {"state", "district", "pincode", "residential_address"};
+        String[] fieldValues = {state, district, pincode, residentialAddress};
+        for (int i = 0; i < fieldValues.length; i++) {
+            if (fieldValues[i] == null || fieldValues[i].trim().isEmpty()) {
+                errorMessages.add(fieldNames[i] + " cannot be empty");
+            }
+        }
+        String pattern = Constant.PINCODE_REGEXP;
+        if(!java.util.regex.Pattern.matches(pattern,pincode))
+            errorMessages.add("Pincode should contain only numbers and should be of length 6");
+       /* pattern = Constant.CITY_REGEXP;
+        if(!java.util.regex.Pattern.matches(pattern, city))
+            errorMessages.add("Field city should only contain letters");*/
+        return errorMessages;
     }
 
     @Override
@@ -801,8 +842,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                     addressToupdate.setDistrict(districtService.findDistrictById(Integer.parseInt(dto.getDistrict())));
                 if(dto.getAddress_line()!=null&& !dto.getAddress_line().isEmpty())
                     addressToupdate.setAddress_line(dto.getAddress_line());
-                if(dto.getCity()!=null && !dto.getCity().isEmpty())
-                    addressToupdate.setCity(dto.getCity());
+                /*if(dto.getCity()!=null && !dto.getCity().isEmpty())
+                    addressToupdate.setCity(dto.getCity());*/
                 if(dto.getPincode()!=null && !dto.getPincode().isEmpty())
                     addressToupdate.setPincode(dto.getPincode());
                 existingServiceProvider.setSpAddresses(addresses);
