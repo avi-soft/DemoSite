@@ -40,24 +40,24 @@ public class CommandLineService implements CommandLineRunner {
     public void run(String... args) throws Exception {
         // Check if data already exists to avoid duplication
         if (entityManager.createQuery("SELECT COUNT(c) FROM CustomProductState c", Long.class).getSingleResult() == 0) {
-            entityManager.persist(new CustomProductState(1L, "NEW"));
-            entityManager.persist(new CustomProductState(2L, "MODIFIED"));
-            entityManager.persist(new CustomProductState(3L, "APPROVED"));
-            entityManager.persist(new CustomProductState(4L, "REJECTED"));
-            entityManager.persist(new CustomProductState(5L, "LIVE"));
-            entityManager.persist(new CustomProductState(6L, "EXPIRED"));
+            entityManager.persist(new CustomProductState(1L, "NEW", "New State."));
+            entityManager.persist(new CustomProductState(2L, "MODIFIED", "Modified State."));
+            entityManager.persist(new CustomProductState(3L, "APPROVED", "Approved State."));
+            entityManager.persist(new CustomProductState(4L, "REJECTED", "Rejected State."));
+            entityManager.persist(new CustomProductState(5L, "LIVE", "Live State."));
+            entityManager.persist(new CustomProductState(6L, "EXPIRED", "Expired State."));
         }
 
         if(entityManager.createQuery("SELECT COUNT(c) FROM CustomJobGroup c", Long.class).getSingleResult() == 0) {
-            entityManager.persist(new CustomJobGroup(1L, 'A'));
-            entityManager.persist(new CustomJobGroup(2L, 'B'));
-            entityManager.persist(new CustomJobGroup(3L, 'C'));
-            entityManager.persist(new CustomJobGroup(4L, 'D'));
+            entityManager.persist(new CustomJobGroup(1L, 'A', "Executive Management"));
+            entityManager.persist(new CustomJobGroup(2L, 'B', "Professional and Technical"));
+            entityManager.persist(new CustomJobGroup(3L, 'C', "Administrative and Support"));
+            entityManager.persist(new CustomJobGroup(4L, 'D', "Entry-Level and Labor"));
         }
 
         if (entityManager.createQuery("SELECT COUNT(c) FROM CustomApplicationScope c", Long.class).getSingleResult() == 0) {
-            entityManager.persist(new CustomApplicationScope(1L, "STATE"));
-            entityManager.persist(new CustomApplicationScope(2L, "CENTER"));
+            entityManager.persist(new CustomApplicationScope(1L, "STATE", "State level operations."));
+            entityManager.persist(new CustomApplicationScope(2L, "CENTER", "Center level operations."));
         }
 
         if (entityManager.createQuery("SELECT COUNT(c) FROM CustomReserveCategory c", Long.class).getSingleResult() == 0) {
@@ -65,10 +65,8 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(new CustomReserveCategory(2L, "SC", "Schedule Caste", false));
             entityManager.persist(new CustomReserveCategory(3L, "ST", "Schedule Tribe", false));
             entityManager.persist(new CustomReserveCategory(4L, "OBC", "Other Backward Caste", false));
+            entityManager.persist(new CustomReserveCategory(5L, "OTHERS", "Others", false));
         }
-
-
-
 
         if(entityManager.createQuery("SELECT COUNT(c) FROM CustomProductRejectionStatus c", Long.class).getSingleResult() == 0) {
             entityManager.merge(new CustomProductRejectionStatus(1L, "TO-BE-MODIFIED", "Product needs modification to get approved."));
@@ -218,7 +216,6 @@ public class CommandLineService implements CommandLineRunner {
         count = entityManager.createQuery("SELECT COUNT(s) FROM StateCode s", Long.class).getSingleResult();
 
         if (count == 0) {
-
 
             // Insert data into the StateCode table
             entityManager.persist(new StateCode(1, "Andhra Pradesh", "AP"));
