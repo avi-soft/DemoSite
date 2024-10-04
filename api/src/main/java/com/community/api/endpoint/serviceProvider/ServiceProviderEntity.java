@@ -113,10 +113,12 @@ public class ServiceProviderEntity  {
     @Size(min = 9, max = 13)
     @Pattern(regexp = "^\\d{9,13}$", message = "WhatsApp number should be between 9 and 13 digits in length")
     private String whatsapp_number;
+    @Email(message = "invalid email format")
     /*@Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",message = "Please enter a valid email address.")*/
     private String primary_email;
 
     @Nullable
+    @Email(message = "invalid email format")
     /*@Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Please enter a valid email address.")*/
     private String secondary_email;
     private String password;

@@ -299,6 +299,9 @@ public class SharedUtilityService {
         }
         return map;
     }
+    public  boolean isValidEmail(String email) {
+        return email != null && email.matches(Constant.EMAIL_REGEXP);
+    }
     public List<Map<String, Object>> mapQualifications(List<QualificationDetails> qualificationDetails) {
         return qualificationDetails.stream()
                 .map(qualificationDetail -> {
