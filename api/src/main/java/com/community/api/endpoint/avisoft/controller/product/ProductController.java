@@ -457,8 +457,11 @@ public class ProductController extends CatalogEndpoint {
 
                     if ((((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date())) && customProduct.getProductState().getProductState().equals(PRODUCT_STATE_NEW)) {
 
+                        List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(customProduct.getId());
+                        List<PhysicalRequirementDto> physicalRequirementDtoList = physicalRequirementDtoService.getPhysicalRequirementDto(customProduct.getId());
+
                         CustomProductWrapper wrapper = new CustomProductWrapper();
-                        wrapper.wrapDetails(customProduct);
+                        wrapper.wrapDetails(customProduct, reserveCategoryDtoList, physicalRequirementDtoList);
 
                         responses.add(wrapper);
                     }
