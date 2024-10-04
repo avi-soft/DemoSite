@@ -59,6 +59,18 @@ public class ServiceProviderRankController {
                 return ResponseService.generateErrorResponse("Something went wrong",HttpStatus.BAD_REQUEST);
             }
         }
+
+        @GetMapping("/get-score-card/{serviceProviderId}")
+        public ResponseEntity<?> getScoreCardToServiceProvider(@PathVariable Long serviceProviderId) {
+            try {
+                Map<String,Integer> scoreCard =serviceProviderRankService.getScoreCard(serviceProviderId);
+                return ResponseService.generateSuccessResponse("score card is retrieved successfully for service provider with ID: " + serviceProviderId,scoreCard , HttpStatus.OK);
+            }
+            catch (Exception e) {
+                exceptionHandling.handleException(e);
+                return ResponseService.generateErrorResponse("Something went wrong",HttpStatus.BAD_REQUEST);
+            }
+        }
 }
 
 
