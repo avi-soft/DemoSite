@@ -244,10 +244,11 @@ public class SharedUtilityService {
 
         }
 
-    public Map<String,Object> serviceProviderDetailsMap(ServiceProviderEntity serviceProvider)
+    public static Map<String,Object> serviceProviderDetailsMap(ServiceProviderEntity serviceProvider)
     {
         Map<String,Object>serviceProviderDetails=new HashMap<>();
         serviceProviderDetails.put("id", serviceProvider.getService_provider_id());
+        serviceProviderDetails.put("type",serviceProvider.getType());
         serviceProviderDetails.put("service_provider_id", serviceProvider.getService_provider_id());
         serviceProviderDetails.put("user_name", serviceProvider.getUser_name());
         serviceProviderDetails.put("first_name", serviceProvider.getFirst_name());
@@ -271,17 +272,12 @@ public class SharedUtilityService {
         serviceProviderDetails.put("number_of_employees", serviceProvider.getNumber_of_employees());
         serviceProviderDetails.put("has_technical_knowledge", serviceProvider.getHas_technical_knowledge());
         serviceProviderDetails.put("work_experience_in_months", serviceProvider.getWork_experience_in_months());
-        serviceProviderDetails.put("highest_qualification", serviceProvider.getHighest_qualification());
-        serviceProviderDetails.put("name_of_institute", serviceProvider.getName_of_institute());
-        serviceProviderDetails.put("year_of_passing", serviceProvider.getYear_of_passing());
-        serviceProviderDetails.put("board_or_university", serviceProvider.getBoard_or_university());
-        serviceProviderDetails.put("total_marks", serviceProvider.getTotal_marks());
-        serviceProviderDetails.put("marks_obtained", serviceProvider.getMarks_obtained());
-        serviceProviderDetails.put("cgpa", serviceProvider.getCgpa());
         serviceProviderDetails.put("latitude", serviceProvider.getLatitude());
         serviceProviderDetails.put("longitude", serviceProvider.getLongitude());
+        serviceProviderDetails.put("service_provider_status",serviceProvider.getServiceProviderTests());
         serviceProviderDetails.put("rank", serviceProvider.getRanking());
         serviceProviderDetails.put("signedUp", serviceProvider.getSignedUp());
+        serviceProviderDetails.put("total_score",serviceProvider.getTotalScore());
        /* serviceProviderDetails.put("skills", serviceProvider.getSkills());*/
        /* serviceProviderDetails.put("infra", serviceProvider.getInfra());
         serviceProviderDetails.put("languages", serviceProvider.getLanguages());*/
