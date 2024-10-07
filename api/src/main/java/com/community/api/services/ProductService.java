@@ -927,9 +927,22 @@ public class ProductService {
                 }
             }
 
-            if (addProductDto.getAdvertiserUrl() != null && !addProductDto.getAdvertiserUrl().trim().isEmpty()) {
-                addProductDto.setAdvertiserUrl(addProductDto.getAdvertiserUrl().trim());
-                customProduct.setAdvertiserUrl(addProductDto.getAdvertiserUrl());
+            if (addProductDto.getAdvertiserUrl() != null) {
+                if(!addProductDto.getAdvertiserUrl().trim().isEmpty()) {
+                    addProductDto.setAdvertiserUrl(addProductDto.getAdvertiserUrl().trim());
+                    customProduct.setAdvertiserUrl(addProductDto.getAdvertiserUrl());
+                }else {
+                    throw new IllegalArgumentException("Adviser Url cannot be empty");
+                }
+            }
+
+            if(addProductDto.getNotifyingAuthority() != null) {
+                if(!addProductDto.getNotifyingAuthority().trim().isEmpty()) {
+                    addProductDto.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
+                    customProduct.setNotifyingAuthority(addProductDto.getNotifyingAuthority());
+                }else {
+                    throw new IllegalArgumentException("Notifying authority cannot be empty");
+                }
             }
 
             return true;
@@ -976,6 +989,10 @@ public class ProductService {
         try {
             if (addProductDto.getGoLiveDate() != null) {
                 dateFormat.parse(dateFormat.format(addProductDto.getGoLiveDate()));
+
+                if(addProductDto.getGoLiveDate().before(createdDate)) {
+                    throw new IllegalArgumentException("Go live date must be after current date.");
+                }
 
                 if (addProductDto.getActiveEndDate() != null) {
                     dateFormat.parse(dateFormat.format(addProductDto.getActiveEndDate()));
@@ -1137,15 +1154,17 @@ public class ProductService {
                     if (!addProductDto.getModificationDateFrom().after(customProduct.getLateDateToPayFee())) {
                         throw new IllegalArgumentException("Modified date from must be after last date to pay fee.");
                     }
-                } else if(addProductDto.getActiveEndDate() != null) {
-                    if (!addProductDto.getModificationDateFrom().after(addProductDto.getLastDateToPayFee())) {
+                }
+                if(addProductDto.getActiveEndDate() != null) {
+                    if (!addProductDto.getModificationDateFrom().after(addProductDto.getActiveEndDate())) {
                         throw new IllegalArgumentException("Modified date from must be after active end date.");
                     }
                 } else if(customProduct.getActiveEndDate() != null) {
                     if (!addProductDto.getModificationDateFrom().after(customProduct.getLateDateToPayFee())) {
                         throw new IllegalArgumentException("Modified date from must be after active end date.");
                     }
-                } else if (addProductDto.getAdmitCardDateFrom() != null) {
+                }
+                if (addProductDto.getAdmitCardDateFrom() != null) {
                     dateFormat.parse(dateFormat.format(addProductDto.getAdmitCardDateFrom()));
                     if (!addProductDto.getModificationDateTo().before(addProductDto.getAdmitCardDateFrom())) {
                         throw new IllegalArgumentException("Modified date to must be before or equal of admit card date from.");
@@ -1154,13 +1173,14 @@ public class ProductService {
                     if (!addProductDto.getModificationDateTo().before(customProduct.getAdmitCardDateFrom())) {
                         throw new IllegalArgumentException("Modified date to must be before or equal of admit card date from.");
                     }
-                } else if (addProductDto.getExamDateFrom() != null) {
+                }
+                if (addProductDto.getExamDateFrom() != null) {
                     dateFormat.parse(dateFormat.format(addProductDto.getExamDateTo()));
                     if (!addProductDto.getModificationDateTo().before(addProductDto.getExamDateFrom())) {
                         throw new IllegalArgumentException("Modified date to must be before or equal of exam date from.");
                     }
                 } else if (customProduct.getExamDateFrom() != null) {
-                    if (!addProductDto.getModificationDateTo().before(customProduct.getAdmitCardDateFrom())) {
+                    if (!addProductDto.getModificationDateTo().before(customProduct.getExamDateFrom())) {
                         throw new IllegalArgumentException("Modified date to must be before or equal of exam date from.");
                     }
                 }
@@ -1202,7 +1222,8 @@ public class ProductService {
                     if(!addProductDto.getAdmitCardDateFrom().after(customProduct.getModificationDateTo())) {
                         throw new IllegalArgumentException("Admit card date from must be after modification date .");
                     }
-                } else if(addProductDto.getLastDateToPayFee() != null) {
+                }
+                if(addProductDto.getLastDateToPayFee() != null) {
                     if(!addProductDto.getAdmitCardDateFrom().after(addProductDto.getModificationDateTo())) {
                         throw new IllegalArgumentException("Admit card date from must be after last date to pay fee.");
                     }
@@ -1210,7 +1231,8 @@ public class ProductService {
                     if(!addProductDto.getAdmitCardDateFrom().after(customProduct.getModificationDateTo())) {
                         throw new IllegalArgumentException("Admit card date from must be after last date to pay fee.");
                     }
-                } else if(addProductDto.getActiveEndDate() != null) {
+                }
+                if(addProductDto.getActiveEndDate() != null) {
                     if(!addProductDto.getAdmitCardDateFrom().after(addProductDto.getActiveEndDate())) {
                         throw new IllegalArgumentException("Admit card date from must be after active end date.");
                     }
@@ -1218,7 +1240,8 @@ public class ProductService {
                     if(!addProductDto.getAdmitCardDateFrom().after(customProduct.getActiveEndDate())) {
                         throw new IllegalArgumentException("Admit card date from must be after active end date.");
                     }
-                } else if (addProductDto.getExamDateFrom() != null) {
+                }
+                if (addProductDto.getExamDateFrom() != null) {
                     dateFormat.parse(dateFormat.format(addProductDto.getExamDateTo()));
                     if (!addProductDto.getAdmitCardDateTo().before(addProductDto.getExamDateTo())) {
                         throw new IllegalArgumentException("Admit date to must be before or equal of exam date from.");
@@ -1265,7 +1288,8 @@ public class ProductService {
                     if(!addProductDto.getExamDateFrom().after(customProduct.getAdmitCardDateTo())) {
                         throw new IllegalArgumentException("Exam date from must be after of admit card to.");
                     }
-                } else if (addProductDto.getModificationDateTo() != null){
+                }
+                if (addProductDto.getModificationDateTo() != null){
                     if(!addProductDto.getExamDateFrom().after(addProductDto.getModificationDateTo())) {
                         throw new IllegalArgumentException("Exam date from must be after of modified date to.");
                     }
@@ -1273,19 +1297,21 @@ public class ProductService {
                     if(!addProductDto.getExamDateFrom().after(customProduct.getModificationDateTo())) {
                         throw new IllegalArgumentException("Exam date from must be after of modified date to.");
                     }
-                } else if (addProductDto.getLastDateToPayFee() != null){
+                }
+                if (addProductDto.getLastDateToPayFee() != null){
                     if(!addProductDto.getExamDateFrom().after(addProductDto.getLastDateToPayFee())) {
                         throw new IllegalArgumentException("Exam date from must be after of last date to pay fee.");
                     }
-                } if (customProduct.getLateDateToPayFee() != null){
+                } else if (customProduct.getLateDateToPayFee() != null){
                     if(!addProductDto.getExamDateFrom().after(customProduct.getLateDateToPayFee())) {
                         throw new IllegalArgumentException("Exam date from must be after of last date to pay fee.");
                     }
-                } else if (addProductDto.getActiveEndDate() != null){
+                }
+                if (addProductDto.getActiveEndDate() != null){
                     if(!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate())) {
                         throw new IllegalArgumentException("Exam date from must be after of active end date.");
                     }
-                } if (customProduct.getActiveEndDate() != null){
+                } else if (customProduct.getActiveEndDate() != null){
                     if(!addProductDto.getExamDateFrom().after(customProduct.getActiveEndDate())) {
                         throw new IllegalArgumentException("Exam date from must be after of active end date.");
                     }
