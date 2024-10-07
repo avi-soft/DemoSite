@@ -248,6 +248,7 @@ public class SharedUtilityService {
     {
         Map<String,Object>serviceProviderDetails=new HashMap<>();
         serviceProviderDetails.put("id", serviceProvider.getService_provider_id());
+        serviceProviderDetails.put("service_provider_id", serviceProvider.getService_provider_id());
         serviceProviderDetails.put("user_name", serviceProvider.getUser_name());
         serviceProviderDetails.put("first_name", serviceProvider.getFirst_name());
         serviceProviderDetails.put("last_name", serviceProvider.getLast_name());
@@ -279,7 +280,7 @@ public class SharedUtilityService {
         serviceProviderDetails.put("cgpa", serviceProvider.getCgpa());
         serviceProviderDetails.put("latitude", serviceProvider.getLatitude());
         serviceProviderDetails.put("longitude", serviceProvider.getLongitude());
-        serviceProviderDetails.put("rank", serviceProvider.getRank());
+        serviceProviderDetails.put("rank", serviceProvider.getRanking());
         serviceProviderDetails.put("signedUp", serviceProvider.getSignedUp());
        /* serviceProviderDetails.put("skills", serviceProvider.getSkills());*/
        /* serviceProviderDetails.put("infra", serviceProvider.getInfra());
@@ -298,6 +299,9 @@ public class SharedUtilityService {
             }
         }
         return map;
+    }
+    public  boolean isValidEmail(String email) {
+        return email != null && email.matches(Constant.EMAIL_REGEXP);
     }
     public List<Map<String, Object>> mapQualifications(List<QualificationDetails> qualificationDetails) {
         return qualificationDetails.stream()

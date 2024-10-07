@@ -31,7 +31,9 @@ public class GenderController {
                 return ResponseService.generateErrorResponse("NO GENDER IS FOUND", HttpStatus.NOT_FOUND);
             }
             return ResponseService.generateSuccessResponse("GENDER FOUND", customGenderList, HttpStatus.OK);
-        } catch (Exception exception) {
+        } catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }

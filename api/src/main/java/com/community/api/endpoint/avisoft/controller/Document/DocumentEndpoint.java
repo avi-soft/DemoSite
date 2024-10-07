@@ -125,7 +125,9 @@ public class DocumentEndpoint {
             }
 
             return responseService.generateSuccessResponse("Document Types retrieved successfully", documentTypes, HttpStatus.OK);
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }  catch (Exception e) {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Error retrieving Document Types", HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -200,7 +202,9 @@ public class DocumentEndpoint {
             return responseService.generateErrorResponse("Invalid request", HttpStatus.BAD_REQUEST);
 
 
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }  catch (Exception e) {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Error retrieving Documents", HttpStatus.INTERNAL_SERVER_ERROR);
         }

@@ -48,7 +48,9 @@ public class ApplicationScopeController {
                 return ResponseService.generateErrorResponse("No Application Scope Found", HttpStatus.NOT_FOUND);
             }
             return ResponseService.generateSuccessResponse("Application Scope Found", applicationScope, HttpStatus.OK);
-        } catch (Exception exception) {
+        } catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }  catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }

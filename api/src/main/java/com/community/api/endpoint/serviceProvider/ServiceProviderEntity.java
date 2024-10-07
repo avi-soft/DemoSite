@@ -25,21 +25,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.Inheritance;
-import javax.persistence.InheritanceType;
-import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.OneToMany;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+
+import javax.persistence.*;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.Pattern;
@@ -49,20 +36,24 @@ import java.util.Set;
 
 @Entity
 @Table(name = "service_provider")
-@Inheritance(strategy = InheritanceType.JOINED)
 @AllArgsConstructor
 @NoArgsConstructor
 @Getter
 @Setter
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+@Inheritance(strategy = InheritanceType.JOINED)
 public class ServiceProviderEntity  {
 
  @Id
  @GeneratedValue(strategy = GenerationType.IDENTITY)
  private Long service_provider_id;
 
- private String user_name;
- 
+    @Column
+    private String type="PROFESSIONAL";
+
+    private Integer totalScore;
+
+    private String user_name;
 
 
 
@@ -113,10 +104,12 @@ public class ServiceProviderEntity  {
     @Size(min = 9, max = 13)
     @Pattern(regexp = "^\\d{9,13}$", message = "WhatsApp number should be between 9 and 13 digits in length")
     private String whatsapp_number;
+    @Email(message = "invalid email format")
     /*@Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",message = "Please enter a valid email address.")*/
     private String primary_email;
 
     @Nullable
+    @Email(message = "invalid email format")
     /*@Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Please enter a valid email address.")*/
     private String secondary_email;
     private String password;
@@ -138,8 +131,22 @@ public class ServiceProviderEntity  {
     @Nullable
     private String registration_number;
 
+    private String partTimeOrFullTime;
 
-
+    private Integer businessUnitInfraScore;
+    private Integer workExperienceScore;
+    private Integer qualificationScore;
+    private Integer technicalExpertiseScore;
+    private Integer staffScore;
+    private Integer writtenTestScore;
+    private Integer imageUploadScore;
+    private Integer partTimeOrFullTimeScore;
+    @ManyToMany
+    @JoinTable(
+            name = "service_provider_skill", // The name of the join table
+            joinColumns = @JoinColumn(name = "service_provider_id"), // Foreign key for ServiceProvider
+            inverseJoinColumns = @JoinColumn(name = "skill_id")) // Foreign key for Skill
+    private List<Skill> skills;
 
  private Boolean has_technical_knowledge;
 
@@ -156,13 +163,6 @@ public class ServiceProviderEntity  {
  private double latitude,longitude;
  private int rank;
  private int signedUp=0;
-
- @ManyToMany
- @JoinTable(
-         name = "service_provider_skill", // The name of the join table
-         joinColumns = @JoinColumn(name = "service_provider_id"), // Foreign key for ServiceProvider
-         inverseJoinColumns = @JoinColumn(name = "skill_id")) // Foreign key for Skill
- private List<Skill> skills;
 
  @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
  @JoinColumn(name = "service_provider_id")

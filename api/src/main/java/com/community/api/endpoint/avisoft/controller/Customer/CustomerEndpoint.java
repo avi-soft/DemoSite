@@ -45,6 +45,7 @@ import javax.transaction.Transactional;
 import javax.validation.constraints.Size;
 import java.io.File;
 import java.lang.reflect.Field;
+import java.security.Key;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -167,14 +168,14 @@ public class CustomerEndpoint {
     public ResponseEntity<?> updateCustomer(@RequestBody Map<String, Object> details, @RequestParam Long customerId) {
         try {
             List<String> errorMessages = new ArrayList<>();
-            Iterator<String> iterator = details.keySet().iterator();
+            /*Iterator<String> iterator = details.keySet().iterator();
             while (iterator.hasNext()) {
                 String key = iterator.next();
                 if (details.get(key).toString().isEmpty()) {
                     iterator.remove(); // Safely remove using the iterator
                     errorMessages.add(key + " cannot be null");
                 }
-            }
+            }*/
             if (!errorMessages.isEmpty()) {
                 return ResponseService.generateErrorResponse("List of Failed validations: " + errorMessages.toString(), HttpStatus.BAD_REQUEST);
             }
@@ -186,7 +187,13 @@ public class CustomerEndpoint {
             if (customCustomer == null) {
                 return ResponseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
             }
-
+            if(details.containsKey("hidePhoneNumber"))
+            {
+                errorMessages.addAll(validateHidePhoneNumber(details, customCustomer));
+                details.remove("secondaryMobileNumber");
+                details.remove("whatsappNumber");
+                details.remove("hidePhoneNumber");
+            }
             // Validate mobile number
             String mobileNumber = (String) details.get("mobileNumber");
             if (mobileNumber != null && !customCustomerService.isValidMobileNumber(mobileNumber)) {
@@ -352,6 +359,28 @@ public class CustomerEndpoint {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error updating " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+    public List<String> validateHidePhoneNumber(Map<String,Object>details,CustomCustomer customer)
+    {
+        List<String>errorMessages=new ArrayList<>();
+        if(((Boolean)details.get("hidePhoneNumber")).equals(true))
+        {
+            System.out.println("no");
+                if(details.containsKey("secondaryMobileNumber")&&((String)details.get("secondaryMobileNumber")).isEmpty())
+                {
+                    errorMessages.add("Need to provide Secondary Mobile Number when hiding primary Mobile Number");
+                }
+
+                if(details.containsKey("whatsappNumber")&&((String)details.get("whatsappNumber")).isEmpty())
+                {
+                    errorMessages.add("Whatsapp number cannot be null");
+                }
+                if(details.containsKey("whatsappNumber")&&((String)details.get("whatsappNumber")).equals(customer.getMobileNumber()))
+                {
+                    errorMessages.add("Cannot set primary number as whatsapp number when hidden");
+                }
+        }
+        return errorMessages;
     }
     public boolean isFieldPresent (Class < ? > clazz, String fieldName){
         try {
@@ -1084,7 +1113,9 @@ public class CustomerEndpoint {
                 listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product, null));
             }
             return ResponseService.generateSuccessResponse("Forms saved : ", listOfSavedProducts, HttpStatus.OK);
-        } catch (Exception exception) {
+        } catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }  catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return ResponseService.generateErrorResponse("SOME EXCEPTION OCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
 
@@ -1107,7 +1138,9 @@ public class CustomerEndpoint {
                 results.add(sharedUtilityService.breakReferenceForCustomer(customerToadd));
             }
             return ResponseService.generateSuccessResponse("List of customers : ", results, HttpStatus.OK);
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }  catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Some issue in customers: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
@@ -1128,9 +1161,9 @@ public class CustomerEndpoint {
             customCustomer.setReferrerServiceProvider(serviceProvider);
             entityManager.merge(customCustomer);
             return ResponseService.generateSuccessResponse("Referrer Set", sharedUtilityService.serviceProviderDetailsMap(serviceProvider), HttpStatus.OK);
-        }catch (NumberFormatException e) {
-            return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }  catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error setting customer's referrer " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
