@@ -492,6 +492,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     }
 
     //mechanism to check password
+    @Transactional
     public ResponseEntity<?> validateServiceProvider(ServiceProviderEntity serviceProvider, String password, HttpServletRequest request, HttpSession session) {
         if (serviceProvider == null) {
             return responseService.generateErrorResponse("No Records Found", HttpStatus.NOT_FOUND);
@@ -531,6 +532,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         }
     }
 
+    @Transactional
     public ResponseEntity<?> loginWithPassword(@RequestBody Map<String, Object> serviceProviderDetails, HttpServletRequest request, HttpSession session) {
         try {
             String mobileNumber = (String) serviceProviderDetails.get("mobileNumber");
@@ -561,6 +563,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         }
     }
 
+    @Transactional
     public ResponseEntity<?> loginWithUsernameAndOTP(String username, HttpSession session) {
         try {
             if (username == null) {

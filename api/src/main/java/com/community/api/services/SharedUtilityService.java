@@ -4,7 +4,9 @@ import com.community.api.component.Constant;
 import com.community.api.endpoint.customer.AddressDTO;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.*;
+import com.community.api.utils.Document;
 import com.community.api.utils.DocumentType;
+import com.community.api.utils.ServiceProviderDocument;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import org.broadleafcommerce.core.catalog.domain.Product;
@@ -139,7 +141,6 @@ public class SharedUtilityService {
         customerDetails.put("secondaryEmail", customCustomer.getSecondaryEmail());
         customerDetails.put("mothers_name", customCustomer.getMothersName());
         customerDetails.put("date_of_birth", customCustomer.getDob());
-        customerDetails.put("adhar_number", customCustomer.getAdharNumber());
         customerDetails.put("category_issue_date", customCustomer.getCategoryIssueDate());
         customerDetails.put("height_cms", customCustomer.getHeightCms());
         customerDetails.put("weight_kgs", customCustomer.getWeightKgs());
@@ -219,6 +220,22 @@ public class SharedUtilityService {
         }
         customerDetails.put("addresses",addresses);
 
+        List<QualificationDetails> qualificationDetails= customCustomer.getQualificationDetailsList();
+        List<Map<String, Object>> qualificationsWithNames = mapQualifications(qualificationDetails);
+        customerDetails.put("qualificationDetails", qualificationsWithNames);
+
+        List<Document> filteredDocuments = new ArrayList<>();
+
+        for (Document document : customCustomer.getDocuments()) {
+            if (document.getFilePath() != null && document.getDocumentType() != null) {
+                filteredDocuments.add(document);
+            }
+        }
+
+        if (!filteredDocuments.isEmpty()) {
+            customerDetails.put("documents", filteredDocuments);
+        }
+
         return customerDetails;
     }
     public ValidationResult validateInputMap(Map<String,Object>inputMap)
@@ -244,7 +261,7 @@ public class SharedUtilityService {
 
         }
 
-    public static Map<String,Object> serviceProviderDetailsMap(ServiceProviderEntity serviceProvider)
+    public Map<String,Object> serviceProviderDetailsMap(ServiceProviderEntity serviceProvider)
     {
         Map<String,Object>serviceProviderDetails=new HashMap<>();
         serviceProviderDetails.put("id", serviceProvider.getService_provider_id());
@@ -274,15 +291,45 @@ public class SharedUtilityService {
         serviceProviderDetails.put("work_experience_in_months", serviceProvider.getWork_experience_in_months());
         serviceProviderDetails.put("latitude", serviceProvider.getLatitude());
         serviceProviderDetails.put("longitude", serviceProvider.getLongitude());
-        serviceProviderDetails.put("service_provider_status",serviceProvider.getServiceProviderTests());
+        serviceProviderDetails.put("service_provider_status",serviceProvider.getTestStatus());
         serviceProviderDetails.put("rank", serviceProvider.getRanking());
         serviceProviderDetails.put("signedUp", serviceProvider.getSignedUp());
+        serviceProviderDetails.put("business_unit_infra_score",serviceProvider.getBusinessUnitInfraScore());
+        serviceProviderDetails.put("qualification_score",serviceProvider.getQualificationScore());
+        serviceProviderDetails.put("technical_expertise_score",serviceProvider.getTechnicalExpertiseScore());
+        serviceProviderDetails.put("work_experience_score",serviceProvider.getWorkExperienceScore());
+        serviceProviderDetails.put("written_test_score",serviceProvider.getWrittenTestScore());
+        serviceProviderDetails.put("image_upload_score",serviceProvider.getImageUploadScore());
         serviceProviderDetails.put("total_score",serviceProvider.getTotalScore());
-       /* serviceProviderDetails.put("skills", serviceProvider.getSkills());*/
-       /* serviceProviderDetails.put("infra", serviceProvider.getInfra());
-        serviceProviderDetails.put("languages", serviceProvider.getLanguages());*/
-/*        serviceProviderDetails.put("privileges", serviceProvider.getPrivileges());
-        serviceProviderDetails.put("spAddresses", serviceProvider.getSpAddresses());*/
+        if(serviceProvider.getType().equalsIgnoreCase("PROFESSIONAL"))
+        {
+            serviceProviderDetails.put("number_of_employees",serviceProvider.getNumber_of_employees());
+            serviceProviderDetails.put("staff_score",serviceProvider.getStaffScore());
+        }
+        else {
+            serviceProviderDetails.put("part_time_or_full_time",serviceProvider.getPartTimeOrFullTime());
+            serviceProviderDetails.put("part_time_or_full_time_score",serviceProvider.getPartTimeOrFullTimeScore());
+        }
+        serviceProviderDetails.put("skills", serviceProvider.getSkills());
+        serviceProviderDetails.put("infra", serviceProvider.getInfra());
+        serviceProviderDetails.put("languages", serviceProvider.getLanguages());
+        serviceProviderDetails.put("privileges", serviceProvider.getPrivileges());
+        serviceProviderDetails.put("spAddresses", serviceProvider.getSpAddresses());
+        List<QualificationDetails> qualificationDetails = serviceProvider.getQualificationDetailsList();
+        List<Map<String, Object>> qualificationsWithNames = mapQualifications(qualificationDetails);
+        serviceProviderDetails.put("qualificationDetails", qualificationsWithNames);
+
+        List<ServiceProviderDocument> filteredDocuments = new ArrayList<>();
+
+        for (ServiceProviderDocument document : serviceProvider.getDocuments()) {
+            if (document.getFilePath() != null && document.getDocumentType() != null) {
+                filteredDocuments.add(document);
+            }
+        }
+
+        if (!filteredDocuments.isEmpty()) {
+            serviceProviderDetails.put("documents", filteredDocuments);
+        }
         return serviceProviderDetails;
     }
 

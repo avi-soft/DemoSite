@@ -252,29 +252,7 @@ public class ServiceProviderController {
                 return ResponseService.generateErrorResponse("Service provider does not found", HttpStatus.NOT_FOUND);
             }
 
-            Map<String,Object> serviceProviderMap= SharedUtilityService.serviceProviderDetailsMap(serviceProviderEntity);
-            List<QualificationDetails> qualificationDetails = serviceProviderEntity.getQualificationDetailsList();
-            List<Map<String, Object>> qualificationsWithNames = sharedUtilityService.mapQualifications(qualificationDetails);
-            serviceProviderMap.put("qualificationDetails", qualificationsWithNames);
-
-            List<ServiceProviderDocument> filteredDocuments = new ArrayList<>();
-
-            for (ServiceProviderDocument document : serviceProviderEntity.getDocuments()) {
-                if (document.getFilePath() != null && document.getDocumentType() != null) {
-                    filteredDocuments.add(document);
-                }
-            }
-
-            if (!filteredDocuments.isEmpty()) {
-                serviceProviderMap.put("documents", filteredDocuments);
-            }
-            serviceProviderMap.put("skills", serviceProviderEntity.getSkills());
-            serviceProviderMap.put("infra", serviceProviderEntity.getInfra());
-            serviceProviderMap.put("languages", serviceProviderEntity.getLanguages());
-            serviceProviderMap.put("privileges", serviceProviderEntity.getPrivileges());
-            serviceProviderMap.put("spAddresses", serviceProviderEntity.getSpAddresses());
-
-
+            Map<String,Object> serviceProviderMap= sharedUtilityService.serviceProviderDetailsMap(serviceProviderEntity);
             return ResponseService.generateSuccessResponse("Service Provider details retrieved successfully", serviceProviderMap, HttpStatus.OK);
         } catch (IllegalArgumentException e) {
             return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
