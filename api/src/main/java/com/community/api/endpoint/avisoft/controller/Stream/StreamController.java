@@ -73,6 +73,8 @@ public class StreamController {
                 return ResponseService.generateErrorResponse("NO STREAM FOUND", HttpStatus.NOT_FOUND);
             }
             return ResponseService.generateSuccessResponse("STREAM FOUND", stream, HttpStatus.OK);
+        }catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
