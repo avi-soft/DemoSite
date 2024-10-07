@@ -402,17 +402,20 @@ public class AccountEndPoint {
                         String ipAddress = request.getRemoteAddr();
                         String userAgent = request.getHeader("User-Agent");
                         if ( jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
+                            return ResponseEntity.ok(new OtpEndpoint.ApiResponse(existingToken, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in"));
 
-                            OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(existingToken, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
-                            return responseService.generateSuccessResponse("Logged in Successfully",response,HttpStatus.OK);
+                            /*OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(existingToken, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
+                            return responseService.generateSuccessResponse("Logged in Successfully",response,HttpStatus.OK);*/
                         } else {
 
                             String token = jwtUtil.generateToken(existingCustomer.getId(), role, ipAddress, userAgent);
                             existingCustomer.setToken(token);
                             em.persist(existingCustomer);
                             session.setAttribute(tokenKey, token);
-                          OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(token, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
-                            return ResponseEntity.ok(response);
+                            return ResponseEntity.ok(new OtpEndpoint.ApiResponse(token, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in"));
+
+/*                          OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(token, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
+                            return ResponseEntity.ok(response);*/
                         }
 
                     } else {
