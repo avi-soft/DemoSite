@@ -25,4 +25,9 @@ public class CustomJobGroup {
     @Column(name="job_group")
     @JsonProperty("job_group")
     protected Character jobGroup;
+
+    @Column(name="job_group_description")
+    @JsonProperty("job_group_description")
+    protected String jobDescription;
+
 }

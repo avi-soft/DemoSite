@@ -52,10 +52,16 @@
         <class>com.community.api.entity.CustomTicketStatus</class>
         <class>com.community.api.entity.CustomTicketType</class>
         <class>com.community.api.entity.CustomServiceProviderTicket</class>
+        <class>com.community.api.entity.CustomProductRejectionStatus</class>
+        <class>com.community.api.entity.CustomGender</class>
+        <class>com.community.api.entity.CustomProductGenderPhysicalRequirementRef</class>
+        <class>com.community.api.entity.CustomStream</class>
+        <class>com.community.api.entity.CustomSubject</class>
+        <class>com.community.api.entity.CustomSector</class>
 
         <exclude-unlisted-classes/>
     </persistence-unit>
-    
+
     <persistence-unit name="blSecurePU" transaction-type="RESOURCE_LOCAL">
         <non-jta-data-source>jdbc/webSecure</non-jta-data-source>
         <exclude-unlisted-classes/>

@@ -44,7 +44,7 @@ public class QualificationDetailsController
         try{
             String jwtToken = authHeader.substring(7);
             Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
-            role = roleService.getRoleByRoleId(roleId).getRole_name();
+             role = roleService.getRoleByRoleId(roleId).getRole_name();
             QualificationDetails newQualificationDetails = qualificationDetailsService.addQualificationDetails(id , qualificationDetails,role);
             return ResponseService.generateSuccessResponse("Qualification Details is added successfully for "+role,newQualificationDetails,HttpStatus.CREATED);
         }
@@ -55,6 +55,8 @@ public class QualificationDetailsController
                 return ResponseService.generateErrorResponse("Service Provider does not exist",HttpStatus.NOT_FOUND);
             }
             return ResponseService.generateErrorResponse("Customer does not exist",HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
         catch (EntityAlreadyExistsException e)
         {
@@ -85,6 +87,8 @@ public class QualificationDetailsController
                 return ResponseService.generateSuccessResponse("Qualification Details list is empty for "+role,qualificationDetails,HttpStatus.OK);
             }
             return ResponseService.generateSuccessResponse("Qualification Details are found for "+role,qualificationDetails,HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
         catch (CustomerDoesNotExistsException e)
         {
@@ -108,6 +112,7 @@ public class QualificationDetailsController
             String jwtToken = authHeader.substring(7);
             Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
             role = roleService.getRoleByRoleId(roleId).getRole_name();
+
             QualificationDetails qualificationDetailsToDelete = qualificationDetailsService.deleteQualificationDetail(id,qualificationDetailId,role);
             return responseService.generateResponse(HttpStatus.OK,"Qualification Detail is deleted successfully for "+ role, qualificationDetailsToDelete);
         }
@@ -118,6 +123,8 @@ public class QualificationDetailsController
                 return ResponseService.generateErrorResponse("Service Provider does not exist",HttpStatus.NOT_FOUND);
             }
             return ResponseService.generateErrorResponse("Customer does not exist",HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
         catch (EntityDoesNotExistsException e)
         {
@@ -148,6 +155,8 @@ public class QualificationDetailsController
                 return ResponseService.generateErrorResponse("Service Provider does not exist",HttpStatus.NOT_FOUND);
             }
             return ResponseService.generateErrorResponse("Customer does not exist",HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
         }
         catch (ExaminationDoesNotExistsException e)
         {

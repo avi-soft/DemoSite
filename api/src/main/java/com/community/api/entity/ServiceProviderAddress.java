@@ -23,7 +23,7 @@ public class ServiceProviderAddress
     @Column(name = "address_Id")
     private long address_id;
     private int address_type_id;
-    private String district,address_line,state,/*city*/pincode;
+    private String district,address_line,state/*city*/,pincode;
 
     @JsonBackReference
     @ManyToOne(fetch = FetchType.LAZY) // Use lazy loading to improve performance if needed

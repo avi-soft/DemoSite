@@ -48,7 +48,9 @@ public class JobGroupController {
                 return ResponseService.generateErrorResponse("No Job Group Found", HttpStatus.NOT_FOUND);
             }
             return ResponseService.generateSuccessResponse("Job Group Found", jobGroup, HttpStatus.OK);
-        } catch (Exception exception) {
+        } catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }  catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
