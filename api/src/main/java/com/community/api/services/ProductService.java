@@ -571,6 +571,12 @@ public class ProductService {
                 addProductDto.setMetaDescription(addProductDto.getMetaDescription().trim());
             }
 
+            if(addProductDto.getPostName() == null || addProductDto.getPostName().trim().isEmpty()) {
+                throw new IllegalArgumentException("Post Name cannot be null or empty.");
+            } else {
+                addProductDto.setPostName(addProductDto.getPostName().trim());
+            }
+
             String formattedDate = dateFormat.format(new Date());
             Date activeStartDate = dateFormat.parse(formattedDate); // Convert formatted date string back to Date
 

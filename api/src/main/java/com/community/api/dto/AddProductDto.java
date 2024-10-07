@@ -112,4 +112,7 @@ public class AddProductDto {
     @JsonProperty("notifying_authority")
     String notifyingAuthority;
 
+    @JsonProperty("post_name")
+    String postName;
+
 }
