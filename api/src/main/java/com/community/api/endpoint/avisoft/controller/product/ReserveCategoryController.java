@@ -39,7 +39,7 @@ public class ReserveCategoryController {
         }
     }
 
-    @GetMapping("get-reserve-category-by_id/{reserveCategoryId}")
+    @GetMapping("get-reserve-category-by-id/{reserveCategoryId}")
     public ResponseEntity<?> getReserveCategoryById(@PathVariable Long reserveCategoryId) {
         try {
             CustomReserveCategory customReserveCategory = reserveCategoryService.getReserveCategoryById(reserveCategoryId);

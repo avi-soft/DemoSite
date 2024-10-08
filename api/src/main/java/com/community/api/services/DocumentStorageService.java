@@ -8,25 +8,25 @@ import com.community.api.utils.Document;
 import com.community.api.utils.DocumentType;
 import com.community.api.utils.ServiceProviderDocument;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.EntityManager;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 @Service
 public class DocumentStorageService {
-
-    public static final String BASE_DIRECTORY = "C:\\Documents";
 
     @Autowired
     private  ResponseService responseService;
@@ -42,6 +42,13 @@ public class DocumentStorageService {
 
     @Autowired
     private EntityManager entityManager;
+
+    @Value("${file.server.url}")
+    private String fileServerUrl;
+
+    @Autowired
+    private RestTemplate restTemplate;
+
 
     public ResponseEntity<Map<String, Object>> saveDocuments(MultipartFile file, String documentTypeStr, Long customerId, String role) {
         try {
@@ -186,7 +193,6 @@ public class DocumentStorageService {
 
         DocumentType[] documents = {
 
-
                 new DocumentType(14,"MATRICULATION", "Completed secondary education or equivalent"),
                 new DocumentType( 15,"INTERMEDIATE", "Completed higher secondary education or equivalent"),
                 new DocumentType(16,"BACHELORS", "Completed undergraduate degree program education "),
@@ -194,8 +200,11 @@ public class DocumentStorageService {
                 new DocumentType( 18,"DOCTORATE", "Completed doctoral degree program education"),
                 new DocumentType(19,"DOMICILE", "The permanent home or principal residence of a person."),
                 new DocumentType( 20,"HANDICAPED", "An outdated term for individuals with physical or mental disabilities; \"person with a disability\" is preferred today"),
+                new DocumentType(21,"C-FORM-PHOTO", "A C Form photo is a standardized ID photo for official documents."),
+                new DocumentType(23,"BUSSINESS_PHOTO", "A Standard proof of Running Bussiness"),
+                new DocumentType(24,"PERSONAL_PHOTO", "A Personal Photgraph of SP")
+            };
 
-        };
 
 
 
@@ -303,4 +312,58 @@ public class DocumentStorageService {
     public void saveTypingText(TypingText typingText) {
         entityManager.persist(typingText);
     }
+
+
+    public void uploadFileOnFileServer(MultipartFile file, String documentType, String customerId, String role) throws IOException {
+        try {
+            String url = fileServerUrl + "/files/upload";
+
+            final String filename = file.getOriginalFilename();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+
+            MultiValueMap<String, Object> multiValueMap = new LinkedMultiValueMap<>();
+            ByteArrayResource contentsAsResource = new ByteArrayResource(file.getBytes()) {
+                @Override
+                public String getFilename() {
+                    return filename;
+                }
+            };
+            multiValueMap.add("file", contentsAsResource);
+            multiValueMap.add("documentType", documentType);
+            multiValueMap.add("customerId", customerId);
+            multiValueMap.add("role", role);
+            HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(multiValueMap, headers);
+
+            restTemplate.postForObject(url, request, String.class);
+
+        } catch (Exception e) {
+            exceptionHandlingService.handleException(e);
+            throw new IOException("Error saving document: " + e.getMessage());
+        }
+    }
+
+    public String deleteFile(Long customerId, String documentType, String fileName, String role) throws IOException {
+        try {
+            String url = fileServerUrl + "/files/delete?customerId=" + customerId +
+                    "&documentType=" + documentType + "&fileName=" + fileName + "&role=" + role;
+
+
+           ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.DELETE, null, String.class);
+
+            String deletedFilePath = response.getBody();
+            if (deletedFilePath != null && !deletedFilePath.isEmpty()) {
+                    System.out.println("File deleted: " + deletedFilePath);
+            } else {
+                throw new IOException("No file path returned from server.");
+            }
+        } catch (Exception e) {
+            exceptionHandlingService.handleException(e);
+            throw new IOException("Error deleting document: " + e.getMessage());
+        }
+        return  fileName;
+    }
+
+
+
 }

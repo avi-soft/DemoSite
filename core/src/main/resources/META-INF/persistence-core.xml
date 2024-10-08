@@ -48,10 +48,20 @@
         <class>com.community.api.entity.CustomProductReserveCategoryFeePostRef</class>
         <class>com.community.api.entity.CustomProductReserveCategoryBornBeforeAfterRef</class>
         <class>com.community.api.entity.CustomJobGroup</class>
+        <class>com.community.api.entity.CustomTicketState</class>
+        <class>com.community.api.entity.CustomTicketStatus</class>
+        <class>com.community.api.entity.CustomTicketType</class>
+        <class>com.community.api.entity.CustomServiceProviderTicket</class>
+        <class>com.community.api.entity.CustomProductRejectionStatus</class>
+        <class>com.community.api.entity.CustomGender</class>
+        <class>com.community.api.entity.CustomProductGenderPhysicalRequirementRef</class>
+        <class>com.community.api.entity.CustomStream</class>
+        <class>com.community.api.entity.CustomSubject</class>
+        <class>com.community.api.entity.CustomSector</class>
 
         <exclude-unlisted-classes/>
     </persistence-unit>
-    
+
     <persistence-unit name="blSecurePU" transaction-type="RESOURCE_LOCAL">
         <non-jta-data-source>jdbc/webSecure</non-jta-data-source>
         <exclude-unlisted-classes/>
@@ -88,6 +98,8 @@
         <class>com.community.api.entity.TypingText</class>
         <class>com.community.api.entity.ResizedImage</class>
         <class>com.community.api.utils.ServiceProviderDocument</class>
+        <class>com.community.api.entity.ServiceProviderTestStatus</class>
+        <class>com.community.api.entity.ServiceProviderRank</class>
         <exclude-unlisted-classes/>
     </persistence-unit>
 

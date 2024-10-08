@@ -5,6 +5,9 @@ import com.community.api.entity.CustomApplicationScope;
 import com.community.api.entity.CustomJobGroup;
 import com.community.api.entity.CustomProductState;
 import com.community.api.entity.CustomReserveCategory;
+import com.community.api.entity.CustomTicketStatus;
+import com.community.api.entity.CustomTicketState;
+import com.community.api.entity.CustomTicketType;
 import com.community.api.entity.Districts;
 import com.community.api.entity.Qualification;
 import com.community.api.entity.Role;
@@ -13,6 +16,7 @@ import com.community.api.entity.ServiceProviderInfra;
 import com.community.api.entity.ServiceProviderLanguage;
 import com.community.api.entity.Skill;
 import com.community.api.entity.StateCode;
+import com.community.api.entity.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -36,24 +40,24 @@ public class CommandLineService implements CommandLineRunner {
     public void run(String... args) throws Exception {
         // Check if data already exists to avoid duplication
         if (entityManager.createQuery("SELECT COUNT(c) FROM CustomProductState c", Long.class).getSingleResult() == 0) {
-            entityManager.persist(new CustomProductState(1L, "NEW"));
-            entityManager.persist(new CustomProductState(2L, "MODIFIED"));
-            entityManager.persist(new CustomProductState(3L, "APPROVED"));
-            entityManager.persist(new CustomProductState(4L, "REJECTED"));
-            entityManager.persist(new CustomProductState(5L, "LIVE"));
-            entityManager.persist(new CustomProductState(6L, "EXPIRED"));
+            entityManager.persist(new CustomProductState(1L, "NEW", "New State."));
+            entityManager.persist(new CustomProductState(2L, "MODIFIED", "Modified State."));
+            entityManager.persist(new CustomProductState(3L, "APPROVED", "Approved State."));
+            entityManager.persist(new CustomProductState(4L, "REJECTED", "Rejected State."));
+            entityManager.persist(new CustomProductState(5L, "LIVE", "Live State."));
+            entityManager.persist(new CustomProductState(6L, "EXPIRED", "Expired State."));
         }
 
         if(entityManager.createQuery("SELECT COUNT(c) FROM CustomJobGroup c", Long.class).getSingleResult() == 0) {
-            entityManager.persist(new CustomJobGroup(1L, 'A'));
-            entityManager.persist(new CustomJobGroup(2L, 'B'));
-            entityManager.persist(new CustomJobGroup(3L, 'C'));
-            entityManager.persist(new CustomJobGroup(4L, 'D'));
+            entityManager.persist(new CustomJobGroup(1L, 'A', "Executive Management"));
+            entityManager.persist(new CustomJobGroup(2L, 'B', "Professional and Technical"));
+            entityManager.persist(new CustomJobGroup(3L, 'C', "Administrative and Support"));
+            entityManager.persist(new CustomJobGroup(4L, 'D', "Entry-Level and Labor"));
         }
 
         if (entityManager.createQuery("SELECT COUNT(c) FROM CustomApplicationScope c", Long.class).getSingleResult() == 0) {
-            entityManager.persist(new CustomApplicationScope(1L, "STATE"));
-            entityManager.persist(new CustomApplicationScope(2L, "CENTER"));
+            entityManager.persist(new CustomApplicationScope(1L, "STATE", "State level operations."));
+            entityManager.persist(new CustomApplicationScope(2L, "CENTER", "Center level operations."));
         }
 
         if (entityManager.createQuery("SELECT COUNT(c) FROM CustomReserveCategory c", Long.class).getSingleResult() == 0) {
@@ -61,14 +65,67 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(new CustomReserveCategory(2L, "SC", "Schedule Caste", false));
             entityManager.persist(new CustomReserveCategory(3L, "ST", "Schedule Tribe", false));
             entityManager.persist(new CustomReserveCategory(4L, "OBC", "Other Backward Caste", false));
+            entityManager.persist(new CustomReserveCategory(5L, "OTHERS", "Others", false));
+        }
+
+        if(entityManager.createQuery("SELECT COUNT(c) FROM CustomProductRejectionStatus c", Long.class).getSingleResult() == 0) {
+            entityManager.merge(new CustomProductRejectionStatus(1L, "TO-BE-MODIFIED", "Product needs modification to get approved."));
+            entityManager.merge(new CustomProductRejectionStatus(2L, "DUPLICATE", "There is already a product present with these details."));
+            entityManager.merge(new CustomProductRejectionStatus(3L, "IRRELEVANT", "The product is irrelevant."));
+            entityManager.merge(new CustomProductRejectionStatus(4L, "UNFEASIBLE", "The product is not feasible to exists."));
+        }
+
+        if(entityManager.createQuery("SELECT COUNT(c) FROM CustomGender c", Long.class).getSingleResult() == 0) {
+            entityManager.persist(new CustomGender(1L, 'M', "MALE"));
+            entityManager.persist(new CustomGender(2L, 'F', "FEMALE"));
+            entityManager.persist(new CustomGender(3L, 'O', "OTHERS"));
+        }
+
+        if(entityManager.createQuery("SELECT COUNT(c) FROM CustomSector c", Long.class).getSingleResult() == 0) {
+            entityManager.merge(new CustomSector(1L, "HEALTHCARE", "Forms related to patient care and medical services."));
+            entityManager.merge(new CustomSector(2L, "EDUCATION", "Forms for student enrollment and academic records."));
+            entityManager.merge(new CustomSector(3L, "FINANCE", "Forms for loans, taxes, and financial services."));
+            entityManager.merge(new CustomSector(4L, "GOVERNMENT", "Forms for taxes and civic registration."));
+            entityManager.merge(new CustomSector(5L, "HUMAN_RESOURCES", "Forms for job applications and employee management."));
+            entityManager.merge(new CustomSector(6L, "REAL_ESTATE", "Forms for property transactions and leases."));
+            entityManager.merge(new CustomSector(7L, "INSURANCE", "Forms for claims and policy management."));
+            entityManager.merge(new CustomSector(8L, "RETAIL", "Forms for customer feedback and warranties."));
+            entityManager.merge(new CustomSector(9L, "TRANSPORTATION", "Forms for shipping and travel documentation."));
+            entityManager.merge(new CustomSector(10L, "LEGAL", "Forms for legal processes and documentation."));
+        }
+
+        if(entityManager.createQuery("SELECT COUNT(c) FROM CustomStream c", Long.class).getSingleResult() == 0) {
+            entityManager.merge(new CustomStream(1L, "SCIENCE", "Description of Science"));
+            entityManager.merge(new CustomStream(2L, "ARTS", "Description of Arts"));
+            entityManager.merge(new CustomStream(3L, "COMMERCE", "Description of Commerce"));
+            entityManager.merge(new CustomStream(4L, "ENGINEERING", "Description of Engineering"));
+            entityManager.merge(new CustomStream(5L, "MEDICINE", "Description of Medicine"));
+            entityManager.merge(new CustomStream(6L, "HUMANITIES", "Description of Humanities"));
+            entityManager.merge(new CustomStream(7L, "SOCIAL SCIENCES", "Description of Social Sciences"));
+            entityManager.merge(new CustomStream(8L, "TECHNOLOGY", "Description of Technology"));
+            entityManager.merge(new CustomStream(9L, "MATHEMATICS", "Description of Mathematics"));
+            entityManager.merge(new CustomStream(10L, "DESIGN", "Description of Design"));
+        }
+
+        if(entityManager.createQuery("SELECT COUNT(s) FROM CustomSubject s", Long.class).getSingleResult() == 0) {
+            entityManager.merge(new CustomSubject(1L, "Mathematics", "Description of Mathematics"));
+            entityManager.merge(new CustomSubject(2L, "Physics", "Description of Physics"));
+            entityManager.merge(new CustomSubject(3L, "Chemistry", "Description of Chemistry"));
+            entityManager.merge(new CustomSubject(4L, "Biology", "Description of Biology"));
+            entityManager.merge(new CustomSubject(5L, "English", "Description of English"));
+            entityManager.merge(new CustomSubject(6L, "History", "Description of History"));
+            entityManager.merge(new CustomSubject(7L, "Geography", "Description of Geography"));
+            entityManager.merge(new CustomSubject(8L, "Computer Science", "Description of Computer Science"));
+            entityManager.merge(new CustomSubject(9L, "Art", "Description of Art"));
+            entityManager.merge(new CustomSubject(10L, "Physical Education", "Description of Physical Education"));
         }
 
         if (entityManager.createQuery("SELECT COUNT(r) FROM Role r", Long.class).getSingleResult() == 0) {
-            entityManager.persist(new Role(1, "SUPER_ADMIN", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
-            entityManager.persist(new Role(2, "ADMIN", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
-            entityManager.persist(new Role(3, "ADMIN_SERVICE_PROVIDER", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
-            entityManager.persist(new Role(4, "SERVICE_PROVIDER", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
-            entityManager.persist(new Role(5, "CUSTOMER", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
+            entityManager.merge(new Role(1, "SUPER_ADMIN", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
+            entityManager.merge(new Role(2, "ADMIN", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
+            entityManager.merge(new Role(3, "ADMIN_SERVICE_PROVIDER", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
+            entityManager.merge(new Role(4, "SERVICE_PROVIDER", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
+            entityManager.merge(new Role(5, "CUSTOMER", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
         }
 
         Long count = entityManager.createQuery("SELECT COUNT(d) FROM Districts d", Long.class).getSingleResult();
@@ -143,8 +200,7 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(new Districts(58, "Jhajjar", "HR"));
             entityManager.persist(new Districts(59, "Jind", "HR"));
             entityManager.persist(new Districts(60, "Kaithal", "HR"));
-            entityManager.persist(
-                    new Districts(61, "Karnal", "HR"));
+            entityManager.persist(new Districts(61, "Karnal", "HR"));
             entityManager.persist(new Districts(62, "Mahendragarh", "HR"));
             entityManager.persist(new Districts(63, "Mewat", "HR"));
             entityManager.persist(new Districts(64, "Palwal", "HR"));
@@ -160,7 +216,6 @@ public class CommandLineService implements CommandLineRunner {
         count = entityManager.createQuery("SELECT COUNT(s) FROM StateCode s", Long.class).getSingleResult();
 
         if (count == 0) {
-
 
             // Insert data into the StateCode table
             entityManager.persist(new StateCode(1, "Andhra Pradesh", "AP"));
@@ -268,6 +323,39 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(new Qualification(4L, "MASTERS", "Completed postgraduate degree program"));
             entityManager.persist(new Qualification(5L, "DOCTORATE", "Completed doctoral degree program"));
 
+        }
+
+        count = entityManager.createQuery("SELECT COUNT(e) FROM TypingText e", Long.class).getSingleResult();
+        if (count == 0) {
+            entityManager.merge(new TypingText(1L, "The quick brown fox jumps over the lazy dog near the quiet river, while the bright sun sets in the horizon, casting beautiful hues of orange."));
+            entityManager.merge(new TypingText(2L, "A curious cat chased a butterfly through the green meadows, unaware of the gentle breeze swirling around."));
+            entityManager.merge(new TypingText(3L, "In the silent night, a lone owl hooted softly as the stars twinkled brightly above the peaceful forest."));
+            entityManager.merge(new TypingText(4L, "Beneath the tall mountains, a small village thrived with joy, laughter, and the warmth of togetherness."));
+            entityManager.merge(new TypingText(5L, "The adventure begins with a journey through unknown lands, filled with unexpected challenges and thrilling discoveries along the way."));
+        }
+
+        count = entityManager.createQuery("SELECT count(e) FROM ServiceProviderTestStatus e", Long.class).getSingleResult();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        String now = LocalDateTime.now().format(formatter);
+
+        if (count == 0) {
+            entityManager.persist(new ServiceProviderTestStatus(1L, "New", "The service provider has registered but has not yet completed the test.", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderTestStatus(2L, "Completed Test", "The service provider has completed the required skill tests.", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderTestStatus(3L, "Approved", "The service provider's submission has been reviewed and approved.", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderTestStatus(4L, "Rejected", "The service provider's submission was rejected due to not meeting the criteria.", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderTestStatus(5L, "Suspended", "The service provider account is currently suspended due to policy violations.", now, now, "SUPER_ADMIN"));
+        }
+        count = entityManager.createQuery("SELECT count(e) FROM ServiceProviderRank e", Long.class).getSingleResult();
+
+        if (count == 0) {
+            entityManager.persist(new ServiceProviderRank(1L, "1a", "The PROFESSIONAL service provider's score is between 75-100 points", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderRank(2L, "1b", "The PROFESSIONAL service provider's score is between 50-75 points", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderRank(3L, "1c", "The PROFESSIONAL service provider's score is between 25-50 points", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderRank(4L, "1d", "The PROFESSIONAL service provider's score is between 0-25 points", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderRank(5L, "2a", "The INDIVIDUAL service provider's score is between 75-100 points", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderRank(6L, "2b", "The INDIVIDUAL service provider's score is between 50-75 points", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderRank(7L, "2c", "The INDIVIDUAL service provider's score is between 25-50 points", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderRank(8L, "2d", "The INDIVIDUAL service provider's score is between 0-25 points", now, now, "SUPER_ADMIN"));
         }
     }
 }

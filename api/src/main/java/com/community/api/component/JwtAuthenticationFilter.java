@@ -86,17 +86,16 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
-
-    } catch (ExpiredJwtException e) {
-        handleException(response, HttpServletResponse.SC_UNAUTHORIZED, "JWT token is expired");
-        logger.error("ExpiredJwtException caught: {}", e.getMessage());
-    } catch (MalformedJwtException e) {
-        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JWT token");
-        exceptionHandling.handleException(e);
-        logger.error("MalformedJwtException caught: {}", e.getMessage());
-    } catch (Exception e) {
-        handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
-        exceptionHandling.handleException(e);
+        } catch (ExpiredJwtException e) {
+            handleException(response, HttpServletResponse.SC_UNAUTHORIZED, "JWT token is expired");
+            logger.error("ExpiredJwtException caught: {}", e.getMessage());
+        } catch (MalformedJwtException e) {
+            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JWT token");
+            exceptionHandling.handleException(e);
+            logger.error("MalformedJwtException caught: {}", e.getMessage());
+        } catch (Exception e) {
+            handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+            exceptionHandling.handleException(e);
 
             logger.error("Exception caught: {}", e.getMessage());
         }
@@ -107,8 +106,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return UNSECURED_URI_PATTERN.matcher(requestURI).matches();
 
     }
-
-
 
     private boolean isApiKeyRequiredUri(HttpServletRequest request) {
 
@@ -212,7 +209,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (!response.isCommitted()) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
-            response.getWriter().write("{\"status\":401,\"message\":\"" + message + "\"}");
+//            response.getWriter().write("{\"status\":401,\"message\":\"" + message + "\"}");
+            response.getWriter().write("{\"status\":\"UNAUTHORIZED\",\"status_code\":401,\"message\":\"" + message + "\"}");
+
 
 
             response.getWriter().flush();
@@ -223,7 +222,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (!response.isCommitted()) {
             response.setStatus(statusCode);
             response.setContentType("application/json");
-            response.getWriter().write("{\"status\":" + statusCode + ",\"message\":\"" + message + "\"}");
+//            response.getWriter().write("{\"status\":" + statusCode + ",\"message\":\"" + message + "\"}");
+            response.getWriter().write("{\"status\":\"" + (statusCode == HttpServletResponse.SC_UNAUTHORIZED ? "UNAUTHORIZED" : "ERROR") + "\",\"status_code\":" + statusCode + ",\"message\":\"" + message + "\"}");
+
             response.getWriter().flush();
         }
     }

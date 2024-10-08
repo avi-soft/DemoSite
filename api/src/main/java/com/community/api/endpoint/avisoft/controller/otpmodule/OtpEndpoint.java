@@ -5,6 +5,7 @@ import com.community.api.component.JwtUtil;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.endpoint.serviceProvider.ServiceProviderStatus;
 import com.community.api.entity.CustomCustomer;
+import com.community.api.entity.ServiceProviderTestStatus;
 import com.community.api.services.*;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
 import com.community.api.services.exception.ExceptionHandlingImplement;
@@ -180,8 +181,10 @@ public class OtpEndpoint {
                     em.persist(existingCustomer);
 
 
-                    String existingToken = (String) session.getAttribute(tokenKey);
-                    if (jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
+                    String existingToken = existingCustomer.getToken();
+
+                    if (existingToken!= null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
+
 
                         ApiResponse response = new ApiResponse(existingToken,sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
                         return ResponseEntity.ok(response);
@@ -242,6 +245,8 @@ public class OtpEndpoint {
                 serviceProviderEntity.setOtp(otp);
                 ServiceProviderStatus serviceProviderStatus = em.find(ServiceProviderStatus.class, Constant.INITIAL_STATUS);
                 serviceProviderEntity.setStatus(serviceProviderStatus);
+                ServiceProviderTestStatus serviceProviderTestStatus = em.find(ServiceProviderTestStatus.class, Constant.INITIAL_TEST_STATUS);
+                serviceProviderEntity.setTestStatus(serviceProviderTestStatus);
                 serviceProviderEntity.setRole(4);
                 em.persist(serviceProviderEntity);
             } else if (existingServiceProvider.getOtp() != null) {

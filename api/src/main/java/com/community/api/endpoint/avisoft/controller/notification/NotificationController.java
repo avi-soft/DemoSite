@@ -16,35 +16,36 @@ import java.io.IOException;
 @RequestMapping("notification")
 public class NotificationController
 {
-        @Autowired
-        private NotificationService notificationService;
-        @Autowired
-        private EntityManager entityManager;
-        @Autowired
-        ExceptionHandlingImplement exceptionHandlingImplement;
-        @Autowired
-        ResponseService responseService;
+    @Autowired
+    private NotificationService notificationService;
+    @Autowired
+    private EntityManager entityManager;
+    @Autowired
+    ExceptionHandlingImplement exceptionHandlingImplement;
+    @Autowired
+    ResponseService responseService;
 
-        @PostMapping("/notify/{customerId}")
-        public ResponseEntity<?> notifyCustomer(@PathVariable Long customerId) throws Exception {
-            try
-            {
-                notificationService.notifyCustomer(customerId);
-                notificationService.notifyCustomer(customerId);
-            }
-            catch (CustomerDoesNotExistsException customerDoesNotExistsException)
-            {
-                exceptionHandlingImplement.handleException(customerDoesNotExistsException);
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer does not exist with id " + customerId);
-            }
-            catch (RuntimeException e)
-            {
-                ResponseService.generateErrorResponse("Email address of customer is null. Please add email address ", HttpStatus.BAD_REQUEST);
-            }
-            catch (Exception e) {
-                exceptionHandlingImplement.handleException(e);
-                throw new Exception("Something went wrong");
-            }
-            return responseService.generateResponse(HttpStatus.OK,"Notification is sent",customerId);
+
+    @PostMapping("/notify/{customerId}")
+    public ResponseEntity<?> notifyCustomer(@PathVariable Long customerId) throws Exception {
+        try
+        {
+            notificationService.notifyCustomer(customerId);
+
         }
+        catch (CustomerDoesNotExistsException customerDoesNotExistsException)
+        {
+            ResponseService.generateErrorResponse("Customer does not exist", HttpStatus.NOT_FOUND);
+        }catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+        catch (RuntimeException e)
+        {
+            ResponseService.generateErrorResponse("Email address of customer is null. Please add email address ", HttpStatus.BAD_REQUEST);
+        }
+        catch (Exception e) {
+            ResponseService.generateErrorResponse("Something went wrong", HttpStatus.BAD_REQUEST);
+        }
+        return responseService.generateResponse(HttpStatus.OK,"Notification is sent",customerId);
+    }
 }

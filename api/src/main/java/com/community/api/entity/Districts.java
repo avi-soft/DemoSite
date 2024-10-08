@@ -15,7 +15,6 @@ import javax.persistence.*;
 @Setter
 public class Districts {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int district_id;
     private String district_name;
     private String state_code;

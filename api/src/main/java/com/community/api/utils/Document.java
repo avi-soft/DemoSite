@@ -25,7 +25,7 @@ public class Document {
     @Lob
     private byte[] data;
 
-    @JsonBackReference
+    @JsonBackReference("documents-customer")
     @ManyToOne
     @JoinColumn(name = "custom_customer_id")
     private CustomCustomer custom_customer;
