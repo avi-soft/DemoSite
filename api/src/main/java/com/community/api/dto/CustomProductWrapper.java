@@ -140,6 +140,8 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
     Date createdDate;
     @JsonProperty("notifying_authority")
     String notifyingAuthority;
+    @JsonProperty("post_name")
+    String postName;
 
     public void wrapDetailsAddProduct(Product product, AddProductDto addProductDto, CustomJobGroup customJobGroup, CustomProductState customProductState, CustomApplicationScope customApplicationScope, Long creatorUserId, Role creatorRole, ReserveCategoryService reserveCategoryService, StateCode state, CustomGender customGender, CustomSector customSector, Qualification qualification, CustomStream customStream, CustomSubject customSubject, Date currentDate) throws Exception {
 
@@ -163,6 +165,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.metaDescription = product.getMetaDescription();
 
         this.displayTemplate = product.getDisplayTemplate();
+        this.postName = addProductDto.getPostName();
 
         for(int i=0; i<addProductDto.getReservedCategory().size(); i++) {
 
@@ -301,6 +304,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
 
         this.displayTemplate = customProduct.getDisplayTemplate();
         this.platformFee = customProduct.getPlatformFee();
+        this.postName = customProduct.getPostName();
 
         this.customApplicationScope = customProduct.getCustomApplicationScope();
         this.customJobGroup = customProduct.getJobGroup();
@@ -361,6 +365,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.activeStartDate = customProduct.getDefaultSku().getActiveStartDate();
         this.url = customProduct.getUrl();
         this.metaDescription = customProduct.getMetaDescription();
+        this.postName = customProduct.getPostName();
 
         this.platformFee = customProduct.getPlatformFee();
         this.state = customProduct.getState();
