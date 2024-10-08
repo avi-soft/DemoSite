@@ -414,25 +414,27 @@ public class CartEndPoint extends BaseEndpoint {
             if(!errors.isEmpty())
                 return ResponseService.generateErrorResponse("Error Placing order : "+errors.toString(),HttpStatus.BAD_REQUEST);
             for (OrderItem orderItem : cart.getOrderItems()) {
-                        Product product = findProductFromItemAttribute(orderItem);
-                        Order individualOrder = orderService.createNamedOrderForCustomer(orderItem.getName(), customer);
-                        individualOrder.setCustomer(customer);
-                        individualOrder.setEmailAddress(customer.getEmailAddress());
-                        individualOrder.setStatus(new OrderStatus("ORDER_PLACED", "order placed"));
-                        OrderItemRequest orderItemRequest = new OrderItemRequest();
-                        orderItemRequest.setProduct(product);
-                        orderItemRequest.setOrder(individualOrder);
-                        orderItemRequest.setQuantity(1);
-                        orderItemRequest.setCategory(product.getCategory());
-                        orderItemRequest.setItemName(product.getName());
-                        Map<String, String> atrtributes = orderItemRequest.getItemAttributes();
-                        atrtributes.put("productId", product.getId().toString());
-                        orderItemRequest.setItemAttributes(atrtributes);
-                        OrderItem orderItemForIndividualOrder = orderItemService.createOrderItem(orderItemRequest);
-                        individualOrder.addOrderItem(orderItemForIndividualOrder);
-                        entityManager.persist(individualOrder);
-                        individualOrders.add(individualOrder);
+                if (orderItemIds.contains(orderItem.getId())) {
+                    Product product = findProductFromItemAttribute(orderItem);
+                    Order individualOrder = orderService.createNamedOrderForCustomer(orderItem.getName(), customer);
+                    individualOrder.setCustomer(customer);
+                    individualOrder.setEmailAddress(customer.getEmailAddress());
+                    individualOrder.setStatus(new OrderStatus("ORDER_PLACED", "order placed"));
+                    OrderItemRequest orderItemRequest = new OrderItemRequest();
+                    orderItemRequest.setProduct(product);
+                    orderItemRequest.setOrder(individualOrder);
+                    orderItemRequest.setQuantity(1);
+                    orderItemRequest.setCategory(product.getCategory());
+                    orderItemRequest.setItemName(product.getName());
+                    Map<String, String> atrtributes = orderItemRequest.getItemAttributes();
+                    atrtributes.put("productId", product.getId().toString());
+                    orderItemRequest.setItemAttributes(atrtributes);
+                    OrderItem orderItemForIndividualOrder = orderItemService.createOrderItem(orderItemRequest);
+                    individualOrder.addOrderItem(orderItemForIndividualOrder);
+                    entityManager.persist(individualOrder);
+                    individualOrders.add(individualOrder);
                 }
+            }
                 responseMap.put("Orders", individualOrders);
                 List<OrderItem> items = cart.getOrderItems();
                 Iterator<OrderItem> iterator = items.iterator();
