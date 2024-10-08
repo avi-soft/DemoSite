@@ -36,13 +36,17 @@ import java.util.stream.Collectors;
 @Service
 public class SharedUtilityService {
     private EntityManager entityManager;
+    public ReserveCategoryService reserveCategoryService;
     private ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService;
-
     @Autowired
     public void setEntityManager(EntityManager entityManager) {
         this.entityManager = entityManager;
     }
-
+    @Autowired
+    public void setReserveCategoryService(ReserveCategoryService reserveCategoryService)
+    {
+        this.reserveCategoryService=reserveCategoryService;
+    }
     @Autowired
     public void setProductReserveCategoryFeePostRefService(ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService) {
         this.productReserveCategoryFeePostRefService = productReserveCategoryFeePostRefService;
@@ -59,7 +63,7 @@ public class SharedUtilityService {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSXXX");
         return zonedDateTime.format(formatter);
     }
-    public Map<String,Object> createProductResponseMap(Product product, OrderItem orderItem)
+    public Map<String,Object> createProductResponseMap(Product product, OrderItem orderItem,CustomCustomer customer)
     {
         Map<String, Object> productDetails = new HashMap<>();
         CustomProduct customProduct=entityManager.find(CustomProduct.class,product.getId());
@@ -75,8 +79,9 @@ public class SharedUtilityService {
         productDetails.put("default_sku_name", product.getDefaultSku().getName());
         productDetails.put("sku_description", product.getDefaultSku().getDescription());
         productDetails.put("long_description", product.getDefaultSku().getLongDescription());
-        productDetails.put("active_start_date", product.getDefaultSku().getActiveStartDate());//@TODO-Fee is dependent on category
-        productDetails.put("fee",productReserveCategoryFeePostRefService.getCustomProductReserveCategoryFeePostRefByProductIdAndReserveCategoryId(product.getId(),1L).getFee());//this is dummy data
+        productDetails.put("active_start_date", product.getDefaultSku().getActiveStartDate());
+        //@TODO-Fee is dependent on category
+        productDetails.put("fee",productReserveCategoryFeePostRefService.getCustomProductReserveCategoryFeePostRefByProductIdAndReserveCategoryId(product.getId(),reserveCategoryService.getCategoryByName(customer.getCategory()).getReserveCategoryId()).getFee());//this is dummy data
         productDetails.put("category_id",product.getDefaultCategory().getId());
         productDetails.put("active_end_date", product.getDefaultSku().getActiveEndDate());
         return productDetails;
@@ -199,7 +204,7 @@ public class SharedUtilityService {
         List<Map<String,Object>>listOfSavedProducts=new ArrayList<>();*/
     /*    if(!customCustomer.getSavedForms().isEmpty()) {
             for (Product product : customCustomer.getSavedForms()) {
-                listOfSavedProducts.add(createProductResponseMap(product, null));
+                listOfSavedProducts.add(createProductResponseMap(product, null,customCustomer));
             }
         }
 
@@ -247,7 +252,6 @@ public class SharedUtilityService {
     public Map<String,Object> serviceProviderDetailsMap(ServiceProviderEntity serviceProvider)
     {
         Map<String,Object>serviceProviderDetails=new HashMap<>();
-        serviceProviderDetails.put("id", serviceProvider.getService_provider_id());
         serviceProviderDetails.put("service_provider_id", serviceProvider.getService_provider_id());
         serviceProviderDetails.put("user_name", serviceProvider.getUser_name());
         serviceProviderDetails.put("first_name", serviceProvider.getFirst_name());
