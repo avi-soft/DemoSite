@@ -405,21 +405,25 @@ public class AccountEndPoint {
                         String existingToken = existingCustomer.getToken();
                         String ipAddress = request.getRemoteAddr();
                         String userAgent = request.getHeader("User-Agent");
+
                         if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
 
 //                          OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(existingToken, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
                             return ResponseEntity.ok(new OtpEndpoint.ApiResponse(existingToken, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in"));
 
 //                            return responseService.generateSuccessResponse("Logged in Successfully",response.getData(),HttpStatus.OK);
+
                         } else {
 
                             String token = jwtUtil.generateToken(existingCustomer.getId(), role, ipAddress, userAgent);
                             existingCustomer.setToken(token);
                             em.persist(existingCustomer);
                             session.setAttribute(tokenKey, token);
-                         /* OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(token, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
-                            return ResponseEntity.ok(response.getData());*/
+
                             return ResponseEntity.ok(new OtpEndpoint.ApiResponse(token, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in"));
+
+/*                          OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(token, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
+                            return ResponseEntity.ok(response);*/
 
                         }
 
