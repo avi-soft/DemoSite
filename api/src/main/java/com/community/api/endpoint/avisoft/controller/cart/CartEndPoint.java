@@ -188,11 +188,15 @@ public class CartEndPoint extends BaseEndpoint {
                         HttpStatus.BAD_REQUEST
                 );
             }
+
             Order cart = orderService.findCartForCustomer(customer);
             if (cart == null) {
                 cart = orderService.createNewCartForCustomer(customer);
             }
             Product product = catalogService.findProductById(productId);
+            if (product == null) {
+                return ResponseService.generateErrorResponse("Product not found", HttpStatus.NOT_FOUND);
+            }
             Long reserveCategoryId=reserveCategoryService.getCategoryByName(customCustomer.getCategory()).getReserveCategoryId();
             if(reserveCategoryService.getReserveCategoryFee(productId,reserveCategoryId)==null)
                 return ResponseService.generateErrorResponse("Cannot add product to cart :Fee not specified for your category",HttpStatus.UNPROCESSABLE_ENTITY);
@@ -200,9 +204,7 @@ public class CartEndPoint extends BaseEndpoint {
             {
 
             }*/
-            if (product == null) {
-                return ResponseService.generateErrorResponse("Product not found", HttpStatus.NOT_FOUND);
-            }
+
             OrderItemRequest orderItemRequest = new OrderItemRequest();
             orderItemRequest.setProduct(product);
             orderItemRequest.setOrder(cart);
@@ -396,8 +398,22 @@ public class CartEndPoint extends BaseEndpoint {
                 return ResponseService.generateErrorResponse("Cart not found", HttpStatus.NOT_FOUND);
             if(cart.getOrderItems().isEmpty())
                 return ResponseService.generateErrorResponse("Cart is empty",HttpStatus.NOT_FOUND);
+            List<Long>cartItemIds=new ArrayList<>();
+            List<String>errors=new ArrayList<>();
+            for(OrderItem orderItem : cart.getOrderItems())
+            {
+                cartItemIds.add(orderItem.getId());
+            }
+            for (Long orderItemId:orderItemIds)
+            {
+                if(!cartItemIds.contains(orderItemId))
+                {
+                    errors.add("Order Item Id : "+orderItemId+" does not belong to cart");
+                }
+            }
+            if(!errors.isEmpty())
+                return ResponseService.generateErrorResponse("Error Placing order : "+errors.toString(),HttpStatus.BAD_REQUEST);
             for (OrderItem orderItem : cart.getOrderItems()) {
-                    if(orderItemIds.contains(orderItem.getId())) {
                         Product product = findProductFromItemAttribute(orderItem);
                         Order individualOrder = orderService.createNamedOrderForCustomer(orderItem.getName(), customer);
                         individualOrder.setCustomer(customer);
@@ -416,7 +432,6 @@ public class CartEndPoint extends BaseEndpoint {
                         individualOrder.addOrderItem(orderItemForIndividualOrder);
                         entityManager.persist(individualOrder);
                         individualOrders.add(individualOrder);
-                    }
                 }
                 responseMap.put("Orders", individualOrders);
                 List<OrderItem> items = cart.getOrderItems();

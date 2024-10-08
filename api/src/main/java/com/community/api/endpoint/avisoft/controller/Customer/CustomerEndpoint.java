@@ -1158,12 +1158,14 @@ public class CustomerEndpoint {
             ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, service_provider_id);
             if (serviceProvider == null)
                 return ResponseService.generateErrorResponse("Service Provider not found", HttpStatus.NOT_FOUND);
+
             CustomerReferrer customerReferrer=new CustomerReferrer();
             customerReferrer.setCustomer(customCustomer);
             customerReferrer.setServiceProvider(serviceProvider);
             customCustomer.getMyReferrer().add(customerReferrer);
             customerReferrer.setCreatedAt(LocalDateTime.now());
             entityManager.persist(customerReferrer);
+
             entityManager.merge(customCustomer);
             return ResponseService.generateSuccessResponse("Referrer Set", sharedUtilityService.serviceProviderDetailsMap(serviceProvider), HttpStatus.OK);
         } catch (IllegalArgumentException e) {

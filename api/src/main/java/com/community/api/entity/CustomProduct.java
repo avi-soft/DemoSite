@@ -148,4 +148,7 @@ public class CustomProduct extends ProductImpl {
     @Column(name = "created_date")
     protected Date createdDate;
 
+    @Column(name = "post_name")
+    protected String postName;
+
 }
