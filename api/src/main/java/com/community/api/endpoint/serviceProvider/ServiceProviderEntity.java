@@ -115,7 +115,7 @@ public class ServiceProviderEntity  {
     private String secondary_email;
     private String password;
     @Nullable
-    private Boolean is_running_business_unit;
+    private Boolean is_running_business_unit=false;
 
     @Nullable
     private String business_name;

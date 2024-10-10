@@ -1158,7 +1158,12 @@ public class CustomerEndpoint {
             ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, service_provider_id);
             if (serviceProvider == null)
                 return ResponseService.generateErrorResponse("Service Provider not found", HttpStatus.NOT_FOUND);
-
+            List<CustomerReferrer>referrerSp=customCustomer.getMyReferrer();
+            for(CustomerReferrer customerReferrer:referrerSp)
+            {
+                if(customerReferrer.getServiceProvider().getService_provider_id().equals(service_provider_id))
+                    return ResponseService.generateErrorResponse("Selected Service Provider already set as Referrer", HttpStatus.BAD_REQUEST);
+            }
             CustomerReferrer customerReferrer=new CustomerReferrer();
             customerReferrer.setCustomer(customCustomer);
             customerReferrer.setServiceProvider(serviceProvider);

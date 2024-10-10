@@ -205,6 +205,12 @@ public class CustomCustomer extends CustomerImpl {
     @Column(name = "disability_handicapped")
     private Boolean disability=false;
 
+    @Column(name = "disability_type")
+    private String disabilityType;
+
+    @Column(name="percentage_of_disability")
+    private double disabilityPercentage;
+
     @Column(name = "is_ex_service_man")
     private Boolean exService=false;
 
