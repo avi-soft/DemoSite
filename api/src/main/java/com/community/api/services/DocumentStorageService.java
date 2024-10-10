@@ -193,7 +193,7 @@ public class DocumentStorageService {
 
         DocumentType[] documents = {
 
-                new DocumentType(14,"MATRICULATION", "Completed secondary education or equivalent"),
+              /*  new DocumentType(14,"MATRICULATION", "Completed secondary education or equivalent"),
                 new DocumentType( 15,"INTERMEDIATE", "Completed higher secondary education or equivalent"),
                 new DocumentType(16,"BACHELORS", "Completed undergraduate degree program education "),
                 new DocumentType(17,"MASTERS", "Completed postgraduate degree program education"),
@@ -202,7 +202,13 @@ public class DocumentStorageService {
                 new DocumentType( 20,"HANDICAPED", "An outdated term for individuals with physical or mental disabilities; \"person with a disability\" is preferred today"),
                 new DocumentType(21,"C-FORM-PHOTO", "A C Form photo is a standardized ID photo for official documents."),
                 new DocumentType(23,"BUSSINESS_PHOTO", "A Standard proof of Running Bussiness"),
-                new DocumentType(24,"PERSONAL_PHOTO", "A Personal Photgraph of SP")
+                new DocumentType(24,"PERSONAL_PHOTO", "A Personal Photgraph of SP")*/
+                new DocumentType(25, "CATEGORY", "The classification of individuals, such as gender categories: Male, Female, Other."),
+                new DocumentType(26, "DISABILITY", "A term used to describe individuals with physical or mental impairments; 'person with a disability' is the preferred terminology."),
+                new DocumentType(27, "EX-SERVICE-MEN", "An identification document required for veterans, typically used to access benefits or services."),
+                new DocumentType(28, "NCC", "A document serving as proof of participation in the National Cadet Corps, often required for certain government applications."),
+                new DocumentType(29, "SPORTS", "A personal photograph typically required for sports-related documentation, such as player registrations or team memberships."),
+                new DocumentType(30, "FREEDOM FIGHTER", "A personal photograph required for identification and documentation purposes related to recognition and benefits for freedom fighters.")
             };
 
 
