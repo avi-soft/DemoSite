@@ -227,22 +227,6 @@ public class ServiceProviderController {
         }
     }
 
-//    Map<String,Object> serviceProviderMap= new HashMap<>();
-//    List<QualificationDetails> qualificationDetails= serviceProviderEntity.getQualificationDetailsList();
-//    List<Map<String, Object>> qualificationsWithNames = sharedUtilityService.mapQualifications(qualificationDetails);
-//            serviceProviderMap.put("qualificationDetails", qualificationsWithNames);
-//
-//    List<ServiceProviderDocument> filteredDocuments = new ArrayList<>();
-//
-//            for (ServiceProviderDocument document : serviceProviderEntity.getDocuments()) {
-//        if (document.getFilePath() != null && document.getDocumentType() != null) {
-//            filteredDocuments.add(document);
-//        }
-//    }
-//
-//            if (!filteredDocuments.isEmpty()) {
-//        serviceProviderMap.put("documents", filteredDocuments);
-//    }
     @Transactional
     @GetMapping("/get-all-details/{serviceProviderId}")
     public ResponseEntity<?> getAllDetails(@PathVariable Long serviceProviderId) {
