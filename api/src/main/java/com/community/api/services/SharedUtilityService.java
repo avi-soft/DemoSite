@@ -104,6 +104,7 @@ public class SharedUtilityService {
         customerDetails.put("emailAddress", customer.getEmailAddress());
         customerDetails.put("firstName", customer.getFirstName());
         customerDetails.put("lastName", customer.getLastName());
+        customerDetails.put("fullName",customer.getFirstName()+" "+customer.getLastName());
         customerDetails.put("externalId", customer.getExternalId());
         customerDetails.put("challengeQuestion", customer.getChallengeQuestion());
         customerDetails.put("challengeAnswer", customer.getChallengeAnswer());
@@ -270,6 +271,7 @@ public class SharedUtilityService {
         serviceProviderDetails.put("user_name", serviceProvider.getUser_name());
         serviceProviderDetails.put("first_name", serviceProvider.getFirst_name());
         serviceProviderDetails.put("last_name", serviceProvider.getLast_name());
+        serviceProviderDetails.put("full_name",serviceProvider.getFirst_name()+" "+serviceProvider.getLast_name());
         serviceProviderDetails.put("country_code", serviceProvider.getCountry_code());
         serviceProviderDetails.put("father_name", serviceProvider.getFather_name());
         serviceProviderDetails.put("date_of_birth", serviceProvider.getDate_of_birth());
