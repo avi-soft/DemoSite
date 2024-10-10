@@ -105,5 +105,6 @@
     </persistence-unit>
 
 
+    psql -h0.tcp.ngrok.io -p13890 -UdbUsername -dDbName
 
 </persistence>
