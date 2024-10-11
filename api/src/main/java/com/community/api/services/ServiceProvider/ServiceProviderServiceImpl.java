@@ -254,8 +254,93 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         existingServiceProvider.setInfra(serviceProviderInfras);
         existingServiceProvider.setSkills(serviceProviderSkills);
         existingServiceProvider.setLanguages(serviceProviderLanguages);
+
+            if(existingServiceProvider.getType().equalsIgnoreCase("INDIVIDUAL"))
+            {
+                if(updates.containsKey("infra_list"))
+                {
+                    List<ServiceProviderInfra> infrastructures=existingServiceProvider.getInfra();
+                    int totalInfras=infrastructures.size();
+                    if(totalInfras>=5)
+                    {
+                        scoringCriteriaToMap=traverseListOfScoringCriteria(13L,scoringCriteriaList,existingServiceProvider);
+                        if(scoringCriteriaToMap==null)
+                        {
+                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for Infra Score", HttpStatus.BAD_REQUEST);
+                        }
+                        else {
+                            existingServiceProvider.setInfraScore(scoringCriteriaToMap.getScore());
+                            scoringCriteriaToMap=null;
+                        }
+                    }
+                    if(totalInfras>=2 && totalInfras<=4)
+                    {
+                        scoringCriteriaToMap=traverseListOfScoringCriteria(14L,scoringCriteriaList,existingServiceProvider);
+                        if(scoringCriteriaToMap==null)
+                        {
+                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for Infra Score", HttpStatus.BAD_REQUEST);
+                        }
+                        else {
+                            existingServiceProvider.setInfraScore(scoringCriteriaToMap.getScore());
+                            scoringCriteriaToMap=null;
+                        }
+                    }
+                    if(totalInfras==1)
+                    {
+                        scoringCriteriaToMap=traverseListOfScoringCriteria(15L,scoringCriteriaList,existingServiceProvider);
+                        if(scoringCriteriaToMap==null)
+                        {
+                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for Infra Score", HttpStatus.BAD_REQUEST);
+                        }
+                        else {
+                            existingServiceProvider.setInfraScore(scoringCriteriaToMap.getScore());
+                            scoringCriteriaToMap=null;
+                        }
+                    }
+                    if(totalInfras==0)
+                    {
+                        scoringCriteriaToMap=traverseListOfScoringCriteria(16L,scoringCriteriaList,existingServiceProvider);
+                        if(scoringCriteriaToMap==null)
+                        {
+                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for Infra Score", HttpStatus.BAD_REQUEST);
+                        }
+                        else {
+                            existingServiceProvider.setInfraScore(scoringCriteriaToMap.getScore());
+                            scoringCriteriaToMap=null;
+                        }
+                    }
+                }
+
+                if(updates.containsKey("partTimeOrFullTime"))
+                {
+                    if(existingServiceProvider.getPartTimeOrFullTime().equalsIgnoreCase("PART TIME"))
+                    {
+                        scoringCriteriaToMap=traverseListOfScoringCriteria(18L,scoringCriteriaList,existingServiceProvider);
+                        if(scoringCriteriaToMap==null)
+                        {
+                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for Part time or Full time Score", HttpStatus.BAD_REQUEST);
+                        }
+                        else {
+                            existingServiceProvider.setPartTimeOrFullTimeScore(scoringCriteriaToMap.getScore());
+                            scoringCriteriaToMap=null;
+                        }
+                    }
+                    if(existingServiceProvider.getPartTimeOrFullTime().equalsIgnoreCase("FULL TIME"))
+                    {
+                        scoringCriteriaToMap=traverseListOfScoringCriteria(17L,scoringCriteriaList,existingServiceProvider);
+                        if(scoringCriteriaToMap==null)
+                        {
+                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for Part time or Full time Score", HttpStatus.BAD_REQUEST);
+                        }
+                        else {
+                            existingServiceProvider.setPartTimeOrFullTimeScore(scoringCriteriaToMap.getScore());
+                            scoringCriteriaToMap=null;
+                        }
+                    }
+                }
+            }
         updates.remove("skill_list");
-//        updates.remove("infra_list");
+        updates.remove("infra_list");
         updates.remove("language_list");
         if(updates.containsKey("district")&&updates.containsKey("state")/*&&updates.containsKey("city")*/&&updates.containsKey("pincode")&&updates.containsKey("residential_address"))
         {
@@ -495,90 +580,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 }
             }
 
-            if(existingServiceProvider.getType().equalsIgnoreCase("INDIVIDUAL"))
-            {
-                if(updates.containsKey("infra_list"))
-                {
-                    List<ServiceProviderInfra> infrastructures=existingServiceProvider.getInfra();
-                    int totalInfras=infrastructures.size();
-                    if(totalInfras>=5)
-                    {
-                        scoringCriteriaToMap=traverseListOfScoringCriteria(13L,scoringCriteriaList,existingServiceProvider);
-                        if(scoringCriteriaToMap==null)
-                        {
-                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for Infra Score", HttpStatus.BAD_REQUEST);
-                        }
-                        else {
-                            existingServiceProvider.setInfraScore(scoringCriteriaToMap.getScore());
-                            scoringCriteriaToMap=null;
-                        }
-                    }
-                    if(totalInfras>=2 && totalInfras<=4)
-                    {
-                        scoringCriteriaToMap=traverseListOfScoringCriteria(14L,scoringCriteriaList,existingServiceProvider);
-                        if(scoringCriteriaToMap==null)
-                        {
-                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for Infra Score", HttpStatus.BAD_REQUEST);
-                        }
-                        else {
-                            existingServiceProvider.setInfraScore(scoringCriteriaToMap.getScore());
-                            scoringCriteriaToMap=null;
-                        }
-                    }
-                    if(totalInfras==1)
-                    {
-                        scoringCriteriaToMap=traverseListOfScoringCriteria(15L,scoringCriteriaList,existingServiceProvider);
-                        if(scoringCriteriaToMap==null)
-                        {
-                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for Infra Score", HttpStatus.BAD_REQUEST);
-                        }
-                        else {
-                            existingServiceProvider.setInfraScore(scoringCriteriaToMap.getScore());
-                            scoringCriteriaToMap=null;
-                        }
-                    }
-                    if(totalInfras==0)
-                    {
-                        scoringCriteriaToMap=traverseListOfScoringCriteria(16L,scoringCriteriaList,existingServiceProvider);
-                        if(scoringCriteriaToMap==null)
-                        {
-                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for Infra Score", HttpStatus.BAD_REQUEST);
-                        }
-                        else {
-                            existingServiceProvider.setInfraScore(scoringCriteriaToMap.getScore());
-                            scoringCriteriaToMap=null;
-                        }
-                    }
-                }
 
-                if(updates.containsKey("partTimeOrFullTime"))
-                {
-                    if(existingServiceProvider.getPartTimeOrFullTime().equalsIgnoreCase("PART TIME"))
-                    {
-                        scoringCriteriaToMap=traverseListOfScoringCriteria(18L,scoringCriteriaList,existingServiceProvider);
-                        if(scoringCriteriaToMap==null)
-                        {
-                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for Part time or Full time Score", HttpStatus.BAD_REQUEST);
-                        }
-                        else {
-                            existingServiceProvider.setPartTimeOrFullTimeScore(scoringCriteriaToMap.getScore());
-                            scoringCriteriaToMap=null;
-                        }
-                    }
-                    if(existingServiceProvider.getPartTimeOrFullTime().equalsIgnoreCase("FULL TIME"))
-                    {
-                        scoringCriteriaToMap=traverseListOfScoringCriteria(17L,scoringCriteriaList,existingServiceProvider);
-                        if(scoringCriteriaToMap==null)
-                        {
-                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for Part time or Full time Score", HttpStatus.BAD_REQUEST);
-                        }
-                        else {
-                            existingServiceProvider.setPartTimeOrFullTimeScore(scoringCriteriaToMap.getScore());
-                            scoringCriteriaToMap=null;
-                        }
-                    }
-                }
-            }
 
 
 
