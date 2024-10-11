@@ -403,23 +403,6 @@ public class CustomerEndpoint {
             }
             CustomerImpl customer = em.find(CustomerImpl.class, customerId);  // Assuming you retrieve the base Customer entity
             Map<String, Object> customerDetails = sharedUtilityService.breakReferenceForCustomer(customer);
-            // Fetch qualification details and replace qualification_id with qualification_name
-            List<QualificationDetails> qualificationDetails= customCustomer.getQualificationDetailsList();
-            List<Map<String, Object>> qualificationsWithNames = sharedUtilityService.mapQualifications(qualificationDetails);
-            customerDetails.put("qualificationDetails", qualificationsWithNames);
-
-            List<Document> filteredDocuments = new ArrayList<>();
-
-            for (Document document : customCustomer.getDocuments()) {
-                if (document.getFilePath() != null && document.getDocumentType() != null) {
-                    filteredDocuments.add(document);
-                }
-            }
-
-            if (!filteredDocuments.isEmpty()) {
-                customerDetails.put("documents", filteredDocuments);
-            }
-
 
             return responseService.generateSuccessResponse("User details retrieved successfully", customerDetails, HttpStatus.OK);
 
