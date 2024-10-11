@@ -20,12 +20,14 @@ import org.springframework.boot.actuate.endpoint.SanitizableData;
 import org.springframework.boot.actuate.endpoint.Sanitizer;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.PropertySource;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
+import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -42,6 +44,11 @@ public class SharedUtilityService {
     private EntityManager entityManager;
     public ReserveCategoryService reserveCategoryService;
     private ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService;
+    @Autowired
+    FileService fileService;
+
+    @Autowired
+    HttpServletRequest request;
     @Autowired
     public void setEntityManager(EntityManager entityManager) {
         this.entityManager = entityManager;
@@ -239,11 +246,21 @@ public class SharedUtilityService {
         List<Map<String, Object>> qualificationsWithNames = mapQualifications(qualificationDetails);
         customerDetails.put("qualificationDetails", qualificationsWithNames);
 
-        List<Document> filteredDocuments = new ArrayList<>();
+        List<Map<String, Object>> filteredDocuments = new ArrayList<>();
 
         for (Document document : customCustomer.getDocuments()) {
             if (document.getFilePath() != null && document.getDocumentType() != null) {
-                filteredDocuments.add(document);
+                Map<String, Object> documentDetails = new HashMap<>();
+                documentDetails.put("documentId", document.getDocumentId());
+                documentDetails.put("name", document.getName());
+                documentDetails.put("filePath", document.getFilePath());
+
+
+                String fileUrl = fileService.getFileUrl(document.getFilePath(), request);
+                documentDetails.put("fileUrl", fileUrl);
+
+                documentDetails.put("documentType", document.getDocumentType());
+                filteredDocuments.add(documentDetails);
             }
         }
 
@@ -334,11 +351,21 @@ public class SharedUtilityService {
         List<Map<String, Object>> qualificationsWithNames = mapQualifications(qualificationDetails);
         serviceProviderDetails.put("qualificationDetails", qualificationsWithNames);
 
-        List<ServiceProviderDocument> filteredDocuments = new ArrayList<>();
+        List<Map<String, Object>> filteredDocuments = new ArrayList<>();
 
         for (ServiceProviderDocument document : serviceProvider.getDocuments()) {
             if (document.getFilePath() != null && document.getDocumentType() != null) {
-                filteredDocuments.add(document);
+                Map<String, Object> documentDetails = new HashMap<>();
+                documentDetails.put("documentId", document.getDocumentId());
+                documentDetails.put("name", document.getName());
+                documentDetails.put("filePath", document.getFilePath());
+
+
+                String fileUrl = fileService.getFileUrl(document.getFilePath(), request);
+                documentDetails.put("fileUrl", fileUrl);
+
+                documentDetails.put("documentType", document.getDocumentType());
+                filteredDocuments.add(documentDetails);
             }
         }
 
