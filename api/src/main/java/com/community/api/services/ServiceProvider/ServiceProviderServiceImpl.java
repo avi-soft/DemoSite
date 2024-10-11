@@ -872,7 +872,26 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             }
             return errorList;
         }
+    public static List<Long> getLongList(Map<String, Object> map, String key) {
+        Object value = map.get(key);
 
+        if (value instanceof List<?>) {
+            List<?> list = (List<?>) value;
+
+            List<Long> longList = new ArrayList<>();
+            for (Object item : list) {
+                if (item instanceof Long) {
+                    longList.add((Long) item);
+                } else if (item instanceof Integer) {
+                    longList.add(((Integer) item).longValue());
+                }
+            }
+
+            return longList;
+        }
+
+        return Collections.emptyList();
+    }
 
     @Transactional
 

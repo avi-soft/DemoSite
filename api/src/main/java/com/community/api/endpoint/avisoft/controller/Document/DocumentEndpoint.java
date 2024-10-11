@@ -121,7 +121,7 @@ public class DocumentEndpoint {
             }
 
             if (documentTypes.isEmpty()) {
-                return responseService.generateErrorResponse("No document found", HttpStatus.NOT_FOUND);
+                return responseService.generateErrorResponse("No document found", HttpStatus.OK);
             }
 
             return responseService.generateSuccessResponse("Document Types retrieved successfully", documentTypes, HttpStatus.OK);
@@ -156,7 +156,7 @@ public class DocumentEndpoint {
                     query1.setParameter("serviceProviderEntity", serviceProviderEntity);
                     List<ServiceProviderDocument> serviceProviderDocuments = query1.getResultList();
                     if (serviceProviderDocuments.isEmpty()) {
-                        return responseService.generateErrorResponse("No documents found", HttpStatus.NOT_FOUND);
+                        return responseService.generateSuccessResponse("No documents found",null ,HttpStatus.OK);
                     }
                     List<DocumentResponse> documentResponses = serviceProviderDocuments.stream()
                             .map(serviceProviderDocument -> {
@@ -183,7 +183,7 @@ public class DocumentEndpoint {
                 query.setParameter("customer", customer);
                 List<Document> documents = query.getResultList();
                 if (documents.isEmpty()) {
-                    return responseService.generateErrorResponse("No documents found", HttpStatus.NOT_FOUND);
+                    return responseService.generateSuccessResponse("No documents found",null ,HttpStatus.OK);
                 }
                 List<DocumentResponse> documentResponses = documents.stream()
                         .map(document -> {

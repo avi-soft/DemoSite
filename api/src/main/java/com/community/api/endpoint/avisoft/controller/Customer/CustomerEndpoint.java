@@ -6,6 +6,7 @@ import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.AddressDTO;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.CustomCustomer;
+import com.community.api.entity.CustomerReferrer;
 import com.community.api.entity.Qualification;
 import com.community.api.entity.CustomProduct;
 import com.community.api.entity.QualificationDetails;
@@ -46,6 +47,7 @@ import javax.validation.constraints.Size;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.security.Key;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -366,19 +368,19 @@ public class CustomerEndpoint {
         if(((Boolean)details.get("hidePhoneNumber")).equals(true))
         {
             System.out.println("no");
-                if(details.containsKey("secondaryMobileNumber")&&((String)details.get("secondaryMobileNumber")).isEmpty())
-                {
-                    errorMessages.add("Need to provide Secondary Mobile Number when hiding primary Mobile Number");
-                }
+            if(details.containsKey("secondaryMobileNumber")&&((String)details.get("secondaryMobileNumber")).isEmpty())
+            {
+                errorMessages.add("Need to provide Secondary Mobile Number when hiding primary Mobile Number");
+            }
 
-                if(details.containsKey("whatsappNumber")&&((String)details.get("whatsappNumber")).isEmpty())
-                {
-                    errorMessages.add("Whatsapp number cannot be null");
-                }
-                if(details.containsKey("whatsappNumber")&&((String)details.get("whatsappNumber")).equals(customer.getMobileNumber()))
-                {
-                    errorMessages.add("Cannot set primary number as whatsapp number when hidden");
-                }
+            if(details.containsKey("whatsappNumber")&&((String)details.get("whatsappNumber")).isEmpty())
+            {
+                errorMessages.add("Whatsapp number cannot be null");
+            }
+            if(details.containsKey("whatsappNumber")&&((String)details.get("whatsappNumber")).equals(customer.getMobileNumber()))
+            {
+                errorMessages.add("Cannot set primary number as whatsapp number when hidden");
+            }
         }
         return errorMessages;
     }
@@ -1017,7 +1019,7 @@ public class CustomerEndpoint {
             customer.setSavedForms(savedForms);
             entityManager.merge(customer);
             Map<String,Object>responseBody=new HashMap<>();
-            Map<String,Object>formBody=sharedUtilityService.createProductResponseMap(product,null);
+            Map<String,Object>formBody=sharedUtilityService.createProductResponseMap(product,null,customer);
             return ResponseService.generateSuccessResponse("Form Saved",formBody,HttpStatus.OK);
         }
         catch (NumberFormatException e) {
@@ -1049,7 +1051,7 @@ public class CustomerEndpoint {
             customer.setSavedForms(savedForms);
             entityManager.merge(customer);
             Map<String,Object>responseBody=new HashMap<>();
-            Map<String,Object>formBody=sharedUtilityService.createProductResponseMap(product,null);
+            Map<String,Object>formBody=sharedUtilityService.createProductResponseMap(product,null,customer);
             return ResponseService.generateSuccessResponse("Form Removed",formBody,HttpStatus.OK);
         }catch (NumberFormatException e) {
             return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
@@ -1067,7 +1069,7 @@ public class CustomerEndpoint {
                 ResponseService.generateErrorResponse("Saved form list is empty", HttpStatus.NOT_FOUND);
             List<Map<String, Object>> listOfSavedProducts = new ArrayList<>();
             for (Product product : customer.getSavedForms()) {
-                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product, null));
+                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product, null,customer));
             }
             return ResponseService.generateSuccessResponse("Forms saved : ", listOfSavedProducts, HttpStatus.OK);
         }catch (NumberFormatException e) {
@@ -1088,7 +1090,7 @@ public class CustomerEndpoint {
                 ResponseService.generateErrorResponse("Saved form list is empty", HttpStatus.NOT_FOUND);
             List<Map<String, Object>> listOfSavedProducts = new ArrayList<>();
             for (Product product : customer.getSavedForms()) {
-                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product, null));
+                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product, null,customer));
             }
             return ResponseService.generateSuccessResponse("Forms saved : ", listOfSavedProducts, HttpStatus.OK);
         }catch (NumberFormatException e) {
@@ -1110,7 +1112,7 @@ public class CustomerEndpoint {
                 ResponseService.generateErrorResponse("Saved form list is empty", HttpStatus.NOT_FOUND);
             List<Map<String, Object>> listOfSavedProducts = new ArrayList<>();
             for (Product product : customer.getSavedForms()) {
-                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product, null));
+                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product, null,customer));
             }
             return ResponseService.generateSuccessResponse("Forms saved : ", listOfSavedProducts, HttpStatus.OK);
         } catch (IllegalArgumentException e) {
@@ -1156,9 +1158,19 @@ public class CustomerEndpoint {
             ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, service_provider_id);
             if (serviceProvider == null)
                 return ResponseService.generateErrorResponse("Service Provider not found", HttpStatus.NOT_FOUND);
-            if (customCustomer.getReferrerServiceProvider() != null)
-                return ResponseService.generateErrorResponse("Referrer already set", HttpStatus.NOT_FOUND);
-            customCustomer.setReferrerServiceProvider(serviceProvider);
+            List<CustomerReferrer>referrerSp=customCustomer.getMyReferrer();
+            for(CustomerReferrer customerReferrer:referrerSp)
+            {
+                if(customerReferrer.getServiceProvider().getService_provider_id().equals(service_provider_id))
+                    return ResponseService.generateErrorResponse("Selected Service Provider already set as Referrer", HttpStatus.BAD_REQUEST);
+            }
+            CustomerReferrer customerReferrer=new CustomerReferrer();
+            customerReferrer.setCustomer(customCustomer);
+            customerReferrer.setServiceProvider(serviceProvider);
+            customCustomer.getMyReferrer().add(customerReferrer);
+            customerReferrer.setCreatedAt(LocalDateTime.now());
+            entityManager.persist(customerReferrer);
+
             entityManager.merge(customCustomer);
             return ResponseService.generateSuccessResponse("Referrer Set", sharedUtilityService.serviceProviderDetailsMap(serviceProvider), HttpStatus.OK);
         } catch (IllegalArgumentException e) {
