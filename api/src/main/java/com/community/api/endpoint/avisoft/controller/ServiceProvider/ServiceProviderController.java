@@ -2,7 +2,8 @@ package com.community.api.endpoint.avisoft.controller.ServiceProvider;
 
 import com.community.api.component.Constant;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
-import com.community.api.entity.QualificationDetails;
+import com.community.api.entity.CustomCustomer;
+import com.community.api.entity.CustomerReferrer;
 import com.community.api.services.DistrictService;
 import com.community.api.services.ResponseService;
 import com.community.api.entity.ServiceProviderAddress;
@@ -81,6 +82,9 @@ public class ServiceProviderController {
     @PatchMapping("save-service-provider")
     public ResponseEntity<?> updateServiceProvider(@RequestParam Long userId, @RequestBody Map<String, Object> serviceProviderDetails) throws Exception {
         try {
+            ServiceProviderEntity serviceProvider=entityManager.find(ServiceProviderEntity.class,userId);
+            if(serviceProvider==null)
+                return ResponseService.generateErrorResponse("Service Provider with provided Id not found",HttpStatus.NOT_FOUND);
             return serviceProviderService.updateServiceProvider(userId, serviceProviderDetails);
         }  catch (IllegalArgumentException e) {
             return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -286,7 +290,10 @@ public class ServiceProviderController {
                                                    @RequestParam(required = false) String last_name,
                                                    @RequestParam(required = false) String mobileNumber) {
         try {
-
+            if(first_name==null&&last_name==null&&state==null&&district==null&&mobileNumber==null)
+            {
+                return ResponseService.generateErrorResponse("Need to provide atleast one search filter",HttpStatus.BAD_REQUEST);
+            }
             return ResponseService.generateSuccessResponse("Service Providers", serviceProviderService.searchServiceProviderBasedOnGivenFields(state, district, first_name, last_name, mobileNumber), HttpStatus.OK);
         } catch (IllegalArgumentException e) {
             return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -295,29 +302,18 @@ public class ServiceProviderController {
             return ResponseService.generateErrorResponse("Some issue in fetching service provider details " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
-
+    @Transactional
     @GetMapping("/show-referred-candidates/{service_provider_id}")
     public ResponseEntity<?> showRefferedCandidates (@PathVariable Long service_provider_id){
         try {
-            Query query = entityManager.createNativeQuery(Constant.GET_SP_REFERRED_CANDIDATES);
-            query.setParameter("service_provider_id", service_provider_id);
-
-            // Directly get a list of BigInteger instead of Object[]
-            List<BigInteger> results = query.getResultList();
-            List<Long> customerIds = new ArrayList<>();
-
-            for (BigInteger result : results) {
-                customerIds.add(result.longValue()); // Convert BigInteger to Long
-            }
-
+            ServiceProviderEntity serviceProvider=entityManager.find(ServiceProviderEntity.class,service_provider_id);
+            if(serviceProvider==null)
+                return ResponseService.generateErrorResponse("Service Provider not found",HttpStatus.NOT_FOUND);
             List<Map<String, Object>> customers = new ArrayList<>();
-            for (long id : customerIds) {
-                Customer customer = customerService.readCustomerById(id);
-                if (customer != null) {
-                    customers.add(sharedUtilityService.breakReferenceForCustomer(customer));
-                }
+            for(CustomerReferrer customerReferrer:serviceProvider.getMyReferrals())
+            {
+                customers.add(sharedUtilityService.breakReferenceForCustomer(customerReferrer.getCustomer()));
             }
-
             return ResponseService.generateSuccessResponse("List of referred candidates is : ", customers, HttpStatus.OK);
         } catch (IllegalArgumentException e) {
             return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
