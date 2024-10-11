@@ -28,6 +28,7 @@ import org.broadleafcommerce.common.persistence.Status;
 
 import org.broadleafcommerce.core.catalog.domain.Category;
 import org.broadleafcommerce.core.catalog.domain.Product;
+import org.broadleafcommerce.core.catalog.domain.ProductImpl;
 import org.broadleafcommerce.core.catalog.domain.Sku;
 
 import org.broadleafcommerce.core.catalog.service.type.ProductType;
@@ -243,6 +244,8 @@ public class ProductController extends CatalogEndpoint {
             }
 
             CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
+            Product product = catalogService.findProductById(customProduct.getId());
+
             if (customProduct == null) {
                 return ResponseService.generateErrorResponse(Constant.PRODUCTNOTFOUND, HttpStatus.NOT_FOUND);
             }
@@ -264,18 +267,25 @@ public class ProductController extends CatalogEndpoint {
             Date currentDate = dateFormat.parse(formattedDate); // Convert formatted date string back to Date
             customProduct.setModifiedDate(currentDate);
 
-            productService.validateAndSetActiveEndDateAndGoLiveDateFields(addProductDto, customProduct, currentDate);
+            // Validate dates fields.
+            productService.validateAndSetActiveStartDate(addProductDto, customProduct, currentDate);
+            productService.validateAndSetActiveEndDate(addProductDto, customProduct, currentDate);
+            productService.validateAndSetGoLiveDate(addProductDto,  customProduct, currentDate);
+            productService.validateAndSetLastDateToPayFeeDate(addProductDto, customProduct, currentDate);
 
-            productService.validateAndSetExamDateFromAndExamDateToFields(addProductDto, customProduct);
-            productService.validateExamDateFromAndExamDateTo(addProductDto, customProduct);
+            productService.validateAndSetModifiedDates(addProductDto, customProduct, currentDate);
+            productService.validateAndSetAdmitCardDates(addProductDto, customProduct, currentDate);
+            productService.validateAndSetExamDates(addProductDto, customProduct, currentDate);
+
+//            productService.validateAndSetExamDateFromAndExamDateToFields(addProductDto, customProduct);
+//            productService.validateExamDateFromAndExamDateTo(addProductDto, customProduct);
+
             productService.validateProductState(addProductDto, customProduct, authHeader);
 
             customProduct.setModifierRole(roleService.getRoleByRoleId(jwtTokenUtil.extractRoleId(authHeader.substring(7))));
             customProduct.setModifierUserId(jwtTokenUtil.extractId(authHeader.substring(7)));
 
             entityManager.merge(customProduct);
-
-            Product product = catalogService.findProductById(customProduct.getId());
 
             if (addProductDto.getReservedCategory() != null) {
                 productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getReservedCategory(), product);

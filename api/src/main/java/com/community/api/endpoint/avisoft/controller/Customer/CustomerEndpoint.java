@@ -1139,8 +1139,6 @@ public class CustomerEndpoint {
             ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, service_provider_id);
             if (serviceProvider == null)
                 return ResponseService.generateErrorResponse("Service Provider not found", HttpStatus.NOT_FOUND);
-            if (customCustomer.getReferrerServiceProvider() != null)
-                return ResponseService.generateErrorResponse("Referrer already set", HttpStatus.NOT_FOUND);
             customCustomer.setReferrerServiceProvider(serviceProvider);
             entityManager.merge(customCustomer);
             return ResponseService.generateSuccessResponse("Referrer Set", sharedUtilityService.serviceProviderDetailsMap(serviceProvider), HttpStatus.OK);
