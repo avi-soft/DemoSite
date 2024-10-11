@@ -383,6 +383,16 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.merge(new ScoringCriteria(10L, "Staff", "More than 4 staff members", 10));
             entityManager.merge(new ScoringCriteria(11L, "Staff", "2 staff members", 5));
             entityManager.merge(new ScoringCriteria(12L, "Staff", "Individual (no staff)", 0));
+
+            //Infra Scoring (For individual)
+            entityManager.merge(new ScoringCriteria(13L,"Infrastructure","Service Provider having Equal to 5 or more than 5 infrastructures",20));
+            entityManager.merge(new ScoringCriteria(14L,"Infrastructure","Service Provider having between 2 and 4 infrastructures",10));
+            entityManager.merge(new ScoringCriteria(15L,"Infrastructure","Service Provider having 1 infrastructure",5));
+            entityManager.merge(new ScoringCriteria(16L,"Infrastructure","Service Provider having 0 infrastructure",0));
+
+            //PartTimeOrFullTime Scoring (For Individual)
+            entityManager.merge(new ScoringCriteria(17L,"PartTimeOrFullTime","Service Provider who is Full time",10));
+            entityManager.merge(new ScoringCriteria(18L,"PartTimeOrFullTime","Service Provider who is Part time",0));
         }
 
     }

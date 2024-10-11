@@ -128,10 +128,10 @@ public class ServiceProviderEntity  {
 
     @Nullable
     private Boolean isCFormAvailable;
-    @Nullable
     private String registration_number;
 
-    private String partTimeOrFullTime;
+    @Nullable
+    private String partTimeOrFullTime="PART TIME";
 
     private Integer businessUnitInfraScore=0;
     private Integer workExperienceScore=0;

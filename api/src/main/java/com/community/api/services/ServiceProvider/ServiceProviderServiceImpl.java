@@ -129,13 +129,27 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 // Validate that the type value is either "Professional" or "Individual"
                 if(typeStr==null || typeStr.trim().isEmpty())
                 {
-                    return responseService.generateErrorResponse("Service Provider type cannot be null or empty", HttpStatus.BAD_REQUEST);
+                    return ResponseService.generateErrorResponse("Service Provider type cannot be null or empty", HttpStatus.BAD_REQUEST);
                 }
                 if (!typeStr.equalsIgnoreCase("PROFESSIONAL") && !typeStr.equalsIgnoreCase("INDIVIDUAL")) {
-                    return responseService.generateErrorResponse("Invalid value for 'type'. Allowed values are 'PROFESSIONAL' or 'INDIVIDUAL'.", HttpStatus.BAD_REQUEST);
+                    return ResponseService.generateErrorResponse("Invalid value for 'type'. Allowed values are 'PROFESSIONAL' or 'INDIVIDUAL'.", HttpStatus.BAD_REQUEST);
                 }
                 existingServiceProvider.setType(typeStr.toUpperCase());
                 updates.remove("type");
+            }
+            if (updates.containsKey("partTimeOrFullTime")) {
+
+                String partTimeOrFullTimeStr = (String) updates.get("partTimeOrFullTime");
+
+                // Validate that the type value is either "Professional" or "Individual"
+                if(partTimeOrFullTimeStr==null || partTimeOrFullTimeStr.trim().isEmpty())
+                {
+                    return ResponseService.generateErrorResponse("Service Provider partTime or FullTime field cannot be null or empty", HttpStatus.BAD_REQUEST);
+                }
+                if (!partTimeOrFullTimeStr.equalsIgnoreCase("PART TIME") && !partTimeOrFullTimeStr.equalsIgnoreCase("FULL TIME")) {
+                    return ResponseService.generateErrorResponse("Invalid value for 'partTime or FullTime'. Allowed values are 'PART TIME' or 'FULL TIME'.", HttpStatus.BAD_REQUEST);
+                }
+                existingServiceProvider.setPartTimeOrFullTime(partTimeOrFullTimeStr.toUpperCase());
             }
 
 
@@ -184,6 +198,41 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             }
         } else
             existingServiceProvider.setSkills(null);
+            TypedQuery<ScoringCriteria> typedQuery=  entityManager.createQuery(Constant.GET_ALL_SCORING_CRITERIA,ScoringCriteria.class);
+            List<ScoringCriteria> scoringCriteriaList = typedQuery.getResultList();
+
+            Integer totalScore=0;
+            ScoringCriteria scoringCriteriaToMap =null;
+            if(updates.containsKey("skill_list"))
+            {
+                List<Skill> skills=existingServiceProvider.getSkills();
+                int totalSkills=skills.size();
+                if(totalSkills<=4)
+                {
+                    scoringCriteriaToMap=traverseListOfScoringCriteria(8L,scoringCriteriaList,existingServiceProvider);
+                    if(scoringCriteriaToMap==null)
+                    {
+                        return ResponseService.generateErrorResponse("Scoring Criteria is not found for Technical Expertise Score", HttpStatus.BAD_REQUEST);
+                    }
+                    else {
+                        Integer totalTechnicalScores=totalSkills * scoringCriteriaToMap.getScore();
+                        existingServiceProvider.setTechnicalExpertiseScore(totalTechnicalScores);
+                        scoringCriteriaToMap=null;
+                    }
+                }
+                if(totalSkills>=5)
+                {
+                    scoringCriteriaToMap=traverseListOfScoringCriteria(9L,scoringCriteriaList,existingServiceProvider);
+                    if(scoringCriteriaToMap==null)
+                    {
+                        return ResponseService.generateErrorResponse("Scoring Criteria is not found for Technical Expertise Score", HttpStatus.BAD_REQUEST);
+                    }
+                    else {
+                        existingServiceProvider.setTechnicalExpertiseScore(scoringCriteriaToMap.getScore());
+                        scoringCriteriaToMap=null;
+                    }
+                }
+            }
         if (!infraList.isEmpty()) {
             for (int infra_id : infraList) {
                 ServiceProviderInfra serviceProviderInfrastructure = entityManager.find(ServiceProviderInfra.class, infra_id);
@@ -206,7 +255,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         existingServiceProvider.setSkills(serviceProviderSkills);
         existingServiceProvider.setLanguages(serviceProviderLanguages);
         updates.remove("skill_list");
-        updates.remove("infra_list");
+//        updates.remove("infra_list");
         updates.remove("language_list");
         if(updates.containsKey("district")&&updates.containsKey("state")/*&&updates.containsKey("city")*/&&updates.containsKey("pincode")&&updates.containsKey("residential_address"))
         {
@@ -323,29 +372,6 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             existingServiceProvider.setUser_name(username);
         }
         entityManager.merge(existingServiceProvider);
-            TypedQuery<ScoringCriteria> typedQuery=  entityManager.createQuery(Constant.GET_ALL_SCORING_CRITERIA,ScoringCriteria.class);
-            List<ScoringCriteria> scoringCriteriaList = typedQuery.getResultList();
-
-            Integer totalScore=0;
-            ScoringCriteria scoringCriteriaToMap =null;
-            if(updates.containsKey("is_running_business_unit"))
-            {
-                if(Boolean.TRUE.equals(existingServiceProvider.getIs_running_business_unit()))
-                {
-                    scoringCriteriaToMap=traverseListOfScoringCriteria(1L,scoringCriteriaList,existingServiceProvider);
-                    if(scoringCriteriaToMap==null)
-                    {
-                        return ResponseService.generateErrorResponse("Scoring Criteria is not found for scoring businessScore", HttpStatus.BAD_REQUEST);
-                    }
-                    else {
-                        existingServiceProvider.setBusinessUnitInfraScore(scoringCriteriaToMap.getScore());
-                        scoringCriteriaToMap=null;
-                    }
-                }
-                else {
-                    existingServiceProvider.setBusinessUnitInfraScore(0);
-                }
-            }
 
             if(updates.containsKey("work_experience_in_months"))
             {
@@ -406,95 +432,176 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 }
             }
 
-            if(updates.containsKey("number_of_employees"))
+            if(existingServiceProvider.getType().equalsIgnoreCase("PROFESSIONAL"))
             {
-                if(existingServiceProvider.getNumber_of_employees()!=null && existingServiceProvider.getNumber_of_employees()<2)
+                if(updates.containsKey("is_running_business_unit"))
                 {
-                    scoringCriteriaToMap=traverseListOfScoringCriteria(12L,scoringCriteriaList,existingServiceProvider);
-                    if(scoringCriteriaToMap==null)
+                    if(Boolean.TRUE.equals(existingServiceProvider.getIs_running_business_unit()))
                     {
-                        return ResponseService.generateErrorResponse("Scoring Criteria is not found for scoring Staff Score", HttpStatus.BAD_REQUEST);
-                    }
-                    else {
-                        existingServiceProvider.setStaffScore(scoringCriteriaToMap.getScore());
-                        scoringCriteriaToMap=null;
-                    }
-                }
-                else if(existingServiceProvider.getNumber_of_employees()!=null   && existingServiceProvider.getNumber_of_employees() >= 2
-                        && existingServiceProvider.getNumber_of_employees() <= 4)
-                {
-                    scoringCriteriaToMap=traverseListOfScoringCriteria(11L,scoringCriteriaList,existingServiceProvider);
-                    if(scoringCriteriaToMap==null)
-                    {
-                        return ResponseService.generateErrorResponse("Scoring Criteria is not found for scoring Staff Score", HttpStatus.BAD_REQUEST);
-                    }
-                    else {
-                        existingServiceProvider.setStaffScore(scoringCriteriaToMap.getScore());
-                        scoringCriteriaToMap=null;
-                    }
-                }
-                else if(existingServiceProvider.getNumber_of_employees()!=null   && existingServiceProvider.getNumber_of_employees()>4)
-                {
-                    scoringCriteriaToMap=traverseListOfScoringCriteria(10L,scoringCriteriaList,existingServiceProvider);
-                    if(scoringCriteriaToMap==null)
-                    {
-                        return ResponseService.generateErrorResponse("Scoring Criteria is not found for scoring Staff Score", HttpStatus.BAD_REQUEST);
-                    }
-                    else {
-                        existingServiceProvider.setStaffScore(scoringCriteriaToMap.getScore());
-                        scoringCriteriaToMap=null;
-                    }
-                }
-            }
-
-            if(updates.containsKey("skills"))
-            {
-               List<Skill> skills=existingServiceProvider.getSkills();
-                int totalSkills=skills.size();
-                if(totalSkills<=4)
-                {
-                    scoringCriteriaToMap=traverseListOfScoringCriteria(8L,scoringCriteriaList,existingServiceProvider);
-                    if(scoringCriteriaToMap==null)
-                    {
-                        return ResponseService.generateErrorResponse("Scoring Criteria is not found for Technical Expertise Score", HttpStatus.BAD_REQUEST);
-                    }
-                    else {
-                        Integer totalTechnicalScores=totalSkills * scoringCriteriaToMap.getScore();
-                        existingServiceProvider.setStaffScore(totalTechnicalScores);
-                        scoringCriteriaToMap=null;
-                    }
-                }
-                if(totalSkills>=5)
-                {
-                    scoringCriteriaToMap=traverseListOfScoringCriteria(9L,scoringCriteriaList,existingServiceProvider);
-                    if(scoringCriteriaToMap==null)
-                    {
-                        return ResponseService.generateErrorResponse("Scoring Criteria is not found for Technical Expertise Score", HttpStatus.BAD_REQUEST);
-                    }
-                    else {
-                        existingServiceProvider.setStaffScore(scoringCriteriaToMap.getScore());
-                        scoringCriteriaToMap=null;
-                    }
-                }
-            }
-
-            if(updates.containsKey("qualificationDetailsList"))
-            {
-                List<QualificationDetails> qualificationDetailsList = existingServiceProvider.getQualificationDetailsList();
-
-                for(QualificationDetails qualificationDetails : qualificationDetailsList)
-                {
-                    DocumentType qualification = entityManager.find(DocumentType.class, qualificationDetails.getQualification_id());
-                    if (qualification != null) {
-                        if (qualification.getDocument_type_name().equalsIgnoreCase("BACHELORS") || qualification.getDocument_type_name().equalsIgnoreCase("MASTERS") || qualification.getDocument_type_name().equalsIgnoreCase("DOCTORATE"))
+                        scoringCriteriaToMap=traverseListOfScoringCriteria(1L,scoringCriteriaList,existingServiceProvider);
+                        if(scoringCriteriaToMap==null)
                         {
-
+                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for scoring businessScore", HttpStatus.BAD_REQUEST);
                         }
-                    } else {
-                        qualificationInfo.put("qualification_name", "Unknown Qualification");
+                        else {
+                            existingServiceProvider.setBusinessUnitInfraScore(scoringCriteriaToMap.getScore());
+                            scoringCriteriaToMap=null;
+                        }
+                    }
+                    else {
+                        existingServiceProvider.setBusinessUnitInfraScore(0);
+                    }
+                }
+
+                if(updates.containsKey("number_of_employees"))
+                {
+                    if(existingServiceProvider.getNumber_of_employees()!=null && existingServiceProvider.getNumber_of_employees()<2 || updates.get("is_running_business_unit").equals(false))
+                    {
+                        scoringCriteriaToMap=traverseListOfScoringCriteria(12L,scoringCriteriaList,existingServiceProvider);
+                        if(scoringCriteriaToMap==null)
+                        {
+                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for scoring Staff Score", HttpStatus.BAD_REQUEST);
+                        }
+                        else {
+                            existingServiceProvider.setStaffScore(scoringCriteriaToMap.getScore());
+                            scoringCriteriaToMap=null;
+                        }
+                    }
+                    else if(existingServiceProvider.getNumber_of_employees()!=null   && existingServiceProvider.getNumber_of_employees() >= 2
+                            && existingServiceProvider.getNumber_of_employees() <= 4 && updates.get("is_running_business_unit").equals(true))
+                    {
+                        scoringCriteriaToMap=traverseListOfScoringCriteria(11L,scoringCriteriaList,existingServiceProvider);
+                        if(scoringCriteriaToMap==null)
+                        {
+                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for scoring Staff Score", HttpStatus.BAD_REQUEST);
+                        }
+                        else {
+                            existingServiceProvider.setStaffScore(scoringCriteriaToMap.getScore());
+                            scoringCriteriaToMap=null;
+                        }
+                    }
+                    else if(existingServiceProvider.getNumber_of_employees()!=null   && existingServiceProvider.getNumber_of_employees()>4 && updates.get("is_running_business_unit").equals(true))
+                    {
+                        scoringCriteriaToMap=traverseListOfScoringCriteria(10L,scoringCriteriaList,existingServiceProvider);
+                        if(scoringCriteriaToMap==null)
+                        {
+                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for scoring Staff Score", HttpStatus.BAD_REQUEST);
+                        }
+                        else {
+                            existingServiceProvider.setStaffScore(scoringCriteriaToMap.getScore());
+                            scoringCriteriaToMap=null;
+                        }
                     }
                 }
             }
+
+            if(existingServiceProvider.getType().equalsIgnoreCase("INDIVIDUAL"))
+            {
+                if(updates.containsKey("infra_list"))
+                {
+                    List<ServiceProviderInfra> infrastructures=existingServiceProvider.getInfra();
+                    int totalInfras=infrastructures.size();
+                    if(totalInfras>=5)
+                    {
+                        scoringCriteriaToMap=traverseListOfScoringCriteria(13L,scoringCriteriaList,existingServiceProvider);
+                        if(scoringCriteriaToMap==null)
+                        {
+                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for Infra Score", HttpStatus.BAD_REQUEST);
+                        }
+                        else {
+                            existingServiceProvider.setInfraScore(scoringCriteriaToMap.getScore());
+                            scoringCriteriaToMap=null;
+                        }
+                    }
+                    if(totalInfras>=2 && totalInfras<=4)
+                    {
+                        scoringCriteriaToMap=traverseListOfScoringCriteria(14L,scoringCriteriaList,existingServiceProvider);
+                        if(scoringCriteriaToMap==null)
+                        {
+                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for Infra Score", HttpStatus.BAD_REQUEST);
+                        }
+                        else {
+                            existingServiceProvider.setInfraScore(scoringCriteriaToMap.getScore());
+                            scoringCriteriaToMap=null;
+                        }
+                    }
+                    if(totalInfras==1)
+                    {
+                        scoringCriteriaToMap=traverseListOfScoringCriteria(15L,scoringCriteriaList,existingServiceProvider);
+                        if(scoringCriteriaToMap==null)
+                        {
+                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for Infra Score", HttpStatus.BAD_REQUEST);
+                        }
+                        else {
+                            existingServiceProvider.setInfraScore(scoringCriteriaToMap.getScore());
+                            scoringCriteriaToMap=null;
+                        }
+                    }
+                    if(totalInfras==0)
+                    {
+                        scoringCriteriaToMap=traverseListOfScoringCriteria(16L,scoringCriteriaList,existingServiceProvider);
+                        if(scoringCriteriaToMap==null)
+                        {
+                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for Infra Score", HttpStatus.BAD_REQUEST);
+                        }
+                        else {
+                            existingServiceProvider.setInfraScore(scoringCriteriaToMap.getScore());
+                            scoringCriteriaToMap=null;
+                        }
+                    }
+                }
+
+                if(updates.containsKey("partTimeOrFullTime"))
+                {
+                    if(existingServiceProvider.getPartTimeOrFullTime().equalsIgnoreCase("PART TIME"))
+                    {
+                        scoringCriteriaToMap=traverseListOfScoringCriteria(18L,scoringCriteriaList,existingServiceProvider);
+                        if(scoringCriteriaToMap==null)
+                        {
+                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for Part time or Full time Score", HttpStatus.BAD_REQUEST);
+                        }
+                        else {
+                            existingServiceProvider.setPartTimeOrFullTimeScore(scoringCriteriaToMap.getScore());
+                            scoringCriteriaToMap=null;
+                        }
+                    }
+                    if(existingServiceProvider.getPartTimeOrFullTime().equalsIgnoreCase("FULL TIME"))
+                    {
+                        scoringCriteriaToMap=traverseListOfScoringCriteria(17L,scoringCriteriaList,existingServiceProvider);
+                        if(scoringCriteriaToMap==null)
+                        {
+                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for Part time or Full time Score", HttpStatus.BAD_REQUEST);
+                        }
+                        else {
+                            existingServiceProvider.setPartTimeOrFullTimeScore(scoringCriteriaToMap.getScore());
+                            scoringCriteriaToMap=null;
+                        }
+                    }
+                }
+            }
+
+
+
+
+
+
+//            if(updates.containsKey("qualificationDetailsList"))
+//            {
+//                List<QualificationDetails> qualificationDetailsList = existingServiceProvider.getQualificationDetailsList();
+//
+//                for(QualificationDetails qualificationDetails : qualificationDetailsList)
+//                {
+//                    DocumentType qualification = entityManager.find(DocumentType.class, qualificationDetails.getQualification_id());
+//                    if (qualification != null) {
+//                        if (qualification.getDocument_type_name().equalsIgnoreCase("BACHELORS") || qualification.getDocument_type_name().equalsIgnoreCase("MASTERS") || qualification.getDocument_type_name().equalsIgnoreCase("DOCTORATE"))
+//                        {
+//
+//                        }
+//                    } else {
+//                        qualificationInfo.put("qualification_name", "Unknown Qualification");
+//                    }
+//                }
+//            }
 
             if(existingServiceProvider.getType().equalsIgnoreCase("PROFESSIONAL"))
             {
