@@ -51,7 +51,7 @@ public class ServiceProviderEntity  {
     @Column
     private String type="PROFESSIONAL";
 
-    private Integer totalScore;
+    private Integer totalScore=0;
 
     private String user_name;
 
@@ -114,7 +114,7 @@ public class ServiceProviderEntity  {
     private String secondary_email;
     private String password;
     @Nullable
-    private Boolean is_running_business_unit;
+    private Boolean is_running_business_unit=false;
 
     @Nullable
     private String business_name;
@@ -133,14 +133,15 @@ public class ServiceProviderEntity  {
 
     private String partTimeOrFullTime;
 
-    private Integer businessUnitInfraScore;
-    private Integer workExperienceScore;
-    private Integer qualificationScore;
-    private Integer technicalExpertiseScore;
-    private Integer staffScore;
+    private Integer businessUnitInfraScore=0;
+    private Integer workExperienceScore=0;
+    private Integer qualificationScore=0;
+    private Integer technicalExpertiseScore=0;
+    private Integer staffScore=0;
     private Integer writtenTestScore;
     private Integer imageUploadScore;
-    private Integer partTimeOrFullTimeScore;
+    private Integer partTimeOrFullTimeScore=0;
+    private Integer infraScore=0;
     @ManyToMany
     @JoinTable(
             name = "service_provider_skill", // The name of the join table

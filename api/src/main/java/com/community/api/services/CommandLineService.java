@@ -357,5 +357,33 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(new ServiceProviderRank(7L, "2c", "The INDIVIDUAL service provider's score is between 25-50 points", now, now, "SUPER_ADMIN"));
             entityManager.persist(new ServiceProviderRank(8L, "2d", "The INDIVIDUAL service provider's score is between 0-25 points", now, now, "SUPER_ADMIN"));
         }
+
+         count = entityManager.createQuery("SELECT count(e) FROM ScoringCriteria e", Long.class).getSingleResult();
+
+        if (count == 0) {
+
+            // Business Unit / Infrastructure Scoring
+            entityManager.merge(new ScoringCriteria(1L, "Business Unit / Infrastructure", "If it's a Business Unit: 20 points", 20));
+
+            // Work Experience Scoring
+            entityManager.merge(new ScoringCriteria(2L, "Work Experience", "1 year work experience", 5));
+            entityManager.merge(new ScoringCriteria(3L, "Work Experience", "2 years work experience", 10));
+            entityManager.merge(new ScoringCriteria(4L, "Work Experience", "3 years work experience", 15));
+            entityManager.merge(new ScoringCriteria(5L, "Work Experience", "5 or more years work experience", 20));
+
+            // Qualification Scoring
+            entityManager.merge(new ScoringCriteria(6L, "Qualification", "Service Provider is graduated or above qualified", 10));
+            entityManager.merge(new ScoringCriteria(7L, "Qualification", "Service Provider is 12th passed", 5));
+
+            // Technical Expertise Scoring
+            entityManager.merge(new ScoringCriteria(8L, "Technical Expertise", "Tech diploma or degree", 10));
+            entityManager.merge(new ScoringCriteria(9L, "Technical Expertise", "Other technical expertise", 5));
+
+            // Staff Scoring
+            entityManager.merge(new ScoringCriteria(10L, "Staff", "More than 4 staff members", 10));
+            entityManager.merge(new ScoringCriteria(11L, "Staff", "2 staff members", 5));
+            entityManager.merge(new ScoringCriteria(12L, "Staff", "Individual (no staff)", 0));
+        }
+
     }
 }

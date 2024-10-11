@@ -11,16 +11,7 @@ import com.community.api.entity.ServiceProviderInfra;
 import com.community.api.entity.ServiceProviderLanguage;
 import com.community.api.entity.Skill;
 import com.community.api.entity.StateCode;
-import com.community.api.services.ApiConstants;
-import com.community.api.services.CustomCustomerService;
-import com.community.api.services.DistrictService;
-import com.community.api.services.RateLimiterService;
-import com.community.api.services.ResponseService;
-import com.community.api.services.ServiceProviderInfraService;
-import com.community.api.services.ServiceProviderLanguageService;
-import com.community.api.services.SharedUtilityService;
-import com.community.api.services.SkillService;
-import com.community.api.services.TwilioServiceForServiceProvider;
+import com.community.api.services.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.twilio.Twilio;
 import com.twilio.exception.ApiException;
@@ -39,10 +30,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.client.HttpClientErrorException;
 
 
-import javax.persistence.Column;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
+import javax.persistence.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
@@ -101,6 +89,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     private RateLimiterService rateLimiterService;
     @Autowired
     private SharedUtilityService sharedUtilityService;
+    @Autowired
+    private ServiceProviderTestService serviceProviderTestService;
 
     @Value("${twilio.phoneNumber}")
     private String twilioPhoneNumber;
@@ -332,6 +322,163 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             existingServiceProvider.setUser_name(username);
         }
         entityManager.merge(existingServiceProvider);
+            TypedQuery<ScoringCriteria> typedQuery=  entityManager.createQuery(Constant.GET_ALL_SCORING_CRITERIA,ScoringCriteria.class);
+            List<ScoringCriteria> scoringCriteriaList = typedQuery.getResultList();
+
+            Integer totalScore=0;
+            ScoringCriteria scoringCriteriaToMap =null;
+            if(updates.containsKey("is_running_business_unit"))
+            {
+                if(Boolean.TRUE.equals(existingServiceProvider.getIs_running_business_unit()))
+                {
+                    scoringCriteriaToMap=traverseListOfScoringCriteria(1L,scoringCriteriaList,existingServiceProvider);
+                    if(scoringCriteriaToMap==null)
+                    {
+                        return ResponseService.generateErrorResponse("Scoring Criteria is not found for scoring businessScore", HttpStatus.BAD_REQUEST);
+                    }
+                    else {
+                        existingServiceProvider.setBusinessUnitInfraScore(scoringCriteriaToMap.getScore());
+                        scoringCriteriaToMap=null;
+                    }
+                }
+                else {
+                    existingServiceProvider.setBusinessUnitInfraScore(0);
+                }
+            }
+
+            if(updates.containsKey("work_experience_in_months"))
+            {
+                if(existingServiceProvider.getWorkExperienceScore()!=null && existingServiceProvider.getWork_experience_in_months()<12)
+                {
+                    existingServiceProvider.setWorkExperienceScore(0);
+                }
+                else if(existingServiceProvider.getWork_experience_in_months()!=null   && existingServiceProvider.getWork_experience_in_months() >= 12
+                        && existingServiceProvider.getWork_experience_in_months() <= 23)
+                {
+                    scoringCriteriaToMap=traverseListOfScoringCriteria(2L,scoringCriteriaList,existingServiceProvider);
+                    if(scoringCriteriaToMap==null)
+                    {
+                        return ResponseService.generateErrorResponse("Scoring Criteria is not found for scoring Work Experience Score", HttpStatus.BAD_REQUEST);
+                    }
+                    else {
+                        existingServiceProvider.setWorkExperienceScore(scoringCriteriaToMap.getScore());
+                        scoringCriteriaToMap=null;
+                    }
+                }
+                else if(existingServiceProvider.getWork_experience_in_months()!=null   && existingServiceProvider.getWork_experience_in_months() >= 24
+                        && existingServiceProvider.getWork_experience_in_months() <= 35)
+                {
+                    scoringCriteriaToMap=traverseListOfScoringCriteria(3L,scoringCriteriaList,existingServiceProvider);
+                    if(scoringCriteriaToMap==null)
+                    {
+                        return ResponseService.generateErrorResponse("Scoring Criteria is not found for scoring Work Experience Score", HttpStatus.BAD_REQUEST);
+                    }
+                    else {
+                        existingServiceProvider.setWorkExperienceScore(scoringCriteriaToMap.getScore());
+                        scoringCriteriaToMap=null;
+                    }
+                }
+                else if(existingServiceProvider.getWork_experience_in_months()!=null   && existingServiceProvider.getWork_experience_in_months() >= 36
+                        && existingServiceProvider.getWork_experience_in_months() <= 59)
+                {
+                    scoringCriteriaToMap=traverseListOfScoringCriteria(4L,scoringCriteriaList,existingServiceProvider);
+                    if(scoringCriteriaToMap==null)
+                    {
+                        return ResponseService.generateErrorResponse("Scoring Criteria is not found for scoring Work Experience Score", HttpStatus.BAD_REQUEST);
+                    }
+                    else {
+                        existingServiceProvider.setWorkExperienceScore(scoringCriteriaToMap.getScore());
+                        scoringCriteriaToMap=null;
+                    }
+                }
+                else if(existingServiceProvider.getWork_experience_in_months()!=null   && existingServiceProvider.getWork_experience_in_months() >= 60)
+                {
+                    scoringCriteriaToMap=traverseListOfScoringCriteria(5L,scoringCriteriaList,existingServiceProvider);
+                    if(scoringCriteriaToMap==null)
+                    {
+                        return ResponseService.generateErrorResponse("Scoring Criteria is not found for scoring Work Experience Score", HttpStatus.BAD_REQUEST);
+                    }
+                    else {
+                        existingServiceProvider.setWorkExperienceScore(scoringCriteriaToMap.getScore());
+                        scoringCriteriaToMap=null;
+                    }
+                }
+            }
+
+            if(updates.containsKey("number_of_employees"))
+            {
+                if(existingServiceProvider.getNumber_of_employees()!=null && existingServiceProvider.getNumber_of_employees()<2)
+                {
+                    scoringCriteriaToMap=traverseListOfScoringCriteria(12L,scoringCriteriaList,existingServiceProvider);
+                    if(scoringCriteriaToMap==null)
+                    {
+                        return ResponseService.generateErrorResponse("Scoring Criteria is not found for scoring Staff Score", HttpStatus.BAD_REQUEST);
+                    }
+                    else {
+                        existingServiceProvider.setStaffScore(scoringCriteriaToMap.getScore());
+                        scoringCriteriaToMap=null;
+                    }
+                }
+                else if(existingServiceProvider.getNumber_of_employees()!=null   && existingServiceProvider.getNumber_of_employees() >= 2
+                        && existingServiceProvider.getNumber_of_employees() <= 4)
+                {
+                    scoringCriteriaToMap=traverseListOfScoringCriteria(11L,scoringCriteriaList,existingServiceProvider);
+                    if(scoringCriteriaToMap==null)
+                    {
+                        return ResponseService.generateErrorResponse("Scoring Criteria is not found for scoring Staff Score", HttpStatus.BAD_REQUEST);
+                    }
+                    else {
+                        existingServiceProvider.setStaffScore(scoringCriteriaToMap.getScore());
+                        scoringCriteriaToMap=null;
+                    }
+                }
+                else if(existingServiceProvider.getNumber_of_employees()!=null   && existingServiceProvider.getNumber_of_employees()>4)
+                {
+                    scoringCriteriaToMap=traverseListOfScoringCriteria(10L,scoringCriteriaList,existingServiceProvider);
+                    if(scoringCriteriaToMap==null)
+                    {
+                        return ResponseService.generateErrorResponse("Scoring Criteria is not found for scoring Staff Score", HttpStatus.BAD_REQUEST);
+                    }
+                    else {
+                        existingServiceProvider.setStaffScore(scoringCriteriaToMap.getScore());
+                        scoringCriteriaToMap=null;
+                    }
+                }
+            }
+
+            if(updates.containsKey("skills"))
+            {
+               List<Skill> skills=existingServiceProvider.getSkills();
+               for(Skill skill: skills)
+               {
+                  if(skill.getSkill_name().equalsIgnoreCase("Form Filling Knowledge/Expertise") || skill.getSkill_name().equalsIgnoreCase("Resizing & Uploading Image/Document") || skill.getSkill_name().equalsIgnoreCase("Executing Online Payment/Transactions") || skill.getSkill_name().equalsIgnoreCase("Apply To Various Government Schemes"))
+                  {
+
+                  }
+               }
+
+            }
+
+            if(existingServiceProvider.getType().equalsIgnoreCase("PROFESSIONAL"))
+            {
+                totalScore=existingServiceProvider.getBusinessUnitInfraScore()+existingServiceProvider.getWorkExperienceScore()+existingServiceProvider.getTechnicalExpertiseScore()+ existingServiceProvider.getQualificationScore()+ existingServiceProvider.getStaffScore();
+            }
+            else {
+                totalScore=existingServiceProvider.getInfraScore()+existingServiceProvider.getWorkExperienceScore()+existingServiceProvider.getTechnicalExpertiseScore()+existingServiceProvider.getQualificationScore()+existingServiceProvider.getPartTimeOrFullTimeScore();
+            }
+            if(existingServiceProvider.getWrittenTestScore()!=null)
+            {
+                totalScore=totalScore+existingServiceProvider.getWrittenTestScore();
+            }
+            if(existingServiceProvider.getImageUploadScore()!=null)
+            {
+                totalScore=totalScore+existingServiceProvider.getImageUploadScore();
+            }
+            existingServiceProvider.setTotalScore(0);
+            existingServiceProvider.setTotalScore(totalScore);
+            assignRank(existingServiceProvider,totalScore);
+
+
         return responseService.generateSuccessResponse("Service Provider Updated Successfully", existingServiceProvider, HttpStatus.OK);
     }catch (NoSuchFieldException e)
         {
@@ -339,6 +486,33 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         }catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error updating Service Provider : ", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    public ScoringCriteria traverseListOfScoringCriteria(Long scoringCriteriaId,List<ScoringCriteria> scoringCriteriaList,ServiceProviderEntity existingServiceProvider)
+    {
+        for(ScoringCriteria scoringCriteria: scoringCriteriaList)
+        {
+            if(scoringCriteria.getId().equals(scoringCriteriaId)){
+                return scoringCriteria;
+            }
+        }
+        return null;
+    }
+
+    public void assignRank(ServiceProviderEntity existingServiceProvider,Integer totalScore) {
+        if (existingServiceProvider.getType().equalsIgnoreCase("PROFESSIONAL")) {
+            ServiceProviderRank serviceProviderRank = serviceProviderTestService.assignRankingForProfessional(totalScore);
+            if (serviceProviderRank == null) {
+                throw new IllegalArgumentException("Service Provider Rank is not found for assigning a rank to the Professional ServiceProvider");
+            }
+            existingServiceProvider.setRanking(serviceProviderRank);
+        } else {
+            ServiceProviderRank serviceProviderRank = serviceProviderTestService.assignRankingForIndividual(totalScore);
+            if (serviceProviderRank == null) {
+                throw new IllegalArgumentException("Service Provider Rank is not found for assigning a rank to the Individual ServiceProvider");
+            }
+            existingServiceProvider.setRanking(serviceProviderRank);
         }
     }
 
