@@ -376,8 +376,8 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.merge(new ScoringCriteria(7L, "Qualification", "Service Provider is 12th passed", 5));
 
             // Technical Expertise Scoring
-            entityManager.merge(new ScoringCriteria(8L, "Technical Expertise", "Tech diploma or degree", 10));
-            entityManager.merge(new ScoringCriteria(9L, "Technical Expertise", "Other technical expertise", 5));
+            entityManager.merge(new ScoringCriteria(8L, "Technical Expertise", "Each skill will score 2 points", 2));
+            entityManager.merge(new ScoringCriteria(9L, "Technical Expertise", "Service Provider having equal to or more than 5 skills", 10));
 
             // Staff Scoring
             entityManager.merge(new ScoringCriteria(10L, "Staff", "More than 4 staff members", 10));

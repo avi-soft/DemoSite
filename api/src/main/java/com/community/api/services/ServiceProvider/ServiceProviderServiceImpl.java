@@ -13,6 +13,7 @@ import com.community.api.entity.Skill;
 import com.community.api.entity.StateCode;
 import com.community.api.services.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
+import com.community.api.utils.DocumentType;
 import com.twilio.Twilio;
 import com.twilio.exception.ApiException;
 import io.github.bucket4j.Bucket;
@@ -113,7 +114,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     public ResponseEntity<?> updateServiceProvider(Long userId, Map<String, Object> updates)  {
         try{
             updates=sharedUtilityService.trimStringValues(updates);
-            List<String> errorMessages=new ArrayList<>();
+            List<String> errorMessages=new ArrayList<>()    ;
 
 
         // Find existing ServiceProviderEntity
@@ -449,14 +450,50 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             if(updates.containsKey("skills"))
             {
                List<Skill> skills=existingServiceProvider.getSkills();
-               for(Skill skill: skills)
-               {
-                  if(skill.getSkill_name().equalsIgnoreCase("Form Filling Knowledge/Expertise") || skill.getSkill_name().equalsIgnoreCase("Resizing & Uploading Image/Document") || skill.getSkill_name().equalsIgnoreCase("Executing Online Payment/Transactions") || skill.getSkill_name().equalsIgnoreCase("Apply To Various Government Schemes"))
-                  {
+                int totalSkills=skills.size();
+                if(totalSkills<=4)
+                {
+                    scoringCriteriaToMap=traverseListOfScoringCriteria(8L,scoringCriteriaList,existingServiceProvider);
+                    if(scoringCriteriaToMap==null)
+                    {
+                        return ResponseService.generateErrorResponse("Scoring Criteria is not found for Technical Expertise Score", HttpStatus.BAD_REQUEST);
+                    }
+                    else {
+                        Integer totalTechnicalScores=totalSkills * scoringCriteriaToMap.getScore();
+                        existingServiceProvider.setStaffScore(totalTechnicalScores);
+                        scoringCriteriaToMap=null;
+                    }
+                }
+                if(totalSkills>=5)
+                {
+                    scoringCriteriaToMap=traverseListOfScoringCriteria(9L,scoringCriteriaList,existingServiceProvider);
+                    if(scoringCriteriaToMap==null)
+                    {
+                        return ResponseService.generateErrorResponse("Scoring Criteria is not found for Technical Expertise Score", HttpStatus.BAD_REQUEST);
+                    }
+                    else {
+                        existingServiceProvider.setStaffScore(scoringCriteriaToMap.getScore());
+                        scoringCriteriaToMap=null;
+                    }
+                }
+            }
 
-                  }
-               }
+            if(updates.containsKey("qualificationDetailsList"))
+            {
+                List<QualificationDetails> qualificationDetailsList = existingServiceProvider.getQualificationDetailsList();
 
+                for(QualificationDetails qualificationDetails : qualificationDetailsList)
+                {
+                    DocumentType qualification = entityManager.find(DocumentType.class, qualificationDetails.getQualification_id());
+                    if (qualification != null) {
+                        if (qualification.getDocument_type_name().equalsIgnoreCase("BACHELORS") || qualification.getDocument_type_name().equalsIgnoreCase("MASTERS") || qualification.getDocument_type_name().equalsIgnoreCase("DOCTORATE"))
+                        {
+
+                        }
+                    } else {
+                        qualificationInfo.put("qualification_name", "Unknown Qualification");
+                    }
+                }
             }
 
             if(existingServiceProvider.getType().equalsIgnoreCase("PROFESSIONAL"))
