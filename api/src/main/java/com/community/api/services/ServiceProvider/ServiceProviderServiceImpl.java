@@ -580,31 +580,6 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 }
             }
 
-
-
-
-
-
-
-
-//            if(updates.containsKey("qualificationDetailsList"))
-//            {
-//                List<QualificationDetails> qualificationDetailsList = existingServiceProvider.getQualificationDetailsList();
-//
-//                for(QualificationDetails qualificationDetails : qualificationDetailsList)
-//                {
-//                    DocumentType qualification = entityManager.find(DocumentType.class, qualificationDetails.getQualification_id());
-//                    if (qualification != null) {
-//                        if (qualification.getDocument_type_name().equalsIgnoreCase("BACHELORS") || qualification.getDocument_type_name().equalsIgnoreCase("MASTERS") || qualification.getDocument_type_name().equalsIgnoreCase("DOCTORATE"))
-//                        {
-//
-//                        }
-//                    } else {
-//                        qualificationInfo.put("qualification_name", "Unknown Qualification");
-//                    }
-//                }
-//            }
-
             if(existingServiceProvider.getType().equalsIgnoreCase("PROFESSIONAL"))
             {
                 totalScore=existingServiceProvider.getBusinessUnitInfraScore()+existingServiceProvider.getWorkExperienceScore()+existingServiceProvider.getTechnicalExpertiseScore()+ existingServiceProvider.getQualificationScore()+ existingServiceProvider.getStaffScore();

@@ -8,8 +8,11 @@ import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.Qualification;
 import com.community.api.entity.QualificationDetails;
+import com.community.api.entity.ScoringCriteria;
+import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
 import com.community.api.services.exception.*;
 import com.community.api.utils.DocumentType;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityManager;
@@ -22,12 +25,14 @@ public class QualificationDetailsService {
     QualificationController qualificationController;
     QualificationService qualificationService;
     SharedUtilityService sharedUtilityService;
+    ServiceProviderServiceImpl serviceProviderService;
 
-    public QualificationDetailsService(EntityManager entityManager, QualificationController qualificationController, QualificationService qualificationService,SharedUtilityService sharedUtilityService) {
+    public QualificationDetailsService(EntityManager entityManager, QualificationController qualificationController, QualificationService qualificationService, SharedUtilityService sharedUtilityService, ServiceProviderServiceImpl serviceProviderService) {
         this.entityManager = entityManager;
         this.qualificationController = qualificationController;
         this.qualificationService = qualificationService;
         this.sharedUtilityService = sharedUtilityService;
+        this.serviceProviderService=serviceProviderService;
     }
 
     @Transactional
@@ -43,6 +48,62 @@ public class QualificationDetailsService {
             qualificationDetails.setService_provider(serviceProviderEntity);
             serviceProviderEntity.getQualificationDetailsList().add(qualificationDetails);
             entityManager.persist(qualificationDetails);
+
+            TypedQuery<ScoringCriteria> typedQuery=  entityManager.createQuery(Constant.GET_ALL_SCORING_CRITERIA,ScoringCriteria.class);
+            List<ScoringCriteria> scoringCriteriaList = typedQuery.getResultList();
+
+            Integer totalScore=0;
+            ScoringCriteria scoringCriteriaToMap =null;
+            QualificationDetails qualificationDetail= serviceProviderEntity.getQualificationDetailsList().get(serviceProviderEntity.getQualificationDetailsList().size()-1);
+//
+            DocumentType qualification = entityManager.find(DocumentType.class, qualificationDetail.getQualification_id());
+            if (qualification != null) {
+                if (qualification.getDocument_type_name().equalsIgnoreCase("BACHELORS") || qualification.getDocument_type_name().equalsIgnoreCase("MASTERS") || qualification.getDocument_type_name().equalsIgnoreCase("DOCTORATE")) {
+                    scoringCriteriaToMap=serviceProviderService.traverseListOfScoringCriteria(6L,scoringCriteriaList,serviceProviderEntity);
+                    if(scoringCriteriaToMap==null)
+                    {
+                        throw new IllegalArgumentException("Scoring Criteria is not found for scoring Qualification Score");
+                    }
+                    else {
+                        serviceProviderEntity.setQualificationScore(scoringCriteriaToMap.getScore());
+                    }
+                }
+                else if(qualification.getDocument_type_name().equalsIgnoreCase("INTERMEDIATE")) {
+                    scoringCriteriaToMap=serviceProviderService.traverseListOfScoringCriteria(7L,scoringCriteriaList,serviceProviderEntity);
+                    if(scoringCriteriaToMap==null)
+                    {
+                        throw new IllegalArgumentException("Scoring Criteria is not found for scoring Qualification Score");
+                    }
+                    else {
+                        serviceProviderEntity.setQualificationScore(scoringCriteriaToMap.getScore());
+                    }
+                }
+                else if(serviceProviderEntity.getQualificationDetailsList().size()==0) {
+                    serviceProviderEntity.setQualificationScore(0);
+                }
+            }
+            else {
+                throw new IllegalArgumentException("Unknown Qualification is found");
+            }
+
+            if(serviceProviderEntity.getType().equalsIgnoreCase("PROFESSIONAL"))
+            {
+                totalScore=serviceProviderEntity.getBusinessUnitInfraScore()+serviceProviderEntity.getWorkExperienceScore()+serviceProviderEntity.getTechnicalExpertiseScore()+ serviceProviderEntity.getQualificationScore()+ serviceProviderEntity.getStaffScore();
+            }
+            else {
+                totalScore=serviceProviderEntity.getInfraScore()+serviceProviderEntity.getWorkExperienceScore()+serviceProviderEntity.getTechnicalExpertiseScore()+serviceProviderEntity.getQualificationScore()+serviceProviderEntity.getPartTimeOrFullTimeScore();
+            }
+            if(serviceProviderEntity.getWrittenTestScore()!=null)
+            {
+                totalScore=totalScore+serviceProviderEntity.getWrittenTestScore();
+            }
+            if(serviceProviderEntity.getImageUploadScore()!=null)
+            {
+                totalScore=totalScore+serviceProviderEntity.getImageUploadScore();
+            }
+            serviceProviderEntity.setTotalScore(0);
+            serviceProviderEntity.setTotalScore(totalScore);
+            serviceProviderService.assignRank(serviceProviderEntity,totalScore);
             return qualificationDetails;
         }
         CustomCustomer customCustomer = findCustomCustomerById(userId);
