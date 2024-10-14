@@ -11,6 +11,7 @@ import com.community.api.entity.CustomGender;
 import com.community.api.entity.CustomJobGroup;
 import com.community.api.entity.CustomProduct;
 import com.community.api.entity.CustomProductGenderPhysicalRequirementRef;
+import com.community.api.entity.CustomProductRejectionStatus;
 import com.community.api.entity.CustomProductState;
 import com.community.api.entity.CustomReserveCategory;
 import com.community.api.entity.CustomSector;
@@ -84,6 +85,8 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
     protected CustomProductState customProductState;
     @JsonProperty("custom_job_group")
     protected CustomJobGroup customJobGroup;
+    @JsonProperty("custom_rejection_status")
+    protected CustomProductRejectionStatus customProductRejectionStatus;
 
     @JsonProperty("creator_user_id")
     protected Long creatorUserId;
@@ -149,7 +152,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.active = product.isActive();
         this.quantity = product.getDefaultSku().getQuantityAvailable();
         this.activeGoLiveDate = addProductDto.getGoLiveDate();
-        this.categoryName = product.getDefaultCategory().getName();
+//        this.categoryName = product.getDefaultCategory().getName();
         this.priorityLevel = addProductDto.getPriorityLevel();
         this.archived = 'N';
         this.createdDate = currentDate;
@@ -274,6 +277,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.examDateFrom = customProduct.getExamDateFrom();
         this.examDateTo = customProduct.getExamDateTo();
         this.notifyingAuthority = customProduct.getNotifyingAuthority();
+        this.customProductRejectionStatus = customProduct.getRejectionStatus();
 
         if (customProduct.getDefaultCategory() != null) {
             this.defaultCategoryId = customProduct.getDefaultCategory().getId();
@@ -337,6 +341,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.selectionCriteria = customProduct.getSelectionCriteria();
         this.state = customProduct.getState();
         this.notifyingAuthority = customProduct.getNotifyingAuthority();
+        this.customProductRejectionStatus = customProduct.getRejectionStatus();
 
         if (customProduct.getDefaultCategory() != null) {
             this.defaultCategoryId = customProduct.getDefaultCategory().getId();
@@ -395,6 +400,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.customStream = customProduct.getStream();
         this.customSubject = customProduct.getSubject();
         this.customGender = customProduct.getGenderSpecific();
+        this.customProductRejectionStatus = customProduct.getRejectionStatus();
 
         if (customProduct.getDefaultCategory() != null) {
             this.defaultCategoryId = customProduct.getDefaultCategory().getId();

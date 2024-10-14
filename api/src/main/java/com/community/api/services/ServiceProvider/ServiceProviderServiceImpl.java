@@ -787,6 +787,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     }
 
     //mechanism to check password
+    @Transactional
     public ResponseEntity<?> validateServiceProvider(ServiceProviderEntity serviceProvider, String password, HttpServletRequest request, HttpSession session) {
         if (serviceProvider == null) {
             return responseService.generateErrorResponse("No Records Found", HttpStatus.NOT_FOUND);
@@ -826,6 +827,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         }
     }
 
+    @Transactional
     public ResponseEntity<?> loginWithPassword(@RequestBody Map<String, Object> serviceProviderDetails, HttpServletRequest request, HttpSession session) {
         try {
             String mobileNumber = (String) serviceProviderDetails.get("mobileNumber");
@@ -856,6 +858,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         }
     }
 
+    @Transactional
     public ResponseEntity<?> loginWithUsernameAndOTP(String username, HttpSession session) {
         try {
             if (username == null) {
@@ -1085,6 +1088,26 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
         return Collections.emptyList();
     }
+    public static List<Long> getLongList(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+
+        if (value instanceof List<?>) {
+            List<?> list = (List<?>) value;
+
+            List<Long> longList = new ArrayList<>();
+            for (Object item : list) {
+                if (item instanceof Long) {
+                    longList.add((Long) item);
+                } else if (item instanceof Integer) {
+                    longList.add(((Integer) item).longValue());
+                }
+            }
+
+            return longList;
+        }
+
+        return Collections.emptyList();
+    }
 
     @Transactional
     public ResponseEntity<?> addAddress(long serviceProviderId, ServiceProviderAddress serviceProviderAddress) throws Exception {
@@ -1172,6 +1195,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     @Transactional
 
     public Object searchServiceProviderBasedOnGivenFields(String state,String district,String first_name,String last_name,String mobileNumber) {
+
         Map<String, Character> alias = new HashMap<>();
         alias.put("state", 'a');
         alias.put("district", 'a');
