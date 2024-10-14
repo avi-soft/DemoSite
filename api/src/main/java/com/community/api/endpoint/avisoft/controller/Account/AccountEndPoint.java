@@ -412,6 +412,7 @@ public class AccountEndPoint {
                         String existingToken = existingCustomer.getToken();
                         String ipAddress = request.getRemoteAddr();
                         String userAgent = request.getHeader("User-Agent");
+
                         if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
                             return ResponseEntity.ok(new OtpEndpoint.ApiResponse(existingToken, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in"));
 
@@ -422,7 +423,6 @@ public class AccountEndPoint {
                             em.persist(existingCustomer);
                             session.setAttribute(tokenKey, token);
                             return ResponseEntity.ok(new OtpEndpoint.ApiResponse(token, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in"));
-
                         }
 
                     } else {

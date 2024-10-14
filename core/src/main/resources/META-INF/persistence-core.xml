@@ -58,6 +58,7 @@
         <class>com.community.api.entity.CustomStream</class>
         <class>com.community.api.entity.CustomSubject</class>
         <class>com.community.api.entity.CustomSector</class>
+        <class>com.community.api.entity.CustomerReferrer</class>
 
         <exclude-unlisted-classes/>
     </persistence-unit>
@@ -100,6 +101,7 @@
         <class>com.community.api.utils.ServiceProviderDocument</class>
         <class>com.community.api.entity.ServiceProviderTestStatus</class>
         <class>com.community.api.entity.ServiceProviderRank</class>
+        <class>com.community.api.entity.ScoringCriteria</class>
         <exclude-unlisted-classes/>
     </persistence-unit>
 

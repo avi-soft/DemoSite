@@ -1095,31 +1095,34 @@ public class ProductService {
                     if(addProductDto.getLastDateToPayFee().before(customProduct.getActiveEndDate())) {
                         throw new IllegalArgumentException("Last day to pay fee cannot be before of active end date.");
                     }
-                }else if (addProductDto.getModificationDateFrom() != null) {
+                }
+                if (addProductDto.getModificationDateFrom() != null) {
                     dateFormat.parse(dateFormat.format(addProductDto.getLastDateToPayFee()));
-                    if (!addProductDto.getGoLiveDate().before(addProductDto.getModificationDateFrom())) {
+                    if (!addProductDto.getLastDateToPayFee().before(addProductDto.getModificationDateFrom())) {
                         throw new IllegalArgumentException("last date to pay fee have to be before of modified date from.");
                     }
                 } else if (customProduct.getModificationDateFrom() != null) {
-                    if (!addProductDto.getGoLiveDate().before(customProduct.getModificationDateFrom())) {
+                    if (!addProductDto.getLastDateToPayFee().before(customProduct.getModificationDateFrom())) {
                         throw new IllegalArgumentException("last date to pay fee have to be before of modified date from.");
                     }
-                } else if (addProductDto.getAdmitCardDateFrom() != null) {
+                }
+                if (addProductDto.getAdmitCardDateFrom() != null) {
                     dateFormat.parse(dateFormat.format(addProductDto.getLastDateToPayFee()));
-                    if (!addProductDto.getGoLiveDate().before(addProductDto.getAdmitCardDateFrom())) {
+                    if (!addProductDto.getLastDateToPayFee().before(addProductDto.getAdmitCardDateFrom())) {
                         throw new IllegalArgumentException("last date to pay fee have to be before of admit card from.");
                     }
                 } else if (customProduct.getAdmitCardDateFrom() != null) {
-                    if (!addProductDto.getGoLiveDate().before(customProduct.getAdmitCardDateFrom())) {
+                    if (!addProductDto.getLastDateToPayFee().before(customProduct.getAdmitCardDateFrom())) {
                         throw new IllegalArgumentException("last date to pay fee have to be before of admit card from.");
                     }
-                } else if (addProductDto.getExamDateFrom() != null) {
+                }
+                if (addProductDto.getExamDateFrom() != null) {
                     dateFormat.parse(dateFormat.format(addProductDto.getLastDateToPayFee()));
-                    if (!addProductDto.getGoLiveDate().before(addProductDto.getExamDateFrom())) {
+                    if (!addProductDto.getLastDateToPayFee().before(addProductDto.getExamDateFrom())) {
                         throw new IllegalArgumentException("last date to pay fee have to be before of exam date from.");
                     }
                 } else if (customProduct.getExamDateFrom() != null) {
-                    if (!addProductDto.getGoLiveDate().before(customProduct.getExamDateFrom())) {
+                    if (!addProductDto.getLastDateToPayFee().before(customProduct.getExamDateFrom())) {
                         throw new IllegalArgumentException("last date to pay fee have to be before of exam date from.");
                     }
                 }
@@ -1578,7 +1581,7 @@ public class ProductService {
                     for (Privileges privilege : privileges) {
                         if ((privilege.getPrivilege_name().equals(Constant.PRIVILEGE_APPROVE_PRODUCT) && customProductState.getProductState().equals(Constant.PRODUCT_STATE_APPROVED))) {
                             customProduct.setProductState(customProductState);
-                            break;
+                            return true;
                         } else if ((privilege.getPrivilege_name().equals(Constant.PRIVILEGE_REJECT_PRODUCT) && customProductState.getProductState().equals(Constant.PRODUCT_STATE_REJECTED))) {
 
                             if (addProductDto.getRejectionStatus() == null) {
@@ -1590,9 +1593,10 @@ public class ProductService {
                             }
                             customProduct.setProductState(customProductState);
                             customProduct.setRejectionStatus(productRejectionStatus);
-                            break;
+                            return true;
                         }
                     }
+                    throw new IllegalArgumentException("Not have privilege to perform action.");
                 } else if (role.equals(Constant.ADMIN) || role.equals(Constant.SUPER_ADMIN)) {
                     customProduct.setProductState(customProductState);
                     if (addProductDto.getRejectionStatus() == null) {
@@ -1603,8 +1607,10 @@ public class ProductService {
                         throw new IllegalArgumentException("NO PRODUCT REJECTION STATUS IS FOUND");
                     }
                     customProduct.setRejectionStatus(productRejectionStatus);
+
+                    return true;
                 } else {
-                    throw new IllegalArgumentException("SOME ERRORS HAVE BEEN FOUND");
+                    throw new IllegalArgumentException("Role not Service provider and admin or super admin");
                 }
             }
             return true;
