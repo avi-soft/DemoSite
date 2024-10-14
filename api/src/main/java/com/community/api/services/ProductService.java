@@ -1865,7 +1865,7 @@ public class ProductService {
                     }
                     if (addProductDto.getGenderSpecific() != null && customGender != gender) {
                         throw new IllegalArgumentException("Gender id is not matched with the specific gender.");
-                    } else if (customProduct.getGenderSpecific() != null && addProductDto.getGenderSpecific() == null && customGender != customProduct.getGenderSpecific()) {
+                    } else if (customProduct != null && customProduct.getGenderSpecific() != null && addProductDto.getGenderSpecific() == null && customGender != customProduct.getGenderSpecific()) {
                         throw new IllegalArgumentException("Gender id is not matched with the specific gender.");
                     }
 
