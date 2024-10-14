@@ -13,6 +13,7 @@ import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import io.swagger.models.auth.In;
 import org.broadleafcommerce.common.money.Money;
+import org.broadleafcommerce.common.persistence.Status;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.broadleafcommerce.core.order.domain.*;
@@ -122,7 +123,7 @@ public class CartEndPoint extends BaseEndpoint {
             Long id = Long.valueOf(customerId);
             if (isAnyServiceNull()) {
                 return ResponseService.generateErrorResponse("One or more Serivces not initialized", HttpStatus.INTERNAL_SERVER_ERROR);
-                }
+            }
             if(id==null)
                 return ResponseService.generateErrorResponse("Customer Id not specified",HttpStatus.BAD_REQUEST);
             Customer customer = customerService.readCustomerById(customerId);//finding the customer to get cart associated with it
@@ -202,6 +203,7 @@ public class CartEndPoint extends BaseEndpoint {
             if (product == null) {
                 return ResponseService.generateErrorResponse("Product not found", HttpStatus.NOT_FOUND);
             }
+            CustomProduct customProduct=entityManager.find(CustomProduct.class,productId);
             Long reserveCategoryId=reserveCategoryService.getCategoryByName(customCustomer.getCategory()).getReserveCategoryId();
             if(reserveCategoryService.getReserveCategoryFee(productId,reserveCategoryId)==null)
                 return ResponseService.generateErrorResponse("Cannot add product to cart :Fee not specified for your category",HttpStatus.UNPROCESSABLE_ENTITY);
@@ -209,7 +211,9 @@ public class CartEndPoint extends BaseEndpoint {
             {
 
             }*/
-
+            if ((((Status) customProduct).getArchived() == 'Y' || !customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
+                return ResponseService.generateErrorResponse("Cannot add an archieved product",HttpStatus.BAD_REQUEST);
+            }
             OrderItemRequest orderItemRequest = new OrderItemRequest();
             orderItemRequest.setProduct(product);
             orderItemRequest.setOrder(cart);
@@ -277,6 +281,7 @@ public class CartEndPoint extends BaseEndpoint {
     @RequestMapping(value = "preview-cart/{customerId}", method = RequestMethod.GET)
     public ResponseEntity<?> retrieveCartItems(@PathVariable long customerId) {
         try {
+            List<OrderItem>archievedItems=new ArrayList<>();
             Long id = Long.valueOf(customerId);
             if(id==null)
                 return ResponseService.generateErrorResponse("Customer Id not specified",HttpStatus.BAD_REQUEST);
@@ -303,6 +308,10 @@ public class CartEndPoint extends BaseEndpoint {
                     Product product = findProductFromItemAttribute(orderItem);
                     CustomProduct customProduct=entityManager.find(CustomProduct.class,product.getId());
                     if (product != null) {
+                        if ((((Status) customProduct).getArchived() == 'Y' || !customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
+                            archievedItems.add(orderItem);
+                            continue;
+                        }
                         Map<String, Object> productDetails = sharedUtilityService.createProductResponseMap(product, orderItem,customCustomer);
                         products.add(productDetails);
                         if(customProduct!=null)
@@ -314,6 +323,11 @@ public class CartEndPoint extends BaseEndpoint {
                 response.put("products", products.toArray());
                 response.put("sub_total", subTotal);
                 response.put("total_platform_fee", platformFee);
+                for(OrderItem orderItem:archievedItems)
+                {
+                    cart.getOrderItems().remove(orderItem);
+                }
+                archievedItems.clear();
                 return ResponseService.generateSuccessResponse("Cart items", response, HttpStatus.OK);
             } else
                 return ResponseService.generateErrorResponse("No items in cart", HttpStatus.NOT_FOUND);
@@ -407,6 +421,7 @@ public class CartEndPoint extends BaseEndpoint {
             List<Long>cartItemIds=new ArrayList<>();
             List<String>errors=new ArrayList<>();
             int batchNumber=customCustomer.getNumberOfOrders();
+            ++batchNumber;
             for(OrderItem orderItem : cart.getOrderItems())
             {
                 cartItemIds.add(orderItem.getId());
@@ -444,7 +459,6 @@ public class CartEndPoint extends BaseEndpoint {
                     individualOrder.addOrderItem(orderItemForIndividualOrder);
                     Money subTotal=new Money(productReserveCategoryFeePostRefService.getCustomProductReserveCategoryFeePostRefByProductIdAndReserveCategoryId(product.getId(),reserveCategoryService.getCategoryByName(customCustomer.getCategory()).getReserveCategoryId()).getFee());
                     individualOrder.setSubTotal(subTotal);
-                    ++batchNumber;
                     individualOrder.setOrderNumber("O-"+customer.getId()+"-B-"+batchNumber);
                     Money total=new Money(customProduct.getPlatformFee());
                     individualOrder.setTotal(total);
@@ -466,11 +480,10 @@ public class CartEndPoint extends BaseEndpoint {
                         entityManager.remove(item);
                     }
                 }
+                customCustomer.setNumberOfOrders(batchNumber);
                 entityManager.merge(customCustomer);
                 entityManager.merge(cart);
-                customCustomer.setNumberOfOrders(batchNumber);
                 return ResponseService.generateSuccessResponse("Order Placed", cart.getId(), HttpStatus.OK);
-
         }catch (NumberFormatException e) {
             return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
@@ -482,11 +495,10 @@ public class CartEndPoint extends BaseEndpoint {
     @RequestMapping(value ="cart-recovery-log/{customerId}",method = RequestMethod.GET)
     public ResponseEntity<?>getCartRecoveryLog(@PathVariable Long customerId)
     {
-            try{
-                Long id = Long.valueOf(customerId);
-                if(id==null)
-                    return ResponseService.generateErrorResponse("Customer Id not specified",HttpStatus.BAD_REQUEST);
-
+        try{
+            Long id = Long.valueOf(customerId);
+            if(id==null)
+                return ResponseService.generateErrorResponse("Customer Id not specified",HttpStatus.BAD_REQUEST);
                 CustomCustomer customCustomer=entityManager.find(CustomCustomer.class,customerId);
                 if(customCustomer==null)
                     return ResponseService.generateErrorResponse("Cannot find customer for this id",HttpStatus.NOT_FOUND);
@@ -501,9 +513,9 @@ public class CartEndPoint extends BaseEndpoint {
                 return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
             }catch (Exception e) {
 
-                exceptionHandling.handleException(e);
-                return ResponseService.generateErrorResponse("Error fetching recovery log", HttpStatus.INTERNAL_SERVER_ERROR);
-            }
+            exceptionHandling.handleException(e);
+            return ResponseService.generateErrorResponse("Error fetching recovery log", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     private boolean isAnyServiceNull() {

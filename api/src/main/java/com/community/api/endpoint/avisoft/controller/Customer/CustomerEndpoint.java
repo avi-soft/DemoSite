@@ -18,6 +18,7 @@ import com.community.api.utils.DocumentType;
 import com.community.api.utils.ServiceProviderDocument;
 import io.micrometer.core.lang.Nullable;
 import org.apache.commons.fileupload.FileUploadException;
+import org.broadleafcommerce.common.persistence.Status;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.broadleafcommerce.profile.core.domain.Address;
@@ -83,6 +84,9 @@ public class CustomerEndpoint {
     private JwtUtil jwtTokenUtil;
 
     @Autowired
+    private ProductReserveCategoryFeePostRefService reserveCategoryFeePostRefService;
+
+    @Autowired
     private RoleService roleService;
 
     @Autowired
@@ -92,7 +96,12 @@ public class CustomerEndpoint {
     private static ResponseService responseService;
 
     @Autowired
+    private FileService fileService;
+
+    @Autowired
     private DocumentStorageService documentStorageService;
+    @Autowired
+    private  ReserveCategoryService reserveCategoryService;
 
     @Autowired
     private CatalogService catalogService;
@@ -368,19 +377,19 @@ public class CustomerEndpoint {
         if(((Boolean)details.get("hidePhoneNumber")).equals(true))
         {
             System.out.println("no");
-                if(details.containsKey("secondaryMobileNumber")&&((String)details.get("secondaryMobileNumber")).isEmpty())
-                {
-                    errorMessages.add("Need to provide Secondary Mobile Number when hiding primary Mobile Number");
-                }
+            if(details.containsKey("secondaryMobileNumber")&&((String)details.get("secondaryMobileNumber")).isEmpty())
+            {
+                errorMessages.add("Need to provide Secondary Mobile Number when hiding primary Mobile Number");
+            }
 
-                if(details.containsKey("whatsappNumber")&&((String)details.get("whatsappNumber")).isEmpty())
-                {
-                    errorMessages.add("Whatsapp number cannot be null");
-                }
-                if(details.containsKey("whatsappNumber")&&((String)details.get("whatsappNumber")).equals(customer.getMobileNumber()))
-                {
-                    errorMessages.add("Cannot set primary number as whatsapp number when hidden");
-                }
+            if(details.containsKey("whatsappNumber")&&((String)details.get("whatsappNumber")).isEmpty())
+            {
+                errorMessages.add("Whatsapp number cannot be null");
+            }
+            if(details.containsKey("whatsappNumber")&&((String)details.get("whatsappNumber")).equals(customer.getMobileNumber()))
+            {
+                errorMessages.add("Cannot set primary number as whatsapp number when hidden");
+            }
         }
         return errorMessages;
     }
@@ -395,7 +404,7 @@ public class CustomerEndpoint {
 
     @Transactional
     @RequestMapping(value = "/get-customer-details/{customerId}", method = RequestMethod.GET)
-    public ResponseEntity<?> getUserDetails(@PathVariable Long customerId) {
+    public ResponseEntity<?> getUserDetails(@PathVariable Long customerId,HttpServletRequest request) {
         try {
             CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
             if (customCustomer == null) {
@@ -412,11 +421,15 @@ public class CustomerEndpoint {
 
             for (Document document : customCustomer.getDocuments()) {
                 if (document.getFilePath() != null && document.getDocumentType() != null) {
+
+                    document.setFilePath(fileService.getFileUrl(document.getFilePath(), request));
+
                     filteredDocuments.add(document);
                 }
             }
 
             if (!filteredDocuments.isEmpty()) {
+
                 customerDetails.put("documents", filteredDocuments);
             }
 
@@ -1013,6 +1026,14 @@ public class CustomerEndpoint {
                 return ResponseService.generateErrorResponse(Constant.PRODUCTNOTFOUND,HttpStatus.NOT_FOUND);
             }
             List<CustomProduct>savedForms=customer.getSavedForms();
+            Double fee=reserveCategoryFeePostRefService.getCustomProductReserveCategoryFeePostRefByProductIdAndReserveCategoryId(product.getId(),reserveCategoryService.getCategoryByName(customer.getCategory()).getReserveCategoryId()).getFee();
+            if(fee==null)
+            {
+                return ResponseService.generateErrorResponse("Cannot save form : Fee not specified for your category for this product",HttpStatus.NOT_FOUND);
+            }
+            if ((((Status) product).getArchived() == 'Y' || !product.getDefaultSku().getActiveEndDate().after(new Date()))) {
+                return ResponseService.generateErrorResponse("Cannot save an archieved product",HttpStatus.BAD_REQUEST);
+            }
             if(savedForms.contains(product))
                 return ResponseService.generateErrorResponse("You can save a form only once",HttpStatus.UNPROCESSABLE_ENTITY);
             savedForms.add(product);
@@ -1069,6 +1090,10 @@ public class CustomerEndpoint {
                 ResponseService.generateErrorResponse("Saved form list is empty", HttpStatus.NOT_FOUND);
             List<Map<String, Object>> listOfSavedProducts = new ArrayList<>();
             for (Product product : customer.getSavedForms()) {
+                CustomProduct customProduct=entityManager.find(CustomProduct.class,product.getId());
+                if ((((Status) customProduct).getArchived() == 'Y')) {
+                    continue;
+                }
                 listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product, null,customer));
             }
             return ResponseService.generateSuccessResponse("Forms saved : ", listOfSavedProducts, HttpStatus.OK);
@@ -1090,6 +1115,10 @@ public class CustomerEndpoint {
                 ResponseService.generateErrorResponse("Saved form list is empty", HttpStatus.NOT_FOUND);
             List<Map<String, Object>> listOfSavedProducts = new ArrayList<>();
             for (Product product : customer.getSavedForms()) {
+                CustomProduct customProduct=entityManager.find(CustomProduct.class,product.getId());
+                if ((((Status) customProduct).getArchived() == 'Y')) {
+                    continue;
+                }
                 listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product, null,customer));
             }
             return ResponseService.generateSuccessResponse("Forms saved : ", listOfSavedProducts, HttpStatus.OK);
@@ -1112,6 +1141,10 @@ public class CustomerEndpoint {
                 ResponseService.generateErrorResponse("Saved form list is empty", HttpStatus.NOT_FOUND);
             List<Map<String, Object>> listOfSavedProducts = new ArrayList<>();
             for (Product product : customer.getSavedForms()) {
+                CustomProduct customProduct=entityManager.find(CustomProduct.class,product.getId());
+                if ((((Status) customProduct).getArchived() == 'Y')) {
+                    continue;
+                }
                 listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product, null,customer));
             }
             return ResponseService.generateSuccessResponse("Forms saved : ", listOfSavedProducts, HttpStatus.OK);
