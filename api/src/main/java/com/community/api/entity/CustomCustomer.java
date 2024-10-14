@@ -205,11 +205,11 @@ public class CustomCustomer extends CustomerImpl {
     @Column(name = "disability_handicapped")
     private Boolean disability=false;
 
-    @Column(name = "disability_type")
+    /*@Column(name = "disability_type")
     private String disabilityType;
 
     @Column(name="percentage_of_disability")
-    private double disabilityPercentage;
+    private double disabilityPercentage;*/
 
     @Column(name = "is_ex_service_man")
     private Boolean exService=false;
@@ -226,5 +226,6 @@ public class CustomCustomer extends CustomerImpl {
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CustomerReferrer> myReferrer = new ArrayList<>();
 
-
+    @Column(name = "order_count")
+    private Integer numberOfOrders;
 }
