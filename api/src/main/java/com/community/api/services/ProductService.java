@@ -1841,7 +1841,7 @@ public class ProductService {
         }
     }
 
-    public boolean validatePhysicalRequirement(AddProductDto addProductDto) throws Exception {
+    public boolean validatePhysicalRequirement(AddProductDto addProductDto, CustomProduct customProduct) throws Exception {
         try {
             CustomGender gender = null;
             if (addProductDto.getGenderSpecific() != null) {
@@ -1864,6 +1864,8 @@ public class ProductService {
                         throw new IllegalArgumentException("GENDER NOT FOUND WITH ID: " + addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getGenderId());
                     }
                     if (addProductDto.getGenderSpecific() != null && customGender != gender) {
+                        throw new IllegalArgumentException("Gender id is not matched with the specific gender.");
+                    } else if (customProduct.getGenderSpecific() != null && addProductDto.getGenderSpecific() == null && customGender != customProduct.getGenderSpecific()) {
                         throw new IllegalArgumentException("Gender id is not matched with the specific gender.");
                     }
 

@@ -208,7 +208,7 @@ public class ProductController extends CatalogEndpoint {
                 notifyingAuthority = districtService.getStateByStateId(addProductDto.getState());
             }
 
-            productService.validatePhysicalRequirement(addProductDto);
+            productService.validatePhysicalRequirement(addProductDto, null);
             productGenderPhysicalRequirementService.savePhysicalRequirement(addProductDto.getPhysicalRequirement(), product);
 
             CustomProductWrapper wrapper = new CustomProductWrapper();
@@ -257,7 +257,7 @@ public class ProductController extends CatalogEndpoint {
             }
             productService.updateProductValidation(addProductDto, customProduct);
             if(addProductDto.getPhysicalRequirement() != null) {
-                productService.validatePhysicalRequirement(addProductDto);
+                productService.validatePhysicalRequirement(addProductDto, customProduct);
                 productService.deleteOldPhysicalRequirement(customProduct);
             }
 
