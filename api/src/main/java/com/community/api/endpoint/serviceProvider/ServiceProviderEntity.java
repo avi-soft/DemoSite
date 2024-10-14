@@ -221,7 +221,7 @@ public class ServiceProviderEntity  {
  private String token;
  @Column
  private Integer totalSkillTestPoints;
-
+    @JsonBackReference
     @OneToMany(mappedBy = "serviceProvider", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CustomerReferrer> myReferrals = new ArrayList<>();
 
@@ -229,7 +229,8 @@ public class ServiceProviderEntity  {
  @OneToMany(mappedBy = "serviceProviderEntity", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
  @Fetch(FetchMode.SUBSELECT)
  private List<ServiceProviderDocument> documents;
- 
+
+
  @Nullable
  @JsonManagedReference
  @OneToMany(mappedBy = "service_provider", cascade = CascadeType.ALL, orphanRemoval = true)

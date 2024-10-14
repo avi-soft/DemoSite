@@ -114,11 +114,10 @@ public class AccountEndPoint {
             String roleName=roleService.findRoleName((Integer) loginDetails.get("role"));
             if(roleName.equals("EMPTY"))
                 return ResponseService.generateErrorResponse("Role not found",HttpStatus.NOT_FOUND);
-            //validating input map
 
             loginDetails=sanitizerService.sanitizeInputMap(loginDetails);//@TODO-Need to sanitize this too
             String mobileNumber = (String) loginDetails.get("mobileNumber");
-            //}
+
             if (mobileNumber != null) {
 
                 int i=0;
@@ -153,6 +152,9 @@ public class AccountEndPoint {
             String roleName=roleService.findRoleName((Integer) loginDetails.get("role"));
             if(roleName.equals("EMPTY"))
                 return ResponseService.generateErrorResponse("Role not found",HttpStatus.NOT_FOUND);
+
+            loginDetails=sanitizerService.sanitizeInputMap(loginDetails);
+
             String mobileNumber = (String) loginDetails.get("mobileNumber");
             String username = (String) loginDetails.get("username");
             if (mobileNumber != null) {
@@ -184,6 +186,8 @@ public class AccountEndPoint {
                 return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
 
             }
+
+            loginDetails=sanitizerService.sanitizeInputMap(loginDetails);
             String mobileNumber = (String) loginDetails.get("mobileNumber");
             /*if(mobileNumber.startsWith("0"))
                 mobileNumber=mobileNumber.substring(1);*/
@@ -261,6 +265,7 @@ public class AccountEndPoint {
             if (loginDetails == null) {
                 return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
             }
+            loginDetails=sanitizerService.sanitizeInputMap(loginDetails);
 
             String username = (String) loginDetails.get("username");
             String password = (String) loginDetails.get("password");
@@ -320,6 +325,7 @@ public class AccountEndPoint {
     private ResponseEntity<?> loginWithUsernameOtp(
             @RequestBody Map<String, Object> loginDetails, HttpSession session) {
         try {
+            loginDetails=sanitizerService.sanitizeInputMap(loginDetails);
 
             if (loginDetails == null) {
                 return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
@@ -375,6 +381,7 @@ public class AccountEndPoint {
     public ResponseEntity<?> loginWithCustomerPassword(@RequestBody Map<String, Object> loginDetails, HttpSession session,
                                                        HttpServletRequest request) {
         try {
+            loginDetails=sanitizerService.sanitizeInputMap(loginDetails);
 
             if (loginDetails == null) {
                 return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
@@ -407,11 +414,7 @@ public class AccountEndPoint {
                         String userAgent = request.getHeader("User-Agent");
 
                         if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
-
-//                          OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(existingToken, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
                             return ResponseEntity.ok(new OtpEndpoint.ApiResponse(existingToken, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in"));
-
-//                            return responseService.generateSuccessResponse("Logged in Successfully",response.getData(),HttpStatus.OK);
 
                         } else {
 
@@ -419,12 +422,7 @@ public class AccountEndPoint {
                             existingCustomer.setToken(token);
                             em.persist(existingCustomer);
                             session.setAttribute(tokenKey, token);
-
                             return ResponseEntity.ok(new OtpEndpoint.ApiResponse(token, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in"));
-
-/*                          OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(token, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
-                            return ResponseEntity.ok(response);*/
-
                         }
 
                     } else {
