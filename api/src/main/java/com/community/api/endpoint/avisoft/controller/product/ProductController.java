@@ -21,6 +21,7 @@ import com.community.api.entity.Qualification;
 import com.community.api.entity.Role;
 import com.community.api.entity.StateCode;
 import com.community.api.services.DistrictService;
+import com.community.api.services.GenderService;
 import com.community.api.services.PhysicalRequirementDtoService;
 import com.community.api.services.ProductGenderPhysicalRequirementService;
 import com.community.api.services.ResponseService;
@@ -106,6 +107,9 @@ public class ProductController extends CatalogEndpoint {
 
     @Autowired
     ProductGenderPhysicalRequirementService productGenderPhysicalRequirementService;
+
+    @Autowired
+    GenderService genderService;
 
     @Autowired
     public ProductController(ExceptionHandlingService exceptionHandlingService, EntityManager entityManager, JwtUtil jwtTokenUtil, ProductService productService, RoleService roleService, JobGroupService jobGroupService, ProductStateService productStateService, ApplicationScopeService applicationScopeService, ProductReserveCategoryBornBeforeAfterRefService productReserveCategoryBornBeforeAfterRefService, ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService, ReserveCategoryService reserveCategoryService, ReserveCategoryDtoService reserveCategoryDtoService, PhysicalRequirementDtoService physicalRequirementDtoService) {
@@ -294,7 +298,9 @@ public class ProductController extends CatalogEndpoint {
             if(addProductDto.getPhysicalRequirement() != null) {
                 productGenderPhysicalRequirementService.savePhysicalRequirement(addProductDto.getPhysicalRequirement(), product);
             }
-
+            if(addProductDto.getGenderSpecific()!=null){
+                customProduct.setGenderSpecific(genderService.getGenderByGenderId(addProductDto.getGenderSpecific()));
+            }
             List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(productId);
             List<PhysicalRequirementDto> physicalRequirementDtoList = physicalRequirementDtoService.getPhysicalRequirementDto(productId);
 
