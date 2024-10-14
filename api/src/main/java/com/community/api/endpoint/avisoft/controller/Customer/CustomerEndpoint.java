@@ -83,6 +83,9 @@ public class CustomerEndpoint {
     private JwtUtil jwtTokenUtil;
 
     @Autowired
+    private ProductReserveCategoryFeePostRefService reserveCategoryFeePostRefService;
+
+    @Autowired
     private RoleService roleService;
 
     @Autowired
@@ -92,7 +95,12 @@ public class CustomerEndpoint {
     private static ResponseService responseService;
 
     @Autowired
+    private FileService fileService;
+
+    @Autowired
     private DocumentStorageService documentStorageService;
+    @Autowired
+    private  ReserveCategoryService reserveCategoryService;
 
     @Autowired
     private CatalogService catalogService;
@@ -395,7 +403,7 @@ public class CustomerEndpoint {
 
     @Transactional
     @RequestMapping(value = "/get-customer-details/{customerId}", method = RequestMethod.GET)
-    public ResponseEntity<?> getUserDetails(@PathVariable Long customerId) {
+    public ResponseEntity<?> getUserDetails(@PathVariable Long customerId,HttpServletRequest request) {
         try {
             CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
             if (customCustomer == null) {
@@ -412,11 +420,15 @@ public class CustomerEndpoint {
 
             for (Document document : customCustomer.getDocuments()) {
                 if (document.getFilePath() != null && document.getDocumentType() != null) {
+
+                    document.setFilePath(fileService.getFileUrl(document.getFilePath(), request));
+
                     filteredDocuments.add(document);
                 }
             }
 
             if (!filteredDocuments.isEmpty()) {
+
                 customerDetails.put("documents", filteredDocuments);
             }
 
@@ -1013,6 +1025,11 @@ public class CustomerEndpoint {
                 return ResponseService.generateErrorResponse(Constant.PRODUCTNOTFOUND,HttpStatus.NOT_FOUND);
             }
             List<CustomProduct>savedForms=customer.getSavedForms();
+            Double fee=reserveCategoryFeePostRefService.getCustomProductReserveCategoryFeePostRefByProductIdAndReserveCategoryId(product.getId(),reserveCategoryService.getCategoryByName(customer.getCategory()).getReserveCategoryId()).getFee();
+            if(fee==null)
+            {
+                return ResponseService.generateErrorResponse("Cannot save form : Fee not specified for your category for this product",HttpStatus.NOT_FOUND);
+            }
             if(savedForms.contains(product))
                 return ResponseService.generateErrorResponse("You can save a form only once",HttpStatus.UNPROCESSABLE_ENTITY);
             savedForms.add(product);
