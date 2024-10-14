@@ -951,6 +951,15 @@ public class ProductService {
                 }
             }
 
+            if(addProductDto.getPostName() != null) {
+                if(!addProductDto.getPostName().trim().isEmpty()) {
+                    addProductDto.setPostName(addProductDto.getPostName().trim());
+                    customProduct.setPostName(addProductDto.getPostName());
+                }else {
+                    throw new IllegalArgumentException("Post name cannot be empty");
+                }
+            }
+
             return true;
         } catch (IllegalArgumentException illegalArgumentException) {
             exceptionHandlingService.handleException(illegalArgumentException);
