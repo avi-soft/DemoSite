@@ -3,6 +3,7 @@ package com.community.api.services;
 import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
 import com.community.api.dto.AddProductDto;
+import com.community.api.dto.CustomProductWrapper;
 import com.community.api.entity.CustomApplicationScope;
 import com.community.api.entity.CustomGender;
 import com.community.api.entity.CustomJobGroup;
@@ -959,6 +960,42 @@ public class ProductService {
                     throw new IllegalArgumentException("Post name cannot be empty");
                 }
             }
+
+            if(addProductDto.getState() != null) {
+                CustomSector customSector = sectorService.getSectorBySectorId(addProductDto.getSector());
+                customProduct.setSector(customSector);
+            }
+
+            if(addProductDto.getStream() != null) {
+                CustomStream customStream = streamService.getStreamByStreamId(addProductDto.getStream());
+                customProduct.setStream(customStream);
+            }
+
+            if(addProductDto.getSubject() != null) {
+                CustomSubject customSubject = subjectService.getSubjectBySubjectId(addProductDto.getSubject());
+                customProduct.setSubject(customSubject);
+            }
+
+            if(addProductDto.getFormComplexity() != null) {
+                if(addProductDto.getFormComplexity() < 0 || addProductDto.getFormComplexity() > 5) {
+                    throw new IllegalArgumentException("Form complexity must lie between 1 and 5");
+                }
+                customProduct.setFormComplexity(addProductDto.getFormComplexity());
+            }
+
+            if(addProductDto.getSelectionCriteria() != null) {
+                if(addProductDto.getSelectionCriteria().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Selection criteria cannot be empty");
+                }
+                customProduct.setSelectionCriteria(addProductDto.getSelectionCriteria());
+            }
+
+            if(addProductDto.getState() != null) {
+                StateCode stateCode = districtService.getStateByStateId(addProductDto.getState());
+                customProduct.setState(stateCode);
+            }
+
+//            if(addProductDto.)
 
             return true;
         } catch (IllegalArgumentException illegalArgumentException) {
