@@ -48,62 +48,7 @@ public class QualificationDetailsService {
             qualificationDetails.setService_provider(serviceProviderEntity);
             serviceProviderEntity.getQualificationDetailsList().add(qualificationDetails);
             entityManager.persist(qualificationDetails);
-
-            TypedQuery<ScoringCriteria> typedQuery=  entityManager.createQuery(Constant.GET_ALL_SCORING_CRITERIA,ScoringCriteria.class);
-            List<ScoringCriteria> scoringCriteriaList = typedQuery.getResultList();
-
-            Integer totalScore=0;
-            ScoringCriteria scoringCriteriaToMap =null;
-            QualificationDetails qualificationDetail= serviceProviderEntity.getQualificationDetailsList().get(serviceProviderEntity.getQualificationDetailsList().size()-1);
-//
-            DocumentType qualification = entityManager.find(DocumentType.class, qualificationDetail.getQualification_id());
-            if (qualification != null) {
-                if (qualification.getDocument_type_name().equalsIgnoreCase("BACHELORS") || qualification.getDocument_type_name().equalsIgnoreCase("MASTERS") || qualification.getDocument_type_name().equalsIgnoreCase("DOCTORATE")) {
-                    scoringCriteriaToMap=serviceProviderService.traverseListOfScoringCriteria(6L,scoringCriteriaList,serviceProviderEntity);
-                    if(scoringCriteriaToMap==null)
-                    {
-                        throw new IllegalArgumentException("Scoring Criteria is not found for scoring Qualification Score");
-                    }
-                    else {
-                        serviceProviderEntity.setQualificationScore(scoringCriteriaToMap.getScore());
-                    }
-                }
-                else if(qualification.getDocument_type_name().equalsIgnoreCase("INTERMEDIATE")) {
-                    scoringCriteriaToMap=serviceProviderService.traverseListOfScoringCriteria(7L,scoringCriteriaList,serviceProviderEntity);
-                    if(scoringCriteriaToMap==null)
-                    {
-                        throw new IllegalArgumentException("Scoring Criteria is not found for scoring Qualification Score");
-                    }
-                    else {
-                        serviceProviderEntity.setQualificationScore(scoringCriteriaToMap.getScore());
-                    }
-                }
-                else if(serviceProviderEntity.getQualificationDetailsList().size()==0) {
-                    serviceProviderEntity.setQualificationScore(0);
-                }
-            }
-            else {
-                throw new IllegalArgumentException("Unknown Qualification is found");
-            }
-
-            if(serviceProviderEntity.getType().equalsIgnoreCase("PROFESSIONAL"))
-            {
-                totalScore=serviceProviderEntity.getBusinessUnitInfraScore()+serviceProviderEntity.getWorkExperienceScore()+serviceProviderEntity.getTechnicalExpertiseScore()+ serviceProviderEntity.getQualificationScore()+ serviceProviderEntity.getStaffScore();
-            }
-            else {
-                totalScore=serviceProviderEntity.getInfraScore()+serviceProviderEntity.getWorkExperienceScore()+serviceProviderEntity.getTechnicalExpertiseScore()+serviceProviderEntity.getQualificationScore()+serviceProviderEntity.getPartTimeOrFullTimeScore();
-            }
-            if(serviceProviderEntity.getWrittenTestScore()!=null)
-            {
-                totalScore=totalScore+serviceProviderEntity.getWrittenTestScore();
-            }
-            if(serviceProviderEntity.getImageUploadScore()!=null)
-            {
-                totalScore=totalScore+serviceProviderEntity.getImageUploadScore();
-            }
-            serviceProviderEntity.setTotalScore(0);
-            serviceProviderEntity.setTotalScore(totalScore);
-            serviceProviderService.assignRank(serviceProviderEntity,totalScore);
+            giveQualificationScore(userId);
             return qualificationDetails;
         }
         CustomCustomer customCustomer = findCustomCustomerById(userId);
@@ -154,6 +99,7 @@ public class QualificationDetailsService {
         }
         qualificationDetails.remove(qualificationDetailsToDelete);
         entityManager.remove(qualificationDetailsToDelete);
+        giveQualificationScore(userId);
         return qualificationDetailsToDelete;
     }
 
@@ -205,6 +151,12 @@ public class QualificationDetailsService {
             List<DocumentType> qualificationDetailsList = qualificationService.getAllQualifications();
             Integer qualificationToAdd = findQualificationId(qualification.getQualification_id(), qualificationDetailsList);
             qualificationDetailsToUpdate.setQualification_id(qualificationToAdd);
+
+            //Qualification scoring
+            if(roleName.equalsIgnoreCase(Constant.SERVICE_PROVIDER))
+            {
+                giveQualificationScore(userId);
+            }
         }
 
         if (Objects.nonNull(qualification.getInstitution_name())) {
@@ -288,5 +240,70 @@ public class QualificationDetailsService {
             }
         }
         throw new ExaminationDoesNotExistsException("Qualification with id " + qualificationId + " does not exist");
+    }
+
+    public void giveQualificationScore(Long userId) throws CustomerDoesNotExistsException {
+        ServiceProviderEntity serviceProviderEntity = findServiceProviderById(userId);
+        TypedQuery<ScoringCriteria> typedQuery=  entityManager.createQuery(Constant.GET_ALL_SCORING_CRITERIA,ScoringCriteria.class);
+        List<ScoringCriteria> scoringCriteriaList = typedQuery.getResultList();
+
+        Integer totalScore=0;
+        ScoringCriteria scoringCriteriaToMap =null;
+        if(!serviceProviderEntity.getQualificationDetailsList().isEmpty())
+        {
+            QualificationDetails qualificationDetail= serviceProviderEntity.getQualificationDetailsList().get(serviceProviderEntity.getQualificationDetailsList().size()-1);
+            DocumentType qualification1 = entityManager.find(DocumentType.class, qualificationDetail.getQualification_id());
+            if (qualification1 != null) {
+                if (qualification1.getDocument_type_name().equalsIgnoreCase("BACHELORS") || qualification1.getDocument_type_name().equalsIgnoreCase("MASTERS") || qualification1.getDocument_type_name().equalsIgnoreCase("DOCTORATE")) {
+                    scoringCriteriaToMap=serviceProviderService.traverseListOfScoringCriteria(6L,scoringCriteriaList,serviceProviderEntity);
+                    if(scoringCriteriaToMap==null)
+                    {
+                        throw new IllegalArgumentException("Scoring Criteria is not found for scoring Qualification Score");
+                    }
+                    else {
+                        serviceProviderEntity.setQualificationScore(scoringCriteriaToMap.getScore());
+                    }
+                }
+                else if(qualification1.getDocument_type_name().equalsIgnoreCase("INTERMEDIATE")) {
+                    scoringCriteriaToMap=serviceProviderService.traverseListOfScoringCriteria(7L,scoringCriteriaList,serviceProviderEntity);
+                    if(scoringCriteriaToMap==null)
+                    {
+                        throw new IllegalArgumentException("Scoring Criteria is not found for scoring Qualification Score");
+                    }
+                    else {
+                        serviceProviderEntity.setQualificationScore(scoringCriteriaToMap.getScore());
+                    }
+                }
+                else if(qualification1.getDocument_type_name().equalsIgnoreCase("MATRICULATION")) {
+                    serviceProviderEntity.setQualificationScore(0);
+                }
+            }
+            else {
+                throw new IllegalArgumentException("Unknown Qualification is found");
+            }
+        }
+        else if(serviceProviderEntity.getQualificationDetailsList().isEmpty()) {
+            serviceProviderEntity.setQualificationScore(0);
+        }
+
+        if(serviceProviderEntity.getType().equalsIgnoreCase("PROFESSIONAL"))
+        {
+            totalScore=serviceProviderEntity.getBusinessUnitInfraScore()+serviceProviderEntity.getWorkExperienceScore()+serviceProviderEntity.getTechnicalExpertiseScore()+ serviceProviderEntity.getQualificationScore()+ serviceProviderEntity.getStaffScore();
+        }
+        else {
+            totalScore=serviceProviderEntity.getInfraScore()+serviceProviderEntity.getWorkExperienceScore()+serviceProviderEntity.getTechnicalExpertiseScore()+serviceProviderEntity.getQualificationScore()+serviceProviderEntity.getPartTimeOrFullTimeScore();
+        }
+        if(serviceProviderEntity.getWrittenTestScore()!=null)
+        {
+            totalScore=totalScore+serviceProviderEntity.getWrittenTestScore();
+        }
+        if(serviceProviderEntity.getImageUploadScore()!=null)
+        {
+            totalScore=totalScore+serviceProviderEntity.getImageUploadScore();
+        }
+        serviceProviderEntity.setTotalScore(0);
+        serviceProviderEntity.setTotalScore(totalScore);
+        serviceProviderService.assignRank(serviceProviderEntity,totalScore);
+        entityManager.merge(serviceProviderEntity);
     }
 }
