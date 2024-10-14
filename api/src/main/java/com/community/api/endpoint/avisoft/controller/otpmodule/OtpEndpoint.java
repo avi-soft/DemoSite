@@ -265,7 +265,7 @@ public class OtpEndpoint {
             Map<String, Object> details = new HashMap<>();
             String maskedNumber = twilioService.genereateMaskednumber(mobileNumber);
             details.put("otp", otp);
-            return responseService.generateSuccessResponse(ApiConstants.OTP_SENT_SUCCESSFULLY + " on " +maskedNumber, details, HttpStatus.OK);
+            return responseService.generateSuccessResponse(ApiConstants.OTP_SENT_SUCCESSFULLY + " on " +maskedNumber, otp, HttpStatus.OK);
 
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
