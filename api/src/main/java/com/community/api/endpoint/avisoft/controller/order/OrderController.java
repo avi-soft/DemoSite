@@ -60,7 +60,6 @@ public class OrderController
     public ResponseEntity<?> getOrderHistory(@PathVariable Long customerId, @RequestParam(defaultValue = "oldest-to-latest") String sort,@RequestParam(defaultValue = "0") int page,@RequestParam(defaultValue = "5") int limit)
     {
         CustomCustomer customCustomer=entityManager.find(CustomCustomer.class,customerId);
-        Map<String,Object> orderMap=new HashMap<>();
         if (customCustomer==null)
             return ResponseService.generateErrorResponse("Customer with the provided Id not found", HttpStatus.NOT_FOUND);
         if(customCustomer.getNumberOfOrders()==0)
@@ -72,6 +71,64 @@ public class OrderController
         query.setMaxResults(limit);
         query.setParameter("orderNumber", orderNumber);
         List<BigInteger> orders = query.getResultList();
+        return generateCombinedDTO(orders,sort);
+    }
+  @RequestMapping(value = "show-all-orders",method = RequestMethod.GET)
+    public ResponseEntity<?> showClubbedOrders( @RequestParam(defaultValue = "all") String orderStatus,
+                                                @RequestParam(defaultValue = "oldest-to-latest")String sort,
+                                                @RequestParam(defaultValue = "0")int page,
+                                               @RequestParam(defaultValue = "5")int limit) {
+          String orderSearchQuery = "SELECT o.order_id FROM blc_order o WHERE o.order_status =:orderStatus";
+          int startPosition = page * limit;
+          List<BigInteger> orderIds=null;
+          Query query = null;
+          if (orderStatus.equals("all")) {
+              query = entityManager.createNativeQuery(Constant.GET_ALL_ORDERS);
+              query.setFirstResult(startPosition);
+              query.setMaxResults(limit);
+              orderIds = query.getResultList();
+          } else {
+              query = entityManager.createNativeQuery(Constant.SEARCH_ORDER_QUERY);
+              query.setFirstResult(startPosition);
+              query.setMaxResults(limit);
+              switch (orderStatus) {
+                  case "completed":
+                      query.setParameter("orderStatus", Constant.ORDER_STATUS_COMPLETED);
+                      break;
+                  case "in-review":
+                      query.setParameter("orderStatus", Constant.ORDER_STATUS_IN_REVIEW);
+                      break;
+                  case "in-progress":
+                      query.setParameter("orderStatus", Constant.ORDER_STATUS_IN_PROGRESS);
+                      break;
+                  case "auto-assigned":
+                      query.setParameter("orderStatus", Constant.ORDER_STATUS_AUTO_ASSIGNED);
+                      break;
+                  case "unassigned":
+                      query.setParameter("orderStatus", Constant.ORDER_STATUS_UNASSIGNED);
+                      break;
+                  case "new":
+                      query.setParameter("orderStatus", Constant.ORDER_STATUS_NEW);
+                      break;
+                  default:
+                      return ResponseService.generateErrorResponse("Wrong search filter", HttpStatus.BAD_REQUEST);
+              }
+          }
+          orderIds = query.getResultList();
+          return generateCombinedDTO(orderIds, sort);
+  }
+    public void sortOrdersByDate(List<CombinedOrderDTO> orders) {
+        Collections.sort(orders, new Comparator<CombinedOrderDTO>() {
+            @Override
+            public int compare(CombinedOrderDTO o1, CombinedOrderDTO o2) {
+                return o2.getOrderDetails().getSubmitDate().compareTo(o1.getOrderDetails().getSubmitDate());
+            }
+        });
+    }
+    public ResponseEntity<?>generateCombinedDTO(List<BigInteger>orders,String sort)
+    {
+        System.out.println("4");
+        Map<String,Object>orderMap=new HashMap<>();
         List<CombinedOrderDTO>orderDetails=new ArrayList<>();
         OrderDTO orderDTO=null;
         for(BigInteger orderId:orders)
@@ -94,7 +151,7 @@ public class OrderController
             CustomProduct customProduct=entityManager.find(CustomProduct.class,productId);
             CustomProductWrapper customProductWrapper=null;
             if(customProduct!=null) {
-                 customProductWrapper = new CustomProductWrapper();
+                customProductWrapper = new CustomProductWrapper();
                 List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(productId);
                 List<PhysicalRequirementDto> physicalRequirementDtoList = physicalRequirementDtoService.getPhysicalRequirementDto(productId);
                 customProductWrapper.wrapDetails(customProduct, reserveCategoryDtoList, physicalRequirementDtoList);
@@ -109,21 +166,7 @@ public class OrderController
         else if(!sort.equals("oldest-to-latest"))
             return ResponseService.generateErrorResponse("Invalid sort option",HttpStatus.BAD_REQUEST);
         orderMap.put("Order List",orderDetails);
-            return ResponseService.generateSuccessResponse("Orders",orderMap,HttpStatus.OK);
-
-    }
-  /*  @RequestMapping(value = "show-clubbed-orders/{customerId}",method = RequestMethod.GET)
-    public ResponseEntity<?> showClubbedOrders(@PathVariable Long customerId, @RequestParam(defaultValue = "oldest-to-latest") String sort)
-    {
-
-    }*/
-    public void sortOrdersByDate(List<CombinedOrderDTO> orders) {
-        Collections.sort(orders, new Comparator<CombinedOrderDTO>() {
-            @Override
-            public int compare(CombinedOrderDTO o1, CombinedOrderDTO o2) {
-                return o2.getOrderDetails().getSubmitDate().compareTo(o1.getOrderDetails().getSubmitDate());
-            }
-        });
+        return ResponseService.generateSuccessResponse("Orders",orderMap,HttpStatus.OK);
     }
 
 }

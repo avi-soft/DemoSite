@@ -210,6 +210,7 @@ public class CartEndPoint extends BaseEndpoint {
             if (cart == null) {
                 cart = orderService.createNewCartForCustomer(customer);
                 cart.setOrderNumber("C-"+customerId);
+              /*  cart.setName("CART-"+customerId);*/
                 }
             Product product = catalogService.findProductById(productId);
             if (product == null) {
@@ -432,8 +433,14 @@ public class CartEndPoint extends BaseEndpoint {
                 return ResponseService.generateErrorResponse("Cart is empty",HttpStatus.NOT_FOUND);
             List<Long>cartItemIds=new ArrayList<>();
             List<String>errors=new ArrayList<>();
-            int batchNumber=customCustomer.getNumberOfOrders();
-            ++batchNumber;
+            int batchNumber=0;
+            if(customCustomer.getNumberOfOrders()==null)
+                batchNumber=1;
+            else
+            {
+                batchNumber=customCustomer.getNumberOfOrders();
+                ++batchNumber;
+            }
             for(OrderItem orderItem : cart.getOrderItems())
             {
                 cartItemIds.add(orderItem.getId());
