@@ -64,9 +64,7 @@ import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import static com.community.api.component.Constant.*;
 
@@ -581,6 +579,49 @@ public class ProductController extends CatalogEndpoint {
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return ResponseService.generateErrorResponse("SOME EXCEPTION OCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @GetMapping("/get-all")
+    public ResponseEntity<?> getAllProducts(
+            @RequestParam(value = "roleId", required = false) Integer roleId,
+            @RequestParam(value = "userId", required = false) Long userId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit) {
+
+        try {
+            List<CustomProduct> products = productService.filterProductsByRoleAndUserId(roleId, userId, page, limit);
+            long totalProducts = productService.countTotalProducts(roleId, userId);
+
+            if (products.isEmpty()) {
+                return ResponseService.generateSuccessResponse("PRODUCT LIST IS EMPTY",products, HttpStatus.OK);
+            }
+
+            List<CustomProductWrapper> responses = new ArrayList<>();
+            for (CustomProduct customProduct : products) {
+                if (customProduct != null && (((Status) customProduct).getArchived() != 'Y')) {
+                    CustomProductWrapper wrapper = new CustomProductWrapper();
+                    wrapper.wrapDetails(customProduct);
+                    responses.add(wrapper);
+                }
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("products", responses);
+            response.put("currentPage", page);
+            response.put("totalItems", totalProducts);
+            response.put("totalPages", (int) Math.ceil((double) totalProducts / limit));
+
+            return ResponseService.generateSuccessResponse("PRODUCTS RETRIEVED SUCCESSFULLY", response, HttpStatus.OK);
+
+        }catch(IllegalArgumentException illegalArgumentException)
+        {
+            return ResponseService.generateErrorResponse(illegalArgumentException.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+        catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return ResponseService.generateErrorResponse("EXCEPTION OCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 

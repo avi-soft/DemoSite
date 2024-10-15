@@ -23,6 +23,7 @@ import org.broadleafcommerce.core.catalog.domain.Category;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -473,6 +474,76 @@ public class ProductService {
         // Execute and return the result
         return query.getResultList();
     }
+
+    public List<CustomProduct> filterProductsByRoleAndUserId(Integer roleId, Long userId, int page, int limit) {
+
+        Role role= entityManager.find(Role.class,roleId);
+        if(role==null)
+        {
+            throw new IllegalArgumentException("No any role exits with id "+ roleId);
+        }
+
+        StringBuilder jpql = new StringBuilder("SELECT DISTINCT p FROM CustomProduct p JOIN p.creatoRole r WHERE 1=1 ");
+
+        Map<String, Object> queryParams = new HashMap<>();
+
+        if (roleId != null) {
+            jpql.append("AND r.role_id = :roleId ");
+            queryParams.put("roleId", roleId);
+        }
+        CustomProduct product1= entityManager.find(CustomProduct.class, roleId.longValue());
+
+        if(product1==null)
+        {
+            throw new IllegalArgumentException("Not any product is created by role with id "+ roleId);
+        }
+
+        if (userId != null) {
+            jpql.append("AND p.userId = :userId ");
+            queryParams.put("userId", userId);
+        }
+
+        CustomProduct product= entityManager.find(CustomProduct.class, userId);
+
+        if(product==null)
+        {
+            throw new IllegalArgumentException("No user with id "+ userId+ " has created any product");
+        }
+
+        TypedQuery<CustomProduct> query = entityManager.createQuery(jpql.toString(), CustomProduct.class);
+
+        queryParams.forEach(query::setParameter);
+
+        int startPosition = page * limit;
+        query.setFirstResult(startPosition);
+        query.setMaxResults(limit);
+
+        return query.getResultList();
+    }
+
+
+    public long countTotalProducts(Integer roleId, Long userId) {
+        StringBuilder countJpql = new StringBuilder("SELECT COUNT(DISTINCT p) FROM CustomProduct p JOIN p.creatoRole r WHERE 1=1 ");
+
+        Map<String, Object> queryParams = new HashMap<>();
+
+        if (roleId != null) {
+            countJpql.append("AND r.role_id = :roleId ");
+            queryParams.put("roleId", roleId);
+        }
+
+        if (userId != null) {
+            countJpql.append("AND p.userId = :userId ");
+            queryParams.put("userId", userId);
+        }
+
+        TypedQuery<Long> countQuery = entityManager.createQuery(countJpql.toString(), Long.class);
+        queryParams.forEach(countQuery::setParameter);
+        return countQuery.getSingleResult();
+    }
+
+
+
 
     public boolean addProductAccessAuthorisation(String authHeader) throws Exception {
         try {
