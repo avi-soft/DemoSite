@@ -107,6 +107,16 @@ public class ProductService {
             StringBuilder values = new StringBuilder("VALUES (:productId, :creatorUserId, :role, :lastModified, :productState, :currentDate");
 
             // Dynamically add columns and values based on non-null fields
+            if(addProductDto.getPostName() != null) {
+                sql.append(", post_name");
+                values.append(", :postName");
+            }
+
+            if(addProductDto.getApplicationScope() != null) {
+                sql.append(", application_scope_id");
+                values.append(", :applicationScope");
+            }
+
             if (addProductDto.getExamDateFrom() != null) {
                 sql.append(", exam_date_from");
                 values.append(", :examDateFrom");
@@ -229,6 +239,14 @@ public class ProductService {
                     .setParameter("currentDate", currentDate);
 
             // Set parameters conditionally
+            if(addProductDto.getPostName() != null) {
+                query.setParameter("postName", addProductDto.getPostName());
+            }
+
+            if(addProductDto.getApplicationScope() != null) {
+                query.setParameter("applicationScope", addProductDto.getApplicationScope());
+            }
+
             if (addProductDto.getExamDateFrom() != null) {
                 query.setParameter("examDateFrom", new Timestamp(addProductDto.getExamDateFrom().getTime()));
             }
@@ -894,7 +912,7 @@ public class ProductService {
                 CustomApplicationScope applicationScope = applicationScopeService.getApplicationScopeById(addProductDto.getApplicationScope());
                 if (applicationScope == null) {
                     throw new IllegalArgumentException("NO APPLICATION SCOPE EXISTS WITH THIS ID");
-                } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE) && customProduct.getCustomApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE)) {
+                } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE) && customProduct.getCustomApplicationScope().getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE)) {
                     if (addProductDto.getState() != null && districtService.getStateByStateId(addProductDto.getState()) != null) {
                         customProduct.setState(districtService.getStateByStateId(addProductDto.getState()));
                         customProduct.setCustomApplicationScope(applicationScope);
@@ -962,6 +980,7 @@ public class ProductService {
             }
 
             if(addProductDto.getState() != null) {
+                System.out.println("HERE");
                 CustomSector customSector = sectorService.getSectorBySectorId(addProductDto.getSector());
                 customProduct.setSector(customSector);
             }
@@ -990,12 +1009,26 @@ public class ProductService {
                 customProduct.setSelectionCriteria(addProductDto.getSelectionCriteria());
             }
 
-            if(addProductDto.getState() != null) {
-                StateCode stateCode = districtService.getStateByStateId(addProductDto.getState());
-                customProduct.setState(stateCode);
+            if(addProductDto.getSector() != null) {
+                CustomSector customSector = sectorService.getSectorBySectorId(addProductDto.getSector());
+                customProduct.setSector(customSector);
             }
 
-//            if(addProductDto.)
+            if(addProductDto.getDownloadNotificationLink() != null) {
+                if(addProductDto.getDownloadNotificationLink().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Download notification link cannot be empty");
+                }
+                addProductDto.setDownloadNotificationLink(addProductDto.getDownloadNotificationLink().trim());
+                customProduct.setDownloadNotificationLink(addProductDto.getDownloadNotificationLink());
+            }
+
+            if(addProductDto.getDownloadSyllabusLink() != null) {
+                if(addProductDto.getDownloadSyllabusLink().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Download syllabus link cannot be empty");
+                }
+                addProductDto.setDownloadSyllabusLink(addProductDto.getDownloadSyllabusLink().trim());
+                customProduct.setDownloadSyllabusLink(addProductDto.getDownloadSyllabusLink());
+            }
 
             return true;
         } catch (IllegalArgumentException illegalArgumentException) {
