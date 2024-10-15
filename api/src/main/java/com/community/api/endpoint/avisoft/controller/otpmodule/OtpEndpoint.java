@@ -69,6 +69,9 @@ public class OtpEndpoint {
     private RoleService roleService;
 
     @Autowired
+    private SanitizerService sanitizerService;
+
+    @Autowired
     private ResponseService responseService;
 
     @Value("${twilio.authToken}")
@@ -125,6 +128,8 @@ public class OtpEndpoint {
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOTP(@RequestBody Map<String, Object> loginDetails, HttpSession session, HttpServletRequest request) {
         try {
+            loginDetails=sanitizerService.sanitizeInputMap(loginDetails);
+
             if (loginDetails == null) {
                 return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
             }
@@ -217,8 +222,10 @@ public class OtpEndpoint {
     @PostMapping("/service-provider-signup")
     public ResponseEntity<?> sendOtpToMobile(@RequestBody Map<String, Object> signupDetails) {
         try {
+            signupDetails=sanitizerService.sanitizeInputMap(signupDetails);
             String mobileNumber = (String) signupDetails.get("mobileNumber");
             String countryCode = (String) signupDetails.get("countryCode");
+
 
             mobileNumber = mobileNumber.startsWith("0") ? mobileNumber.substring(1) : mobileNumber;
             if (customCustomerService.findCustomCustomerByPhone(mobileNumber, countryCode) != null) {
@@ -258,7 +265,7 @@ public class OtpEndpoint {
             Map<String, Object> details = new HashMap<>();
             String maskedNumber = twilioService.genereateMaskednumber(mobileNumber);
             details.put("otp", otp);
-            return responseService.generateSuccessResponse(ApiConstants.OTP_SENT_SUCCESSFULLY + " on " +maskedNumber, details, HttpStatus.OK);
+            return responseService.generateSuccessResponse(ApiConstants.OTP_SENT_SUCCESSFULLY + " on " +maskedNumber, otp, HttpStatus.OK);
 
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {

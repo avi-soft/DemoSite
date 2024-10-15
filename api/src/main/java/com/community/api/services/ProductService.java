@@ -3,6 +3,7 @@ package com.community.api.services;
 import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
 import com.community.api.dto.AddProductDto;
+import com.community.api.dto.CustomProductWrapper;
 import com.community.api.entity.CustomApplicationScope;
 import com.community.api.entity.CustomGender;
 import com.community.api.entity.CustomJobGroup;
@@ -106,6 +107,16 @@ public class ProductService {
             StringBuilder values = new StringBuilder("VALUES (:productId, :creatorUserId, :role, :lastModified, :productState, :currentDate");
 
             // Dynamically add columns and values based on non-null fields
+            if(addProductDto.getPostName() != null) {
+                sql.append(", post_name");
+                values.append(", :postName");
+            }
+
+            if(addProductDto.getApplicationScope() != null) {
+                sql.append(", application_scope_id");
+                values.append(", :applicationScope");
+            }
+
             if (addProductDto.getExamDateFrom() != null) {
                 sql.append(", exam_date_from");
                 values.append(", :examDateFrom");
@@ -228,6 +239,14 @@ public class ProductService {
                     .setParameter("currentDate", currentDate);
 
             // Set parameters conditionally
+            if(addProductDto.getPostName() != null) {
+                query.setParameter("postName", addProductDto.getPostName());
+            }
+
+            if(addProductDto.getApplicationScope() != null) {
+                query.setParameter("applicationScope", addProductDto.getApplicationScope());
+            }
+
             if (addProductDto.getExamDateFrom() != null) {
                 query.setParameter("examDateFrom", new Timestamp(addProductDto.getExamDateFrom().getTime()));
             }
@@ -893,7 +912,7 @@ public class ProductService {
                 CustomApplicationScope applicationScope = applicationScopeService.getApplicationScopeById(addProductDto.getApplicationScope());
                 if (applicationScope == null) {
                     throw new IllegalArgumentException("NO APPLICATION SCOPE EXISTS WITH THIS ID");
-                } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE) && customProduct.getCustomApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE)) {
+                } else if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE) && customProduct.getCustomApplicationScope().getApplicationScope().equals(Constant.APPLICATION_SCOPE_STATE)) {
                     if (addProductDto.getState() != null && districtService.getStateByStateId(addProductDto.getState()) != null) {
                         customProduct.setState(districtService.getStateByStateId(addProductDto.getState()));
                         customProduct.setCustomApplicationScope(applicationScope);
@@ -949,6 +968,66 @@ public class ProductService {
                 }else {
                     throw new IllegalArgumentException("Notifying authority cannot be empty");
                 }
+            }
+
+            if(addProductDto.getPostName() != null) {
+                if(!addProductDto.getPostName().trim().isEmpty()) {
+                    addProductDto.setPostName(addProductDto.getPostName().trim());
+                    customProduct.setPostName(addProductDto.getPostName());
+                }else {
+                    throw new IllegalArgumentException("Post name cannot be empty");
+                }
+            }
+
+            if(addProductDto.getState() != null) {
+                System.out.println("HERE");
+                CustomSector customSector = sectorService.getSectorBySectorId(addProductDto.getSector());
+                customProduct.setSector(customSector);
+            }
+
+            if(addProductDto.getStream() != null) {
+                CustomStream customStream = streamService.getStreamByStreamId(addProductDto.getStream());
+                customProduct.setStream(customStream);
+            }
+
+            if(addProductDto.getSubject() != null) {
+                CustomSubject customSubject = subjectService.getSubjectBySubjectId(addProductDto.getSubject());
+                customProduct.setSubject(customSubject);
+            }
+
+            if(addProductDto.getFormComplexity() != null) {
+                if(addProductDto.getFormComplexity() < 0 || addProductDto.getFormComplexity() > 5) {
+                    throw new IllegalArgumentException("Form complexity must lie between 1 and 5");
+                }
+                customProduct.setFormComplexity(addProductDto.getFormComplexity());
+            }
+
+            if(addProductDto.getSelectionCriteria() != null) {
+                if(addProductDto.getSelectionCriteria().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Selection criteria cannot be empty");
+                }
+                customProduct.setSelectionCriteria(addProductDto.getSelectionCriteria());
+            }
+
+            if(addProductDto.getSector() != null) {
+                CustomSector customSector = sectorService.getSectorBySectorId(addProductDto.getSector());
+                customProduct.setSector(customSector);
+            }
+
+            if(addProductDto.getDownloadNotificationLink() != null) {
+                if(addProductDto.getDownloadNotificationLink().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Download notification link cannot be empty");
+                }
+                addProductDto.setDownloadNotificationLink(addProductDto.getDownloadNotificationLink().trim());
+                customProduct.setDownloadNotificationLink(addProductDto.getDownloadNotificationLink());
+            }
+
+            if(addProductDto.getDownloadSyllabusLink() != null) {
+                if(addProductDto.getDownloadSyllabusLink().trim().isEmpty()) {
+                    throw new IllegalArgumentException("Download syllabus link cannot be empty");
+                }
+                addProductDto.setDownloadSyllabusLink(addProductDto.getDownloadSyllabusLink().trim());
+                customProduct.setDownloadSyllabusLink(addProductDto.getDownloadSyllabusLink());
             }
 
             return true;
@@ -1844,7 +1923,7 @@ public class ProductService {
         }
     }
 
-    public boolean validatePhysicalRequirement(AddProductDto addProductDto) throws Exception {
+    public boolean validatePhysicalRequirement(AddProductDto addProductDto, CustomProduct customProduct) throws Exception {
         try {
             CustomGender gender = null;
             if (addProductDto.getGenderSpecific() != null) {
@@ -1867,6 +1946,8 @@ public class ProductService {
                         throw new IllegalArgumentException("GENDER NOT FOUND WITH ID: " + addProductDto.getPhysicalRequirement().get(physicalAttributeIndex).getGenderId());
                     }
                     if (addProductDto.getGenderSpecific() != null && customGender != gender) {
+                        throw new IllegalArgumentException("Gender id is not matched with the specific gender.");
+                    } else if (customProduct != null && customProduct.getGenderSpecific() != null && addProductDto.getGenderSpecific() == null && customGender != customProduct.getGenderSpecific()) {
                         throw new IllegalArgumentException("Gender id is not matched with the specific gender.");
                     }
 

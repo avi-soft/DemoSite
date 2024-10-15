@@ -104,6 +104,9 @@ public class CustomerEndpoint {
     private  ReserveCategoryService reserveCategoryService;
 
     @Autowired
+    private  SanitizerService sanitizerService;
+
+    @Autowired
     private CatalogService catalogService;
 
     @PersistenceContext
@@ -179,6 +182,9 @@ public class CustomerEndpoint {
     public ResponseEntity<?> updateCustomer(@RequestBody Map<String, Object> details, @RequestParam Long customerId) {
         try {
             List<String> errorMessages = new ArrayList<>();
+
+            details=sanitizerService.sanitizeInputMap(details);
+
             /*Iterator<String> iterator = details.keySet().iterator();
             while (iterator.hasNext()) {
                 String key = iterator.next();
@@ -374,6 +380,8 @@ public class CustomerEndpoint {
     public List<String> validateHidePhoneNumber(Map<String,Object>details,CustomCustomer customer)
     {
         List<String>errorMessages=new ArrayList<>();
+        details=sanitizerService.sanitizeInputMap(details);
+
         if(((Boolean)details.get("hidePhoneNumber")).equals(true))
         {
             System.out.println("no");
@@ -412,6 +420,7 @@ public class CustomerEndpoint {
             }
             CustomerImpl customer = em.find(CustomerImpl.class, customerId);  // Assuming you retrieve the base Customer entity
             Map<String, Object> customerDetails = sharedUtilityService.breakReferenceForCustomer(customer);
+
             // Fetch qualification details and replace qualification_id with qualification_name
             List<QualificationDetails> qualificationDetails= customCustomer.getQualificationDetailsList();
             List<Map<String, Object>> qualificationsWithNames = sharedUtilityService.mapQualifications(qualificationDetails);
@@ -432,6 +441,7 @@ public class CustomerEndpoint {
 
                 customerDetails.put("documents", filteredDocuments);
             }
+
 
 
             return responseService.generateSuccessResponse("User details retrieved successfully", customerDetails, HttpStatus.OK);
@@ -750,6 +760,9 @@ public class CustomerEndpoint {
     @RequestMapping(value = "update-username", method = RequestMethod.POST)
     public ResponseEntity<?> updateCustomerUsername(@RequestBody Map<String, Object> updates, @RequestParam Long customerId) {
         try {
+
+            updates=sanitizerService.sanitizeInputMap(updates);
+
             if (customerService == null) {
                 return ResponseService.generateErrorResponse("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
 
@@ -795,6 +808,8 @@ public class CustomerEndpoint {
                 return ResponseService.generateErrorResponse("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
 
             }
+            details=sanitizerService.sanitizeInputMap(details);
+
             String password = (String) details.get("password");
             Customer customer = customerService.readCustomerById(customerId);
             if (customer == null) {

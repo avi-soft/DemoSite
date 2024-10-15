@@ -152,7 +152,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.active = product.isActive();
         this.quantity = product.getDefaultSku().getQuantityAvailable();
         this.activeGoLiveDate = addProductDto.getGoLiveDate();
-//        this.categoryName = product.getDefaultCategory().getName();
+        this.categoryName = product.getDefaultCategory().getName();
         this.priorityLevel = addProductDto.getPriorityLevel();
         this.archived = 'N';
         this.createdDate = currentDate;

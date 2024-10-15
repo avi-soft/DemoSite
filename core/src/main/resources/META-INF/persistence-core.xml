@@ -101,6 +101,7 @@
         <class>com.community.api.utils.ServiceProviderDocument</class>
         <class>com.community.api.entity.ServiceProviderTestStatus</class>
         <class>com.community.api.entity.ServiceProviderRank</class>
+        <class>com.community.api.entity.ScoringCriteria</class>
         <exclude-unlisted-classes/>
     </persistence-unit>
 
