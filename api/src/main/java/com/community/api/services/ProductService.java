@@ -476,38 +476,41 @@ public class ProductService {
     }
 
     public List<CustomProduct> filterProductsByRoleAndUserId(Integer roleId, Long userId, int page, int limit) {
-
-        Role role= entityManager.find(Role.class,roleId);
-        if(role==null)
-        {
-            throw new IllegalArgumentException("No any role exits with id "+ roleId);
-        }
-
         StringBuilder jpql = new StringBuilder("SELECT DISTINCT p FROM CustomProduct p JOIN p.creatoRole r WHERE 1=1 ");
 
         Map<String, Object> queryParams = new HashMap<>();
 
         if (roleId != null) {
+            Role role= entityManager.find(Role.class,roleId);
+            if(role==null)
+            {
+                throw new IllegalArgumentException("No any role exits with id "+ roleId);
+            }
+
+            // Check if any product exists with the given role
+            String roleCheckQuery = "SELECT COUNT(p) FROM CustomProduct p WHERE p.creatoRole.role_id = :roleId";
+            Long roleProductCount = entityManager.createQuery(roleCheckQuery, Long.class)
+                    .setParameter("roleId", roleId)
+                    .getSingleResult();
+
+            if (roleProductCount == 0) {
+                throw new IllegalArgumentException("No product is created by role with id " + roleId);
+            }
             jpql.append("AND r.role_id = :roleId ");
             queryParams.put("roleId", roleId);
         }
-        CustomProduct product1= entityManager.find(CustomProduct.class, roleId.longValue());
-
-        if(product1==null)
-        {
-            throw new IllegalArgumentException("Not any product is created by role with id "+ roleId);
-        }
 
         if (userId != null) {
+            String userCheckQuery = "SELECT COUNT(p) FROM CustomProduct p WHERE p.userId = :userId";
+            Long userProductCount = entityManager.createQuery(userCheckQuery, Long.class)
+                    .setParameter("userId", userId)
+                    .getSingleResult();
+
+            if (userProductCount == 0) {
+                throw new IllegalArgumentException("No user with id " + userId + " has created any product");
+            }
             jpql.append("AND p.userId = :userId ");
             queryParams.put("userId", userId);
-        }
-
-        CustomProduct product= entityManager.find(CustomProduct.class, userId);
-
-        if(product==null)
-        {
-            throw new IllegalArgumentException("No user with id "+ userId+ " has created any product");
         }
 
         TypedQuery<CustomProduct> query = entityManager.createQuery(jpql.toString(), CustomProduct.class);
