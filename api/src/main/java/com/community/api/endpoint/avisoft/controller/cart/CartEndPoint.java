@@ -428,7 +428,8 @@ public class CartEndPoint extends BaseEndpoint {
             }
             if(orderItemIds.isEmpty())
                 return ResponseService.generateErrorResponse("No items Selected",HttpStatus.BAD_REQUEST);
-            for (Long orderItemId:orderItemIds)
+
+                for (Long orderItemId:orderItemIds)
             {
                 if(!cartItemIds.contains(orderItemId))
                 {

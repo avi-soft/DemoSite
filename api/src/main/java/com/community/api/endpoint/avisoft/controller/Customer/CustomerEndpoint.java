@@ -808,33 +808,29 @@ public class CustomerEndpoint {
                 return ResponseService.generateErrorResponse("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
 
             }
-            details=sanitizerService.sanitizeInputMap(details);
+            //details=sanitizerService.sanitizeInputMap(details);
 
             String password = (String) details.get("password");
             Customer customer = customerService.readCustomerById(customerId);
             if (customer == null) {
                 return ResponseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
             }
-            if (password != null) {
+            if (password != null && !(password.isEmpty())) {
                 if (customer.getPassword() == null || customer.getPassword().isEmpty()) {
                     customer.setPassword(passwordEncoder.encode(password));
                     em.merge(customer);
                     return ResponseService.generateSuccessResponse("Password Created", sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK);
                 }
                 if (!passwordEncoder.matches(password, customer.getPassword())) {
-            /*if (customerDTO.getPassword() != null && customerDTO.getOldPassword() != null) {
-                if (passwordEncoder.matches(customerDTO.getOldPassword(), customer.getPassword())) {
-                    if (!customerDTO.getPassword().equals(customerDTO.getOldPassword())) {*/
+
                     customer.setPassword(passwordEncoder.encode(password));
                     em.merge(customer);
                     return ResponseService.generateSuccessResponse("Password Updated", sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK);
-                    /*} else
-                        return new ResponseEntity<>("Old password and new password can not be same!", HttpStatus.BAD_REQUEST);
-                } else
-                    return new ResponseEntity<>("The old password you provided is incorrect. Please try again with the correct old password", HttpStatus.BAD_REQUEST);
-            }*/
                 }
-                return ResponseService.generateErrorResponse("Old Password and new Password cannot be same", HttpStatus.BAD_REQUEST);
+                else
+                {
+                    return ResponseService.generateErrorResponse("Old Password and new Password cannot be same", HttpStatus.BAD_REQUEST);
+                }
             } else {
                 return ResponseService.generateErrorResponse("Empty Password", HttpStatus.BAD_REQUEST);
             }
