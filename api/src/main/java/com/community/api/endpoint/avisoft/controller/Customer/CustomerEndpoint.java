@@ -298,7 +298,6 @@ public class CustomerEndpoint {
                 for (CustomerAddress customerAddress : customCustomer.getCustomerAddresses()) {
 
                     if (customerAddress.getAddressName().equals("PERMANENT_ADDRESS")) {
-                        System.out.println("1");
                         customerAddress.getAddress().setAddressLine1((String) details.get("permanentAddress"));
                         customerAddress.getAddress().setStateProvinceRegion(districtService.findStateById(Integer.parseInt(state)));
                         customerAddress.getAddress().setCounty(districtService.findDistrictById(Integer.parseInt(district)));
@@ -384,7 +383,7 @@ public class CustomerEndpoint {
 
         if(((Boolean)details.get("hidePhoneNumber")).equals(true))
         {
-            System.out.println("no");
+
             if(details.containsKey("secondaryMobileNumber")&&((String)details.get("secondaryMobileNumber")).isEmpty())
             {
                 errorMessages.add("Need to provide Secondary Mobile Number when hiding primary Mobile Number");
@@ -1043,7 +1042,7 @@ public class CustomerEndpoint {
                 return ResponseService.generateErrorResponse("Cannot save form : Fee not specified for your category for this product",HttpStatus.NOT_FOUND);
             }
             if ((((Status) product).getArchived() == 'Y' || !product.getDefaultSku().getActiveEndDate().after(new Date()))) {
-                return ResponseService.generateErrorResponse("Cannot save an archieved product",HttpStatus.BAD_REQUEST);
+                return ResponseService.generateErrorResponse("Cannot save an archived product",HttpStatus.BAD_REQUEST);
             }
             if(savedForms.contains(product))
                 return ResponseService.generateErrorResponse("You can save a form only once",HttpStatus.UNPROCESSABLE_ENTITY);

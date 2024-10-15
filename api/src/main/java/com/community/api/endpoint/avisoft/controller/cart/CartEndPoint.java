@@ -11,19 +11,17 @@ import com.community.api.services.ResponseService;
 import com.community.api.services.SharedUtilityService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import io.swagger.models.auth.In;
 import org.broadleafcommerce.common.money.Money;
 import org.broadleafcommerce.common.persistence.Status;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
-import org.broadleafcommerce.core.order.domain.*;
+import org.broadleafcommerce.core.order.domain.Order;
+import org.broadleafcommerce.core.order.domain.OrderItem;
 import org.broadleafcommerce.core.order.service.OrderItemService;
 import org.broadleafcommerce.core.order.service.OrderService;
 import org.broadleafcommerce.core.order.service.call.OrderItemRequest;
 import org.broadleafcommerce.core.order.service.type.OrderStatus;
 import org.broadleafcommerce.profile.core.domain.Customer;
-import org.broadleafcommerce.profile.core.domain.CustomerAttribute;
-import org.broadleafcommerce.profile.core.domain.CustomerAttributeImpl;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -47,9 +45,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
-
-import static com.community.api.services.ServiceProvider.ServiceProviderServiceImpl.getIntegerList;
 import static com.community.api.services.ServiceProvider.ServiceProviderServiceImpl.getLongList;
 
 @RestController
@@ -133,7 +128,7 @@ public class CartEndPoint extends BaseEndpoint {
         try {
             Long id = Long.valueOf(customerId);
             if (isAnyServiceNull()) {
-                return ResponseService.generateErrorResponse("One or more Serivces not initialized", HttpStatus.INTERNAL_SERVER_ERROR);
+                return ResponseService.generateErrorResponse("One or more Services not initialized", HttpStatus.INTERNAL_SERVER_ERROR);
             }
             if(id==null)
                 return ResponseService.generateErrorResponse("Customer Id not specified",HttpStatus.BAD_REQUEST);
@@ -223,7 +218,7 @@ public class CartEndPoint extends BaseEndpoint {
 
             }*/
             if ((((Status) customProduct).getArchived() == 'Y' || !customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
-                return ResponseService.generateErrorResponse("Cannot add an archieved product",HttpStatus.BAD_REQUEST);
+                return ResponseService.generateErrorResponse("Cannot add an archived product",HttpStatus.BAD_REQUEST);
             }
             OrderItemRequest orderItemRequest = new OrderItemRequest();
             orderItemRequest.setProduct(product);
@@ -536,9 +531,7 @@ public class CartEndPoint extends BaseEndpoint {
 
     public Product findProductFromItemAttribute(OrderItem orderItem) {
         Long productId = Long.parseLong(orderItem.getOrderItemAttributes().get("productId").getValue());
-        System.out.println(productId);
         Product product = catalogService.findProductById(productId);
-        System.out.println(product.getName());
         return product;
     }
     public class OrderRequest {
