@@ -54,7 +54,8 @@ public class PrivilegesController {
     @RequestMapping(value = "create-privilege", method = RequestMethod.POST)
     public ResponseEntity<?> createPrivilege(@RequestBody Privileges privilege) {
         try {
-           return privilegeService.createPrivilege(privilege);
+
+            return privilegeService.createPrivilege(privilege);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Error removing ", HttpStatus.INTERNAL_SERVER_ERROR);

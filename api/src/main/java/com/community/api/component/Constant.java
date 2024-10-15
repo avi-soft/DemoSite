@@ -12,6 +12,7 @@ public class Constant {
     public static final String FIND_ALL_SERVICE_PROVIDER_TEST_RANK_QUERY= "SELECT q FROM ServiceProviderRank q";
     public static final String GET_ALL_RANDOM_IMAGES="SELECT q FROM Image q";
     public static final String GET_ALL_RANDOM_TYPING_TEXT="SELECT q FROM TypingText q";
+    public static final String GET_ALL_SCORING_CRITERIA="SELECT q FROM ScoringCriteria q";
     public static String PHONE_QUERY_SERVICE_PROVIDER = "SELECT c FROM ServiceProviderEntity c WHERE c.mobileNumber = :mobileNumber AND c.country_code = :country_code";
     public static String USERNAME_QUERY_SERVICE_PROVIDER = "SELECT c FROM ServiceProviderEntity c WHERE c.user_name = :username";
     public static final String ADMIN = "ADMIN";
@@ -125,9 +126,9 @@ public class Constant {
     public static final Double MIN_WAIST_SIZE = 10d;
     public static final Double MAX_CHEST_SIZE = 125d;
     public static final Double MIN_CHEST_SIZE = 20d;
-
+    public static final String GET_RESERVE_CATEGORY_BY_ID= "SELECT r FROM CustomReserveCategory r WHERE r.reserveCategoryName = :name";
     public static final String GET_PRODUCT_GENDER_PHYSICAL_REQUIREMENT = "SELECT c FROM CustomProductGenderPhysicalRequirementRef c WHERE c.customProduct = :customProduct";
-
+    public static final String GET_RESERVE_CATEGORY_FEE= "SELECT p.fee FROM custom_product_reserve_category_fee_post_reference p WHERE p.product_id = :pid AND p.reserve_category_id = :reserveCategoryId";
     public static final String GET_ALL_SUBJECT = "SELECT c FROM CustomSubject c";
     public static final String GET_ALL_STREAM = "SELECT c FROM CustomStream c";
     public static final String GET_SUBJECT_BY_SUBJECT_ID = "SELECT c FROM CustomSubject c WHERE c.subjectId = :subjectId";

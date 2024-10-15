@@ -114,11 +114,9 @@ public class AccountEndPoint {
             String roleName=roleService.findRoleName((Integer) loginDetails.get("role"));
             if(roleName.equals("EMPTY"))
                 return ResponseService.generateErrorResponse("Role not found",HttpStatus.NOT_FOUND);
-            //validating input map
 
-            loginDetails=sanitizerService.sanitizeInputMap(loginDetails);//@TODO-Need to sanitize this too
             String mobileNumber = (String) loginDetails.get("mobileNumber");
-            //}
+
             if (mobileNumber != null) {
 
                 int i=0;
@@ -127,7 +125,6 @@ public class AccountEndPoint {
                     if(mobileNumber.charAt(i)!='0')
                         break;
                 }
-                //if(mobileNumber.startsWith("0")) {
                 mobileNumber = mobileNumber.substring(i);
                 loginDetails.put("mobileNumber", mobileNumber);
                 if (customCustomerService.isValidMobileNumber(mobileNumber) && isNumeric(mobileNumber)) {
@@ -153,6 +150,7 @@ public class AccountEndPoint {
             String roleName=roleService.findRoleName((Integer) loginDetails.get("role"));
             if(roleName.equals("EMPTY"))
                 return ResponseService.generateErrorResponse("Role not found",HttpStatus.NOT_FOUND);
+
             String mobileNumber = (String) loginDetails.get("mobileNumber");
             String username = (String) loginDetails.get("username");
             if (mobileNumber != null) {
@@ -184,9 +182,8 @@ public class AccountEndPoint {
                 return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
 
             }
+
             String mobileNumber = (String) loginDetails.get("mobileNumber");
-            /*if(mobileNumber.startsWith("0"))
-                mobileNumber=mobileNumber.substring(1);*/
             String countryCode = (String) loginDetails.get("countryCode");
             Integer role = (Integer) loginDetails.get("role");
             if (mobileNumber == null) {
@@ -219,6 +216,8 @@ public class AccountEndPoint {
                     ResponseEntity<Map<String, Object>> otpResponse = twilioService.sendOtpToMobile(updated_mobile, countryCode);
 
                     Map<String, Object> responseBody = otpResponse.getBody();
+
+
 
                     if (responseBody.get("otp")!=null) {
                         return responseService.generateSuccessResponse((String) responseBody.get("message"), (String) responseBody.get("otp"), HttpStatus.OK);
@@ -320,7 +319,6 @@ public class AccountEndPoint {
     private ResponseEntity<?> loginWithUsernameOtp(
             @RequestBody Map<String, Object> loginDetails, HttpSession session) {
         try {
-
             if (loginDetails == null) {
                 return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
 
@@ -405,22 +403,17 @@ public class AccountEndPoint {
                         String existingToken = existingCustomer.getToken();
                         String ipAddress = request.getRemoteAddr();
                         String userAgent = request.getHeader("User-Agent");
-                        if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
 
-//                          OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(existingToken, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
+                        if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
                             return ResponseEntity.ok(new OtpEndpoint.ApiResponse(existingToken, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in"));
 
-//                            return responseService.generateSuccessResponse("Logged in Successfully",response.getData(),HttpStatus.OK);
                         } else {
 
                             String token = jwtUtil.generateToken(existingCustomer.getId(), role, ipAddress, userAgent);
                             existingCustomer.setToken(token);
                             em.persist(existingCustomer);
                             session.setAttribute(tokenKey, token);
-                         /* OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(token, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in");
-                            return ResponseEntity.ok(response.getData());*/
                             return ResponseEntity.ok(new OtpEndpoint.ApiResponse(token, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been logged in"));
-
                         }
 
                     } else {

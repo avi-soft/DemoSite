@@ -1660,7 +1660,7 @@ public class ProductService {
                     for (Privileges privilege : privileges) {
                         if ((privilege.getPrivilege_name().equals(Constant.PRIVILEGE_APPROVE_PRODUCT) && customProductState.getProductState().equals(Constant.PRODUCT_STATE_APPROVED))) {
                             customProduct.setProductState(customProductState);
-                            break;
+                            return true;
                         } else if ((privilege.getPrivilege_name().equals(Constant.PRIVILEGE_REJECT_PRODUCT) && customProductState.getProductState().equals(Constant.PRODUCT_STATE_REJECTED))) {
 
                             if (addProductDto.getRejectionStatus() == null) {
@@ -1672,9 +1672,10 @@ public class ProductService {
                             }
                             customProduct.setProductState(customProductState);
                             customProduct.setRejectionStatus(productRejectionStatus);
-                            break;
+                            return true;
                         }
                     }
+                    throw new IllegalArgumentException("Not have privilege to perform action.");
                 } else if (role.equals(Constant.ADMIN) || role.equals(Constant.SUPER_ADMIN)) {
                     customProduct.setProductState(customProductState);
                     if (addProductDto.getRejectionStatus() == null) {
@@ -1685,8 +1686,10 @@ public class ProductService {
                         throw new IllegalArgumentException("NO PRODUCT REJECTION STATUS IS FOUND");
                     }
                     customProduct.setRejectionStatus(productRejectionStatus);
+
+                    return true;
                 } else {
-                    throw new IllegalArgumentException("SOME ERRORS HAVE BEEN FOUND");
+                    throw new IllegalArgumentException("Role not Service provider and admin or super admin");
                 }
             }
             return true;

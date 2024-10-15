@@ -6,6 +6,7 @@ import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.AddressDTO;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.CustomCustomer;
+import com.community.api.entity.CustomerReferrer;
 import com.community.api.entity.Qualification;
 import com.community.api.entity.CustomProduct;
 import com.community.api.entity.QualificationDetails;
@@ -46,6 +47,7 @@ import javax.validation.constraints.Size;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.security.Key;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -91,6 +93,9 @@ public class CustomerEndpoint {
 
     @Autowired
     private DocumentStorageService documentStorageService;
+
+    @Autowired
+    private  SanitizerService sanitizerService;
 
     @Autowired
     private CatalogService catalogService;
@@ -168,6 +173,9 @@ public class CustomerEndpoint {
     public ResponseEntity<?> updateCustomer(@RequestBody Map<String, Object> details, @RequestParam Long customerId) {
         try {
             List<String> errorMessages = new ArrayList<>();
+
+            details=sanitizerService.sanitizeInputMap(details);
+
             /*Iterator<String> iterator = details.keySet().iterator();
             while (iterator.hasNext()) {
                 String key = iterator.next();
@@ -363,6 +371,8 @@ public class CustomerEndpoint {
     public List<String> validateHidePhoneNumber(Map<String,Object>details,CustomCustomer customer)
     {
         List<String>errorMessages=new ArrayList<>();
+        details=sanitizerService.sanitizeInputMap(details);
+
         if(((Boolean)details.get("hidePhoneNumber")).equals(true))
         {
             System.out.println("no");
@@ -401,23 +411,6 @@ public class CustomerEndpoint {
             }
             CustomerImpl customer = em.find(CustomerImpl.class, customerId);  // Assuming you retrieve the base Customer entity
             Map<String, Object> customerDetails = sharedUtilityService.breakReferenceForCustomer(customer);
-            // Fetch qualification details and replace qualification_id with qualification_name
-            List<QualificationDetails> qualificationDetails= customCustomer.getQualificationDetailsList();
-            List<Map<String, Object>> qualificationsWithNames = sharedUtilityService.mapQualifications(qualificationDetails);
-            customerDetails.put("qualificationDetails", qualificationsWithNames);
-
-            List<Document> filteredDocuments = new ArrayList<>();
-
-            for (Document document : customCustomer.getDocuments()) {
-                if (document.getFilePath() != null && document.getDocumentType() != null) {
-                    filteredDocuments.add(document);
-                }
-            }
-
-            if (!filteredDocuments.isEmpty()) {
-                customerDetails.put("documents", filteredDocuments);
-            }
-
 
             return responseService.generateSuccessResponse("User details retrieved successfully", customerDetails, HttpStatus.OK);
 
@@ -735,6 +728,9 @@ public class CustomerEndpoint {
     @RequestMapping(value = "update-username", method = RequestMethod.POST)
     public ResponseEntity<?> updateCustomerUsername(@RequestBody Map<String, Object> updates, @RequestParam Long customerId) {
         try {
+
+            updates=sanitizerService.sanitizeInputMap(updates);
+
             if (customerService == null) {
                 return ResponseService.generateErrorResponse("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
 
@@ -780,6 +776,8 @@ public class CustomerEndpoint {
                 return ResponseService.generateErrorResponse("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
 
             }
+            details=sanitizerService.sanitizeInputMap(details);
+
             String password = (String) details.get("password");
             Customer customer = customerService.readCustomerById(customerId);
             if (customer == null) {
@@ -1017,7 +1015,7 @@ public class CustomerEndpoint {
             customer.setSavedForms(savedForms);
             entityManager.merge(customer);
             Map<String,Object>responseBody=new HashMap<>();
-            Map<String,Object>formBody=sharedUtilityService.createProductResponseMap(product,null);
+            Map<String,Object>formBody=sharedUtilityService.createProductResponseMap(product,null,customer);
             return ResponseService.generateSuccessResponse("Form Saved",formBody,HttpStatus.OK);
         }
         catch (NumberFormatException e) {
@@ -1049,7 +1047,7 @@ public class CustomerEndpoint {
             customer.setSavedForms(savedForms);
             entityManager.merge(customer);
             Map<String,Object>responseBody=new HashMap<>();
-            Map<String,Object>formBody=sharedUtilityService.createProductResponseMap(product,null);
+            Map<String,Object>formBody=sharedUtilityService.createProductResponseMap(product,null,customer);
             return ResponseService.generateSuccessResponse("Form Removed",formBody,HttpStatus.OK);
         }catch (NumberFormatException e) {
             return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
@@ -1067,7 +1065,7 @@ public class CustomerEndpoint {
                 ResponseService.generateErrorResponse("Saved form list is empty", HttpStatus.NOT_FOUND);
             List<Map<String, Object>> listOfSavedProducts = new ArrayList<>();
             for (Product product : customer.getSavedForms()) {
-                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product, null));
+                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product, null,customer));
             }
             return ResponseService.generateSuccessResponse("Forms saved : ", listOfSavedProducts, HttpStatus.OK);
         }catch (NumberFormatException e) {
@@ -1088,7 +1086,7 @@ public class CustomerEndpoint {
                 ResponseService.generateErrorResponse("Saved form list is empty", HttpStatus.NOT_FOUND);
             List<Map<String, Object>> listOfSavedProducts = new ArrayList<>();
             for (Product product : customer.getSavedForms()) {
-                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product, null));
+                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product, null,customer));
             }
             return ResponseService.generateSuccessResponse("Forms saved : ", listOfSavedProducts, HttpStatus.OK);
         }catch (NumberFormatException e) {
@@ -1110,7 +1108,7 @@ public class CustomerEndpoint {
                 ResponseService.generateErrorResponse("Saved form list is empty", HttpStatus.NOT_FOUND);
             List<Map<String, Object>> listOfSavedProducts = new ArrayList<>();
             for (Product product : customer.getSavedForms()) {
-                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product, null));
+                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product, null,customer));
             }
             return ResponseService.generateSuccessResponse("Forms saved : ", listOfSavedProducts, HttpStatus.OK);
         } catch (IllegalArgumentException e) {
@@ -1156,7 +1154,14 @@ public class CustomerEndpoint {
             ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, service_provider_id);
             if (serviceProvider == null)
                 return ResponseService.generateErrorResponse("Service Provider not found", HttpStatus.NOT_FOUND);
-            customCustomer.setReferrerServiceProvider(serviceProvider);
+
+            CustomerReferrer customerReferrer=new CustomerReferrer();
+            customerReferrer.setCustomer(customCustomer);
+            customerReferrer.setServiceProvider(serviceProvider);
+            customCustomer.getMyReferrer().add(customerReferrer);
+            customerReferrer.setCreatedAt(LocalDateTime.now());
+            entityManager.persist(customerReferrer);
+
             entityManager.merge(customCustomer);
             return ResponseService.generateSuccessResponse("Referrer Set", sharedUtilityService.serviceProviderDetailsMap(serviceProvider), HttpStatus.OK);
         } catch (IllegalArgumentException e) {
