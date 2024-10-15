@@ -980,7 +980,6 @@ public class ProductService {
             }
 
             if(addProductDto.getState() != null) {
-                System.out.println("HERE");
                 CustomSector customSector = sectorService.getSectorBySectorId(addProductDto.getSector());
                 customProduct.setSector(customSector);
             }
