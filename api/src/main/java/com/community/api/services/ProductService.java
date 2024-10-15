@@ -1663,7 +1663,7 @@ public class ProductService {
                         } else if ((privilege.getPrivilege_name().equals(Constant.PRIVILEGE_REJECT_PRODUCT) && customProductState.getProductState().equals(Constant.PRODUCT_STATE_REJECTED))) {
 
                             if (addProductDto.getRejectionStatus() == null) {
-                                throw new IllegalArgumentException("REJECTION STATE CANNOT BE NULL IF PRODUCT IS REJECTED");
+                                throw new IllegalArgumentException("REJECTION STATUS CANNOT BE NULL IF PRODUCT IS REJECTED");
                             }
                             CustomProductRejectionStatus productRejectionStatus = productRejectionStatusService.getAllRejectionStatusByRejectionStatusId(addProductDto.getRejectionStatus());
                             if (productRejectionStatus == null) {
@@ -1676,7 +1676,6 @@ public class ProductService {
                     }
                     throw new IllegalArgumentException("Not have privilege to perform action.");
                 } else if (role.equals(Constant.ADMIN) || role.equals(Constant.SUPER_ADMIN)) {
-                    customProduct.setProductState(customProductState);
                     if (addProductDto.getRejectionStatus() == null) {
                         throw new IllegalArgumentException("REJECTION STATE CANNOT BE NULL IF PRODUCT IS REJECTED");
                     }
@@ -1685,6 +1684,7 @@ public class ProductService {
                         throw new IllegalArgumentException("NO PRODUCT REJECTION STATUS IS FOUND");
                     }
                     customProduct.setRejectionStatus(productRejectionStatus);
+                    customProduct.setProductState(customProductState);
 
                     return true;
                 } else {
