@@ -278,6 +278,8 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.examDateTo = customProduct.getExamDateTo();
         this.notifyingAuthority = customProduct.getNotifyingAuthority();
         this.customProductRejectionStatus = customProduct.getRejectionStatus();
+        this.createdDate = customProduct.getCreatedDate();
+        this.postName = customProduct.getPostName();
 
         if (customProduct.getDefaultCategory() != null) {
             this.defaultCategoryId = customProduct.getDefaultCategory().getId();
@@ -342,6 +344,8 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.state = customProduct.getState();
         this.notifyingAuthority = customProduct.getNotifyingAuthority();
         this.customProductRejectionStatus = customProduct.getRejectionStatus();
+        this.createdDate = customProduct.getCreatedDate();
+        this.postName = customProduct.getPostName();
 
         if (customProduct.getDefaultCategory() != null) {
             this.defaultCategoryId = customProduct.getDefaultCategory().getId();
@@ -401,6 +405,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.customSubject = customProduct.getSubject();
         this.customGender = customProduct.getGenderSpecific();
         this.customProductRejectionStatus = customProduct.getRejectionStatus();
+        this.postName = customProduct.getPostName();
 
         if (customProduct.getDefaultCategory() != null) {
             this.defaultCategoryId = customProduct.getDefaultCategory().getId();
