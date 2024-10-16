@@ -4,6 +4,7 @@ import com.broadleafcommerce.rest.api.endpoint.BaseEndpoint;
 import com.community.api.component.Constant;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.CustomProduct;
+import com.community.api.entity.ErrorResponse;
 import com.community.api.services.CartService;
 import com.community.api.services.ProductReserveCategoryFeePostRefService;
 import com.community.api.services.ReserveCategoryService;
@@ -12,6 +13,8 @@ import com.community.api.services.SharedUtilityService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import io.swagger.models.auth.In;
+import org.broadleafcommerce.common.currency.domain.BroadleafCurrency;
+import org.broadleafcommerce.common.currency.domain.BroadleafCurrencyImpl;
 import org.broadleafcommerce.common.money.Money;
 import org.broadleafcommerce.common.persistence.Status;
 import org.broadleafcommerce.core.catalog.domain.Product;
@@ -25,10 +28,12 @@ import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.domain.CustomerAttribute;
 import org.broadleafcommerce.profile.core.domain.CustomerAttributeImpl;
 import org.broadleafcommerce.profile.core.service.CustomerService;
+import org.hibernate.validator.constraints.Currency;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,7 +42,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import javax.transaction.Transactional;
+import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
@@ -47,6 +54,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 import static com.community.api.services.ServiceProvider.ServiceProviderServiceImpl.getIntegerList;
@@ -125,7 +133,6 @@ public class CartEndPoint extends BaseEndpoint {
     public void setCartService(CartService cartService) {
         this.cartService = cartService;
     }
-
 
     @Transactional
     @RequestMapping(value = "empty/{customerId}", method = RequestMethod.DELETE)
@@ -410,7 +417,6 @@ public class CartEndPoint extends BaseEndpoint {
             return ResponseService.generateErrorResponse("Error deleting", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
     @Transactional
     @RequestMapping(value = "place-order/{customerId}", method = RequestMethod.POST)
     public ResponseEntity<?> placeOrder(@PathVariable long customerId,@RequestBody Map<String,Object>map) {
@@ -548,7 +554,6 @@ public class CartEndPoint extends BaseEndpoint {
         System.out.println(product.getName());
         return product;
     }
-    public class OrderRequest {
-        private List<Long> orderItemIds;
+
     }
-}
+

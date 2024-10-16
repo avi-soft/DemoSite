@@ -1,5 +1,8 @@
 package com.community.api.component;
 
+import org.broadleafcommerce.common.currency.domain.BroadleafCurrency;
+import org.broadleafcommerce.common.currency.domain.BroadleafCurrencyImpl;
+
 public class Constant {
 
     public static final long MAX_FILE_SIZE = 1 * 1024 * 1024;
@@ -148,6 +151,7 @@ public class Constant {
     public static final String ORDER_STATUS_IN_PROGRESS="IN_PROGRESS";
     public static final String ORDER_STATUS_IN_CART="IN_PROCESS";
     public static final String ORDER_STATUS_UNASSIGNED="UNASSIGNED";
-    public static String GET_ALL_ORDERS="SELECT o.order_id FROM blc_order o WHERE o.order_status <> 'IN_PROCESS'";
-    public static String SEARCH_ORDER_QUERY="SELECT o.order_id FROM blc_order o WHERE o.order_status =:orderStatus";
+    public static final String GET_ALL_ORDERS="SELECT o.order_id FROM blc_order o WHERE o.order_status <> 'IN_PROCESS'";
+    public static final String SEARCH_ORDER_QUERY="SELECT o.order_id FROM blc_order o WHERE o.order_status =:orderStatus";
+    public static final String GET_NEW_ORDERS="SELECT o.order_id FROM blc_order o WHERE o.order_status = 'NEW'";
 }

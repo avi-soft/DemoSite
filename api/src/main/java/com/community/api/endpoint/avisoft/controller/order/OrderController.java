@@ -14,11 +14,13 @@ import com.community.api.services.PhysicalRequirementDtoService;
 import com.community.api.services.ReserveCategoryDtoService;
 import com.community.api.services.ReserveCategoryService;
 import com.community.api.services.ResponseService;
+import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.apache.catalina.core.ApplicationContext;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.order.domain.Order;
 import org.broadleafcommerce.core.order.domain.OrderItem;
 import org.broadleafcommerce.core.order.service.OrderService;
+import org.broadleafcommerce.core.order.service.type.OrderStatus;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpRequest;
@@ -33,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.servlet.http.HttpServletRequest;
+import javax.transaction.Transactional;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,6 +43,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 @RestController
 public class OrderController
@@ -47,6 +51,8 @@ public class OrderController
     private EntityManager entityManager;
     @Autowired
     private OrderService orderService;
+    @Autowired
+    private ExceptionHandlingImplement exceptionHandling;
     @Autowired
     private ReserveCategoryDtoService reserveCategoryDtoService;
     @Autowired
@@ -168,5 +174,42 @@ public class OrderController
         orderMap.put("Order List",orderDetails);
         return ResponseService.generateSuccessResponse("Orders",orderMap,HttpStatus.OK);
     }
+
+    /********************************DUMMY AUTO ASSIGNER FOR FLOW*****************************************/
+
+
+    /*public void randomNumberForAssigner(Order order)
+    {
+        Random random = new Random();
+        int randomNumber = random.nextInt(2);
+        if(randomNumber==1)
+            order.setStatus(new OrderStatus(Constant.ORDER_STATUS_AUTO_ASSIGNED,"Auto Assigned"));
+        else
+            order.setStatus(new OrderStatus(Constant.ORDER_STATUS_UNASSIGNED,"Not Assigned to any SP"));
+        entityManager.merge(order);
+    }
+
+    @Transactional
+    @RequestMapping(value ="auto-assign-orders",method = RequestMethod.POST)
+    public ResponseEntity<?> dummyAutoAssigner()
+    {
+        try {
+            System.out.println("Auto Assigner Scheduled :");
+            Query query = entityManager.createNativeQuery(Constant.GET_NEW_ORDERS);
+            List<BigInteger> orderIds = query.getResultList();
+            if (orderIds.isEmpty())
+                return ResponseService.generateSuccessResponse("No Orders to assign",null,HttpStatus.OK);
+            for (BigInteger id : orderIds) {
+                Order order = orderService.findOrderById(id.longValue());
+                if (order != null)
+                    randomNumberForAssigner(order);
+            }
+            return ResponseService.generateSuccessResponse("Orders assigned",null,HttpStatus.OK);
+        }catch (Exception e)
+        {
+            exceptionHandling.handleException(e);
+            return ResponseService.generateErrorResponse("Error Auto Assigning", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }*/
 
 }
