@@ -2,6 +2,9 @@ package com.community.api.endpoint.avisoft.controller.Customer;
 
 import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
+import com.community.api.dto.CustomProductWrapper;
+import com.community.api.dto.PhysicalRequirementDto;
+import com.community.api.dto.ReserveCategoryDto;
 import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.endpoint.customer.AddressDTO;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
@@ -97,7 +100,10 @@ public class CustomerEndpoint {
 
     @Autowired
     private FileService fileService;
-
+    @Autowired
+    private ReserveCategoryDtoService reserveCategoryDtoService;
+    @Autowired
+    private PhysicalRequirementDtoService physicalRequirementDtoService;
     @Autowired
     private DocumentStorageService documentStorageService;
     @Autowired
@@ -1048,11 +1054,6 @@ public class CustomerEndpoint {
                 return ResponseService.generateErrorResponse(Constant.PRODUCTNOTFOUND,HttpStatus.NOT_FOUND);
             }
             List<CustomProduct>savedForms=customer.getSavedForms();
-            Double fee=reserveCategoryFeePostRefService.getCustomProductReserveCategoryFeePostRefByProductIdAndReserveCategoryId(product.getId(),reserveCategoryService.getCategoryByName(customer.getCategory()).getReserveCategoryId()).getFee();
-            if(fee==null)
-            {
-                return ResponseService.generateErrorResponse("Cannot save form : Fee not specified for your category for this product",HttpStatus.NOT_FOUND);
-            }
             if ((((Status) product).getArchived() == 'Y' || !product.getDefaultSku().getActiveEndDate().after(new Date()))) {
                 return ResponseService.generateErrorResponse("Cannot save an archived product",HttpStatus.BAD_REQUEST);
             }
@@ -1062,8 +1063,12 @@ public class CustomerEndpoint {
             customer.setSavedForms(savedForms);
             entityManager.merge(customer);
             Map<String,Object>responseBody=new HashMap<>();
-            Map<String,Object>formBody=sharedUtilityService.createProductResponseMap(product,null,customer);
-            return ResponseService.generateSuccessResponse("Form Saved",formBody,HttpStatus.OK);
+           /* Map<String,Object>formBody=sharedUtilityService.createProductResponseMap(product,null,customer);*/
+            CustomProductWrapper customProductWrapper = new CustomProductWrapper();
+            List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(product_id);
+            List<PhysicalRequirementDto> physicalRequirementDtoList = physicalRequirementDtoService.getPhysicalRequirementDto(product_id);
+            customProductWrapper.wrapDetails(product, reserveCategoryDtoList, physicalRequirementDtoList);
+            return ResponseService.generateSuccessResponse("Form Saved",customProductWrapper,HttpStatus.OK);
         }
         catch (NumberFormatException e) {
             return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
@@ -1093,9 +1098,11 @@ public class CustomerEndpoint {
                 return ResponseService.generateErrorResponse("Form not present in saved Form list",HttpStatus.UNPROCESSABLE_ENTITY);
             customer.setSavedForms(savedForms);
             entityManager.merge(customer);
-            Map<String,Object>responseBody=new HashMap<>();
-            Map<String,Object>formBody=sharedUtilityService.createProductResponseMap(product,null,customer);
-            return ResponseService.generateSuccessResponse("Form Removed",formBody,HttpStatus.OK);
+            CustomProductWrapper customProductWrapper = new CustomProductWrapper();
+            List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(product_id);
+            List<PhysicalRequirementDto> physicalRequirementDtoList = physicalRequirementDtoService.getPhysicalRequirementDto(product_id);
+            customProductWrapper.wrapDetails(product, reserveCategoryDtoList, physicalRequirementDtoList);
+            return ResponseService.generateSuccessResponse("Form Removed",customProductWrapper,HttpStatus.OK);
         }catch (NumberFormatException e) {
             return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
@@ -1110,13 +1117,17 @@ public class CustomerEndpoint {
                 ResponseService.generateErrorResponse("Customer with this id not found", HttpStatus.NOT_FOUND);
             if (customer.getSavedForms().isEmpty())
                 ResponseService.generateErrorResponse("Saved form list is empty", HttpStatus.NOT_FOUND);
-            List<Map<String, Object>> listOfSavedProducts = new ArrayList<>();
+            List<CustomProductWrapper> listOfSavedProducts = new ArrayList<>();
             for (Product product : customer.getSavedForms()) {
                 CustomProduct customProduct=entityManager.find(CustomProduct.class,product.getId());
                 if ((((Status) customProduct).getArchived() == 'Y')) {
                     continue;
                 }
-                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product, null,customer));
+                CustomProductWrapper customProductWrapper = new CustomProductWrapper();
+                List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(product.getId());
+                List<PhysicalRequirementDto> physicalRequirementDtoList = physicalRequirementDtoService.getPhysicalRequirementDto(product.getId());
+                customProductWrapper.wrapDetails(customProduct, reserveCategoryDtoList, physicalRequirementDtoList);
+                listOfSavedProducts.add(customProductWrapper);
             }
             return ResponseService.generateSuccessResponse("Forms saved : ", listOfSavedProducts, HttpStatus.OK);
         }catch (NumberFormatException e) {
@@ -1135,21 +1146,24 @@ public class CustomerEndpoint {
                 ResponseService.generateErrorResponse("Customer with this id not found", HttpStatus.NOT_FOUND);
             if (customer.getSavedForms().isEmpty())
                 ResponseService.generateErrorResponse("Saved form list is empty", HttpStatus.NOT_FOUND);
-            List<Map<String, Object>> listOfSavedProducts = new ArrayList<>();
+            List<CustomProductWrapper> listOfSavedProducts = new ArrayList<>();
             for (Product product : customer.getSavedForms()) {
                 CustomProduct customProduct=entityManager.find(CustomProduct.class,product.getId());
                 if ((((Status) customProduct).getArchived() == 'Y')) {
                     continue;
                 }
-                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product, null,customer));
+                CustomProductWrapper customProductWrapper = new CustomProductWrapper();
+                List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(product.getId());
+                List<PhysicalRequirementDto> physicalRequirementDtoList = physicalRequirementDtoService.getPhysicalRequirementDto(product.getId());
+                customProductWrapper.wrapDetails(customProduct, reserveCategoryDtoList, physicalRequirementDtoList);
+                listOfSavedProducts.add(customProductWrapper);
             }
             return ResponseService.generateSuccessResponse("Forms saved : ", listOfSavedProducts, HttpStatus.OK);
         }catch (NumberFormatException e) {
             return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return ResponseService.generateErrorResponse("SOME EXCEPTION OCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-
+            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -1161,21 +1175,24 @@ public class CustomerEndpoint {
                 ResponseService.generateErrorResponse("Customer with this id not found", HttpStatus.NOT_FOUND);
             if (customer.getSavedForms().isEmpty())
                 ResponseService.generateErrorResponse("Saved form list is empty", HttpStatus.NOT_FOUND);
-            List<Map<String, Object>> listOfSavedProducts = new ArrayList<>();
+            List<CustomProductWrapper> listOfSavedProducts = new ArrayList<>();
             for (Product product : customer.getSavedForms()) {
                 CustomProduct customProduct=entityManager.find(CustomProduct.class,product.getId());
                 if ((((Status) customProduct).getArchived() == 'Y')) {
                     continue;
                 }
-                listOfSavedProducts.add(sharedUtilityService.createProductResponseMap(product, null,customer));
+                CustomProductWrapper customProductWrapper = new CustomProductWrapper();
+                List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(product.getId());
+                List<PhysicalRequirementDto> physicalRequirementDtoList = physicalRequirementDtoService.getPhysicalRequirementDto(product.getId());
+                customProductWrapper.wrapDetails(customProduct, reserveCategoryDtoList, physicalRequirementDtoList);
+                listOfSavedProducts.add(customProductWrapper);
             }
             return ResponseService.generateSuccessResponse("Forms saved : ", listOfSavedProducts, HttpStatus.OK);
-        } catch (IllegalArgumentException e) {
-            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
-        }  catch (Exception exception) {
+        }catch (NumberFormatException e) {
+            return ResponseService.generateErrorResponse("Invalid customerId: expected a Long", HttpStatus.BAD_REQUEST);
+        } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return ResponseService.generateErrorResponse("SOME EXCEPTION OCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-
+            return new ResponseEntity<>("SOMEEXCEPTIONOCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
