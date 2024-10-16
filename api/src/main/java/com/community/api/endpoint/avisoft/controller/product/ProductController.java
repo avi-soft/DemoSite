@@ -582,15 +582,21 @@ public class ProductController extends CatalogEndpoint {
         }
     }
 
-
     @GetMapping("/get-all")
     public ResponseEntity<?> getAllProducts(
-            @RequestParam(value = "roleId", required = false) Integer roleId,
-            @RequestParam(value = "userId", required = false) Long userId,
+            @RequestHeader(value = "Authorization") String authHeader,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int limit) {
 
         try {
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseService.generateErrorResponse("Authorization header is missing or invalid.", HttpStatus.UNAUTHORIZED);
+            }
+
+            String jwtToken = authHeader.substring(7);
+
+            Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
+            Long userId = jwtTokenUtil.extractId(jwtToken);
             List<CustomProduct> products = productService.filterProductsByRoleAndUserId(roleId, userId, page, limit);
             long totalProducts = productService.countTotalProducts(roleId, userId);
 

@@ -496,8 +496,11 @@ public class ProductService {
             if (roleProductCount == 0) {
                 throw new IllegalArgumentException("No product is created by role with id " + roleId);
             }
-            jpql.append("AND r.role_id = :roleId ");
-            queryParams.put("roleId", roleId);
+            else
+            {
+                jpql.append("AND r.role_id = :roleId ");
+                queryParams.put("roleId", roleId);
+            }
         }
 
         if (userId != null) {
@@ -509,8 +512,11 @@ public class ProductService {
             if (userProductCount == 0) {
                 throw new IllegalArgumentException("No user with id " + userId + " has created any product");
             }
-            jpql.append("AND p.userId = :userId ");
-            queryParams.put("userId", userId);
+            else
+            {
+                jpql.append("AND p.userId = :userId ");
+                queryParams.put("userId", userId);
+            }
         }
 
         TypedQuery<CustomProduct> query = entityManager.createQuery(jpql.toString(), CustomProduct.class);
