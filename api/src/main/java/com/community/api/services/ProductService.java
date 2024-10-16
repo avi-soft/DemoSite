@@ -575,6 +575,7 @@ public class ProductService {
             if (addProductDto.getMetaTitle() == null || addProductDto.getMetaTitle().trim().isEmpty()) {
                 throw new IllegalArgumentException(PRODUCTTITLENOTGIVEN);
             } else {
+                addProductDto.setPostName(addProductDto.getMetaTitle().trim());
                 addProductDto.setMetaTitle(addProductDto.getMetaTitle().trim());
             }
 
