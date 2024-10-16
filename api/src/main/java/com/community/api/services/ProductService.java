@@ -1079,6 +1079,11 @@ public class ProductService {
                 customProduct.setSector(customSector);
             }
 
+            if(addProductDto.getQualification() != null) {
+                Qualification qualification = qualificationService.getQualificationByQualificationId(addProductDto.getQualification());
+                customProduct.setQualification(qualification);
+            }
+
             if(addProductDto.getStream() != null) {
                 CustomStream customStream = streamService.getStreamByStreamId(addProductDto.getStream());
                 customProduct.setStream(customStream);
