@@ -94,8 +94,13 @@ public class SharedUtilityService {
         productDetails.put("sku_description", product.getDefaultSku().getDescription());
         productDetails.put("long_description", product.getDefaultSku().getLongDescription());
         productDetails.put("active_start_date", product.getDefaultSku().getActiveStartDate());
+        Double fee=productReserveCategoryFeePostRefService.getCustomProductReserveCategoryFeePostRefByProductIdAndReserveCategoryId(product.getId(),reserveCategoryService.getCategoryByName(customer.getCategory()).getReserveCategoryId()).getFee();
+        if(fee==null)
+        {
+            fee=10.0; //@TODO - make it constant free
+        }
         //@TODO-Fee is dependent on category
-        productDetails.put("fee",productReserveCategoryFeePostRefService.getCustomProductReserveCategoryFeePostRefByProductIdAndReserveCategoryId(product.getId(),reserveCategoryService.getCategoryByName(customer.getCategory()).getReserveCategoryId()).getFee());//this is dummy data
+        productDetails.put("fee",fee);//this is dummy data
         productDetails.put("category_id",product.getDefaultCategory().getId());
         productDetails.put("active_end_date", product.getDefaultSku().getActiveEndDate());
         return productDetails;
@@ -140,7 +145,7 @@ public class SharedUtilityService {
         CustomCustomer customCustomer=entityManager.find(CustomCustomer.class,customer.getId());
         Order cart=orderService.findCartForCustomer(customer);
         if(cart!=null)
-        customerDetails.put("orderId",cart.getId());
+            customerDetails.put("orderId",cart.getId());
         else
             customerDetails.put("orderId",null);
         customerDetails.put("mobileNumber", customCustomer.getMobileNumber());
@@ -227,7 +232,7 @@ public class SharedUtilityService {
         }
 
         customerDetails.put("savedForms",listOfSavedProducts);*/
-            List<CustomerAddressDTO>addresses=new ArrayList<>();
+        List<CustomerAddressDTO>addresses=new ArrayList<>();
         for(CustomerAddress customerAddress:customer.getCustomerAddresses())
         {
             CustomerAddressDTO addressDTO=new CustomerAddressDTO();
@@ -272,26 +277,26 @@ public class SharedUtilityService {
     }
     public ValidationResult validateInputMap(Map<String,Object>inputMap)
     {
-            if(inputMap.keySet().size()>Constant.MAX_REQUEST_SIZE)
-                return ValidationResult.EXCEEDS_MAX_SIZE;
+        if(inputMap.keySet().size()>Constant.MAX_REQUEST_SIZE)
+            return ValidationResult.EXCEEDS_MAX_SIZE;
 
-            // Iterate through the map entries to check for nested maps
-            for (Map.Entry<String, Object> entry : inputMap.entrySet()) {
-                Object value = entry.getValue();
+        // Iterate through the map entries to check for nested maps
+        for (Map.Entry<String, Object> entry : inputMap.entrySet()) {
+            Object value = entry.getValue();
 
-                // Check if the value is a nested map
-                if (value instanceof Map) {
-                    Map<?, ?> nestedMap = (Map<?, ?>) value;
+            // Check if the value is a nested map
+            if (value instanceof Map) {
+                Map<?, ?> nestedMap = (Map<?, ?>) value;
 
-                    // Check the size of the nested map's key set
-                    if (nestedMap.keySet().size() > Constant.MAX_NESTED_KEY_SIZE) {
-                        return ValidationResult.EXCEEDS_NESTED_SIZE;
-                    }
+                // Check the size of the nested map's key set
+                if (nestedMap.keySet().size() > Constant.MAX_NESTED_KEY_SIZE) {
+                    return ValidationResult.EXCEEDS_NESTED_SIZE;
                 }
             }
-            return ValidationResult.SUCCESS;
-
         }
+        return ValidationResult.SUCCESS;
+
+    }
 
     public Map<String,Object> serviceProviderDetailsMap(ServiceProviderEntity serviceProvider)
     {
@@ -326,6 +331,11 @@ public class SharedUtilityService {
         serviceProviderDetails.put("service_provider_status",serviceProvider.getTestStatus());
         serviceProviderDetails.put("rank", serviceProvider.getRanking());
         serviceProviderDetails.put("signedUp", serviceProvider.getSignedUp());
+        /* serviceProviderDetails.put("skills", serviceProvider.getSkills());*/
+       /* serviceProviderDetails.put("infra", serviceProvider.getInfra());
+        serviceProviderDetails.put("languages", serviceProvider.getLanguages());*/
+/*        serviceProviderDetails.put("privileges", serviceProvider.getPrivileges());
+        serviceProviderDetails.put("spAddresses", serviceProvider.getSpAddresses());*/
         serviceProviderDetails.put("business_unit_infra_score",serviceProvider.getBusinessUnitInfraScore());
         serviceProviderDetails.put("qualification_score",serviceProvider.getQualificationScore());
         serviceProviderDetails.put("technical_expertise_score",serviceProvider.getTechnicalExpertiseScore());
