@@ -2,6 +2,7 @@ package com.community.api.component;
 
 import org.broadleafcommerce.common.currency.domain.BroadleafCurrency;
 import org.broadleafcommerce.common.currency.domain.BroadleafCurrencyImpl;
+import org.broadleafcommerce.core.order.service.type.OrderStatus;
 
 public class Constant {
 
@@ -142,16 +143,17 @@ public class Constant {
     public static final String CITY_REGEXP="^[A-Za-z\\\\s]+$";
     public static final String EMAIL_REGEXP="^[\\w-\\.]+@[\\w-]+\\.[a-zA-Z]{2,}$";
     public static final String GET_ALL_ORDERS_OF_ONE_CUSTOMER="SELECT o from blc_ ";
-    public static final String GET_ORDERS_USING_CUSTOMER_ID = "SELECT CAST(o.order_id AS BIGINT) FROM blc_order o WHERE o.order_number LIKE :orderNumber";
-    public static final String ORDER_STATUS_NEW="NEW";
-    public static final String ORDER_STATUS_COMPLETED="COMPLETED";
-    public static final String ORDER_STATUS_IN_REVIEW="IN_REVIEW";
-    public static final String ORDER_STATUS_ASSIGNED="ASSIGNED";
-    public static final String ORDER_STATUS_AUTO_ASSIGNED="AUTO_ASSIGNED";
-    public static final String ORDER_STATUS_IN_PROGRESS="IN_PROGRESS";
-    public static final String ORDER_STATUS_IN_CART="IN_PROCESS";
-    public static final String ORDER_STATUS_UNASSIGNED="UNASSIGNED";
+    public static final String GET_ORDERS_USING_CUSTOMER_ID = "SELECT CAST(o.order_id AS BIGINT) FROM blc_order o WHERE o.order_number LIKE :orderNumber";;
+    public static final OrderStatus ORDER_STATUS_NEW = new OrderStatus("NEW", "NEW", true);
+    public static final OrderStatus ORDER_STATUS_COMPLETED = new OrderStatus("COMPLETED", "COMPLETED", true);
+    public static final OrderStatus ORDER_STATUS_IN_REVIEW = new OrderStatus("IN_REVIEW", "IN_REVIEW", true);
+    public static final OrderStatus ORDER_STATUS_ASSIGNED = new OrderStatus("ASSIGNED", "ASSIGNED", true);
+    public static final OrderStatus ORDER_STATUS_AUTO_ASSIGNED = new OrderStatus("AUTO_ASSIGNED", "AUTO_ASSIGNED", true);
+    public static final OrderStatus ORDER_STATUS_IN_PROGRESS = new OrderStatus("IN_PROGRESS", "IN_PROGRESS", true);
+    public static final OrderStatus ORDER_STATUS_IN_CART = new OrderStatus("IN_PROCESS", "IN_PROCESS", true);
+    public static final OrderStatus ORDER_STATUS_UNASSIGNED = new OrderStatus("UNASSIGNED", "UNASSIGNED", true);
     public static final String GET_ALL_ORDERS="SELECT o.order_id FROM blc_order o WHERE o.order_status <> 'IN_PROCESS'";
     public static final String SEARCH_ORDER_QUERY="SELECT o.order_id FROM blc_order o WHERE o.order_status =:orderStatus";
     public static final String GET_NEW_ORDERS="SELECT o.order_id FROM blc_order o WHERE o.order_status = 'NEW'";
+    public static final String GET_SP_ORDER_REQUEST="SELECT o.order_request_id FROM SP_orders_requests o WHERE o.order_id = :orderId AND o.service_provider_id = :serviceProviderId ";
 }

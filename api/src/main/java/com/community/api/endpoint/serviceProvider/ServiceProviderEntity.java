@@ -233,6 +233,13 @@ public class ServiceProviderEntity  {
     @OneToMany(mappedBy = "service_provider", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<QualificationDetails> qualificationDetailsList;
 
+    @JsonIgnore
+    @OneToMany(mappedBy = "serviceProvider", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderRequest> orderRequests;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "serviceProvider", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ServiceProviderAcceptedOrders> acceptedOrders;
 }
 
 

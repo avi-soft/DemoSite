@@ -5,11 +5,13 @@ import com.community.api.component.Constant;
 import com.community.api.dto.CustomProductWrapper;
 import com.community.api.dto.PhysicalRequirementDto;
 import com.community.api.dto.ReserveCategoryDto;
+import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.CombinedOrderDTO;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.CustomProduct;
 import com.community.api.entity.ErrorResponse;
 import com.community.api.entity.OrderDTO;
+import com.community.api.entity.OrderRequest;
 import com.community.api.services.PhysicalRequirementDtoService;
 import com.community.api.services.ReserveCategoryDtoService;
 import com.community.api.services.ReserveCategoryService;
@@ -37,6 +39,7 @@ import javax.persistence.Query;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.math.BigInteger;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -174,42 +177,32 @@ public class OrderController
         orderMap.put("Order List",orderDetails);
         return ResponseService.generateSuccessResponse("Orders",orderMap,HttpStatus.OK);
     }
-
-    /********************************DUMMY AUTO ASSIGNER FOR FLOW*****************************************/
-
-
-    /*public void randomNumberForAssigner(Order order)
-    {
-        Random random = new Random();
-        int randomNumber = random.nextInt(2);
-        if(randomNumber==1)
-            order.setStatus(new OrderStatus(Constant.ORDER_STATUS_AUTO_ASSIGNED,"Auto Assigned"));
-        else
-            order.setStatus(new OrderStatus(Constant.ORDER_STATUS_UNASSIGNED,"Not Assigned to any SP"));
-        entityManager.merge(order);
-    }
-
     @Transactional
-    @RequestMapping(value ="auto-assign-orders",method = RequestMethod.POST)
-    public ResponseEntity<?> dummyAutoAssigner()
-    {
+    @RequestMapping(value = "assign-order/{orderId}/{serviceProviderId}",method = RequestMethod.POST)
+    public ResponseEntity<?>manuallyAssignOrder(@PathVariable Long orderId,@PathVariable Long serviceProviderId) {
         try {
-            System.out.println("Auto Assigner Scheduled :");
-            Query query = entityManager.createNativeQuery(Constant.GET_NEW_ORDERS);
-            List<BigInteger> orderIds = query.getResultList();
-            if (orderIds.isEmpty())
-                return ResponseService.generateSuccessResponse("No Orders to assign",null,HttpStatus.OK);
-            for (BigInteger id : orderIds) {
-                Order order = orderService.findOrderById(id.longValue());
-                if (order != null)
-                    randomNumberForAssigner(order);
-            }
-            return ResponseService.generateSuccessResponse("Orders assigned",null,HttpStatus.OK);
+            Order order = orderService.findOrderById(orderId);
+            if(!order.getStatus().equals(Constant.ORDER_STATUS_UNASSIGNED))
+                return ResponseService.generateErrorResponse("Cannot assign this order manually as its status is : "+order.getStatus().toString(),HttpStatus.UNPROCESSABLE_ENTITY);
+            if (order == null)
+                return ResponseService.generateErrorResponse("Order with the provided id not found", HttpStatus.NOT_FOUND);
+            ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
+            if (serviceProvider == null)
+                return ResponseService.generateErrorResponse("Service Provider with the provided id not found", HttpStatus.NOT_FOUND);
+            OrderRequest orderRequest = new OrderRequest();
+            orderRequest.setOrderId(order.getId());
+            orderRequest.setServiceProvider(serviceProvider);
+            orderRequest.setRequestStatus("GENERATED");
+            orderRequest.setGeneratedAt(LocalDateTime.now());
+            orderRequest.setUpdatedAt(LocalDateTime.now());
+            entityManager.persist(orderRequest);
+            serviceProvider.getOrderRequests().add(orderRequest);
+            entityManager.merge(serviceProvider);
+            return ResponseService.generateSuccessResponse("Order Request Generated", orderRequest.getOrderRequestId(), HttpStatus.OK);
         }catch (Exception e)
         {
             exceptionHandling.handleException(e);
-            return ResponseService.generateErrorResponse("Error Auto Assigning", HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseService.generateErrorResponse("Error assigning Request to Service Provider", HttpStatus.INTERNAL_SERVER_ERROR);
         }
-    }*/
-
+    }
 }

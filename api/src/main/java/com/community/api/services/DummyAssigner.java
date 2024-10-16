@@ -54,9 +54,9 @@ public class DummyAssigner {
             Random random = new Random();
             int randomNumber = random.nextInt(2);
             if (randomNumber == 1) {
-                order.setStatus(new OrderStatus(Constant.ORDER_STATUS_AUTO_ASSIGNED, "Auto Assigned"));
+                order.setStatus(Constant.ORDER_STATUS_AUTO_ASSIGNED);
             } else {
-                order.setStatus(new OrderStatus(Constant.ORDER_STATUS_UNASSIGNED, "Not Assigned to any SP"));
+                order.setStatus(Constant.ORDER_STATUS_UNASSIGNED);
             }
             entityManager.merge(order);
         }

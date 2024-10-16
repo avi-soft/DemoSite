@@ -4,6 +4,8 @@ import com.community.api.component.Constant;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.CustomerReferrer;
+import com.community.api.entity.OrderRequest;
+import com.community.api.entity.ServiceProviderAcceptedOrders;
 import com.community.api.services.DistrictService;
 import com.community.api.services.ResponseService;
 import com.community.api.entity.ServiceProviderAddress;
@@ -12,6 +14,8 @@ import com.community.api.entity.Skill;
 import com.community.api.services.*;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
 import com.community.api.services.exception.ExceptionHandlingImplement;
+import org.broadleafcommerce.core.order.domain.Order;
+import org.broadleafcommerce.core.order.service.OrderService;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,15 +26,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityManager;
+import javax.persistence.GeneratedValue;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 import javax.validation.ConstraintViolationException;
 import java.math.BigInteger;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import static com.fasterxml.jackson.databind.type.LogicalType.DateTime;
 
 @RestController
 @RequestMapping("/service-providers")
@@ -60,6 +68,8 @@ public class ServiceProviderController {
     private SharedUtilityService sharedUtilityService;
     @Autowired
     private SanitizerService sanitizerService;
+    @Autowired
+    private OrderService orderService;
 
     @Transactional
     @PostMapping("/assign-skill")
@@ -326,6 +336,52 @@ public class ServiceProviderController {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Some issue in fetching candidates: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
+    }
+    @Transactional
+    @PostMapping("/{serviceProviderId}/order-requests/{orderId}")
+    public ResponseEntity<?> orderRequestAction(@PathVariable Long serviceProviderId,@PathVariable Long orderId,@RequestParam String action)
+    {
+        ServiceProviderEntity serviceProvider=entityManager.find(ServiceProviderEntity.class,serviceProviderId);
+        if(serviceProvider==null)
+            return ResponseService.generateErrorResponse("Service Provider not found",HttpStatus.NOT_FOUND);
+        Order order=orderService.findOrderById(orderId);
+        if(order==null)
+            return ResponseService.generateErrorResponse("Order not found",HttpStatus.NOT_FOUND);
+        Query query=entityManager.createNativeQuery(Constant.GET_SP_ORDER_REQUEST);
+        query.setParameter("orderId",orderId);
+        query.setParameter("serviceProviderId",serviceProviderId);
+        BigInteger requestId= (BigInteger) query.getSingleResult();
+        OrderRequest orderRequest=entityManager.find(OrderRequest.class,requestId.longValue());
+        if(orderRequest==null)
+            return ResponseService.generateErrorResponse("Cannot fetch order Details",HttpStatus.INTERNAL_SERVER_ERROR);
+        if(!orderRequest.getRequestStatus().equals("GENERATED"))
+        {
+            return ResponseService.generateErrorResponse("Invalid Order",HttpStatus.UNPROCESSABLE_ENTITY);
+        }
+        if(action.equals("accept"))
+        {
+            order.setStatus(Constant.ORDER_STATUS_IN_PROGRESS);
+            ServiceProviderAcceptedOrders serviceProviderAcceptedOrders=new ServiceProviderAcceptedOrders();
+            orderRequest.setRequestStatus("ACCEPTED");
+            orderRequest.setUpdatedAt(LocalDateTime.now());
+            entityManager.merge(orderRequest);
+            serviceProviderAcceptedOrders.setServiceProvider(serviceProvider);
+            serviceProviderAcceptedOrders.setOrderId(orderId);
+            serviceProviderAcceptedOrders.setGeneratedAt(LocalDateTime.now());
+            serviceProviderAcceptedOrders.setUpdatedAt(LocalDateTime.now());
+            entityManager.persist(serviceProviderAcceptedOrders);
+            serviceProvider.getAcceptedOrders().add(serviceProviderAcceptedOrders);
+            entityManager.merge(serviceProvider);
+            return ResponseService.generateSuccessResponse("Order Accepted",null,HttpStatus.OK);
+        }
+        else if(action.equals("return"))
+        {
+            orderRequest.setRequestStatus("RETURNED");
+            entityManager.merge(orderRequest);
+            return ResponseService.generateSuccessResponse("Order Returned",null,HttpStatus.OK);
+        }
+        else
+            return ResponseService.generateErrorResponse("Invalid Action",HttpStatus.BAD_REQUEST);
     }
 
 }
