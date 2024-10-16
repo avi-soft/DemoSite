@@ -66,12 +66,12 @@ public class AddProductDto {
     String advertiserUrl;
     @JsonProperty("domicile_required")
     Boolean domicileRequired;
-    @JsonProperty("product_state")
+    @JsonProperty("product_state_id")
     Long productState;
     @JsonProperty("display_template")
     String displayTemplate;
 
-    @JsonProperty("rejection_status")
+    @JsonProperty("rejection_status_id")
     Long rejectionStatus;
 
     @Temporal(TemporalType.TIMESTAMP)
@@ -111,5 +111,8 @@ public class AddProductDto {
 
     @JsonProperty("notifying_authority")
     String notifyingAuthority;
+
+    @JsonProperty("post_name")
+    String postName;
 
 }

@@ -198,6 +198,8 @@ public class CartEndPoint extends BaseEndpoint {
                 return ResponseService.generateErrorResponse("Product not found", HttpStatus.NOT_FOUND);
             }
             Long reserveCategoryId=reserveCategoryService.getCategoryByName(customCustomer.getCategory()).getReserveCategoryId();
+            if(reserveCategoryId==null)
+                return ResponseService.generateErrorResponse("Invalid Category",HttpStatus.INTERNAL_SERVER_ERROR);
             if(reserveCategoryService.getReserveCategoryFee(productId,reserveCategoryId)==null)
                 return ResponseService.generateErrorResponse("Cannot add product to cart :Fee not specified for your category",HttpStatus.UNPROCESSABLE_ENTITY);
             /*if(productReserveCategoryFeePostRefService.getCustomProductReserveCategoryFeePostRefByProductIdAndReserveCategoryId(product.getId(),.getFee()==null)
