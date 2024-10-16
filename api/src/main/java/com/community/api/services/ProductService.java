@@ -476,8 +476,7 @@ public class ProductService {
     }
 
     public List<CustomProduct> filterProductsByRoleAndUserId(Integer roleId, Long userId, int page, int limit) {
-        // Start building the query without 1=1 since conditions are mandatory
-        StringBuilder jpql = new StringBuilder("SELECT DISTINCT p FROM CustomProduct p JOIN p.creatoRole r WHERE ");
+        StringBuilder jpql = new StringBuilder("SELECT DISTINCT p FROM CustomProduct p JOIN p.creatoRole r ");
 
         Map<String, Object> queryParams = new HashMap<>();
 
@@ -488,39 +487,42 @@ public class ProductService {
                 throw new IllegalArgumentException("No role exists with id " + roleId);
             }
 
-            // Ensure the role has products
-            String roleCheckQuery = "SELECT COUNT(p) FROM CustomProduct p WHERE p.creatoRole.role_id = :roleId";
-            Long roleProductCount = entityManager.createQuery(roleCheckQuery, Long.class)
-                    .setParameter("roleId", roleId)
-                    .getSingleResult();
+            if (!role.getRole_name().equalsIgnoreCase(ADMIN) && !role.getRole_name().equalsIgnoreCase(SUPER_ADMIN)) {
+                String roleCheckQuery = "SELECT COUNT(p) FROM CustomProduct p WHERE p.creatoRole.role_id = :roleId";
+                Long roleProductCount = entityManager.createQuery(roleCheckQuery, Long.class)
+                        .setParameter("roleId", roleId)
+                        .getSingleResult();
 
-            if (roleProductCount == 0) {
-                throw new IllegalArgumentException("No product is created by role with id " + roleId);
+                if (roleProductCount == 0) {
+                    throw new IllegalArgumentException("No product is created by role with id " + roleId);
+                } else {
+                    jpql.append("WHERE r.role_id = :roleId ");
+                    queryParams.put("roleId", roleId);
+                }
+
+                if (userId != null) {
+                    String userCheckQuery = "SELECT COUNT(p) FROM CustomProduct p WHERE p.userId = :userId";
+                    Long userProductCount = entityManager.createQuery(userCheckQuery, Long.class)
+                            .setParameter("userId", userId)
+                            .getSingleResult();
+
+                    if (userProductCount == 0) {
+                        throw new IllegalArgumentException("No user with id " + userId + " has created any product");
+                    } else {
+                        jpql.append("AND p.userId = :userId ");
+                        queryParams.put("userId", userId);
+                    }
+                }
             } else {
-                // Append role condition to the query
-                jpql.append("r.role_id = :roleId ");
-                queryParams.put("roleId", roleId);
+                // For Admin or Superadmin, they can see all products, so no need to append any conditions
+                jpql.append("WHERE 1=1 ");
             }
         }
 
-        // Add user condition with AND since both role and user must be checked
-        if (userId != null) {
-            String userCheckQuery = "SELECT COUNT(p) FROM CustomProduct p WHERE p.userId = :userId";
-            Long userProductCount = entityManager.createQuery(userCheckQuery, Long.class)
-                    .setParameter("userId", userId)
-                    .getSingleResult();
-
-            if (userProductCount == 0) {
-                throw new IllegalArgumentException("No user with id " + userId + " has created any product");
-            } else {
-                // Append user condition to the query
-                jpql.append("AND p.userId = :userId ");
-                queryParams.put("userId", userId);
-            }
-        }
-
+        // Execute the query with pagination
         TypedQuery<CustomProduct> query = entityManager.createQuery(jpql.toString(), CustomProduct.class);
         queryParams.forEach(query::setParameter);
+
         int startPosition = page * limit;
         query.setFirstResult(startPosition);
         query.setMaxResults(limit);
@@ -528,31 +530,29 @@ public class ProductService {
         return query.getResultList();
     }
 
-
     public long countTotalProducts(Integer roleId, Long userId) {
-        // Start building the query without 1=1 since conditions are mandatory
-        StringBuilder countJpql = new StringBuilder("SELECT COUNT(DISTINCT p) FROM CustomProduct p JOIN p.creatoRole r WHERE ");
+        StringBuilder countJpql = new StringBuilder("SELECT COUNT(DISTINCT p) FROM CustomProduct p JOIN p.creatoRole r ");
 
         Map<String, Object> queryParams = new HashMap<>();
 
-        boolean hasRoleId = roleId != null;
-        boolean hasUserId = userId != null;
-
-        // Check roleId condition
-        if (hasRoleId) {
-            countJpql.append("r.role_id = :roleId ");
-            queryParams.put("roleId", roleId);
-        }
-
-        // Add userId condition with AND if roleId is present
-        if (hasUserId) {
-            if (hasRoleId) {
-                countJpql.append("AND ");
+        if (roleId != null) {
+            Role role = entityManager.find(Role.class, roleId);
+            if (role == null) {
+                throw new IllegalArgumentException("No role exists with id " + roleId);
             }
-            countJpql.append("p.userId = :userId ");
-            queryParams.put("userId", userId);
-        }
 
+            if (!role.getRole_name().equalsIgnoreCase(ADMIN) && !role.getRole_name().equalsIgnoreCase(SUPER_ADMIN)) {
+                countJpql.append("WHERE r.role_id = :roleId ");
+                queryParams.put("roleId", roleId);
+
+                if (userId != null) {
+                    countJpql.append("AND p.userId = :userId ");
+                    queryParams.put("userId", userId);
+                }
+            } else {
+                countJpql.append("WHERE 1=1 ");
+            }
+        }
         TypedQuery<Long> countQuery = entityManager.createQuery(countJpql.toString(), Long.class);
         queryParams.forEach(countQuery::setParameter);
         return countQuery.getSingleResult();
