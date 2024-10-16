@@ -788,33 +788,29 @@ public class CustomerEndpoint {
                 return ResponseService.generateErrorResponse("Customer service is not initialized.", HttpStatus.INTERNAL_SERVER_ERROR);
 
             }
-            details=sanitizerService.sanitizeInputMap(details);
+            //details=sanitizerService.sanitizeInputMap(details);
 
             String password = (String) details.get("password");
             Customer customer = customerService.readCustomerById(customerId);
             if (customer == null) {
                 return ResponseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
             }
-            if (password != null) {
+            if (password != null && !(password.isEmpty())) {
                 if (customer.getPassword() == null || customer.getPassword().isEmpty()) {
                     customer.setPassword(passwordEncoder.encode(password));
                     em.merge(customer);
                     return ResponseService.generateSuccessResponse("Password Created", sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK);
                 }
                 if (!passwordEncoder.matches(password, customer.getPassword())) {
-            /*if (customerDTO.getPassword() != null && customerDTO.getOldPassword() != null) {
-                if (passwordEncoder.matches(customerDTO.getOldPassword(), customer.getPassword())) {
-                    if (!customerDTO.getPassword().equals(customerDTO.getOldPassword())) {*/
+
                     customer.setPassword(passwordEncoder.encode(password));
                     em.merge(customer);
                     return ResponseService.generateSuccessResponse("Password Updated", sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK);
-                    /*} else
-                        return new ResponseEntity<>("Old password and new password can not be same!", HttpStatus.BAD_REQUEST);
-                } else
-                    return new ResponseEntity<>("The old password you provided is incorrect. Please try again with the correct old password", HttpStatus.BAD_REQUEST);
-            }*/
                 }
-                return ResponseService.generateErrorResponse("Old Password and new Password cannot be same", HttpStatus.BAD_REQUEST);
+                else
+                {
+                    return ResponseService.generateErrorResponse("Old Password and new Password cannot be same", HttpStatus.BAD_REQUEST);
+                }
             } else {
                 return ResponseService.generateErrorResponse("Empty Password", HttpStatus.BAD_REQUEST);
             }
@@ -1166,7 +1162,12 @@ public class CustomerEndpoint {
             ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, service_provider_id);
             if (serviceProvider == null)
                 return ResponseService.generateErrorResponse("Service Provider not found", HttpStatus.NOT_FOUND);
-
+            List<CustomerReferrer>referrerSp=customCustomer.getMyReferrer();
+            for(CustomerReferrer customerReferrer:referrerSp)
+            {
+                if(customerReferrer.getServiceProvider().getService_provider_id().equals(service_provider_id))
+                    return ResponseService.generateErrorResponse("Selected Service Provider already set as Referrer", HttpStatus.BAD_REQUEST);
+            }
             CustomerReferrer customerReferrer=new CustomerReferrer();
             customerReferrer.setCustomer(customCustomer);
             customerReferrer.setServiceProvider(serviceProvider);

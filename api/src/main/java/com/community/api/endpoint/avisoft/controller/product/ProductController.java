@@ -299,8 +299,13 @@ public class ProductController extends CatalogEndpoint {
                 productGenderPhysicalRequirementService.savePhysicalRequirement(addProductDto.getPhysicalRequirement(), product);
             }
             if(addProductDto.getGenderSpecific()!=null){
-                customProduct.setGenderSpecific(genderService.getGenderByGenderId(addProductDto.getGenderSpecific()));
+                if(addProductDto.getGenderSpecific() == 0) {
+                    customProduct.setGenderSpecific(null);
+                }else{
+                    customProduct.setGenderSpecific(genderService.getGenderByGenderId(addProductDto.getGenderSpecific()));
+                }
             }
+
             List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(productId);
             List<PhysicalRequirementDto> physicalRequirementDtoList = physicalRequirementDtoService.getPhysicalRequirementDto(productId);
 

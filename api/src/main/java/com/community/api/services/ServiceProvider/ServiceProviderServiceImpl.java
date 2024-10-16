@@ -170,7 +170,47 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 return ResponseService.generateErrorResponse("Primary and Secondary Mobile Numbers cannot be the same", HttpStatus.BAD_REQUEST);
             }
 
+            if(updates.containsKey("district")&&updates.containsKey("state")/*&&updates.containsKey("city")*/&&updates.containsKey("pincode")&&updates.containsKey("residential_address"))
+            {
+                if(validateAddressFields(updates).isEmpty()) {
+                    if (existingServiceProvider.getSpAddresses().isEmpty()) {
+                        ServiceProviderAddress serviceProviderAddress = new ServiceProviderAddress();
+                        serviceProviderAddress.setAddress_type_id(findAddressName("CURRENT_ADDRESS").getAddress_type_Id());
+                        serviceProviderAddress.setPincode((String) updates.get("pincode"));
+                        serviceProviderAddress.setDistrict((String) updates.get("district"));
+                        serviceProviderAddress.setState((String) updates.get("state"));
+                        /*serviceProviderAddress.setCity((String) updates.get("city"));*/
+                        serviceProviderAddress.setAddress_line((String) updates.get("residential_address"));
+                        if (serviceProviderAddress.getAddress_line() != null /*|| serviceProviderAddress.getCity() != null*/ || serviceProviderAddress.getDistrict() != null || serviceProviderAddress.getState() != null || serviceProviderAddress.getPincode() != null) {
+                            addAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress);
+                        }
+                    } else {
+                        ServiceProviderAddress serviceProviderAddress = existingServiceProvider.getSpAddresses().get(0);
+                        ServiceProviderAddress serviceProviderAddressDTO = new ServiceProviderAddress();
+                        serviceProviderAddressDTO.setAddress_type_id(serviceProviderAddress.getAddress_type_id());
+                        serviceProviderAddressDTO.setAddress_id(serviceProviderAddress.getAddress_id());
+                        serviceProviderAddressDTO.setState((String) updates.get("state"));
+                        serviceProviderAddressDTO.setDistrict((String) updates.get("district"));
+                        serviceProviderAddressDTO.setAddress_line((String) updates.get("residential_address"));
+                        serviceProviderAddressDTO.setPincode((String) updates.get("pincode"));
+                        serviceProviderAddressDTO.setServiceProviderEntity(existingServiceProvider);
+                        /*serviceProviderAddressDTO.setCity((String) updates.get("city"));*/
+                        for (String error : updateAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress, serviceProviderAddressDTO)) {
+                            errorMessages.add(error);
+                        }
+                    }
+                }else
+                {
+                    errorMessages.addAll(validateAddressFields(updates));
+                }
+            }
 
+            //removing key for address
+            updates.remove("residential_address");
+            updates.remove("city");
+            updates.remove("state");
+            updates.remove("district");
+            updates.remove("pincode");
         // Validate and check for unique constraints
         ServiceProviderEntity existingSPByUsername = null;
         ServiceProviderEntity existingSPByEmail = null;
@@ -360,47 +400,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         updates.remove("skill_list");
         updates.remove("infra_list");
         updates.remove("language_list");
-        if(updates.containsKey("district")&&updates.containsKey("state")/*&&updates.containsKey("city")*/&&updates.containsKey("pincode")&&updates.containsKey("residential_address"))
-        {
-            if(validateAddressFields(updates).isEmpty()) {
-                if (existingServiceProvider.getSpAddresses().isEmpty()) {
-                    ServiceProviderAddress serviceProviderAddress = new ServiceProviderAddress();
-                    serviceProviderAddress.setAddress_type_id(findAddressName("CURRENT_ADDRESS").getAddress_type_Id());
-                    serviceProviderAddress.setPincode((String) updates.get("pincode"));
-                    serviceProviderAddress.setDistrict((String) updates.get("district"));
-                    serviceProviderAddress.setState((String) updates.get("state"));
-                    /*serviceProviderAddress.setCity((String) updates.get("city"));*/
-                    serviceProviderAddress.setAddress_line((String) updates.get("residential_address"));
-                    if (serviceProviderAddress.getAddress_line() != null /*|| serviceProviderAddress.getCity() != null*/ || serviceProviderAddress.getDistrict() != null || serviceProviderAddress.getState() != null || serviceProviderAddress.getPincode() != null) {
-                        addAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress);
-                    }
-                } else {
-                    ServiceProviderAddress serviceProviderAddress = existingServiceProvider.getSpAddresses().get(0);
-                    ServiceProviderAddress serviceProviderAddressDTO = new ServiceProviderAddress();
-                    serviceProviderAddressDTO.setAddress_type_id(serviceProviderAddress.getAddress_type_id());
-                    serviceProviderAddressDTO.setAddress_id(serviceProviderAddress.getAddress_id());
-                    serviceProviderAddressDTO.setState((String) updates.get("state"));
-                    serviceProviderAddressDTO.setDistrict((String) updates.get("district"));
-                    serviceProviderAddressDTO.setAddress_line((String) updates.get("residential_address"));
-                    serviceProviderAddressDTO.setPincode((String) updates.get("pincode"));
-                    serviceProviderAddressDTO.setServiceProviderEntity(existingServiceProvider);
-                    /*serviceProviderAddressDTO.setCity((String) updates.get("city"));*/
-                    for (String error : updateAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress, serviceProviderAddressDTO)) {
-                        errorMessages.add(error);
-                    }
-                }
-            }else
-            {
-                errorMessages.addAll(validateAddressFields(updates));
-            }
-        }
 
-        //removing key for address
-        updates.remove("residential_address");
-        updates.remove("city");
-        updates.remove("state");
-        updates.remove("district");
-        updates.remove("pincode");
 
         // Update only the fields that are present in the map using reflections
         for (Map.Entry<String, Object> entry : updates.entrySet()) {
