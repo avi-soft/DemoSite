@@ -204,6 +204,12 @@ public class CustomerEndpoint {
             if (customCustomer == null) {
                 return ResponseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
             }
+            String secondaryMobileNumber = (String) details.get("secondaryMobileNumber");
+            String mobileNumber = (String) details.get("mobileNumber");
+            if (secondaryMobileNumber != null && mobileNumber==null && secondaryMobileNumber.equalsIgnoreCase(customCustomer.getMobileNumber())) {
+                return ResponseService.generateErrorResponse("Primary and Secondary Mobile Numbers cannot be the same", HttpStatus.BAD_REQUEST);
+            }
+
             if(details.containsKey("hidePhoneNumber"))
             {
                 errorMessages.addAll(validateHidePhoneNumber(details, customCustomer));
@@ -212,9 +218,17 @@ public class CustomerEndpoint {
                 details.remove("hidePhoneNumber");
             }
             // Validate mobile number
-            String mobileNumber = (String) details.get("mobileNumber");
+            if (mobileNumber != null && secondaryMobileNumber != null) {
+                if (mobileNumber.equalsIgnoreCase(secondaryMobileNumber)) {
+                    errorMessages.add("Primary and Secondary Mobile Numbers cannot be the same");
+                }
+            }
             if (mobileNumber != null && !customCustomerService.isValidMobileNumber(mobileNumber)) {
                 return ResponseService.generateErrorResponse("Cannot update phoneNumber", HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+
+            if (mobileNumber != null && secondaryMobileNumber==null && mobileNumber.equalsIgnoreCase(customCustomer.getSecondaryMobileNumber())) {
+                return ResponseService.generateErrorResponse("Primary and Secondary Mobile Numbers cannot be the same", HttpStatus.BAD_REQUEST);
             }
 
             // Check for existing username and email
@@ -247,8 +261,6 @@ public class CustomerEndpoint {
             {
                 errorMessages.add("Last name cannot be null");
             }
-
-
 
             if (details.containsKey("emailAddress") && ((String) details.get("emailAddress")).isEmpty())
                 errorMessages.add("email Address cannot be null");
