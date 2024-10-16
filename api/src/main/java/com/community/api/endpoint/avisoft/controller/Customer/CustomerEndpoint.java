@@ -403,7 +403,7 @@ public class CustomerEndpoint {
 
     @Transactional
     @RequestMapping(value = "/get-customer-details/{customerId}", method = RequestMethod.GET)
-    public ResponseEntity<?> getUserDetails(@PathVariable Long customerId,HttpServletRequest request) {
+    public ResponseEntity<?> getUserDetails(@PathVariable Long customerId) {
         try {
             CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
             if (customCustomer == null) {
@@ -411,27 +411,6 @@ public class CustomerEndpoint {
             }
             CustomerImpl customer = em.find(CustomerImpl.class, customerId);  // Assuming you retrieve the base Customer entity
             Map<String, Object> customerDetails = sharedUtilityService.breakReferenceForCustomer(customer);
-            // Fetch qualification details and replace qualification_id with qualification_name
-            List<QualificationDetails> qualificationDetails= customCustomer.getQualificationDetailsList();
-            List<Map<String, Object>> qualificationsWithNames = sharedUtilityService.mapQualifications(qualificationDetails);
-            customerDetails.put("qualificationDetails", qualificationsWithNames);
-
-            List<Document> filteredDocuments = new ArrayList<>();
-
-            for (Document document : customCustomer.getDocuments()) {
-                if (document.getFilePath() != null && document.getDocumentType() != null) {
-
-                    document.setFilePath(fileService.getFileUrl(document.getFilePath(), request));
-
-                    filteredDocuments.add(document);
-                }
-            }
-
-            if (!filteredDocuments.isEmpty()) {
-
-                customerDetails.put("documents", filteredDocuments);
-            }
-
 
             return responseService.generateSuccessResponse("User details retrieved successfully", customerDetails, HttpStatus.OK);
 
@@ -799,7 +778,7 @@ public class CustomerEndpoint {
             if (customer == null) {
                 return ResponseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
             }
-            if (password != null) {
+            if (password != null&&!password.isEmpty()) {
                 if (customer.getPassword() == null || customer.getPassword().isEmpty()) {
                     customer.setPassword(passwordEncoder.encode(password));
                     em.merge(customer);
@@ -818,7 +797,8 @@ public class CustomerEndpoint {
                     return new ResponseEntity<>("The old password you provided is incorrect. Please try again with the correct old password", HttpStatus.BAD_REQUEST);
             }*/
                 }
-                return ResponseService.generateErrorResponse("Old Password and new Password cannot be same", HttpStatus.BAD_REQUEST);
+                else
+                    return ResponseService.generateErrorResponse("Old Password and new Password cannot be same", HttpStatus.BAD_REQUEST);
             } else {
                 return ResponseService.generateErrorResponse("Empty Password", HttpStatus.BAD_REQUEST);
             }
