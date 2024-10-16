@@ -142,7 +142,7 @@ public class AccountEndPoint {
         }
     }
 
-
+    @Transactional
     @PostMapping("/login-with-password")
     @ResponseBody
     public ResponseEntity<?> loginWithPassword(@RequestBody Map<String, Object> loginDetails, HttpSession session, HttpServletRequest request) {
