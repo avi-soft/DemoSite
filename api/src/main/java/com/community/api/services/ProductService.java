@@ -1035,6 +1035,16 @@ public class ProductService {
                     customProduct.setDomicileRequired(addProductDto.getDomicileRequired());
                     customProduct.setCustomApplicationScope(applicationScope);
                 }
+            } else {
+                if(customProduct.getCustomApplicationScope().getApplicationScope().equals(APPLICATION_SCOPE_STATE)) {
+                    if(addProductDto.getState() != null) {
+                        StateCode stateCode = districtService.getStateByStateId(addProductDto.getState());
+                        customProduct.setState(stateCode);
+                    }
+                    if(addProductDto.getDomicileRequired() != null) {
+                        customProduct.setDomicileRequired(addProductDto.getDomicileRequired());
+                    }
+                }
             }
 
             if (addProductDto.getAdvertiserUrl() != null) {
@@ -1062,6 +1072,11 @@ public class ProductService {
                 }else {
                     throw new IllegalArgumentException("Post name cannot be empty");
                 }
+            }
+
+            if(addProductDto.getQualification() != null) {
+                Qualification qualification = qualificationService.getQualificationByQualificationId(addProductDto.getQualification());
+                customProduct.setQualification(qualification);
             }
 
             if(addProductDto.getState() != null) {
