@@ -46,6 +46,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -150,6 +153,21 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                     return ResponseService.generateErrorResponse("Invalid value for 'partTime or FullTime'. Allowed values are 'PART TIME' or 'FULL TIME'.", HttpStatus.BAD_REQUEST);
                 }
                 existingServiceProvider.setPartTimeOrFullTime(partTimeOrFullTimeStr.toUpperCase());
+            }
+
+            String mobileNumber = (String) updates.get("mobileNumber");
+            String secondaryMobileNumber = (String) updates.get("secondary_mobile_number");
+
+            if (mobileNumber != null && secondaryMobileNumber != null) {
+                if (mobileNumber.equalsIgnoreCase(secondaryMobileNumber)) {
+                    errorMessages.add("Primary and Secondary Mobile Numbers cannot be the same");
+                }
+            }
+            if (mobileNumber != null && secondaryMobileNumber==null && mobileNumber.equalsIgnoreCase(existingServiceProvider.getSecondary_mobile_number())) {
+                return ResponseService.generateErrorResponse("Primary and Secondary Mobile Numbers cannot be the same", HttpStatus.BAD_REQUEST);
+            }
+            if (secondaryMobileNumber != null && mobileNumber==null && secondaryMobileNumber.equalsIgnoreCase(existingServiceProvider.getMobileNumber())) {
+                return ResponseService.generateErrorResponse("Primary and Secondary Mobile Numbers cannot be the same", HttpStatus.BAD_REQUEST);
             }
 
 
@@ -439,6 +457,19 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                         if (!newValue.toString().matches(regex)) {
                             errorMessages.add(fieldName+ "is invalid"); // Use a placeholder
                             continue;
+                        }
+                    }
+
+                    if (fieldName.equals("date_of_birth")) {
+                        String dobString = (String) newValue;
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+                        try {
+                            LocalDate dob = LocalDate.parse(dobString, formatter);
+                            if (dob.isAfter(LocalDate.now())) {
+                                errorMessages.add("Date of birth cannot be in the future");
+                            }
+                        } catch (DateTimeParseException e) {
+                            errorMessages.add("Invalid date format for " + fieldName + ". Expected format is DD-MM-YYYY.");
                         }
                     }
                 }
