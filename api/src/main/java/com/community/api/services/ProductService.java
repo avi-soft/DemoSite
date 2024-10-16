@@ -476,18 +476,19 @@ public class ProductService {
     }
 
     public List<CustomProduct> filterProductsByRoleAndUserId(Integer roleId, Long userId, int page, int limit) {
-        StringBuilder jpql = new StringBuilder("SELECT DISTINCT p FROM CustomProduct p JOIN p.creatoRole r WHERE 1=1 ");
+        // Start building the query without 1=1 since conditions are mandatory
+        StringBuilder jpql = new StringBuilder("SELECT DISTINCT p FROM CustomProduct p JOIN p.creatoRole r WHERE ");
 
         Map<String, Object> queryParams = new HashMap<>();
 
+        // Check if the role exists
         if (roleId != null) {
-            Role role= entityManager.find(Role.class,roleId);
-            if(role==null)
-            {
-                throw new IllegalArgumentException("No any role exits with id "+ roleId);
+            Role role = entityManager.find(Role.class, roleId);
+            if (role == null) {
+                throw new IllegalArgumentException("No role exists with id " + roleId);
             }
 
-            // Check if any product exists with the given role
+            // Ensure the role has products
             String roleCheckQuery = "SELECT COUNT(p) FROM CustomProduct p WHERE p.creatoRole.role_id = :roleId";
             Long roleProductCount = entityManager.createQuery(roleCheckQuery, Long.class)
                     .setParameter("roleId", roleId)
@@ -495,14 +496,14 @@ public class ProductService {
 
             if (roleProductCount == 0) {
                 throw new IllegalArgumentException("No product is created by role with id " + roleId);
-            }
-            else
-            {
-                jpql.append("AND r.role_id = :roleId ");
+            } else {
+                // Append role condition to the query
+                jpql.append("r.role_id = :roleId ");
                 queryParams.put("roleId", roleId);
             }
         }
 
+        // Add user condition with AND since both role and user must be checked
         if (userId != null) {
             String userCheckQuery = "SELECT COUNT(p) FROM CustomProduct p WHERE p.userId = :userId";
             Long userProductCount = entityManager.createQuery(userCheckQuery, Long.class)
@@ -511,18 +512,15 @@ public class ProductService {
 
             if (userProductCount == 0) {
                 throw new IllegalArgumentException("No user with id " + userId + " has created any product");
-            }
-            else
-            {
+            } else {
+                // Append user condition to the query
                 jpql.append("AND p.userId = :userId ");
                 queryParams.put("userId", userId);
             }
         }
 
         TypedQuery<CustomProduct> query = entityManager.createQuery(jpql.toString(), CustomProduct.class);
-
         queryParams.forEach(query::setParameter);
-
         int startPosition = page * limit;
         query.setFirstResult(startPosition);
         query.setMaxResults(limit);
@@ -532,17 +530,26 @@ public class ProductService {
 
 
     public long countTotalProducts(Integer roleId, Long userId) {
-        StringBuilder countJpql = new StringBuilder("SELECT COUNT(DISTINCT p) FROM CustomProduct p JOIN p.creatoRole r WHERE 1=1 ");
+        // Start building the query without 1=1 since conditions are mandatory
+        StringBuilder countJpql = new StringBuilder("SELECT COUNT(DISTINCT p) FROM CustomProduct p JOIN p.creatoRole r WHERE ");
 
         Map<String, Object> queryParams = new HashMap<>();
 
-        if (roleId != null) {
-            countJpql.append("AND r.role_id = :roleId ");
+        boolean hasRoleId = roleId != null;
+        boolean hasUserId = userId != null;
+
+        // Check roleId condition
+        if (hasRoleId) {
+            countJpql.append("r.role_id = :roleId ");
             queryParams.put("roleId", roleId);
         }
 
-        if (userId != null) {
-            countJpql.append("AND p.userId = :userId ");
+        // Add userId condition with AND if roleId is present
+        if (hasUserId) {
+            if (hasRoleId) {
+                countJpql.append("AND ");
+            }
+            countJpql.append("p.userId = :userId ");
             queryParams.put("userId", userId);
         }
 
@@ -550,9 +557,6 @@ public class ProductService {
         queryParams.forEach(countQuery::setParameter);
         return countQuery.getSingleResult();
     }
-
-
-
 
     public boolean addProductAccessAuthorisation(String authHeader) throws Exception {
         try {
