@@ -197,9 +197,7 @@ public class QualificationDetailsService {
 
     private CustomCustomer findCustomCustomerById(Long customCustomerId) throws CustomerDoesNotExistsException {
         CustomCustomer customCustomer = entityManager.find(CustomCustomer.class, customCustomerId);
-        System.out.println(customCustomerId);
         if (customCustomer == null) {
-            System.out.println("Inside the throw ");
             throw new CustomerDoesNotExistsException("Customer does not exist with id " + customCustomerId);
         }
         return customCustomer;
