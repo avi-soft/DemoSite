@@ -1208,6 +1208,27 @@ public class ProductService {
             if (addProductDto.getActiveEndDate() != null) {
                 dateFormat.parse(dateFormat.format(addProductDto.getActiveEndDate()));
 
+                if(addProductDto.getGoLiveDate() != null) {
+                    dateFormat.parse(dateFormat.format(addProductDto.getGoLiveDate()));
+                    if(!addProductDto.getGoLiveDate().before(addProductDto.getActiveEndDate())){
+                        throw new IllegalArgumentException("Active end date has be future of go Live Date");
+                    }
+                }else {
+                    if(!customProduct.getGoLiveDate().before(addProductDto.getActiveEndDate())){
+                        throw new IllegalArgumentException("Active end date has be future of go Live Date");
+                    }
+                }
+                if(addProductDto.getActiveStartDate() != null) {
+                    dateFormat.parse(dateFormat.format(addProductDto.getActiveStartDate()));
+                    if(!addProductDto.getActiveStartDate().before(addProductDto.getActiveEndDate())){
+                        throw new IllegalArgumentException("Active end date has be future of active start Date");
+                    }
+                } else {
+                    if(!customProduct.getActiveStartDate().before(addProductDto.getActiveEndDate())){
+                        throw new IllegalArgumentException("Active end date has be future of active start Date");
+                    }
+                }
+
                 if (addProductDto.getLastDateToPayFee() != null) {
                     dateFormat.parse(dateFormat.format(addProductDto.getLastDateToPayFee()));
                     if (!addProductDto.getActiveEndDate().before(addProductDto.getLastDateToPayFee())) {
