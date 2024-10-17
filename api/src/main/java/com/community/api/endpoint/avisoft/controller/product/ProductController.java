@@ -4,20 +4,32 @@ import com.broadleafcommerce.rest.api.endpoint.catalog.CatalogEndpoint;
 import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
 import com.community.api.dto.AddProductDto;
+import com.community.api.dto.PhysicalRequirementDto;
 import com.community.api.dto.ReserveCategoryDto;
 import com.community.api.dto.CustomProductWrapper;
 
 import com.community.api.entity.CustomApplicationScope;
+import com.community.api.entity.CustomGender;
 import com.community.api.entity.CustomJobGroup;
 import com.community.api.entity.CustomProduct;
 import com.community.api.entity.CustomProductState;
 
+import com.community.api.entity.CustomSector;
+import com.community.api.entity.CustomStream;
+import com.community.api.entity.CustomSubject;
+import com.community.api.entity.Qualification;
 import com.community.api.entity.Role;
+import com.community.api.entity.StateCode;
+import com.community.api.services.DistrictService;
+import com.community.api.services.GenderService;
+import com.community.api.services.PhysicalRequirementDtoService;
+import com.community.api.services.ProductGenderPhysicalRequirementService;
 import com.community.api.services.ResponseService;
 import org.broadleafcommerce.common.persistence.Status;
 
 import org.broadleafcommerce.core.catalog.domain.Category;
 import org.broadleafcommerce.core.catalog.domain.Product;
+import org.broadleafcommerce.core.catalog.domain.ProductImpl;
 import org.broadleafcommerce.core.catalog.domain.Sku;
 
 import org.broadleafcommerce.core.catalog.service.type.ProductType;
@@ -53,11 +65,7 @@ import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.community.api.component.Constant.*;
 
@@ -71,12 +79,12 @@ import static com.community.api.component.Constant.*;
 @RequestMapping(value = "/product-custom", produces = {MediaType.APPLICATION_JSON_VALUE, MediaType.APPLICATION_XML_VALUE})
 public class ProductController extends CatalogEndpoint {
 
-    public static final String TENTATIVEDATEAFTERACTIVEENDDATE = "BOTH TENTATIVE EXAMINATION DATA MUST BE AFTER ACTIVE END DATE";
-    public static final String TENTATIVEEXAMDATETOAFTEREXAMDATEFROM = "TENTATIVE EXAM DATE TO MUST BE EITHER EQUAL OR BEFORE OF TENTATIVE EXAM DATE FROM";
-    public static final String TENTATIVEEXAMDATEAFTERACTIVEENDDATE = "TENTATIVE EXAMINATION DATE MUST BE AFTER ACTIVE END DATE";
-    public static final String POSTLESSTHANORZERO = "NUMBER OF POST CANNOT BE LESS THAN OR EQUAL TO ZERO";
-    public static final String PRODUCTNOTFOUND = "PRODUCT NOT FOUND";
-    public static final String PRODUCTFOUNDSUCCESSFULLY = "PRODUCTS FOUND SUCCESSFULLY";
+    public static final String TENTATIVEDATEAFTERACTIVEENDDATE = "Both tentative examination data must be after active end date.";
+    public static final String TENTATIVEEXAMDATETOAFTEREXAMDATEFROM = "Tentative exam date to must be either equal or before of tentative exam date from.";
+    public static final String TENTATIVEEXAMDATEAFTERACTIVEENDDATE = "Tentative examination date must be after active end date.";
+    public static final String POSTLESSTHANORZERO = "Number of post cannot be less than or equal to zero.";
+    public static final String PRODUCTNOTFOUND = "Product not found.";
+    public static final String PRODUCTFOUNDSUCCESSFULLY = "Products found successfully";
 
     private final ExceptionHandlingService exceptionHandlingService;
     private final EntityManager entityManager;
@@ -90,9 +98,19 @@ public class ProductController extends CatalogEndpoint {
     private final ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService;
     private final ReserveCategoryService reserveCategoryService;
     private final ReserveCategoryDtoService reserveCategoryDtoService;
+    private final PhysicalRequirementDtoService physicalRequirementDtoService;
 
     @Autowired
-    public ProductController(ExceptionHandlingService exceptionHandlingService, EntityManager entityManager, JwtUtil jwtTokenUtil, ProductService productService, RoleService roleService, JobGroupService jobGroupService, ProductStateService productStateService, ApplicationScopeService applicationScopeService, ProductReserveCategoryBornBeforeAfterRefService productReserveCategoryBornBeforeAfterRefService, ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService, ReserveCategoryService reserveCategoryService, ReserveCategoryDtoService reserveCategoryDtoService) {
+    DistrictService districtService;
+
+    @Autowired
+    ProductGenderPhysicalRequirementService productGenderPhysicalRequirementService;
+
+    @Autowired
+    GenderService genderService;
+
+    @Autowired
+    public ProductController(ExceptionHandlingService exceptionHandlingService, EntityManager entityManager, JwtUtil jwtTokenUtil, ProductService productService, RoleService roleService, JobGroupService jobGroupService, ProductStateService productStateService, ApplicationScopeService applicationScopeService, ProductReserveCategoryBornBeforeAfterRefService productReserveCategoryBornBeforeAfterRefService, ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService, ReserveCategoryService reserveCategoryService, ReserveCategoryDtoService reserveCategoryDtoService, PhysicalRequirementDtoService physicalRequirementDtoService) {
         this.exceptionHandlingService = exceptionHandlingService;
         this.entityManager = entityManager;
         this.jwtTokenUtil = jwtTokenUtil;
@@ -105,6 +123,7 @@ public class ProductController extends CatalogEndpoint {
         this.productReserveCategoryFeePostRefService = productReserveCategoryFeePostRefService;
         this.reserveCategoryService = reserveCategoryService;
         this.reserveCategoryDtoService = reserveCategoryDtoService;
+        this.physicalRequirementDtoService = physicalRequirementDtoService;
     }
 
     @Transactional
@@ -122,10 +141,6 @@ public class ProductController extends CatalogEndpoint {
             }
 
             Category category = productService.validateCategory(categoryId);
-            if (category == null || ((Status) category).getArchived() != 'Y') {
-                ResponseService.generateErrorResponse("CATEGORY NOT FOUND", HttpStatus.NOT_FOUND);
-            }
-
             productService.addProductDtoValidation(addProductDto);
 
             Product product = catalogService.createProduct(ProductType.PRODUCT);
@@ -141,46 +156,71 @@ public class ProductController extends CatalogEndpoint {
 
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); // Set active start date to current date and time in "yyyy-MM-dd HH:mm:ss" format
             String formattedDate = dateFormat.format(new Date());
-            Date activeStartDate = dateFormat.parse(formattedDate);
+            Date currentDate = dateFormat.parse(formattedDate);
 
             Sku sku = catalogService.createSku(); // Create a new Sku Object
-            sku.setActiveStartDate(activeStartDate);
+            sku.setActiveStartDate(addProductDto.getActiveStartDate());
             sku.setName(addProductDto.getMetaTitle());
             sku.setQuantityAvailable(addProductDto.getQuantity());
             sku.setDescription(addProductDto.getMetaDescription());
             sku.setActiveEndDate(addProductDto.getActiveEndDate());
             sku.setDefaultProduct(product);
-//            catalogService.saveSku(sku); // this was creating duplicate entries in the db.
 
             CustomJobGroup customJobGroup = productService.validateCustomJobGroup(addProductDto.getJobGroup());
             if (customJobGroup == null) {
-                ResponseService.generateErrorResponse("CUSTOM JOB GROUP NOT FOUND", HttpStatus.NOT_FOUND);
+                ResponseService.generateErrorResponse("Custom job group not found.", HttpStatus.NOT_FOUND);
             }
 
             CustomProductState customProductState = productStateService.getProductStateByName(PRODUCT_STATE_NEW);
             if (customProductState == null) {
-                ResponseService.generateErrorResponse("CUSTOM PRODUCT STATE NOT FOUND", HttpStatus.NOT_FOUND);
+                ResponseService.generateErrorResponse("Custom product state not found.", HttpStatus.NOT_FOUND);
             }
 
             product.setDefaultSku(sku); // Set default SKU in the product
 
             productService.validateReserveCategory(addProductDto);
+            CustomGender customGender = productService.validateGenderSpecificField(addProductDto);
+            CustomSector customSector = productService.validateSector(addProductDto);
+
+            productService.validateSelectionCriteria(addProductDto);
+
+            Qualification qualification = productService.validateQualification(addProductDto);
+            CustomStream customStream = productService.validateStream(addProductDto);
+            CustomSubject customSubject = productService.validateSubject(addProductDto);
+
+            productService.validateAdmitCardDates(addProductDto);
+            productService.validateModificationDates(addProductDto);
+            productService.validateLastDateToPayFee(addProductDto);
+
+            productService.validateLinks(addProductDto);
+            productService.validateFormComplexity(addProductDto);
 
             Role role = productService.getRoleByToken(authHeader);
             Long creatorUserId = productService.getUserIdByToken(authHeader);
 
-            productService.saveCustomProduct(product, addProductDto, customProductState, role, creatorUserId, product.getActiveStartDate()); // Save external product with provided dates and get status code
+            productService.saveCustomProduct(product, addProductDto, customProductState, role, creatorUserId, product.getActiveStartDate(), currentDate); // Save external product with provided dates and get status code
             productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getReservedCategory(), product);
             productReserveCategoryBornBeforeAfterRefService.saveBornBeforeAndBornAfter(addProductDto.getReservedCategory(), product);
 
-            CustomProductWrapper wrapper = new CustomProductWrapper();
             CustomJobGroup jobGroup = jobGroupService.getJobGroupById(addProductDto.getJobGroup());
             CustomApplicationScope applicationScope = applicationScopeService.getApplicationScopeById(addProductDto.getApplicationScope());
 
-            wrapper.wrapDetailsAddProduct(product, addProductDto, jobGroup, customProductState, applicationScope, creatorUserId, role, reserveCategoryService);
+            StateCode notifyingAuthority = null;
+            if (addProductDto.getState() != null) {
+                notifyingAuthority = districtService.getStateByStateId(addProductDto.getState());
+            }
+
+            productService.validatePhysicalRequirement(addProductDto, null);
+            productGenderPhysicalRequirementService.savePhysicalRequirement(addProductDto.getPhysicalRequirement(), product);
+
+            CustomProductWrapper wrapper = new CustomProductWrapper();
+            wrapper.wrapDetailsAddProduct(product, addProductDto, jobGroup, customProductState, applicationScope, creatorUserId, role, reserveCategoryService, notifyingAuthority, customGender, customSector, qualification, customStream, customSubject, currentDate);
 
             return ResponseService.generateSuccessResponse("PRODUCT ADDED SUCCESSFULLY", wrapper, HttpStatus.OK);
 
+        } catch (NumberFormatException numberFormatException) {
+            exceptionHandlingService.handleException(numberFormatException);
+            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + numberFormatException.getMessage(), HttpStatus.NOT_FOUND);
         } catch (IllegalArgumentException illegalArgumentException) {
             exceptionHandlingService.handleException(illegalArgumentException);
             return ResponseService.generateErrorResponse(illegalArgumentException.getMessage(), HttpStatus.BAD_REQUEST);
@@ -206,16 +246,22 @@ public class ProductController extends CatalogEndpoint {
             }
 
             CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
+            Product product = catalogService.findProductById(customProduct.getId());
+
             if (customProduct == null) {
                 return ResponseService.generateErrorResponse(Constant.PRODUCTNOTFOUND, HttpStatus.NOT_FOUND);
             }
 
             // Validations and checks.
-            if(addProductDto.getReservedCategory() != null) {
+            if (addProductDto.getReservedCategory() != null) {
                 productService.validateReserveCategory(addProductDto);
                 productService.deleteOldReserveCategoryMapping(customProduct);
             }
             productService.updateProductValidation(addProductDto, customProduct);
+            if(addProductDto.getPhysicalRequirement() != null) {
+                productService.validatePhysicalRequirement(addProductDto, customProduct);
+                productService.deleteOldPhysicalRequirement(customProduct);
+            }
 
             // Validation of getActiveEndDate and getGoLiveDate.
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); // Set active start date to current date and time in "yyyy-MM-dd HH:mm:ss" format
@@ -223,32 +269,54 @@ public class ProductController extends CatalogEndpoint {
             Date currentDate = dateFormat.parse(formattedDate); // Convert formatted date string back to Date
             customProduct.setModifiedDate(currentDate);
 
-            productService.validateAndSetActiveEndDateAndGoLiveDateFields(addProductDto, customProduct);
+            // Validate dates fields.
+            productService.validateAndSetActiveStartDate(addProductDto, customProduct, currentDate);
+            productService.validateAndSetActiveEndDate(addProductDto, customProduct, currentDate);
+            productService.validateAndSetGoLiveDate(addProductDto,  customProduct, currentDate);
+            productService.validateAndSetLastDateToPayFeeDate(addProductDto, customProduct, currentDate);
 
-            productService.validateAndSetExamDateFromAndExamDateToFields(addProductDto, customProduct);
-            productService.validateExamDateFromAndExamDateTo(addProductDto, customProduct);
+            productService.validateAndSetModifiedDates(addProductDto, customProduct, currentDate);
+            productService.validateAndSetAdmitCardDates(addProductDto, customProduct, currentDate);
+            productService.validateAndSetExamDates(addProductDto, customProduct, currentDate);
+
+//            productService.validateAndSetExamDateFromAndExamDateToFields(addProductDto, customProduct);
+//            productService.validateExamDateFromAndExamDateTo(addProductDto, customProduct);
+
             productService.validateProductState(addProductDto, customProduct, authHeader);
 
-            customProduct.setModifiedDate(new Date());
             customProduct.setModifierRole(roleService.getRoleByRoleId(jwtTokenUtil.extractRoleId(authHeader.substring(7))));
             customProduct.setModifierUserId(jwtTokenUtil.extractId(authHeader.substring(7)));
 
-            entityManager.persist(customProduct);
+            entityManager.merge(customProduct);
 
-            Product product = catalogService.findProductById(customProduct.getId());
-
-            productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getReservedCategory(), product);
-            productReserveCategoryBornBeforeAfterRefService.saveBornBeforeAndBornAfter(addProductDto.getReservedCategory(), product);
+            if (addProductDto.getReservedCategory() != null) {
+                productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getReservedCategory(), product);
+                productReserveCategoryBornBeforeAfterRefService.saveBornBeforeAndBornAfter(addProductDto.getReservedCategory(), product);
+            }
+            if(addProductDto.getPhysicalRequirement() != null) {
+                productGenderPhysicalRequirementService.savePhysicalRequirement(addProductDto.getPhysicalRequirement(), product);
+            }
+            if(addProductDto.getGenderSpecific()!=null){
+                if(addProductDto.getGenderSpecific() == 0) {
+                    customProduct.setGenderSpecific(null);
+                }else{
+                    customProduct.setGenderSpecific(genderService.getGenderByGenderId(addProductDto.getGenderSpecific()));
+                }
+            }
 
             List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(productId);
+            List<PhysicalRequirementDto> physicalRequirementDtoList = physicalRequirementDtoService.getPhysicalRequirementDto(productId);
 
             CustomProductWrapper wrapper = new CustomProductWrapper();
-            wrapper.wrapDetails(customProduct, reserveCategoryDtoList);
+            wrapper.wrapDetails(customProduct, reserveCategoryDtoList, physicalRequirementDtoList);
             return ResponseService.generateSuccessResponse("Product Updated Successfully", wrapper, HttpStatus.OK);
 
+        } catch (NumberFormatException numberFormatException) {
+            exceptionHandlingService.handleException(numberFormatException);
+            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + numberFormatException.getMessage(), HttpStatus.NOT_FOUND);
         } catch (IllegalArgumentException illegalArgumentException) {
             exceptionHandlingService.handleException(illegalArgumentException);
-            return ResponseService.generateErrorResponse(illegalArgumentException.getMessage(), HttpStatus.BAD_REQUEST);
+            return ResponseService.generateErrorResponse("Illegal Argument Exception: " + illegalArgumentException.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -281,7 +349,9 @@ public class ProductController extends CatalogEndpoint {
                 CustomProductWrapper wrapper = new CustomProductWrapper();
 
                 List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(productId);
-                wrapper.wrapDetails(customProduct, reserveCategoryDtoList);
+                List<PhysicalRequirementDto> physicalRequirementDtoList = physicalRequirementDtoService.getPhysicalRequirementDto(productId);
+
+                wrapper.wrapDetails(customProduct, reserveCategoryDtoList, physicalRequirementDtoList);
                 return ResponseService.generateSuccessResponse("PRODUCT FOUND", wrapper, HttpStatus.OK);
 
             } else {
@@ -290,7 +360,10 @@ public class ProductController extends CatalogEndpoint {
 
         } catch (NumberFormatException numberFormatException) {
             exceptionHandlingService.handleException(numberFormatException);
-            return ResponseService.generateErrorResponse(Constant.NUMBER_FORMAT_EXCEPTION + ": " + numberFormatException.getMessage(), HttpStatus.BAD_REQUEST);
+            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + numberFormatException.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException illegalArgumentException) {
+            exceptionHandlingService.handleException(illegalArgumentException);
+            return ResponseService.generateErrorResponse(Constant.NUMBER_FORMAT_EXCEPTION + ": " + illegalArgumentException.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -302,7 +375,6 @@ public class ProductController extends CatalogEndpoint {
     public ResponseEntity<?> retrieveProducts() {
 
         try {
-
             if (catalogService == null) {
                 return ResponseService.generateErrorResponse(Constant.CATALOG_SERVICE_NOT_INITIALIZED, HttpStatus.INTERNAL_SERVER_ERROR);
             }
@@ -333,6 +405,12 @@ public class ProductController extends CatalogEndpoint {
 
             return ResponseService.generateSuccessResponse(PRODUCTFOUNDSUCCESSFULLY, responses, HttpStatus.OK);
 
+        } catch (NumberFormatException numberFormatException) {
+            exceptionHandlingService.handleException(numberFormatException);
+            return ResponseService.generateErrorResponse(SOME_EXCEPTION_OCCURRED + ": " + numberFormatException.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException illegalArgumentException) {
+            exceptionHandlingService.handleException(illegalArgumentException);
+            return ResponseService.generateErrorResponse(SOME_EXCEPTION_OCCURRED + ": " + illegalArgumentException.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -340,6 +418,7 @@ public class ProductController extends CatalogEndpoint {
     }
 
     @DeleteMapping("/delete/{productId}")
+    @Transactional
     public ResponseEntity<?> deleteProduct(@PathVariable("productId") String productIdPath) {
         try {
 
@@ -361,10 +440,13 @@ public class ProductController extends CatalogEndpoint {
 
         } catch (NumberFormatException numberFormatException) {
             exceptionHandlingService.handleException(numberFormatException);
-            return ResponseService.generateErrorResponse(Constant.NUMBER_FORMAT_EXCEPTION + ": " + numberFormatException.getMessage(), HttpStatus.BAD_REQUEST);
+            return ResponseService.generateErrorResponse(SOME_EXCEPTION_OCCURRED + ": " + numberFormatException.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException illegalArgumentException) {
+            exceptionHandlingService.handleException(illegalArgumentException);
+            return ResponseService.generateErrorResponse(SOME_EXCEPTION_OCCURRED + ": " + illegalArgumentException.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
-            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseService.generateErrorResponse(SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -393,8 +475,11 @@ public class ProductController extends CatalogEndpoint {
 
                     if ((((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date())) && customProduct.getProductState().getProductState().equals(PRODUCT_STATE_NEW)) {
 
+                        List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(customProduct.getId());
+                        List<PhysicalRequirementDto> physicalRequirementDtoList = physicalRequirementDtoService.getPhysicalRequirementDto(customProduct.getId());
+
                         CustomProductWrapper wrapper = new CustomProductWrapper();
-                        wrapper.wrapDetails(customProduct);
+                        wrapper.wrapDetails(customProduct, reserveCategoryDtoList, physicalRequirementDtoList);
 
                         responses.add(wrapper);
                     }
@@ -463,6 +548,16 @@ public class ProductController extends CatalogEndpoint {
             @RequestParam(value = "reserve_categories", required = false) List<Long> reserveCategories) {
 
         try {
+
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); // Set active start date to current date and time in "yyyy-MM-dd HH:mm:ss" format
+            if(dateFrom != null) {
+                String formattedDateFrom = dateFormat.format(dateFrom);
+                dateFrom = dateFormat.parse(formattedDateFrom);
+            }
+            if(dateTo != null) {
+                String formattedDateTo = dateFormat.format(dateTo);
+                dateTo = dateFormat.parse(formattedDateTo);
+            }
             List<CustomProduct> products = productService.filterProducts(state, categories, reserveCategories, title, fee, post, dateFrom, dateTo);
 
             if (products.isEmpty()) {
@@ -486,9 +581,65 @@ public class ProductController extends CatalogEndpoint {
 
             return ResponseService.generateSuccessResponse("PRODUCTS RETRIEVED SUCCESSFULLY", responses, HttpStatus.OK);
 
+        } catch (NumberFormatException numberFormatException) {
+            exceptionHandlingService.handleException(numberFormatException);
+            return ResponseService.generateErrorResponse(SOME_EXCEPTION_OCCURRED + ": " + numberFormatException.getMessage(), HttpStatus.NOT_FOUND);
+        } catch (IllegalArgumentException illegalArgumentException) {
+            exceptionHandlingService.handleException(illegalArgumentException);
+            return ResponseService.generateErrorResponse(SOME_EXCEPTION_OCCURRED + ": " + illegalArgumentException.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return ResponseService.generateErrorResponse("SOME EXCEPTION OCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @GetMapping("/get-all")
+    public ResponseEntity<?> getAllProducts(
+            @RequestHeader(value = "Authorization") String authHeader,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit) {
+
+        try {
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseService.generateErrorResponse("Authorization header is missing or invalid.", HttpStatus.UNAUTHORIZED);
+            }
+
+            String jwtToken = authHeader.substring(7);
+
+            Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
+            Long userId = jwtTokenUtil.extractId(jwtToken);
+            List<CustomProduct> products = productService.filterProductsByRoleAndUserId(roleId, userId, page, limit);
+            long totalProducts = productService.countTotalProducts(roleId, userId);
+
+            if (products.isEmpty()) {
+                return ResponseService.generateSuccessResponse("PRODUCT LIST IS EMPTY",products, HttpStatus.OK);
+            }
+
+            List<CustomProductWrapper> responses = new ArrayList<>();
+            for (CustomProduct customProduct : products) {
+                if (customProduct != null && (((Status) customProduct).getArchived() != 'Y')) {
+                    CustomProductWrapper wrapper = new CustomProductWrapper();
+                    wrapper.wrapDetails(customProduct);
+                    responses.add(wrapper);
+                }
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("products", responses);
+            response.put("currentPage", page);
+            response.put("totalItems", totalProducts);
+            response.put("totalPages", (int) Math.ceil((double) totalProducts / limit));
+
+            return ResponseService.generateSuccessResponse("PRODUCTS RETRIEVED SUCCESSFULLY", response, HttpStatus.OK);
+
+        }catch(IllegalArgumentException illegalArgumentException)
+        {
+            return ResponseService.generateErrorResponse(illegalArgumentException.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+        catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return ResponseService.generateErrorResponse("EXCEPTION OCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
 }

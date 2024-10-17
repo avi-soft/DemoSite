@@ -59,7 +59,7 @@ public class ServiceProviderTest {
     @Column(name ="is_image_test_passed")
     private Boolean is_image_test_passed;
 
-    @Column(name ="is_signature_test_passed")
+    @Column(name ="is_test_completed")
     private Boolean is_test_completed;
 
     @Column(name = "submitted_at")

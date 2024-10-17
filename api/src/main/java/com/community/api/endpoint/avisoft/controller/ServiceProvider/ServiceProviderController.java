@@ -2,6 +2,8 @@ package com.community.api.endpoint.avisoft.controller.ServiceProvider;
 
 import com.community.api.component.Constant;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
+import com.community.api.entity.CustomCustomer;
+import com.community.api.entity.CustomerReferrer;
 import com.community.api.services.DistrictService;
 import com.community.api.services.ResponseService;
 import com.community.api.entity.ServiceProviderAddress;
@@ -10,6 +12,7 @@ import com.community.api.entity.Skill;
 import com.community.api.services.*;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
 import com.community.api.services.exception.ExceptionHandlingImplement;
+import com.community.api.utils.ServiceProviderDocument;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,10 +28,7 @@ import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 import javax.validation.ConstraintViolationException;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @RestController
 @RequestMapping("/service-providers")
@@ -70,6 +70,8 @@ public class ServiceProviderController {
             serviceProviderEntity.setSkills(listOfSkills);
             entityManager.merge(serviceProviderEntity);
             return responseService.generateSuccessResponse("Skill assigned to service provider id : " + serviceProviderEntity.getService_provider_id(), serviceProviderEntity, HttpStatus.OK);
+        }  catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error assigning skill: " + e.getMessage());
@@ -79,7 +81,12 @@ public class ServiceProviderController {
     @PatchMapping("save-service-provider")
     public ResponseEntity<?> updateServiceProvider(@RequestParam Long userId, @RequestBody Map<String, Object> serviceProviderDetails) throws Exception {
         try {
+            ServiceProviderEntity serviceProvider=entityManager.find(ServiceProviderEntity.class,userId);
+            if(serviceProvider==null)
+                return ResponseService.generateErrorResponse("Service Provider with provided Id not found",HttpStatus.NOT_FOUND);
             return serviceProviderService.updateServiceProvider(userId, serviceProviderDetails);
+        }  catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Some error updating: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -96,6 +103,8 @@ public class ServiceProviderController {
             else
                 entityManager.remove(serviceProviderToBeDeleted);
             return responseService.generateSuccessResponse("Service Provider Deleted", null, HttpStatus.OK);
+        }  catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error deleting: " + e.getMessage());
@@ -132,6 +141,8 @@ public class ServiceProviderController {
                 return responseService.generateErrorResponse("Old Password and new Password cannot be same", HttpStatus.BAD_REQUEST);
             }/*else
                     return new ResponseEntity<>("Password do not match", HttpStatus.BAD_REQUEST);*/
+        }  catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Error changing/updating password: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -146,6 +157,8 @@ public class ServiceProviderController {
                 throw new Exception("ServiceProvider with ID " + userId + " not found");
             }
             return ResponseEntity.ok(serviceProviderEntity);
+        }  catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Some fetching account " + e.getMessage());
@@ -172,7 +185,9 @@ public class ServiceProviderController {
             entityManager.persist(serviceProviderAddress);
             entityManager.merge(existingServiceProvider);
             return responseService.generateSuccessResponse("Address added successfully", serviceProviderAddress, HttpStatus.OK);
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }  catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error adding address " + e.getMessage());
         }
@@ -183,7 +198,9 @@ public class ServiceProviderController {
         try {
             TypedQuery<ServiceProviderAddressRef> query = entityManager.createQuery(Constant.jpql, ServiceProviderAddressRef.class);
             return responseService.generateSuccessResponse("List of addresses : ", query.getResultList(), HttpStatus.OK);
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }  catch (Exception e) {
             exceptionHandling.handleException(e);
             return responseService.generateErrorResponse("Some issue in fetching addressNames " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
@@ -204,8 +221,17 @@ public class ServiceProviderController {
             query.setFirstResult(startPosition);
             query.setMaxResults(limit);
             List<ServiceProviderEntity> results = query.getResultList();
-            return ResponseService.generateSuccessResponse("List of service providers: ", results, HttpStatus.OK);
-        } catch (Exception e) {
+            List<Map<String,Object>>resultOfSp=new ArrayList<>();
+            for(ServiceProviderEntity serviceProvider: results)
+            {
+                resultOfSp.add(sharedUtilityService.serviceProviderDetailsMap(serviceProvider));
+            }
+
+
+            return ResponseService.generateSuccessResponse("List of service providers: ", resultOfSp, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }  catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Some issue in fetching service providers: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
@@ -220,8 +246,11 @@ public class ServiceProviderController {
                 return ResponseService.generateErrorResponse("Service provider does not found", HttpStatus.NOT_FOUND);
             }
 
-            return ResponseService.generateSuccessResponse("Service Provider details retrieved successfully", serviceProviderEntity, HttpStatus.OK);
-        } catch (Exception e) {
+            Map<String,Object> serviceProviderMap= sharedUtilityService.serviceProviderDetailsMap(serviceProviderEntity);
+            return ResponseService.generateSuccessResponse("Service Provider details retrieved successfully", serviceProviderMap, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }  catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Some issue in fetching service provider details " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
@@ -251,6 +280,8 @@ public class ServiceProviderController {
             }
 
             return ResponseService.generateSuccessResponse("List of service providers with completed test status: ", results, HttpStatus.OK);
+        }  catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Some issue in fetching service providers: " + e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -265,38 +296,34 @@ public class ServiceProviderController {
                                                    @RequestParam(required = false) String last_name,
                                                    @RequestParam(required = false) String mobileNumber) {
         try {
-
+            if(first_name==null&&last_name==null&&state==null&&district==null&&mobileNumber==null)
+            {
+                return ResponseService.generateErrorResponse("Need to provide atleast one search filter",HttpStatus.BAD_REQUEST);
+            }
             return ResponseService.generateSuccessResponse("Service Providers", serviceProviderService.searchServiceProviderBasedOnGivenFields(state, district, first_name, last_name, mobileNumber), HttpStatus.OK);
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }  catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Some issue in fetching service provider details " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
     }
-
+    @Transactional
     @GetMapping("/show-referred-candidates/{service_provider_id}")
     public ResponseEntity<?> showRefferedCandidates (@PathVariable Long service_provider_id){
         try {
-            Query query = entityManager.createNativeQuery(Constant.GET_SP_REFERRED_CANDIDATES);
-            query.setParameter("service_provider_id", service_provider_id);
-
-            // Directly get a list of BigInteger instead of Object[]
-            List<BigInteger> results = query.getResultList();
-            List<Long> customerIds = new ArrayList<>();
-
-            for (BigInteger result : results) {
-                customerIds.add(result.longValue()); // Convert BigInteger to Long
-            }
-
+            ServiceProviderEntity serviceProvider=entityManager.find(ServiceProviderEntity.class,service_provider_id);
+            if(serviceProvider==null)
+                return ResponseService.generateErrorResponse("Service Provider not found",HttpStatus.NOT_FOUND);
             List<Map<String, Object>> customers = new ArrayList<>();
-            for (long id : customerIds) {
-                Customer customer = customerService.readCustomerById(id);
-                if (customer != null) {
-                    customers.add(sharedUtilityService.breakReferenceForCustomer(customer));
-                }
+            for(CustomerReferrer customerReferrer:serviceProvider.getMyReferrals())
+            {
+                customers.add(sharedUtilityService.breakReferenceForCustomer(customerReferrer.getCustomer()));
             }
-
             return ResponseService.generateSuccessResponse("List of referred candidates is : ", customers, HttpStatus.OK);
-        } catch (Exception e) {
+        } catch (IllegalArgumentException e) {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }  catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Some issue in fetching candidates: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
