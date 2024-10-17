@@ -78,6 +78,7 @@ public class ServiceProviderController {
         }
     }
 
+    @Transactional
     @PatchMapping("save-service-provider")
     public ResponseEntity<?> updateServiceProvider(@RequestParam Long userId, @RequestBody Map<String, Object> serviceProviderDetails) throws Exception {
         try {
