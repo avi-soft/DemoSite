@@ -203,36 +203,38 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
             Integer totalScore=0;
             ScoringCriteria scoringCriteriaToMap =null;
-            if(updates.containsKey("skill_list"))
-            {
-                List<Skill> skills=existingServiceProvider.getSkills();
-                int totalSkills=skills.size();
-                if(totalSkills<=4)
+
+            if (updates.containsKey("has_technical_knowledge")) {
+                if (updates.containsKey("skill_list") && updates.get("has_technical_knowledge").equals(true))
                 {
-                    scoringCriteriaToMap=traverseListOfScoringCriteria(8L,scoringCriteriaList,existingServiceProvider);
-                    if(scoringCriteriaToMap==null)
-                    {
-                        return ResponseService.generateErrorResponse("Scoring Criteria is not found for Technical Expertise Score", HttpStatus.BAD_REQUEST);
+                    List<Integer> skillListToGet = getIntegerList(updates, "skill_list");
+                    int totalSkills = skillListToGet.size();
+                    if (totalSkills <= 4) {
+                        scoringCriteriaToMap = traverseListOfScoringCriteria(8L, scoringCriteriaList, existingServiceProvider);
+                        if (scoringCriteriaToMap == null) {
+                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for Technical Expertise Score", HttpStatus.BAD_REQUEST);
+                        } else {
+                            Integer totalTechnicalScores = totalSkills * scoringCriteriaToMap.getScore();
+                            existingServiceProvider.setTechnicalExpertiseScore(totalTechnicalScores);
+                            scoringCriteriaToMap = null;
+                        }
                     }
-                    else {
-                        Integer totalTechnicalScores=totalSkills * scoringCriteriaToMap.getScore();
-                        existingServiceProvider.setTechnicalExpertiseScore(totalTechnicalScores);
-                        scoringCriteriaToMap=null;
+                    if (totalSkills >= 5) {
+                        scoringCriteriaToMap = traverseListOfScoringCriteria(9L, scoringCriteriaList, existingServiceProvider);
+                        if (scoringCriteriaToMap == null) {
+                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for Technical Expertise Score", HttpStatus.BAD_REQUEST);
+                        } else {
+                            existingServiceProvider.setTechnicalExpertiseScore(scoringCriteriaToMap.getScore());
+                            scoringCriteriaToMap = null;
+                        }
                     }
                 }
-                if(totalSkills>=5)
+                else if(updates.containsKey("skill_list") && updates.get("has_technical_knowledge").equals(false))
                 {
-                    scoringCriteriaToMap=traverseListOfScoringCriteria(9L,scoringCriteriaList,existingServiceProvider);
-                    if(scoringCriteriaToMap==null)
-                    {
-                        return ResponseService.generateErrorResponse("Scoring Criteria is not found for Technical Expertise Score", HttpStatus.BAD_REQUEST);
-                    }
-                    else {
-                        existingServiceProvider.setTechnicalExpertiseScore(scoringCriteriaToMap.getScore());
-                        scoringCriteriaToMap=null;
-                    }
+                    existingServiceProvider.setTechnicalExpertiseScore(0);
                 }
             }
+
         if (!infraList.isEmpty()) {
             for (int infra_id : infraList) {
                 ServiceProviderInfra serviceProviderInfrastructure = entityManager.find(ServiceProviderInfra.class, infra_id);

@@ -323,6 +323,7 @@ public class SharedUtilityService {
                     qualificationInfo.put("grade_or_percentage_value", qualificationDetail.getGrade_or_percentage_value());
                     qualificationInfo.put("marks_total", qualificationDetail.getTotal_marks());
                     qualificationInfo.put("marks_obtained", qualificationDetail.getMarks_obtained());
+                    qualificationInfo.put("qualification_id",qualificationDetail.getQualification_id());
 
                     // Replace the qualification_id with qualification_name
                     if (qualification != null) {
