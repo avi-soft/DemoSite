@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import java.util.List;
@@ -45,5 +46,30 @@ public class ReserveCategoryService {
             return null;
         }
 
+    }
+    public CustomReserveCategory getCategoryByName(String name)
+    {
+        try
+        {
+            return entityManager.createQuery(Constant.GET_RESERVE_CATEGORY_BY_ID, CustomReserveCategory.class)
+                    .setParameter("name", name)
+                    .getResultStream()
+                    .findFirst()
+                    .orElse(null);
+        }catch(Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return null;
+        }
+    }
+    public Double getReserveCategoryFee(Long pid, Long reserveCategoryId) {
+        Query query = entityManager.createNativeQuery(Constant.GET_RESERVE_CATEGORY_FEE);
+        query.setParameter("pid", pid);
+        query.setParameter("reserveCategoryId", reserveCategoryId);
+
+        try {
+            return (Double) query.getSingleResult();
+        } catch (NoResultException e) {
+            return null; // Return null if no result is found
+        }
     }
 }

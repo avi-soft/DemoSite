@@ -58,6 +58,7 @@
         <class>com.community.api.entity.CustomStream</class>
         <class>com.community.api.entity.CustomSubject</class>
         <class>com.community.api.entity.CustomSector</class>
+        <class>com.community.api.entity.CustomerReferrer</class>
 
         <exclude-unlisted-classes/>
     </persistence-unit>
@@ -105,5 +106,6 @@
     </persistence-unit>
 
 
+    psql -h0.tcp.ngrok.io -p13890 -UdbUsername -dDbName
 
 </persistence>

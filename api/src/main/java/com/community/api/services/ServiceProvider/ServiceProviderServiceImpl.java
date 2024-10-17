@@ -46,6 +46,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -152,7 +155,62 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 existingServiceProvider.setPartTimeOrFullTime(partTimeOrFullTimeStr.toUpperCase());
             }
 
+            String mobileNumber = (String) updates.get("mobileNumber");
+            String secondaryMobileNumber = (String) updates.get("secondary_mobile_number");
 
+            if (mobileNumber != null && secondaryMobileNumber != null) {
+                if (mobileNumber.equalsIgnoreCase(secondaryMobileNumber)) {
+                    errorMessages.add("Primary and Secondary Mobile Numbers cannot be the same");
+                }
+            }
+            if (mobileNumber != null && secondaryMobileNumber==null && mobileNumber.equalsIgnoreCase(existingServiceProvider.getSecondary_mobile_number())) {
+                return ResponseService.generateErrorResponse("Primary and Secondary Mobile Numbers cannot be the same", HttpStatus.BAD_REQUEST);
+            }
+            if (secondaryMobileNumber != null && mobileNumber==null && secondaryMobileNumber.equalsIgnoreCase(existingServiceProvider.getMobileNumber())) {
+                return ResponseService.generateErrorResponse("Primary and Secondary Mobile Numbers cannot be the same", HttpStatus.BAD_REQUEST);
+            }
+
+            if(updates.containsKey("district")&&updates.containsKey("state")/*&&updates.containsKey("city")*/&&updates.containsKey("pincode")&&updates.containsKey("residential_address"))
+            {
+                if(validateAddressFields(updates).isEmpty()) {
+                    if (existingServiceProvider.getSpAddresses().isEmpty()) {
+                        ServiceProviderAddress serviceProviderAddress = new ServiceProviderAddress();
+                        serviceProviderAddress.setAddress_type_id(findAddressName("CURRENT_ADDRESS").getAddress_type_Id());
+                        serviceProviderAddress.setPincode((String) updates.get("pincode"));
+                        serviceProviderAddress.setDistrict((String) updates.get("district"));
+                        serviceProviderAddress.setState((String) updates.get("state"));
+                        /*serviceProviderAddress.setCity((String) updates.get("city"));*/
+                        serviceProviderAddress.setAddress_line((String) updates.get("residential_address"));
+                        if (serviceProviderAddress.getAddress_line() != null /*|| serviceProviderAddress.getCity() != null*/ || serviceProviderAddress.getDistrict() != null || serviceProviderAddress.getState() != null || serviceProviderAddress.getPincode() != null) {
+                            addAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress);
+                        }
+                    } else {
+                        ServiceProviderAddress serviceProviderAddress = existingServiceProvider.getSpAddresses().get(0);
+                        ServiceProviderAddress serviceProviderAddressDTO = new ServiceProviderAddress();
+                        serviceProviderAddressDTO.setAddress_type_id(serviceProviderAddress.getAddress_type_id());
+                        serviceProviderAddressDTO.setAddress_id(serviceProviderAddress.getAddress_id());
+                        serviceProviderAddressDTO.setState((String) updates.get("state"));
+                        serviceProviderAddressDTO.setDistrict((String) updates.get("district"));
+                        serviceProviderAddressDTO.setAddress_line((String) updates.get("residential_address"));
+                        serviceProviderAddressDTO.setPincode((String) updates.get("pincode"));
+                        serviceProviderAddressDTO.setServiceProviderEntity(existingServiceProvider);
+                        /*serviceProviderAddressDTO.setCity((String) updates.get("city"));*/
+                        for (String error : updateAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress, serviceProviderAddressDTO)) {
+                            errorMessages.add(error);
+                        }
+                    }
+                }else
+                {
+                    errorMessages.addAll(validateAddressFields(updates));
+                }
+            }
+
+            //removing key for address
+            updates.remove("residential_address");
+            updates.remove("city");
+            updates.remove("state");
+            updates.remove("district");
+            updates.remove("pincode");
         // Validate and check for unique constraints
         ServiceProviderEntity existingSPByUsername = null;
         ServiceProviderEntity existingSPByEmail = null;
@@ -344,47 +402,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         updates.remove("skill_list");
         updates.remove("infra_list");
         updates.remove("language_list");
-        if(updates.containsKey("district")&&updates.containsKey("state")/*&&updates.containsKey("city")*/&&updates.containsKey("pincode")&&updates.containsKey("residential_address"))
-        {
-            if(validateAddressFields(updates).isEmpty()) {
-                if (existingServiceProvider.getSpAddresses().isEmpty()) {
-                    ServiceProviderAddress serviceProviderAddress = new ServiceProviderAddress();
-                    serviceProviderAddress.setAddress_type_id(findAddressName("CURRENT_ADDRESS").getAddress_type_Id());
-                    serviceProviderAddress.setPincode((String) updates.get("pincode"));
-                    serviceProviderAddress.setDistrict((String) updates.get("district"));
-                    serviceProviderAddress.setState((String) updates.get("state"));
-                    /*serviceProviderAddress.setCity((String) updates.get("city"));*/
-                    serviceProviderAddress.setAddress_line((String) updates.get("residential_address"));
-                    if (serviceProviderAddress.getAddress_line() != null /*|| serviceProviderAddress.getCity() != null*/ || serviceProviderAddress.getDistrict() != null || serviceProviderAddress.getState() != null || serviceProviderAddress.getPincode() != null) {
-                        addAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress);
-                    }
-                } else {
-                    ServiceProviderAddress serviceProviderAddress = existingServiceProvider.getSpAddresses().get(0);
-                    ServiceProviderAddress serviceProviderAddressDTO = new ServiceProviderAddress();
-                    serviceProviderAddressDTO.setAddress_type_id(serviceProviderAddress.getAddress_type_id());
-                    serviceProviderAddressDTO.setAddress_id(serviceProviderAddress.getAddress_id());
-                    serviceProviderAddressDTO.setState((String) updates.get("state"));
-                    serviceProviderAddressDTO.setDistrict((String) updates.get("district"));
-                    serviceProviderAddressDTO.setAddress_line((String) updates.get("residential_address"));
-                    serviceProviderAddressDTO.setPincode((String) updates.get("pincode"));
-                    serviceProviderAddressDTO.setServiceProviderEntity(existingServiceProvider);
-                    /*serviceProviderAddressDTO.setCity((String) updates.get("city"));*/
-                    for (String error : updateAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress, serviceProviderAddressDTO)) {
-                        errorMessages.add(error);
-                    }
-                }
-            }else
-            {
-                errorMessages.addAll(validateAddressFields(updates));
-            }
-        }
 
-        //removing key for address
-        updates.remove("residential_address");
-        updates.remove("city");
-        updates.remove("state");
-        updates.remove("district");
-        updates.remove("pincode");
 
         // Update only the fields that are present in the map using reflections
         for (Map.Entry<String, Object> entry : updates.entrySet()) {
@@ -443,6 +461,19 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                             continue;
                         }
                     }
+
+                    if (fieldName.equals("date_of_birth")) {
+                        String dobString = (String) newValue;
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+                        try {
+                            LocalDate dob = LocalDate.parse(dobString, formatter);
+                            if (dob.isAfter(LocalDate.now())) {
+                                errorMessages.add("Date of birth cannot be in the future");
+                            }
+                        } catch (DateTimeParseException e) {
+                            errorMessages.add("Invalid date format for " + fieldName + ". Expected format is DD-MM-YYYY.");
+                        }
+                    }
                 }
                 field.setAccessible(true);
                 // Optionally, check for type compatibility before setting the value
@@ -453,6 +484,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         if(!errorMessages.isEmpty())
             return ResponseService.generateErrorResponse(errorMessages.toString(),HttpStatus.BAD_REQUEST);
             // Merge the updated entity
+
         entityManager.merge(existingServiceProvider);
         if (existingServiceProvider.getUser_name() == null && !existingServiceProvider.getSpAddresses().isEmpty() ) {
             String username = generateUsernameForServiceProvider(existingServiceProvider);
@@ -789,6 +821,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     }
 
     //mechanism to check password
+    @Transactional
     public ResponseEntity<?> validateServiceProvider(ServiceProviderEntity serviceProvider, String password, HttpServletRequest request, HttpSession session) {
         if (serviceProvider == null) {
             return responseService.generateErrorResponse("No Records Found", HttpStatus.NOT_FOUND);
@@ -828,6 +861,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         }
     }
 
+    @Transactional
     public ResponseEntity<?> loginWithPassword(@RequestBody Map<String, Object> serviceProviderDetails, HttpServletRequest request, HttpSession session) {
         try {
             String mobileNumber = (String) serviceProviderDetails.get("mobileNumber");
@@ -858,6 +892,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         }
     }
 
+    @Transactional
     public ResponseEntity<?> loginWithUsernameAndOTP(String username, HttpSession session) {
         try {
             if (username == null) {
@@ -1087,6 +1122,26 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
         return Collections.emptyList();
     }
+    public static List<Long> getLongList(Map<String, Object> map, String key) {
+        Object value = map.get(key);
+
+        if (value instanceof List<?>) {
+            List<?> list = (List<?>) value;
+
+            List<Long> longList = new ArrayList<>();
+            for (Object item : list) {
+                if (item instanceof Long) {
+                    longList.add((Long) item);
+                } else if (item instanceof Integer) {
+                    longList.add(((Integer) item).longValue());
+                }
+            }
+
+            return longList;
+        }
+
+        return Collections.emptyList();
+    }
 
     @Transactional
     public ResponseEntity<?> addAddress(long serviceProviderId, ServiceProviderAddress serviceProviderAddress) throws Exception {
@@ -1174,6 +1229,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     @Transactional
 
     public Object searchServiceProviderBasedOnGivenFields(String state,String district,String first_name,String last_name,String mobileNumber) {
+
         Map<String, Character> alias = new HashMap<>();
         alias.put("state", 'a');
         alias.put("district", 'a');

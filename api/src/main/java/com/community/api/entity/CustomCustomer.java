@@ -12,6 +12,7 @@ import lombok.Setter;
 import org.broadleafcommerce.profile.core.domain.CustomerImpl;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -204,6 +205,13 @@ public class CustomCustomer extends CustomerImpl {
     @Column(name = "disability_handicapped")
     private Boolean disability=false;
 
+
+ @Column(name = "disability_type")
+    private String disabilityType;
+
+    @Column(name="percentage_of_disability")
+    private Double disabilityPercentage=0.0;
+
     @Column(name = "is_ex_service_man")
     private Boolean exService=false;
 
@@ -216,14 +224,10 @@ public class CustomCustomer extends CustomerImpl {
     @Column(name = "visible_identification_mark_2")
     private String identificationMark2;
 
-    @Nullable
-//    @JsonManagedReference("referrerServiceProvider-customer")
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "customer_referrer",
-            joinColumns = @JoinColumn(name = "customer_id"),
-            inverseJoinColumns = @JoinColumn(name = "service_provider_id"))
-    private ServiceProviderEntity ReferrerServiceProvider;
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CustomerReferrer> myReferrer = new ArrayList<>();
 
 
+    @Column(name = "order_count")
+    private Integer numberOfOrders;
 }

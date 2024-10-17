@@ -21,6 +21,7 @@ import com.community.api.entity.Qualification;
 import com.community.api.entity.Role;
 import com.community.api.entity.StateCode;
 import com.community.api.services.DistrictService;
+import com.community.api.services.GenderService;
 import com.community.api.services.PhysicalRequirementDtoService;
 import com.community.api.services.ProductGenderPhysicalRequirementService;
 import com.community.api.services.ResponseService;
@@ -64,9 +65,7 @@ import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import static com.community.api.component.Constant.*;
 
@@ -106,6 +105,9 @@ public class ProductController extends CatalogEndpoint {
 
     @Autowired
     ProductGenderPhysicalRequirementService productGenderPhysicalRequirementService;
+
+    @Autowired
+    GenderService genderService;
 
     @Autowired
     public ProductController(ExceptionHandlingService exceptionHandlingService, EntityManager entityManager, JwtUtil jwtTokenUtil, ProductService productService, RoleService roleService, JobGroupService jobGroupService, ProductStateService productStateService, ApplicationScopeService applicationScopeService, ProductReserveCategoryBornBeforeAfterRefService productReserveCategoryBornBeforeAfterRefService, ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService, ReserveCategoryService reserveCategoryService, ReserveCategoryDtoService reserveCategoryDtoService, PhysicalRequirementDtoService physicalRequirementDtoService) {
@@ -208,7 +210,7 @@ public class ProductController extends CatalogEndpoint {
                 notifyingAuthority = districtService.getStateByStateId(addProductDto.getState());
             }
 
-            productService.validatePhysicalRequirement(addProductDto);
+            productService.validatePhysicalRequirement(addProductDto, null);
             productGenderPhysicalRequirementService.savePhysicalRequirement(addProductDto.getPhysicalRequirement(), product);
 
             CustomProductWrapper wrapper = new CustomProductWrapper();
@@ -257,7 +259,7 @@ public class ProductController extends CatalogEndpoint {
             }
             productService.updateProductValidation(addProductDto, customProduct);
             if(addProductDto.getPhysicalRequirement() != null) {
-                productService.validatePhysicalRequirement(addProductDto);
+                productService.validatePhysicalRequirement(addProductDto, customProduct);
                 productService.deleteOldPhysicalRequirement(customProduct);
             }
 
@@ -293,6 +295,13 @@ public class ProductController extends CatalogEndpoint {
             }
             if(addProductDto.getPhysicalRequirement() != null) {
                 productGenderPhysicalRequirementService.savePhysicalRequirement(addProductDto.getPhysicalRequirement(), product);
+            }
+            if(addProductDto.getGenderSpecific()!=null){
+                if(addProductDto.getGenderSpecific() == 0) {
+                    customProduct.setGenderSpecific(null);
+                }else{
+                    customProduct.setGenderSpecific(genderService.getGenderByGenderId(addProductDto.getGenderSpecific()));
+                }
             }
 
             List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(productId);
@@ -581,6 +590,55 @@ public class ProductController extends CatalogEndpoint {
         } catch (Exception exception) {
             exceptionHandlingService.handleException(exception);
             return ResponseService.generateErrorResponse("SOME EXCEPTION OCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GetMapping("/get-all")
+    public ResponseEntity<?> getAllProducts(
+            @RequestHeader(value = "Authorization") String authHeader,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int limit) {
+
+        try {
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                return ResponseService.generateErrorResponse("Authorization header is missing or invalid.", HttpStatus.UNAUTHORIZED);
+            }
+
+            String jwtToken = authHeader.substring(7);
+
+            Integer roleId = jwtTokenUtil.extractRoleId(jwtToken);
+            Long userId = jwtTokenUtil.extractId(jwtToken);
+            List<CustomProduct> products = productService.filterProductsByRoleAndUserId(roleId, userId, page, limit);
+            long totalProducts = productService.countTotalProducts(roleId, userId);
+
+            if (products.isEmpty()) {
+                return ResponseService.generateSuccessResponse("PRODUCT LIST IS EMPTY",products, HttpStatus.OK);
+            }
+
+            List<CustomProductWrapper> responses = new ArrayList<>();
+            for (CustomProduct customProduct : products) {
+                if (customProduct != null && (((Status) customProduct).getArchived() != 'Y')) {
+                    CustomProductWrapper wrapper = new CustomProductWrapper();
+                    wrapper.wrapDetails(customProduct);
+                    responses.add(wrapper);
+                }
+            }
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("products", responses);
+            response.put("currentPage", page);
+            response.put("totalItems", totalProducts);
+            response.put("totalPages", (int) Math.ceil((double) totalProducts / limit));
+
+            return ResponseService.generateSuccessResponse("PRODUCTS RETRIEVED SUCCESSFULLY", response, HttpStatus.OK);
+
+        }catch(IllegalArgumentException illegalArgumentException)
+        {
+            return ResponseService.generateErrorResponse(illegalArgumentException.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+        catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return ResponseService.generateErrorResponse("EXCEPTION OCCURRED: " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
