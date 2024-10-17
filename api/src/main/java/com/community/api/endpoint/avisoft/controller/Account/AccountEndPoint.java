@@ -145,6 +145,12 @@ public class AccountEndPoint {
         }
     }
 
+//    @PostMapping("/admin-login-with-otp")
+//    @ResponseBody
+//    public ResponseEntity<?> verifyAndLoginAdmin(@RequestBody Map<String, Object> loginDetails, HttpSession session)
+//    {
+//
+//    }
 
     @PostMapping("/login-with-password")
     @ResponseBody

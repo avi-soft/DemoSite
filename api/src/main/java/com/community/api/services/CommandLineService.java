@@ -305,5 +305,13 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(new ServiceProviderRank(4L, "Average", "The service provider's performance was satisfactory but could improve in certain areas.", now, now, "SUPER_ADMIN"));
             entityManager.persist(new ServiceProviderRank(5L, "Low", "The service provider's performance did not meet the required criteria.", now, now, "SUPER_ADMIN"));
         }
+
+        count= entityManager.createQuery("SELECT count(e) FROM CustomAdmin e", Long.class).getSingleResult();
+        if(count==0)
+        {
+            entityManager.merge(new CustomAdmin(1L,2,"1234","7740066387",now,"SUPER_ADMIN"));
+            entityManager.merge(new CustomAdmin(2L,1,"1234","9872548680",now,"SUPER_ADMIN"));
+            entityManager.merge(new CustomAdmin(3L,3,"1234","7710393096",now,"SUPER_ADMIN"));
+        }
     }
 }
