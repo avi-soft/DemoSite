@@ -87,7 +87,6 @@ public class OtpEndpoint {
             String mobileNumber = customerDetails.getMobileNumber().startsWith("0")
                     ? customerDetails.getMobileNumber().substring(1)
                     : customerDetails.getMobileNumber();
-
             String countryCode = customerDetails.getCountryCode() == null || customerDetails.getCountryCode().isEmpty()
                     ? Constant.COUNTRY_CODE
                     : customerDetails.getCountryCode();

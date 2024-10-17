@@ -3,6 +3,7 @@ package com.community.api.endpoint.avisoft.controller.cart;
 import com.broadleafcommerce.rest.api.endpoint.BaseEndpoint;
 import com.community.api.component.Constant;
 import com.community.api.entity.CustomCustomer;
+import com.community.api.entity.CustomOrderState;
 import com.community.api.entity.CustomProduct;
 import com.community.api.entity.ErrorResponse;
 import com.community.api.services.CartService;
@@ -57,6 +58,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.stream.Collectors;
 
+import static com.community.api.component.Constant.ORDER_STATE_NEW;
 import static com.community.api.services.ServiceProvider.ServiceProviderServiceImpl.getIntegerList;
 import static com.community.api.services.ServiceProvider.ServiceProviderServiceImpl.getLongList;
 
@@ -460,6 +462,7 @@ public class CartEndPoint extends BaseEndpoint {
                     errors.add("Order Item Id : "+orderItemId+" does not belong to cart");
                 }
             }
+            List<Order>newOrders=new ArrayList<>();
             if(!errors.isEmpty())
                 return ResponseService.generateErrorResponse("Error Placing order : "+errors.toString(),HttpStatus.BAD_REQUEST);
             for (OrderItem orderItem : cart.getOrderItems()) {
@@ -467,12 +470,14 @@ public class CartEndPoint extends BaseEndpoint {
                     Product product = findProductFromItemAttribute(orderItem);
                     if(product!=null)
                         customProduct=entityManager.find(CustomProduct.class,product.getId());
+
                     Order individualOrder = orderService.createNamedOrderForCustomer(orderItem.getName(), customer);
                     individualOrder.setCustomer(customer);
                     individualOrder.setEmailAddress(customer.getEmailAddress());
-                    individualOrder.setStatus(new OrderStatus("NEW", "Order Generated"));
+                    individualOrder.setStatus(Constant.ORDER_STATUS_NEW);
                     OrderItemRequest orderItemRequest = new OrderItemRequest();
                     orderItemRequest.setProduct(product);
+                    individualOrder.setCustomer(customer);
                     orderItemRequest.setOrder(individualOrder);
                     orderItemRequest.setQuantity(1);
                     orderItemRequest.setCategory(product.getCategory());
@@ -491,7 +496,12 @@ public class CartEndPoint extends BaseEndpoint {
                     Date date = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
                     individualOrder.setSubmitDate(date);
                     individualOrder.setSubmitDate(date);
-                    entityManager.persist(individualOrder);
+                    entityManager.merge(individualOrder);
+                    CustomOrderState orderState=new CustomOrderState();
+                    orderState.setOrderState((ORDER_STATE_NEW.getOrderState()));
+                    orderState.setOrderStateDescription((ORDER_STATE_NEW.getOrderStateDescription()));
+                    orderState.setOrderId(individualOrder.getId());
+                    entityManager.persist(orderState);
                     individualOrders.add(individualOrder);
                 }
             }

@@ -8,6 +8,7 @@ import com.community.api.dto.ReserveCategoryDto;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.CombinedOrderDTO;
 import com.community.api.entity.CustomCustomer;
+import com.community.api.entity.CustomOrderState;
 import com.community.api.entity.CustomProduct;
 import com.community.api.entity.ErrorResponse;
 import com.community.api.entity.OrderDTO;
@@ -23,11 +24,14 @@ import org.broadleafcommerce.core.order.domain.Order;
 import org.broadleafcommerce.core.order.domain.OrderItem;
 import org.broadleafcommerce.core.order.service.OrderService;
 import org.broadleafcommerce.core.order.service.type.OrderStatus;
+import org.broadleafcommerce.core.web.order.OrderState;
 import org.modelmapper.ModelMapper;
+import org.mvel2.ast.Or;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -83,15 +87,15 @@ public class OrderController
         return generateCombinedDTO(orders,sort);
     }
   @RequestMapping(value = "show-all-orders",method = RequestMethod.GET)
-    public ResponseEntity<?> showClubbedOrders( @RequestParam(defaultValue = "all") String orderStatus,
+    public ResponseEntity<?> showClubbedOrders( @RequestParam(defaultValue = "all") String orderState,
                                                 @RequestParam(defaultValue = "oldest-to-latest")String sort,
                                                 @RequestParam(defaultValue = "0")int page,
                                                @RequestParam(defaultValue = "5")int limit) {
-          String orderSearchQuery = "SELECT o.order_id FROM blc_order o WHERE o.order_status =:orderStatus";
+          String orderSearchQuery = "SELECT o.order_id FROM order_state o WHERE o.order_state =:orderState";
           int startPosition = page * limit;
           List<BigInteger> orderIds=null;
           Query query = null;
-          if (orderStatus.equals("all")) {
+          if (orderState.equals("all")) {
               query = entityManager.createNativeQuery(Constant.GET_ALL_ORDERS);
               query.setFirstResult(startPosition);
               query.setMaxResults(limit);
@@ -100,24 +104,24 @@ public class OrderController
               query = entityManager.createNativeQuery(Constant.SEARCH_ORDER_QUERY);
               query.setFirstResult(startPosition);
               query.setMaxResults(limit);
-              switch (orderStatus) {
+              switch (orderState) {
                   case "completed":
-                      query.setParameter("orderStatus", Constant.ORDER_STATUS_COMPLETED);
+                      query.setParameter("orderStatus", Constant.ORDER_STATE_COMPLETED);
                       break;
                   case "in-review":
-                      query.setParameter("orderStatus", Constant.ORDER_STATUS_IN_REVIEW);
+                      query.setParameter("orderStatus", Constant.ORDER_STATE_IN_REVIEW);
                       break;
                   case "in-progress":
-                      query.setParameter("orderStatus", Constant.ORDER_STATUS_IN_PROGRESS);
+                      query.setParameter("orderStatus", Constant.ORDER_STATE_IN_PROGRESS);
                       break;
                   case "auto-assigned":
-                      query.setParameter("orderStatus", Constant.ORDER_STATUS_AUTO_ASSIGNED);
+                      query.setParameter("orderStatus", Constant.ORDER_STATE_AUTO_ASSIGNED);
                       break;
                   case "unassigned":
-                      query.setParameter("orderStatus", Constant.ORDER_STATUS_UNASSIGNED);
+                      query.setParameter("orderStatus", Constant.ORDER_STATE_UNASSIGNED);
                       break;
                   case "new":
-                      query.setParameter("orderStatus", Constant.ORDER_STATUS_NEW);
+                      query.setParameter("orderStatus", Constant.ORDER_STATE_NEW);
                       break;
                   default:
                       return ResponseService.generateErrorResponse("Wrong search filter", HttpStatus.BAD_REQUEST);
@@ -143,9 +147,11 @@ public class OrderController
         for(BigInteger orderId:orders)
         {
             Order order=orderService.findOrderById(orderId.longValue());
+            CustomOrderState orderState=entityManager.find(CustomOrderState.class,order.getId());
             if(order!=null)
             {
-                orderDTO=new OrderDTO(order.getId(),
+               orderDTO = new OrderDTO(
+                        order.getId(),
                         order.getName(),
                         order.getTotal(),
                         order.getStatus(),
@@ -153,7 +159,10 @@ public class OrderController
                         order.getOrderNumber(),
                         order.getEmailAddress(),
                         order.getCustomer().getId(),
-                        order.getSubTotal());
+                        order.getSubTotal(),
+                        orderState.getOrderState()
+                );
+
             }
             OrderItem orderItem=order.getOrderItems().get(0);
             Long productId=Long.parseLong(orderItem.getOrderItemAttributes().get("productId").getValue());
@@ -182,13 +191,24 @@ public class OrderController
     public ResponseEntity<?>manuallyAssignOrder(@PathVariable Long orderId,@PathVariable Long serviceProviderId) {
         try {
             Order order = orderService.findOrderById(orderId);
-            if(!order.getStatus().equals(Constant.ORDER_STATUS_UNASSIGNED))
+            if(order==null)
+                return ResponseService.generateErrorResponse("Order not found",HttpStatus.NOT_FOUND);
+            CustomOrderState customOrderState=entityManager.find(CustomOrderState.class,order.getId());
+            if(!customOrderState.getOrderState().equals(Constant.ORDER_STATE_UNASSIGNED.getOrderState()))
                 return ResponseService.generateErrorResponse("Cannot assign this order manually as its status is : "+order.getStatus().toString(),HttpStatus.UNPROCESSABLE_ENTITY);
             if (order == null)
                 return ResponseService.generateErrorResponse("Order with the provided id not found", HttpStatus.NOT_FOUND);
             ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
             if (serviceProvider == null)
                 return ResponseService.generateErrorResponse("Service Provider with the provided id not found", HttpStatus.NOT_FOUND);
+            Query query = entityManager.createNativeQuery(Constant.GET_SP_ORDER_REQUEST);
+            query.setParameter("orderId", orderId);
+            query.setParameter("serviceProviderId", serviceProviderId);
+            Integer queryResultCount=query.getResultList().size();
+            if(queryResultCount==1)
+            {
+                return ResponseService.generateErrorResponse("Unable to assign order: This order request has been previously returned by the chosen service provider.",HttpStatus.BAD_REQUEST);
+            }
             OrderRequest orderRequest = new OrderRequest();
             orderRequest.setOrderId(order.getId());
             orderRequest.setServiceProvider(serviceProvider);
@@ -197,12 +217,29 @@ public class OrderController
             orderRequest.setUpdatedAt(LocalDateTime.now());
             entityManager.persist(orderRequest);
             serviceProvider.getOrderRequests().add(orderRequest);
+            order.setStatus(Constant.ORDER_STATUS_ASSIGNED);
+            customOrderState.setOrderState(Constant.ORDER_STATE_ASSIGNED.getOrderState());
+            customOrderState.setOrderStateDescription(Constant.ORDER_STATE_ASSIGNED.getOrderStateDescription());
+            entityManager.merge(customOrderState);
+            entityManager.merge(order);
             entityManager.merge(serviceProvider);
-            return ResponseService.generateSuccessResponse("Order Request Generated", orderRequest.getOrderRequestId(), HttpStatus.OK);
+            return ResponseService.generateSuccessResponse("Order Request Generated", orderRequest, HttpStatus.OK);
         }catch (Exception e)
         {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error assigning Request to Service Provider", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    @GetMapping("/get-non-eligible-sp/{orderId}")
+    public List<BigInteger> availableSp(@PathVariable Long orderId)
+    {
+        Order order=orderService.findOrderById(orderId);
+        Query query=entityManager.createNativeQuery(Constant.NOT_ELIGIBLE_SP);
+        query.setParameter("orderId",orderId);
+        List<BigInteger>nonEligibleSp=query.getResultList();
+        for(BigInteger in:nonEligibleSp)
+            System.out.println(in.longValue());
+        return nonEligibleSp;
+    }
+
 }

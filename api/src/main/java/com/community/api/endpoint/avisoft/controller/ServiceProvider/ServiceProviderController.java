@@ -1,9 +1,16 @@
 package com.community.api.endpoint.avisoft.controller.ServiceProvider;
 
 import com.community.api.component.Constant;
+import com.community.api.dto.CustomProductWrapper;
+import com.community.api.dto.PhysicalRequirementDto;
+import com.community.api.dto.ReserveCategoryDto;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
+import com.community.api.entity.CombinedOrderDTO;
 import com.community.api.entity.CustomCustomer;
+import com.community.api.entity.CustomOrderState;
+import com.community.api.entity.CustomProduct;
 import com.community.api.entity.CustomerReferrer;
+import com.community.api.entity.OrderDTO;
 import com.community.api.entity.OrderRequest;
 import com.community.api.entity.ServiceProviderAcceptedOrders;
 import com.community.api.services.DistrictService;
@@ -27,6 +34,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityManager;
 import javax.persistence.GeneratedValue;
+import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
@@ -35,6 +43,7 @@ import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -70,6 +79,10 @@ public class ServiceProviderController {
     private SanitizerService sanitizerService;
     @Autowired
     private OrderService orderService;
+    @Autowired
+    private ReserveCategoryDtoService reserveCategoryDtoService;
+    @Autowired
+    private PhysicalRequirementDtoService physicalRequirementDtoService;
 
     @Transactional
     @PostMapping("/assign-skill")
@@ -338,50 +351,113 @@ public class ServiceProviderController {
         }
     }
     @Transactional
-    @PostMapping("/{serviceProviderId}/order-requests/{orderId}")
-    public ResponseEntity<?> orderRequestAction(@PathVariable Long serviceProviderId,@PathVariable Long orderId,@RequestParam String action)
+    @GetMapping("/{serviceProviderId}/order-requests")
+    public ResponseEntity<?> allOrderRequestsBySPId(@PathVariable Long serviceProviderId,@RequestParam(defaultValue = "0")int page,@RequestParam(defaultValue = "10") int limit)
     {
-        ServiceProviderEntity serviceProvider=entityManager.find(ServiceProviderEntity.class,serviceProviderId);
-        if(serviceProvider==null)
-            return ResponseService.generateErrorResponse("Service Provider not found",HttpStatus.NOT_FOUND);
-        Order order=orderService.findOrderById(orderId);
-        if(order==null)
-            return ResponseService.generateErrorResponse("Order not found",HttpStatus.NOT_FOUND);
-        Query query=entityManager.createNativeQuery(Constant.GET_SP_ORDER_REQUEST);
-        query.setParameter("orderId",orderId);
-        query.setParameter("serviceProviderId",serviceProviderId);
-        BigInteger requestId= (BigInteger) query.getSingleResult();
-        OrderRequest orderRequest=entityManager.find(OrderRequest.class,requestId.longValue());
-        if(orderRequest==null)
-            return ResponseService.generateErrorResponse("Cannot fetch order Details",HttpStatus.INTERNAL_SERVER_ERROR);
-        if(!orderRequest.getRequestStatus().equals("GENERATED"))
-        {
-            return ResponseService.generateErrorResponse("Invalid Order",HttpStatus.UNPROCESSABLE_ENTITY);
+        try{
+            int startPosition=page*limit;
+            ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
+            if (serviceProvider == null)
+                return ResponseService.generateErrorResponse("Service Provider not found", HttpStatus.NOT_FOUND);
+            Query query=entityManager.createNativeQuery(Constant.GET_ONE_SP_ORDER_REQUEST);
+            query.setParameter("serviceProviderId",serviceProviderId);
+            query.setFirstResult(startPosition);
+            query.setMaxResults(limit);
+            List<BigInteger>orderRequestIds=query.getResultList();
+            List<OrderRequest>spOrderRequests=new ArrayList<>();
+            for (BigInteger orderRequestId:orderRequestIds)
+            {
+                OrderRequest orderRequest=entityManager.find(OrderRequest.class,orderRequestId.longValue());
+                if(orderRequest!=null)
+                    spOrderRequests.add(orderRequest);
+            }
+            return ResponseService.generateSuccessResponse("Order Requests :",spOrderRequests,HttpStatus.OK);
+        }  catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseService.generateErrorResponse("Some issue in fetching candidates: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
-        if(action.equals("accept"))
-        {
-            order.setStatus(Constant.ORDER_STATUS_IN_PROGRESS);
-            ServiceProviderAcceptedOrders serviceProviderAcceptedOrders=new ServiceProviderAcceptedOrders();
-            orderRequest.setRequestStatus("ACCEPTED");
-            orderRequest.setUpdatedAt(LocalDateTime.now());
-            entityManager.merge(orderRequest);
-            serviceProviderAcceptedOrders.setServiceProvider(serviceProvider);
-            serviceProviderAcceptedOrders.setOrderId(orderId);
-            serviceProviderAcceptedOrders.setGeneratedAt(LocalDateTime.now());
-            serviceProviderAcceptedOrders.setUpdatedAt(LocalDateTime.now());
-            entityManager.persist(serviceProviderAcceptedOrders);
-            serviceProvider.getAcceptedOrders().add(serviceProviderAcceptedOrders);
-            entityManager.merge(serviceProvider);
-            return ResponseService.generateSuccessResponse("Order Accepted",null,HttpStatus.OK);
+    }
+    @Transactional
+    @PostMapping("/{serviceProviderId}/order-requests/{orderRequestId}")
+    public ResponseEntity<?> orderRequestAction(@PathVariable Long serviceProviderId,@PathVariable Long orderRequestId,@RequestParam String action) {
+        try {
+            action=action.toUpperCase();
+            OrderRequest orderRequest = entityManager.find(OrderRequest.class, orderRequestId);
+            if(orderRequest==null)
+                return ResponseService.generateErrorResponse("Order Request Not found",HttpStatus.BAD_REQUEST);
+            Order order = orderService.findOrderById(orderRequest.getOrderId());
+            if (order == null)
+                return ResponseService.generateErrorResponse("Order not found", HttpStatus.NOT_FOUND);
+            if(!action.equals(Constant.SP_REQUEST_ACTION_VIEW)&&!action.equals(Constant.SP_REQUEST_ACTION_ACCEPT)&&!action.equals(Constant.SP_REQUEST_ACTION_RETURN))
+                return ResponseService.generateErrorResponse("Invalid Action", HttpStatus.BAD_REQUEST);
+            ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
+            if (serviceProvider == null)
+                return ResponseService.generateErrorResponse("Service Provider not found", HttpStatus.NOT_FOUND);
+            CustomOrderState orderState=entityManager.find(CustomOrderState.class,orderRequest.getOrderId());
+            if (!orderRequest.getRequestStatus().equals("GENERATED")) {
+                return ResponseService.generateErrorResponse("Order already Accepted/Returned ", HttpStatus.UNPROCESSABLE_ENTITY);
+            }
+            if(action.equals(Constant.SP_REQUEST_ACTION_VIEW))
+            {
+                Long productId=Long.parseLong(order.getOrderItems().get(0).getOrderItemAttributes().get("productId").getValue());
+                CustomProduct customProduct=entityManager.find(CustomProduct.class,productId);
+                Map<String,Object>orderRequestDetail=new HashMap<>();
+                OrderDTO orderDTO=new OrderDTO(
+                        order.getId(),
+                        order.getName(),
+                        order.getTotal(),
+                        order.getStatus(),
+                        order.getSubmitDate(),
+                        order.getOrderNumber(),
+                        order.getEmailAddress(),
+                        order.getCustomer().getId(),
+                        order.getSubTotal(),
+                        orderState.getOrderState() // Ensure this matches the expected order
+                );
+
+                CustomProductWrapper customProductWrapper = new CustomProductWrapper();
+                List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(productId);
+                List<PhysicalRequirementDto> physicalRequirementDtoList = physicalRequirementDtoService.getPhysicalRequirementDto(productId);
+                customProductWrapper.wrapDetails(customProduct, reserveCategoryDtoList, physicalRequirementDtoList);
+                orderRequestDetail.put("order_request_details",orderRequest);
+                orderRequestDetail.put("order_details",orderDTO);
+                orderRequestDetail.put("ordered_product_details",customProductWrapper);
+                return ResponseService.generateSuccessResponse("Order Request Details :",orderRequestDetail,HttpStatus.OK);
+            }
+            else if (action.equals(Constant.SP_REQUEST_ACTION_ACCEPT)) {
+                order.setStatus(Constant.ORDER_STATUS_IN_PROGRESS);
+                ServiceProviderAcceptedOrders serviceProviderAcceptedOrders = new ServiceProviderAcceptedOrders();
+                orderRequest.setRequestStatus("ACCEPTED");
+                orderState.setOrderState(Constant.ORDER_STATE_IN_PROGRESS.getOrderState());
+                orderState.setOrderStateDescription(Constant.ORDER_STATE_IN_PROGRESS.getOrderStateDescription());
+                orderRequest.setUpdatedAt(LocalDateTime.now());
+                entityManager.merge(orderRequest);
+                serviceProviderAcceptedOrders.setServiceProvider(serviceProvider);
+                serviceProviderAcceptedOrders.setOrderId(orderRequest.getOrderId());
+                serviceProviderAcceptedOrders.setGeneratedAt(LocalDateTime.now());
+                serviceProviderAcceptedOrders.setUpdatedAt(LocalDateTime.now());
+                entityManager.persist(serviceProviderAcceptedOrders);
+                serviceProvider.getAcceptedOrders().add(serviceProviderAcceptedOrders);
+                entityManager.merge(orderState);
+                entityManager.merge(serviceProvider);
+                return ResponseService.generateSuccessResponse("Order Accepted", null, HttpStatus.OK);
+            } else  {
+                orderRequest.setRequestStatus("RETURNED");
+                order.setStatus(Constant.ORDER_STATUS_UNASSIGNED);
+                orderState.setOrderState(Constant.ORDER_STATE_UNASSIGNED.getOrderState());
+                orderState.setOrderStateDescription(Constant.ORDER_STATE_UNASSIGNED.getOrderStateDescription());
+                /*entityManager.merge(order);*/
+                entityManager.merge(orderRequest);
+                entityManager.merge(orderState);
+                return ResponseService.generateSuccessResponse("Order Returned", null, HttpStatus.OK);
+            }
+        } catch (NoResultException e) {
+            exceptionHandling.handleException(e);
+            return ResponseService.generateErrorResponse("Order does not belong to the specified SP", HttpStatus.BAD_REQUEST);
+        }catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return ResponseService.generateErrorResponse("Some issue in fetching order Requests: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
-        else if(action.equals("return"))
-        {
-            orderRequest.setRequestStatus("RETURNED");
-            entityManager.merge(orderRequest);
-            return ResponseService.generateSuccessResponse("Order Returned",null,HttpStatus.OK);
-        }
-        else
-            return ResponseService.generateErrorResponse("Invalid Action",HttpStatus.BAD_REQUEST);
     }
 
 }

@@ -1,5 +1,6 @@
 package com.community.api.services;
 import com.community.api.component.Constant;
+import com.community.api.entity.CustomOrderState;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.broadleafcommerce.core.order.domain.Order;
 import org.broadleafcommerce.core.order.service.OrderService;
@@ -52,12 +53,18 @@ public class DummyAssigner {
 
         private void randomNumberForAssigner(Order order) {
             Random random = new Random();
+            CustomOrderState orderState=entityManager.find(CustomOrderState.class,order.getId());
             int randomNumber = random.nextInt(2);
             if (randomNumber == 1) {
                 order.setStatus(Constant.ORDER_STATUS_AUTO_ASSIGNED);
+                orderState.setOrderState(Constant.ORDER_STATE_AUTO_ASSIGNED.getOrderState());
+                orderState.setOrderStateDescription(Constant.ORDER_STATE_AUTO_ASSIGNED.getOrderStateDescription());
             } else {
                 order.setStatus(Constant.ORDER_STATUS_UNASSIGNED);
+                orderState.setOrderState(Constant.ORDER_STATE_UNASSIGNED.getOrderState());
+                orderState.setOrderStateDescription(Constant.ORDER_STATE_UNASSIGNED.getOrderStateDescription());
             }
+            entityManager.merge(orderState);
             entityManager.merge(order);
         }
     }
