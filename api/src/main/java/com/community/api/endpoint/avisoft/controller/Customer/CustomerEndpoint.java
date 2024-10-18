@@ -82,6 +82,12 @@ public class CustomerEndpoint {
 
     @Autowired
     private ExceptionHandlingService exceptionHandlingService;
+    @Autowired
+    private ReserveCategoryDtoService reserveCategoryDtoService;
+    @Autowired
+    private PhysicalRequirementDtoService physicalRequirementDtoService;
+
+
 
     @Autowired
     private JwtUtil jwtTokenUtil;
@@ -100,10 +106,6 @@ public class CustomerEndpoint {
 
     @Autowired
     private FileService fileService;
-    @Autowired
-    private ReserveCategoryDtoService reserveCategoryDtoService;
-    @Autowired
-    private PhysicalRequirementDtoService physicalRequirementDtoService;
     @Autowired
     private DocumentStorageService documentStorageService;
     @Autowired
@@ -429,7 +431,7 @@ public class CustomerEndpoint {
 
     @Transactional
     @RequestMapping(value = "/get-customer-details/{customerId}", method = RequestMethod.GET)
-    public ResponseEntity<?> getUserDetails(@PathVariable Long customerId,HttpServletRequest request) {
+    public ResponseEntity<?> getUserDetails(@PathVariable Long customerId) {
         try {
             CustomCustomer customCustomer = em.find(CustomCustomer.class, customerId);
             if (customCustomer == null) {
@@ -437,29 +439,6 @@ public class CustomerEndpoint {
             }
             CustomerImpl customer = em.find(CustomerImpl.class, customerId);  // Assuming you retrieve the base Customer entity
             Map<String, Object> customerDetails = sharedUtilityService.breakReferenceForCustomer(customer);
-
-            // Fetch qualification details and replace qualification_id with qualification_name
-            List<QualificationDetails> qualificationDetails= customCustomer.getQualificationDetailsList();
-            List<Map<String, Object>> qualificationsWithNames = sharedUtilityService.mapQualifications(qualificationDetails);
-            customerDetails.put("qualificationDetails", qualificationsWithNames);
-
-            List<Document> filteredDocuments = new ArrayList<>();
-
-            for (Document document : customCustomer.getDocuments()) {
-                if (document.getFilePath() != null && document.getDocumentType() != null) {
-
-                    document.setFilePath(fileService.getFileUrl(document.getFilePath(), request));
-
-                    filteredDocuments.add(document);
-                }
-            }
-
-            if (!filteredDocuments.isEmpty()) {
-
-                customerDetails.put("documents", filteredDocuments);
-            }
-
-
 
             return responseService.generateSuccessResponse("User details retrieved successfully", customerDetails, HttpStatus.OK);
 
@@ -832,12 +811,14 @@ public class CustomerEndpoint {
             if (customer == null) {
                 return ResponseService.generateErrorResponse("No data found for this customerId", HttpStatus.NOT_FOUND);
             }
+
             if (password != null && !(password.isEmpty())) {
                 if (customer.getPassword() == null || customer.getPassword().isEmpty()) {
                     customer.setPassword(passwordEncoder.encode(password));
                     em.merge(customer);
                     return ResponseService.generateSuccessResponse("Password Created", sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK);
                 }
+                System.out.println(password+","+customer.getPassword());
                 if (!passwordEncoder.matches(password, customer.getPassword())) {
 
                     customer.setPassword(passwordEncoder.encode(password));
@@ -1063,7 +1044,6 @@ public class CustomerEndpoint {
             customer.setSavedForms(savedForms);
             entityManager.merge(customer);
             Map<String,Object>responseBody=new HashMap<>();
-           /* Map<String,Object>formBody=sharedUtilityService.createProductResponseMap(product,null,customer);*/
             CustomProductWrapper customProductWrapper = new CustomProductWrapper();
             List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(product_id);
             List<PhysicalRequirementDto> physicalRequirementDtoList = physicalRequirementDtoService.getPhysicalRequirementDto(product_id);
