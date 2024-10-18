@@ -24,6 +24,7 @@ import org.broadleafcommerce.core.catalog.domain.Category;
 import org.broadleafcommerce.core.catalog.domain.Product;
 import org.broadleafcommerce.core.catalog.service.CatalogService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -493,6 +494,89 @@ public class ProductService {
         return query.getResultList();
     }
 
+    public List<CustomProduct> filterProductsByRoleAndUserId(Integer roleId, Long userId, int page, int limit) {
+        StringBuilder jpql = new StringBuilder("SELECT DISTINCT p FROM CustomProduct p JOIN p.creatoRole r ");
+
+        Map<String, Object> queryParams = new HashMap<>();
+
+        // Check if the role exists
+        if (roleId != null) {
+            Role role = entityManager.find(Role.class, roleId);
+            if (role == null) {
+                throw new IllegalArgumentException("No role exists with id " + roleId);
+            }
+
+            if (!role.getRole_name().equalsIgnoreCase(ADMIN) && !role.getRole_name().equalsIgnoreCase(SUPER_ADMIN)) {
+                String roleCheckQuery = "SELECT COUNT(p) FROM CustomProduct p WHERE p.creatoRole.role_id = :roleId";
+                Long roleProductCount = entityManager.createQuery(roleCheckQuery, Long.class)
+                        .setParameter("roleId", roleId)
+                        .getSingleResult();
+
+                if (roleProductCount == 0) {
+                    throw new IllegalArgumentException("No product is created by role with id " + roleId);
+                } else {
+                    jpql.append("WHERE r.role_id = :roleId ");
+                    queryParams.put("roleId", roleId);
+                }
+
+                if (userId != null) {
+                    String userCheckQuery = "SELECT COUNT(p) FROM CustomProduct p WHERE p.userId = :userId";
+                    Long userProductCount = entityManager.createQuery(userCheckQuery, Long.class)
+                            .setParameter("userId", userId)
+                            .getSingleResult();
+
+                    if (userProductCount == 0) {
+                        throw new IllegalArgumentException("No user with id " + userId + " has created any product");
+                    } else {
+                        jpql.append("AND p.userId = :userId ");
+                        queryParams.put("userId", userId);
+                    }
+                }
+            } else {
+                // For Admin or Superadmin, they can see all products, so no need to append any conditions
+                jpql.append("WHERE 1=1 ");
+            }
+        }
+
+        // Execute the query with pagination
+        TypedQuery<CustomProduct> query = entityManager.createQuery(jpql.toString(), CustomProduct.class);
+        queryParams.forEach(query::setParameter);
+
+        int startPosition = page * limit;
+        query.setFirstResult(startPosition);
+        query.setMaxResults(limit);
+
+        return query.getResultList();
+    }
+
+    public long countTotalProducts(Integer roleId, Long userId) {
+        StringBuilder countJpql = new StringBuilder("SELECT COUNT(DISTINCT p) FROM CustomProduct p JOIN p.creatoRole r ");
+
+        Map<String, Object> queryParams = new HashMap<>();
+
+        if (roleId != null) {
+            Role role = entityManager.find(Role.class, roleId);
+            if (role == null) {
+                throw new IllegalArgumentException("No role exists with id " + roleId);
+            }
+
+            if (!role.getRole_name().equalsIgnoreCase(ADMIN) && !role.getRole_name().equalsIgnoreCase(SUPER_ADMIN)) {
+                countJpql.append("WHERE r.role_id = :roleId ");
+                queryParams.put("roleId", roleId);
+
+                if (userId != null) {
+                    countJpql.append("AND p.userId = :userId ");
+                    queryParams.put("userId", userId);
+                }
+            } else {
+                countJpql.append("WHERE 1=1 ");
+            }
+        }
+        TypedQuery<Long> countQuery = entityManager.createQuery(countJpql.toString(), Long.class);
+        queryParams.forEach(countQuery::setParameter);
+        return countQuery.getSingleResult();
+    }
+
     public boolean addProductAccessAuthorisation(String authHeader) throws Exception {
         try {
             String jwtToken = authHeader.substring(7);
@@ -575,6 +659,7 @@ public class ProductService {
             if (addProductDto.getMetaTitle() == null || addProductDto.getMetaTitle().trim().isEmpty()) {
                 throw new IllegalArgumentException(PRODUCTTITLENOTGIVEN);
             } else {
+                addProductDto.setPostName(addProductDto.getMetaTitle().trim());
                 addProductDto.setMetaTitle(addProductDto.getMetaTitle().trim());
             }
 
@@ -950,6 +1035,16 @@ public class ProductService {
                     customProduct.setDomicileRequired(addProductDto.getDomicileRequired());
                     customProduct.setCustomApplicationScope(applicationScope);
                 }
+            } else {
+                if(customProduct.getCustomApplicationScope().getApplicationScope().equals(APPLICATION_SCOPE_STATE)) {
+                    if(addProductDto.getState() != null) {
+                        StateCode stateCode = districtService.getStateByStateId(addProductDto.getState());
+                        customProduct.setState(stateCode);
+                    }
+                    if(addProductDto.getDomicileRequired() != null) {
+                        customProduct.setDomicileRequired(addProductDto.getDomicileRequired());
+                    }
+                }
             }
 
             if (addProductDto.getAdvertiserUrl() != null) {
@@ -979,8 +1074,12 @@ public class ProductService {
                 }
             }
 
+            if(addProductDto.getQualification() != null) {
+                Qualification qualification = qualificationService.getQualificationByQualificationId(addProductDto.getQualification());
+                customProduct.setQualification(qualification);
+            }
+
             if(addProductDto.getState() != null) {
-                System.out.println("HERE");
                 CustomSector customSector = sectorService.getSectorBySectorId(addProductDto.getSector());
                 customProduct.setSector(customSector);
             }
@@ -1664,7 +1763,7 @@ public class ProductService {
                         } else if ((privilege.getPrivilege_name().equals(Constant.PRIVILEGE_REJECT_PRODUCT) && customProductState.getProductState().equals(Constant.PRODUCT_STATE_REJECTED))) {
 
                             if (addProductDto.getRejectionStatus() == null) {
-                                throw new IllegalArgumentException("REJECTION STATE CANNOT BE NULL IF PRODUCT IS REJECTED");
+                                throw new IllegalArgumentException("REJECTION STATUS CANNOT BE NULL IF PRODUCT IS REJECTED");
                             }
                             CustomProductRejectionStatus productRejectionStatus = productRejectionStatusService.getAllRejectionStatusByRejectionStatusId(addProductDto.getRejectionStatus());
                             if (productRejectionStatus == null) {
@@ -1677,7 +1776,6 @@ public class ProductService {
                     }
                     throw new IllegalArgumentException("Not have privilege to perform action.");
                 } else if (role.equals(Constant.ADMIN) || role.equals(Constant.SUPER_ADMIN)) {
-                    customProduct.setProductState(customProductState);
                     if (addProductDto.getRejectionStatus() == null) {
                         throw new IllegalArgumentException("REJECTION STATE CANNOT BE NULL IF PRODUCT IS REJECTED");
                     }
@@ -1686,6 +1784,7 @@ public class ProductService {
                         throw new IllegalArgumentException("NO PRODUCT REJECTION STATUS IS FOUND");
                     }
                     customProduct.setRejectionStatus(productRejectionStatus);
+                    customProduct.setProductState(customProductState);
 
                     return true;
                 } else {

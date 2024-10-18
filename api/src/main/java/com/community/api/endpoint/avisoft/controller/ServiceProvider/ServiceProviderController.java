@@ -222,7 +222,12 @@ public class ServiceProviderController {
             query.setFirstResult(startPosition);
             query.setMaxResults(limit);
             List<ServiceProviderEntity> results = query.getResultList();
-            return ResponseService.generateSuccessResponse("List of service providers: ", results, HttpStatus.OK);
+            List<Map<String,Object>>resultOfSp=new ArrayList<>();
+            for(ServiceProviderEntity serviceProvider: results)
+            {
+                resultOfSp.add(sharedUtilityService.serviceProviderDetailsMap(serviceProvider));
+            }
+            return ResponseService.generateSuccessResponse("List of service providers: ", resultOfSp, HttpStatus.OK);
         } catch (IllegalArgumentException e) {
             return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
         }  catch (Exception e) {
