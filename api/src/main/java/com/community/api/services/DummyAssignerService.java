@@ -4,11 +4,9 @@ import com.community.api.entity.CustomOrderState;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.broadleafcommerce.core.order.domain.Order;
 import org.broadleafcommerce.core.order.service.OrderService;
-import org.broadleafcommerce.core.order.service.type.OrderStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -18,7 +16,7 @@ import java.util.List;
 import java.util.Random;
 
 @Service
-public class DummyAssigner {
+public class DummyAssignerService {
     @Autowired
     private OrderService orderService;
     @Autowired
@@ -40,7 +38,7 @@ public class DummyAssigner {
                 for (BigInteger id : orderIds) {
                     Order order = orderService.findOrderById(id.longValue());
                     if (order != null) {
-                        randomNumberForAssigner(order);
+                        dummyAssigner(order);
                     }
                 }
                 System.out.println("Orders assigned");
@@ -51,7 +49,7 @@ public class DummyAssigner {
             }
         }
 
-        private void randomNumberForAssigner(Order order) {
+        public void dummyAssigner(Order order) {
             Random random = new Random();
             CustomOrderState orderState=entityManager.find(CustomOrderState.class,order.getId());
             int randomNumber = random.nextInt(2);

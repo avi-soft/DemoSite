@@ -221,6 +221,7 @@ public class ServiceProviderEntity  {
     @Column
     private Integer totalSkillTestPoints;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "serviceProvider", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CustomerReferrer> myReferrals = new ArrayList<>();
 

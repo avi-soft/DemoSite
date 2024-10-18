@@ -5,8 +5,6 @@ import com.community.api.dto.CustomProductWrapper;
 import com.community.api.dto.PhysicalRequirementDto;
 import com.community.api.dto.ReserveCategoryDto;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
-import com.community.api.entity.CombinedOrderDTO;
-import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.CustomOrderState;
 import com.community.api.entity.CustomProduct;
 import com.community.api.entity.CustomerReferrer;
@@ -23,7 +21,6 @@ import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.broadleafcommerce.core.order.domain.Order;
 import org.broadleafcommerce.core.order.service.OrderService;
-import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,21 +30,16 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityManager;
-import javax.persistence.GeneratedValue;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
-import javax.validation.ConstraintViolationException;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static com.fasterxml.jackson.databind.type.LogicalType.DateTime;
 
 @RestController
 @RequestMapping("/service-providers")
@@ -83,6 +75,8 @@ public class ServiceProviderController {
     private ReserveCategoryDtoService reserveCategoryDtoService;
     @Autowired
     private PhysicalRequirementDtoService physicalRequirementDtoService;
+    @Autowired
+    private DummyAssignerService dummyAssignerService;
 
     @Transactional
     @PostMapping("/assign-skill")
@@ -237,8 +231,7 @@ public class ServiceProviderController {
     public ResponseEntity<?> getAllServiceProviders(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int limit) {
-        try {
-            // Calculate the start position for pagination
+        try{
             int startPosition = page * limit;
             // Create the query
             TypedQuery<ServiceProviderEntity> query = entityManager.createQuery(Constant.GET_ALL_SERVICE_PROVIDERS, ServiceProviderEntity.class);
@@ -352,14 +345,35 @@ public class ServiceProviderController {
     }
     @Transactional
     @GetMapping("/{serviceProviderId}/order-requests")
-    public ResponseEntity<?> allOrderRequestsBySPId(@PathVariable Long serviceProviderId,@RequestParam(defaultValue = "0")int page,@RequestParam(defaultValue = "10") int limit)
+    public ResponseEntity<?> allOrderRequestsBySPId(@PathVariable Long serviceProviderId,@RequestParam(defaultValue = "0")int page,@RequestParam(defaultValue = "10") int limit,@RequestParam(defaultValue = "all") String requestStatus)
     {
         try{
             int startPosition=page*limit;
+            Query query=null;
+            requestStatus=requestStatus.toLowerCase();
             ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
             if (serviceProvider == null)
                 return ResponseService.generateErrorResponse("Service Provider not found", HttpStatus.NOT_FOUND);
-            Query query=entityManager.createNativeQuery(Constant.GET_ONE_SP_ORDER_REQUEST);
+            if(requestStatus.equals("all"))
+            {
+                query =entityManager.createNativeQuery(Constant.GET_ONE_SP_ALL_ORDER_REQUEST);
+            }
+            else {
+                query = entityManager.createNativeQuery(Constant.GET_ONE_SP_ORDER_REQUEST);
+                switch (requestStatus) {
+                    case "accepted":
+                        query.setParameter("requestStatus", "ACCEPTED");
+                        break;
+                    case "returned":
+                        query.setParameter("requestStatus", "RETURNED");
+                        break;
+                    case "new":
+                        query.setParameter("requestStatus", "GENERATED");
+                        break;
+                    default:
+                        return ResponseService.generateErrorResponse("Invalid Order request Status", HttpStatus.BAD_REQUEST);
+                }
+            }
             query.setParameter("serviceProviderId",serviceProviderId);
             query.setFirstResult(startPosition);
             query.setMaxResults(limit);
@@ -391,6 +405,8 @@ public class ServiceProviderController {
             if(!action.equals(Constant.SP_REQUEST_ACTION_VIEW)&&!action.equals(Constant.SP_REQUEST_ACTION_ACCEPT)&&!action.equals(Constant.SP_REQUEST_ACTION_RETURN))
                 return ResponseService.generateErrorResponse("Invalid Action", HttpStatus.BAD_REQUEST);
             ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
+            if(!orderRequest.getServiceProvider().equals(serviceProvider))
+                return ResponseService.generateErrorResponse("Order Request does not belong to the specified SP,Check again",HttpStatus.BAD_REQUEST);
             if (serviceProvider == null)
                 return ResponseService.generateErrorResponse("Service Provider not found", HttpStatus.NOT_FOUND);
             CustomOrderState orderState=entityManager.find(CustomOrderState.class,orderRequest.getOrderId());
@@ -449,11 +465,9 @@ public class ServiceProviderController {
                 /*entityManager.merge(order);*/
                 entityManager.merge(orderRequest);
                 entityManager.merge(orderState);
+                dummyAssignerService.dummyAssigner(order);
                 return ResponseService.generateSuccessResponse("Order Returned", null, HttpStatus.OK);
             }
-        } catch (NoResultException e) {
-            exceptionHandling.handleException(e);
-            return ResponseService.generateErrorResponse("Order does not belong to the specified SP", HttpStatus.BAD_REQUEST);
         }catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Some issue in fetching order Requests: " + e.getMessage(), HttpStatus.BAD_REQUEST);

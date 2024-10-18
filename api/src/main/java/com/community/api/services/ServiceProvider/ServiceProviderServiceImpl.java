@@ -43,6 +43,7 @@ import javax.persistence.Column;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
@@ -940,5 +941,15 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
            response.add(sharedUtilityService.serviceProviderDetailsMap(serviceProvider));
         }
         return response;
+    }
+    public List<ServiceProviderEntity> getAllSp(int page,int limit) {
+        int startPosition = page * limit;
+        // Create the query
+        TypedQuery<ServiceProviderEntity> query = entityManager.createQuery(Constant.GET_ALL_SERVICE_PROVIDERS, ServiceProviderEntity.class);
+        // Apply pagination
+        query.setFirstResult(startPosition);
+        query.setMaxResults(limit);
+        List<ServiceProviderEntity> results = query.getResultList();
+        return results;
     }
 }
