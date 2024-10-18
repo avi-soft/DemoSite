@@ -47,7 +47,36 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(new CustomProductState(5L, "LIVE", "Live State."));
             entityManager.persist(new CustomProductState(6L, "EXPIRED", "Expired State."));
         }
+        if (entityManager.createQuery("SELECT COUNT(o) FROM OrderStateRef o", Long.class).getSingleResult() == 0) {
+            entityManager.persist(new OrderStateRef(1, "AUTO_ASSIGNED", "Order automatically assigned."));
+            entityManager.persist(new OrderStateRef(2, "UNASSIGNED", "Order is unassigned."));
+            entityManager.persist(new OrderStateRef(3, "ASSIGNED", "Order assigned."));
+            entityManager.persist(new OrderStateRef(4, "RETURNED", "Order returned."));
+            entityManager.persist(new OrderStateRef(5, "IN_PROGRESS", "Order is in progress."));
+            entityManager.persist(new OrderStateRef(6, "COMPLETED", "Order completed."));
+        }
 
+        if(entityManager.createQuery("SELECT COUNT(c) FROM CustomOrderStatus c",Long.class).getSingleResult()==0)
+        {
+                // AUTO_ASSIGNED (ID 1)
+                entityManager.persist(new CustomOrderStatus(1, "AUTO_ASSIGNED", 1, "Order automatically assigned."));
+                // UNASSIGNED (ID 2)
+                entityManager.persist(new CustomOrderStatus(2, "UNASSIGNED", 2, "Order is unassigned."));
+                // ASSIGNED (ID 3)
+                entityManager.persist(new CustomOrderStatus(3, "ASSIGNED_BY_SUPER_ADMIN", 3, "Order assigned by super admin."));
+                entityManager.persist(new CustomOrderStatus(4, "ASSIGNED_BY_AUTO_ASSIGNER", 3, "Order assigned by Auto Assigner."));
+                // RETURNED (ID 4)
+                entityManager.persist(new CustomOrderStatus(5, "CANNOT_BE_DONE", 4, "Order cannot be done."));
+                entityManager.persist(new CustomOrderStatus(6, "DUPLICATE_ORDER", 4, "Order is a duplicate."));
+                // IN_PROGRESS (ID 5)
+                entityManager.persist(new CustomOrderStatus(7, "IN_PROGRESS", 5, "Order is in progress."));
+                // COMPLETED (ID 6)
+                entityManager.persist(new CustomOrderStatus(8, "FULFILLED", 6, "Order fulfilled."));
+                entityManager.persist(new CustomOrderStatus(9, "DUPLICATE", 6, "Order duplicate."));
+                entityManager.persist(new CustomOrderStatus(10, "DUMMY_ORDER", 6, "Order not valid or created as a test."));
+                entityManager.persist(new CustomOrderStatus(11, "STUDENT_UNREACHABLE", 6, "Order could not be completed because the student/customer was not reachable."));
+                entityManager.persist(new CustomOrderStatus(12, "DOCUMENT_NOT_AVAILABLE", 6, "Necessary document to complete the order was unavailable."));
+            }
         if(entityManager.createQuery("SELECT COUNT(c) FROM CustomJobGroup c", Long.class).getSingleResult() == 0) {
             entityManager.persist(new CustomJobGroup(1L, 'A', "Executive Management"));
             entityManager.persist(new CustomJobGroup(2L, 'B', "Professional and Technical"));

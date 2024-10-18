@@ -25,6 +25,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -290,6 +292,16 @@ public class OrderController
             return ResponseService.generateErrorResponse("Error assigning Request to Service Provider", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+   /* @Transactional
+    @PutMapping("/{orderId}/complete-order")
+    public ResponseEntity<?> completeOrder(@PathVariable Long orderId)
+    {
+        Order order=orderService.findOrderById(orderId);
+        if(order==null)
+            return ResponseService.generateErrorResponse("Order with the specified id not found",HttpStatus.BAD_REQUEST);
+        CustomOrderState orderState=entityManager.find(CustomOrderState.class,orderId);
+
+    }*/
     @Transactional
     @GetMapping("/{orderId}/availableSp")
     public ResponseEntity<?>getEligibleSp(@PathVariable Long orderId,@RequestParam (defaultValue = "0") int page ,@RequestParam(defaultValue = "10") int limit)
