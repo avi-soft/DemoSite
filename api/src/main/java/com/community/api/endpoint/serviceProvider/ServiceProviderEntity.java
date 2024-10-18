@@ -236,11 +236,14 @@ public class ServiceProviderEntity  {
     @OneToMany(mappedBy = "service_provider", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<QualificationDetails> qualificationDetailsList;
 
+    @Column(name="is_active")
+    private Boolean isActive;
 
+    @Column(name="maximum_ticket_size")
+    private Integer maximumTicketSize;
 
-
-
-
+    @Column(name="maximum_binding_size")
+    private Integer maximumBindingSize;
 
 }
 
