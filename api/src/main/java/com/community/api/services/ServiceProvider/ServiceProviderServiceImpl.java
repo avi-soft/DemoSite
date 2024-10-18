@@ -1228,7 +1228,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
     @Transactional
 
-    public Object searchServiceProviderBasedOnGivenFields(String state,String district,String first_name,String last_name,String mobileNumber) {
+    public Object searchServiceProviderBasedOnGivenFields(String state,String district,String first_name,String last_name,String mobileNumber, ) {
 
         Map<String, Character> alias = new HashMap<>();
         alias.put("state", 'a');
