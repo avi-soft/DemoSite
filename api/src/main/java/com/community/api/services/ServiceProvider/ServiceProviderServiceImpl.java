@@ -1228,13 +1228,14 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
     @Transactional
 
-    public Object searchServiceProviderBasedOnGivenFields(String state,String district,String first_name,String last_name,String mobileNumber) {
+    public Object searchServiceProviderBasedOnGivenFields(String state,String district,String first_name,String last_name,String mobileNumber, Long test_status_id) {
 
         Map<String, Character> alias = new HashMap<>();
         alias.put("state", 'a');
         alias.put("district", 'a');
         alias.put("first_name", 's');
         alias.put("last_name", 's');
+        alias.put("test_status_id", 's');
         String generalizedQuery = "SELECT s.*\n" +
                 "FROM service_provider s\n" +
                 "JOIN custom_service_provider_address a ON s.service_provider_id = a.service_provider_id\n" +
@@ -1248,8 +1249,13 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                     .findFirst()
                     .orElse(null);
         }
+        if(test_status_id!=null)
+        {
+            System.out.println("FUIHWEUHFOIHSODIFHIDHF");
+            generalizedQuery = generalizedQuery + alias.get("test_status_id") + "." + "test_status_id" + " =" + test_status_id + " AND ";
+        }
         String[] fieldsNames = {"state", "district", "first_name","last_name"};
-        String[] fields = {state, district, first_name,last_name};
+        Object[] fields = {state, district, first_name,last_name};
         for (int i = 0; i < fields.length; i++) {
             if (fields[i] != null) {
                 generalizedQuery = generalizedQuery + alias.get(fieldsNames[i]) + "." + fieldsNames[i] + " =:" + fieldsNames[i] + " AND ";
@@ -1258,6 +1264,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         generalizedQuery = generalizedQuery.trim();
         int lastSpaceIndex = generalizedQuery.lastIndexOf(" ");
         generalizedQuery = generalizedQuery.substring(0, lastSpaceIndex);
+        System.out.println("-------------------------" + generalizedQuery);
         Query query;
         query = entityManager.createNativeQuery(generalizedQuery, ServiceProviderEntity.class);
         for (int i = 0; i < fields.length; i++) {
