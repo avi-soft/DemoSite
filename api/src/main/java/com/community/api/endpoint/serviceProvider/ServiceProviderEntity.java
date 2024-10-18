@@ -142,6 +142,7 @@ public class ServiceProviderEntity  {
     private Integer writtenTestScore;
     private Integer imageUploadScore;
     private Integer partTimeOrFullTimeScore;
+    private Integer infraScore=0;
     @ManyToMany
     @JoinTable(
             name = "service_provider_skill", // The name of the join table

@@ -164,7 +164,6 @@ public class Constant {
     public static final String SP_REQUEST_ACTION_RETURN="RETURN";
     public static final String SP_REQUEST_ACTION_VIEW="VIEW";
     public static final String NOT_ELIGIBLE_SP="SELECT s.service_provider_id FROM sp_orders_requests s WHERE order_id = :orderId AND request_status ='RETURNED'";
-    /****************/
     public static final OrderStatus ORDER_STATUS_NEW = new OrderStatus("NEW", "NEW", true);
     public static final OrderStatus ORDER_STATUS_COMPLETED = new OrderStatus("COMPLETED", "COMPLETED", true);
     public static final OrderStatus ORDER_STATUS_IN_REVIEW = new OrderStatus("IN_REVIEW", "IN_REVIEW", true);

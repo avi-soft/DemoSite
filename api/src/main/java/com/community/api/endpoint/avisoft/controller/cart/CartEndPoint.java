@@ -227,6 +227,8 @@ public class CartEndPoint extends BaseEndpoint {
             }
             CustomProduct customProduct=entityManager.find(CustomProduct.class,productId);
             Long reserveCategoryId=reserveCategoryService.getCategoryByName(customCustomer.getCategory()).getReserveCategoryId();
+            if(reserveCategoryId==null)
+                return ResponseService.generateErrorResponse("Invalid Category",HttpStatus.INTERNAL_SERVER_ERROR);
             if(reserveCategoryService.getReserveCategoryFee(productId,reserveCategoryId)==null)
                 return ResponseService.generateErrorResponse("Cannot add product to cart :Fee not specified for your category",HttpStatus.UNPROCESSABLE_ENTITY);
             /*if(productReserveCategoryFeePostRefService.getCustomProductReserveCategoryFeePostRefByProductIdAndReserveCategoryId(product.getId(),.getFee()==null)

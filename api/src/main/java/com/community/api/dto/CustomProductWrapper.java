@@ -152,7 +152,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.active = product.isActive();
         this.quantity = product.getDefaultSku().getQuantityAvailable();
         this.activeGoLiveDate = addProductDto.getGoLiveDate();
-//        this.categoryName = product.getDefaultCategory().getName();
+        this.categoryName = product.getDefaultCategory().getName();
         this.priorityLevel = addProductDto.getPriorityLevel();
         this.archived = 'N';
         this.createdDate = currentDate;
@@ -278,6 +278,8 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.examDateTo = customProduct.getExamDateTo();
         this.notifyingAuthority = customProduct.getNotifyingAuthority();
         this.customProductRejectionStatus = customProduct.getRejectionStatus();
+        this.createdDate = customProduct.getCreatedDate();
+        this.postName = customProduct.getPostName();
 
         if (customProduct.getDefaultCategory() != null) {
             this.defaultCategoryId = customProduct.getDefaultCategory().getId();
@@ -342,6 +344,8 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.state = customProduct.getState();
         this.notifyingAuthority = customProduct.getNotifyingAuthority();
         this.customProductRejectionStatus = customProduct.getRejectionStatus();
+        this.createdDate = customProduct.getCreatedDate();
+        this.postName = customProduct.getPostName();
 
         if (customProduct.getDefaultCategory() != null) {
             this.defaultCategoryId = customProduct.getDefaultCategory().getId();
@@ -401,6 +405,7 @@ public class CustomProductWrapper extends BaseWrapper implements APIWrapper<Prod
         this.customSubject = customProduct.getSubject();
         this.customGender = customProduct.getGenderSpecific();
         this.customProductRejectionStatus = customProduct.getRejectionStatus();
+        this.postName = customProduct.getPostName();
 
         if (customProduct.getDefaultCategory() != null) {
             this.defaultCategoryId = customProduct.getDefaultCategory().getId();
