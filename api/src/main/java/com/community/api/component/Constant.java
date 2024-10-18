@@ -155,7 +155,7 @@ public class Constant {
     public static final CustomOrderState ORDER_STATE_IN_CART = new CustomOrderState("IN_CART", "Order yet to be placed");
     public static final CustomOrderState ORDER_STATE_UNASSIGNED = new CustomOrderState("UNASSIGNED", "Order is unassigned");
     public static final String GET_ALL_ORDERS="SELECT o.order_id FROM blc_order o WHERE o.order_status <> 'IN_PROCESS'";
-    public static final String SEARCH_ORDER_QUERY="SELECT o.order_id FROM order_state o WHERE o.order_state =:orderStatus";
+    public static final String SEARCH_ORDER_QUERY="SELECT o.order_id FROM order_state o WHERE o.order_state =:orderState";
     public static final String GET_NEW_ORDERS="SELECT o.order_id FROM order_state o WHERE o.order_state = 'NEW'";
     public static final String GET_SP_ORDER_REQUEST="SELECT o.order_request_id FROM SP_orders_requests o WHERE o.order_id = :orderId AND o.service_provider_id = :serviceProviderId ";
     public static final String GET_ONE_SP_ORDER_REQUEST="SELECT o.order_request_id FROM SP_orders_requests o WHERE o.service_provider_id = :serviceProviderId AND o.request_Status = :requestStatus";

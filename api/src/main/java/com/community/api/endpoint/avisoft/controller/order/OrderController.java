@@ -7,10 +7,13 @@ import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.CombinedOrderDTO;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.CustomOrderState;
+import com.community.api.entity.CustomOrderStatus;
 import com.community.api.entity.CustomProduct;
 import com.community.api.entity.OrderDTO;
 import com.community.api.entity.OrderRequest;
+import com.community.api.entity.OrderStateRef;
 import com.community.api.services.CustomOrderService;
+import com.community.api.services.OrderStatusByStateService;
 import com.community.api.services.PhysicalRequirementDtoService;
 import com.community.api.services.ReserveCategoryDtoService;
 import com.community.api.services.ResponseService;
@@ -55,6 +58,8 @@ public class OrderController
     private ServiceProviderServiceImpl serviceProviderService;
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
+    @Autowired
+    private OrderStatusByStateService orderStatusByStateService;
     @Autowired
     private CustomOrderService customOrderService;
     @Autowired
@@ -156,22 +161,22 @@ public class OrderController
                 query.setMaxResults(limit);
                 switch (orderState) {
                     case "completed":
-                        query.setParameter("orderStatus", Constant.ORDER_STATE_COMPLETED);
+                        query.setParameter("orderState", Constant.ORDER_STATE_COMPLETED.getOrderState());
                         break;
                     case "in-review":
-                        query.setParameter("orderStatus", Constant.ORDER_STATE_IN_REVIEW);
+                        query.setParameter("orderState", Constant.ORDER_STATE_IN_REVIEW.getOrderState());
                         break;
                     case "in-progress":
-                        query.setParameter("orderStatus", Constant.ORDER_STATE_IN_PROGRESS);
+                        query.setParameter("orderState", Constant.ORDER_STATE_IN_PROGRESS.getOrderState());
                         break;
                     case "auto-assigned":
-                        query.setParameter("orderStatus", Constant.ORDER_STATE_AUTO_ASSIGNED);
+                        query.setParameter("orderState", Constant.ORDER_STATE_AUTO_ASSIGNED.getOrderState());
                         break;
                     case "unassigned":
-                        query.setParameter("orderStatus", Constant.ORDER_STATE_UNASSIGNED);
+                        query.setParameter("orderState", Constant.ORDER_STATE_UNASSIGNED.getOrderState());
                         break;
                     case "new":
-                        query.setParameter("orderStatus", Constant.ORDER_STATE_NEW);
+                        query.setParameter("orderState", Constant.ORDER_STATE_NEW.getOrderState());
                         break;
                     default:
                         return ResponseService.generateErrorResponse("Wrong search filter", HttpStatus.BAD_REQUEST);
@@ -196,7 +201,6 @@ public class OrderController
     public ResponseEntity<?>generateCombinedDTO(List<BigInteger>orders,String sort)
     {
         try{
-        System.out.println("4");
         Map<String,Object>orderMap=new HashMap<>();
         List<CombinedOrderDTO>orderDetails=new ArrayList<>();
         OrderDTO orderDTO=null;
@@ -301,6 +305,38 @@ public class OrderController
         {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error viewing SP List", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @GetMapping("find-order-status/{orderStateId}")
+    public ResponseEntity<?>findOrderStatusByOrderState(@PathVariable Integer orderStateId)
+    {
+        try {
+            OrderStateRef orderStateRef=entityManager.find(OrderStateRef.class,orderStateId);
+            if(orderStateRef==null)
+                return ResponseService.generateErrorResponse("Order State Id is invalid",HttpStatus.BAD_REQUEST);
+            List<CustomOrderStatus>result=orderStatusByStateService.getOrderStatusByOrderStateId(orderStateId);
+            if(result.isEmpty())
+                return ResponseService.generateErrorResponse("No Results Found",HttpStatus.OK);
+            return ResponseService.generateSuccessResponse("Order Statuses",result,HttpStatus.OK);
+        }catch (Exception e)
+        {
+            exceptionHandling.handleException(e);
+            return ResponseService.generateErrorResponse("Error in fetching status list : ", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @GetMapping("find-order-state/{orderStatusId}")
+    public ResponseEntity<?>findOrderStatebyStatusId(@PathVariable Integer orderStatusId)
+    {
+        try {
+            CustomOrderStatus customOrderStatus=entityManager.find(CustomOrderStatus.class,orderStatusId);
+            if(customOrderStatus==null)
+                return ResponseService.generateErrorResponse("Order Status Id invalid",HttpStatus.BAD_REQUEST);
+            OrderStateRef result=orderStatusByStateService.getOrderStateByOrderStatus(orderStatusId);
+            return ResponseService.generateSuccessResponse("Order State Linked :",result,HttpStatus.OK);
+        }catch (Exception e)
+        {
+            exceptionHandling.handleException(e);
+            return ResponseService.generateErrorResponse("Error in fetching status list : ", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
