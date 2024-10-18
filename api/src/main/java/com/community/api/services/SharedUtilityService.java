@@ -45,6 +45,11 @@ public class SharedUtilityService {
     public ReserveCategoryService reserveCategoryService;
     private ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService;
     @Autowired
+    FileService fileService;
+
+    @Autowired
+    HttpServletRequest request;
+    @Autowired
     public void setEntityManager(EntityManager entityManager) {
         this.entityManager = entityManager;
     }
@@ -55,12 +60,6 @@ public class SharedUtilityService {
     }
     @Autowired
     public OrderService orderService;
-
-    @Autowired
-    public  FileService fileService;
-
-    @Autowired
-    public HttpServletRequest request;
 
     @Autowired
     public void setProductReserveCategoryFeePostRefService(ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService) {
@@ -332,6 +331,12 @@ public class SharedUtilityService {
         serviceProviderDetails.put("service_provider_status",serviceProvider.getTestStatus());
         serviceProviderDetails.put("rank", serviceProvider.getRanking());
         serviceProviderDetails.put("signedUp", serviceProvider.getSignedUp());
+
+        /* serviceProviderDetails.put("skills", serviceProvider.getSkills());*/
+       /* serviceProviderDetails.put("infra", serviceProvider.getInfra());
+        serviceProviderDetails.put("languages", serviceProvider.getLanguages());*/
+/*        serviceProviderDetails.put("privileges", serviceProvider.getPrivileges());
+        serviceProviderDetails.put("spAddresses", serviceProvider.getSpAddresses());*/
         serviceProviderDetails.put("business_unit_infra_score",serviceProvider.getBusinessUnitInfraScore());
         serviceProviderDetails.put("qualification_score",serviceProvider.getQualificationScore());
         serviceProviderDetails.put("technical_expertise_score",serviceProvider.getTechnicalExpertiseScore());
@@ -414,6 +419,7 @@ public class SharedUtilityService {
                     qualificationInfo.put("grade_or_percentage_value", qualificationDetail.getGrade_or_percentage_value());
                     qualificationInfo.put("marks_total", qualificationDetail.getTotal_marks());
                     qualificationInfo.put("marks_obtained", qualificationDetail.getMarks_obtained());
+                    qualificationInfo.put("qualification_id",qualificationDetail.getQualification_id());
 
                     // Replace the qualification_id with qualification_name
                     if (qualification != null) {

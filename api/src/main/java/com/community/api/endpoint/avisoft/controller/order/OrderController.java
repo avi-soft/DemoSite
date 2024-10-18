@@ -70,20 +70,20 @@ public class OrderController
     public ResponseEntity<?> getOrderHistory(@PathVariable Long customerId, @RequestParam(defaultValue = "oldest-to-latest") String sort,@RequestParam(defaultValue = "0") int page,@RequestParam(defaultValue = "5") int limit)
     {
         try{
-        CustomCustomer customCustomer=entityManager.find(CustomCustomer.class,customerId);
-        if (customCustomer==null)
-            return ResponseService.generateErrorResponse("Customer with the provided Id not found", HttpStatus.NOT_FOUND);
-        if(customCustomer.getNumberOfOrders()==0)
-            return ResponseService.generateErrorResponse("Order History Empty - No Orders placed", HttpStatus.OK);
-        String orderNumber = "O-"+customerId+"%"; // Use % for wildcard search
-        int startPosition=page*limit;
-        Query query = entityManager.createNativeQuery(Constant.GET_ORDERS_USING_CUSTOMER_ID);
-        query.setFirstResult(startPosition);
-        query.setMaxResults(limit);
-        query.setParameter("orderNumber", orderNumber);
-        List<BigInteger> orders = query.getResultList();
-        return generateCombinedDTO(orders,sort);
-    } catch (Exception e)
+            CustomCustomer customCustomer=entityManager.find(CustomCustomer.class,customerId);
+            if (customCustomer==null)
+                return ResponseService.generateErrorResponse("Customer with the provided Id not found", HttpStatus.NOT_FOUND);
+            if(customCustomer.getNumberOfOrders()==0)
+                return ResponseService.generateErrorResponse("Order History Empty - No Orders placed", HttpStatus.OK);
+            String orderNumber = "O-"+customerId+"%"; // Use % for wildcard search
+            int startPosition=page*limit;
+            Query query = entityManager.createNativeQuery(Constant.GET_ORDERS_USING_CUSTOMER_ID);
+            query.setFirstResult(startPosition);
+            query.setMaxResults(limit);
+            query.setParameter("orderNumber", orderNumber);
+            List<BigInteger> orders = query.getResultList();
+            return generateCombinedDTO(orders,sort);
+        } catch (Exception e)
         {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Error assigning Request to Service Provider", HttpStatus.INTERNAL_SERVER_ERROR);
@@ -111,7 +111,7 @@ public class OrderController
                         order.getCustomer().getId(),
                         order.getSubTotal(),
                         orderState.getOrderState())
-                      ;
+                ;
             }
             OrderItem orderItem = order.getOrderItems().get(0);
             Long productId = Long.parseLong(orderItem.getOrderItemAttributes().get("productId").getValue());
@@ -134,11 +134,11 @@ public class OrderController
             return ResponseService.generateErrorResponse("Error retrieving Order Details", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-  @RequestMapping(value = "show-all-orders",method = RequestMethod.GET)
+    @RequestMapping(value = "show-all-orders",method = RequestMethod.GET)
     public ResponseEntity<?> showClubbedOrders( @RequestParam(defaultValue = "all") String orderState,
                                                 @RequestParam(defaultValue = "oldest-to-latest")String sort,
                                                 @RequestParam(defaultValue = "0")int page,
-                                               @RequestParam(defaultValue = "5")int limit) {
+                                                @RequestParam(defaultValue = "5")int limit) {
         try {
             String orderSearchQuery = "SELECT o.order_id FROM order_state o WHERE o.order_state =:orderState";
             sort = sort.toLowerCase();
@@ -180,11 +180,11 @@ public class OrderController
             orderIds = query.getResultList();
             return generateCombinedDTO(orderIds, sort);
         } catch (Exception e)
-    {
-        exceptionHandling.handleException(e);
-        return ResponseService.generateErrorResponse("Error assigning Request to Service Provider", HttpStatus.INTERNAL_SERVER_ERROR);
+        {
+            exceptionHandling.handleException(e);
+            return ResponseService.generateErrorResponse("Error assigning Request to Service Provider", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
-  }
     public void sortOrdersByDate(List<CombinedOrderDTO> orders) {
         Collections.sort(orders, new Comparator<CombinedOrderDTO>() {
             @Override
@@ -196,56 +196,56 @@ public class OrderController
     public ResponseEntity<?>generateCombinedDTO(List<BigInteger>orders,String sort)
     {
         try{
-        System.out.println("4");
-        Map<String,Object>orderMap=new HashMap<>();
-        List<CombinedOrderDTO>orderDetails=new ArrayList<>();
-        OrderDTO orderDTO=null;
-        for(BigInteger orderId:orders)
-        {
-            Order order=orderService.findOrderById(orderId.longValue());
-            CustomOrderState orderState=entityManager.find(CustomOrderState.class,order.getId());
-            if(order!=null)
+            System.out.println("4");
+            Map<String,Object>orderMap=new HashMap<>();
+            List<CombinedOrderDTO>orderDetails=new ArrayList<>();
+            OrderDTO orderDTO=null;
+            for(BigInteger orderId:orders)
             {
-               orderDTO = new OrderDTO(
-                        order.getId(),
-                        order.getName(),
-                        order.getTotal(),
-                        order.getStatus(),
-                        order.getSubmitDate(),
-                        order.getOrderNumber(),
-                        order.getEmailAddress(),
-                        order.getCustomer().getId(),
-                        order.getSubTotal(),
-                        orderState.getOrderState()
-                );
+                Order order=orderService.findOrderById(orderId.longValue());
+                CustomOrderState orderState=entityManager.find(CustomOrderState.class,order.getId());
+                if(order!=null)
+                {
+                    orderDTO = new OrderDTO(
+                            order.getId(),
+                            order.getName(),
+                            order.getTotal(),
+                            order.getStatus(),
+                            order.getSubmitDate(),
+                            order.getOrderNumber(),
+                            order.getEmailAddress(),
+                            order.getCustomer().getId(),
+                            order.getSubTotal(),
+                            orderState.getOrderState()
+                    );
 
+                }
+                OrderItem orderItem=order.getOrderItems().get(0);
+                Long productId=Long.parseLong(orderItem.getOrderItemAttributes().get("productId").getValue());
+                CustomProduct customProduct=entityManager.find(CustomProduct.class,productId);
+                CustomProductWrapper customProductWrapper=null;
+                if(customProduct!=null) {
+                    customProductWrapper = new CustomProductWrapper();
+                    List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(productId);
+                    List<PhysicalRequirementDto> physicalRequirementDtoList = physicalRequirementDtoService.getPhysicalRequirementDto(productId);
+                    customProductWrapper.wrapDetails(customProduct, reserveCategoryDtoList, physicalRequirementDtoList);
+                }
+                CombinedOrderDTO combinedOrderDTO=new CombinedOrderDTO();
+                combinedOrderDTO.setOrderDetails(orderDTO);
+                combinedOrderDTO.setProductDetails(customProductWrapper);
+                orderDetails.add(combinedOrderDTO);
             }
-            OrderItem orderItem=order.getOrderItems().get(0);
-            Long productId=Long.parseLong(orderItem.getOrderItemAttributes().get("productId").getValue());
-            CustomProduct customProduct=entityManager.find(CustomProduct.class,productId);
-            CustomProductWrapper customProductWrapper=null;
-            if(customProduct!=null) {
-                customProductWrapper = new CustomProductWrapper();
-                List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(productId);
-                List<PhysicalRequirementDto> physicalRequirementDtoList = physicalRequirementDtoService.getPhysicalRequirementDto(productId);
-                customProductWrapper.wrapDetails(customProduct, reserveCategoryDtoList, physicalRequirementDtoList);
-            }
-            CombinedOrderDTO combinedOrderDTO=new CombinedOrderDTO();
-            combinedOrderDTO.setOrderDetails(orderDTO);
-            combinedOrderDTO.setProductDetails(customProductWrapper);
-            orderDetails.add(combinedOrderDTO);
-        }
-        if(sort.equals("latest-to-oldest"))
-            sortOrdersByDate(orderDetails);
-        else if(!sort.equals("oldest-to-latest"))
-            return ResponseService.generateErrorResponse("Invalid sort option",HttpStatus.BAD_REQUEST);
-        orderMap.put("Order List",orderDetails);
-        return ResponseService.generateSuccessResponse("Orders",orderMap,HttpStatus.OK);
-    }catch (Exception e)
-    {
-        exceptionHandling.handleException(e);
-        return ResponseService.generateErrorResponse("Error assigning Request to Service Provider", HttpStatus.INTERNAL_SERVER_ERROR);
-    }}
+            if(sort.equals("latest-to-oldest"))
+                sortOrdersByDate(orderDetails);
+            else if(!sort.equals("oldest-to-latest"))
+                return ResponseService.generateErrorResponse("Invalid sort option",HttpStatus.BAD_REQUEST);
+            orderMap.put("Order List",orderDetails);
+            return ResponseService.generateSuccessResponse("Orders",orderMap,HttpStatus.OK);
+        }catch (Exception e)
+        {
+            exceptionHandling.handleException(e);
+            return ResponseService.generateErrorResponse("Error assigning Request to Service Provider", HttpStatus.INTERNAL_SERVER_ERROR);
+        }}
     @Transactional
     @RequestMapping(value = "assign-order/{orderId}/{serviceProviderId}",method = RequestMethod.POST)
     public ResponseEntity<?>manuallyAssignOrder(@PathVariable Long orderId,@PathVariable Long serviceProviderId) {
