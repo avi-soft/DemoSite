@@ -254,9 +254,17 @@ public class ServiceProviderTestService {
         int typingTestScore = calculateTypingTestScore(test.getTyping_test_text(), typedText);
         test.setTyping_test_scores(typingTestScore);
         serviceProvider.setWrittenTestScore(typingTestScore);
-        serviceProvider.setTotalScore(typingTestScore);
+        entityManager.merge(test);
+        serviceProvider.setTotalScore(0);
+
         if(serviceProvider.getType().equalsIgnoreCase("PROFESSIONAL"))
         {
+            Integer totalScore=typingTestScore+ serviceProvider.getBusinessUnitInfraScore()+serviceProvider.getWorkExperienceScore()+serviceProvider.getTechnicalExpertiseScore()+ serviceProvider.getQualificationScore()+serviceProvider.getStaffScore();
+            if(serviceProvider.getImageUploadScore()!=null)
+            {
+                totalScore= totalScore+serviceProvider.getImageUploadScore();
+            }
+            serviceProvider.setTotalScore(totalScore);
             ServiceProviderRank serviceProviderRank= assignRankingForProfessional(serviceProvider.getTotalScore());
             if(serviceProviderRank==null)
             {
@@ -265,6 +273,12 @@ public class ServiceProviderTestService {
             serviceProvider.setRanking(serviceProviderRank);
         }
         else {
+            Integer totalScore=typingTestScore+ serviceProvider.getInfraScore()+serviceProvider.getWorkExperienceScore()+serviceProvider.getTechnicalExpertiseScore()+ serviceProvider.getQualificationScore()+serviceProvider.getPartTimeOrFullTimeScore();
+            if(serviceProvider.getImageUploadScore()!=null)
+            {
+                totalScore= totalScore+serviceProvider.getImageUploadScore();
+            }
+            serviceProvider.setTotalScore(totalScore);
             ServiceProviderRank serviceProviderRank= assignRankingForIndividual(serviceProvider.getTotalScore());
             if(serviceProviderRank==null)
             {
@@ -273,7 +287,7 @@ public class ServiceProviderTestService {
             serviceProvider.setRanking(serviceProviderRank);
         }
         entityManager.merge(serviceProvider);
-        return entityManager.merge(test);
+        return test;
 
     }
 
@@ -489,39 +503,14 @@ public class ServiceProviderTestService {
         serviceProvider.setImageUploadScore(giveUploadedImageScoreDTO.getImage_test_scores());
         serviceProvider.setTotalSkillTestPoints(serviceProviderTest.getImage_test_scores() + serviceProviderTest.getTyping_test_scores());
 
+        serviceProvider.setTotalScore(0);
         Integer totalScore=0;
-        totalScore+=giveUploadedImageScoreDTO.getImage_test_scores();
-        if(serviceProvider.getWrittenTestScore()!=null)
-        {
-             totalScore+=serviceProvider.getWrittenTestScore();
-        }
-        if(serviceProvider.getBusinessUnitInfraScore()!=null)
-        {
-            Integer businessUnitInfraScore= serviceProvider.getBusinessUnitInfraScore();
-            totalScore+=businessUnitInfraScore;
-        }
-        if(serviceProvider.getWorkExperienceScore()!=null)
-        {
-            Integer workExperienceScore= serviceProvider.getWorkExperienceScore();
-            totalScore+=workExperienceScore;
-        }
-        if(serviceProvider.getQualificationScore()!=null)
-        {
-            Integer qualificationScore= serviceProvider.getQualificationScore();
-            totalScore+=qualificationScore;
-        }
-        if(serviceProvider.getTechnicalExpertiseScore()!=null)
-        {
-            Integer technicalExpertiseScore= serviceProvider.getTechnicalExpertiseScore();
-            totalScore+=technicalExpertiseScore;
-        }
-
         if(serviceProvider.getType().equalsIgnoreCase("PROFESSIONAL"))
         {
-            if(serviceProvider.getStaffScore()!=null)
+            totalScore+=giveUploadedImageScoreDTO.getImage_test_scores()+serviceProvider.getBusinessUnitInfraScore()+serviceProvider.getWorkExperienceScore()+serviceProvider.getTechnicalExpertiseScore()+ serviceProvider.getQualificationScore()+serviceProvider.getStaffScore();
+            if(serviceProvider.getWrittenTestScore()!=null)
             {
-                Integer staffScore= serviceProvider.getStaffScore();
-                totalScore+=staffScore;
+                totalScore+=serviceProvider.getWrittenTestScore();
             }
             serviceProvider.setTotalScore(totalScore);
             ServiceProviderRank serviceProviderRank= assignRankingForProfessional(totalScore);
@@ -532,10 +521,10 @@ public class ServiceProviderTestService {
             serviceProvider.setRanking(serviceProviderRank);
         }
         else {
-            if(serviceProvider.getPartTimeOrFullTimeScore()!=null)
+           totalScore+= giveUploadedImageScoreDTO.getImage_test_scores()+serviceProvider.getInfraScore()+serviceProvider.getWorkExperienceScore()+serviceProvider.getTechnicalExpertiseScore()+ serviceProvider.getQualificationScore()+serviceProvider.getPartTimeOrFullTimeScore();
+            if(serviceProvider.getWrittenTestScore()!=null)
             {
-                Integer partTimeOrFullTimeScore= serviceProvider.getPartTimeOrFullTimeScore();
-                totalScore+=partTimeOrFullTimeScore;
+                totalScore+=serviceProvider.getWrittenTestScore();
             }
             serviceProvider.setTotalScore(totalScore);
             ServiceProviderRank serviceProviderRank= assignRankingForIndividual(totalScore);

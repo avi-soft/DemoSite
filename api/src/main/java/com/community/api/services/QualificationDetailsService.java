@@ -99,7 +99,10 @@ public class QualificationDetailsService {
         }
         qualificationDetails.remove(qualificationDetailsToDelete);
         entityManager.remove(qualificationDetailsToDelete);
-        giveQualificationScore(userId);
+        if(roleName.equalsIgnoreCase(Constant.SERVICE_PROVIDER))
+        {
+            giveQualificationScore(userId);
+        }
         return qualificationDetailsToDelete;
     }
 
