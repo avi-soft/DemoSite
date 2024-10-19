@@ -20,21 +20,28 @@ public class CustomAdmin
 {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long admin_id;
 
-    private int role_id;
+    private int role;
     private String password;
+    private String user_name;
     private String otp;
     @Size(min = 9, max = 13)
-    private String phoneNumber;
+    private String mobileNumber;
+    private String country_code;
+    private String token;
+    private int signedUp=0;
     private String created_at,updated_at,created_by, modified_by;
 
 
-    public CustomAdmin(Long id, int role_id, String password, String phoneNumber, String created_at, String created_by) {
-        this.id = id;
-        this.role_id = role_id;
+    public CustomAdmin(Long admin_id, int role, String password,String user_name, String mobileNumber,String country_code,int signedUp, String created_at, String created_by) {
+        this.admin_id = admin_id;
+        this.role = role;
         this.password = password;
-        this.phoneNumber = phoneNumber;
+        this.user_name=user_name;
+        this.mobileNumber = mobileNumber;
+        this.country_code = country_code;
+        this.signedUp = signedUp;
         this.created_at = created_at;
         this.created_by = created_by;
     }

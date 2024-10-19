@@ -1,5 +1,6 @@
 package com.community.api.component;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
+import com.community.api.entity.CustomAdmin;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.ServiceProviderInfra;
 import com.community.api.services.CustomCustomerService;
@@ -175,6 +176,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         Customer customCustomer = null;
         ServiceProviderEntity serviceProvider = null;
+        CustomAdmin customAdmin=null;
         if (id != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             if (roleService.findRoleName(jwtUtil.extractRoleId(jwt)).equals(Constant.roleUser)) {
                 customCustomer = CustomerService.readCustomerById(id);
@@ -198,6 +200,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     return false;
                 } else {
                     respondWithUnauthorized(response, "Invalid data provided for this customer");
+                    return true;
+                }
+            }
+
+            else if (roleService.findRoleName(jwtUtil.extractRoleId(jwt)).equals(Constant.ADMIN) || roleService.findRoleName(jwtUtil.extractRoleId(jwt)).equals(Constant.SUPER_ADMIN) || roleService.findRoleName(jwtUtil.extractRoleId(jwt)).equals(Constant.roleAdminServiceProvider)) {
+                customAdmin=entityManager.find(CustomAdmin.class,id);
+                if (customAdmin != null && jwtUtil.validateToken(jwt, ipAdress, User_Agent)) {
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            customAdmin.getAdmin_id(), null, new ArrayList<>());
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    return false;
+                } else {
+                    respondWithUnauthorized(response, "Invalid data provided for this user");
                     return true;
                 }
             }

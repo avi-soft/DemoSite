@@ -29,6 +29,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
+import javax.validation.constraints.Size;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.time.ZonedDateTime;
@@ -425,6 +426,33 @@ public class SharedUtilityService {
                     return qualificationInfo;
                 }).collect(Collectors.toList());
     }
+
+    public Map<String,Object> adminDetailsMap(CustomAdmin customAdmin)
+    {
+        Map<String,Object>customAdminDetails=new HashMap<>();
+        if(customAdmin.getRole()==2)
+        {
+            customAdminDetails.put("admin_id",customAdmin.getAdmin_id());
+        }
+        else if(customAdmin.getRole()==1)
+        {
+            customAdminDetails.put("super_admin_id",customAdmin.getAdmin_id());
+        }
+        else if(customAdmin.getRole()==3)
+        {
+            customAdminDetails.put("admin_service_provider_id",customAdmin.getAdmin_id());
+        }
+
+        customAdminDetails.put("role_id", customAdmin.getRole());
+        customAdminDetails.put("user_name", customAdmin.getUser_name());
+        customAdminDetails.put("password", customAdmin.getPassword());
+        customAdminDetails.put("otp", customAdmin.getOtp());
+        customAdminDetails.put("mobile_number",customAdmin.getMobileNumber());
+        customAdminDetails.put("country_code", customAdmin.getCountry_code());
+        return customAdminDetails;
+    }
+
+
 
 
 
