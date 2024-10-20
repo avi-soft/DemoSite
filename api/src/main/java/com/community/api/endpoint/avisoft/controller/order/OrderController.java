@@ -181,7 +181,7 @@ public class OrderController
         } catch (Exception e)
     {
         exceptionHandling.handleException(e);
-        return ResponseService.generateErrorResponse("Error assigning Request to Service Provider", HttpStatus.INTERNAL_SERVER_ERROR);
+        return ResponseService.generateErrorResponse("Error Fetching order List", HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
     public void sortOrdersByDate(List<CombinedOrderDTO> orders) {
@@ -242,7 +242,7 @@ public class OrderController
     }catch (Exception e)
     {
         exceptionHandling.handleException(e);
-        return ResponseService.generateErrorResponse("Error assigning Request to Service Provider", HttpStatus.INTERNAL_SERVER_ERROR);
+        return ResponseService.generateErrorResponse("Error fetching orders ", HttpStatus.INTERNAL_SERVER_ERROR);
     }}
     @Transactional
     @RequestMapping(value = "assign-order/{orderId}/{serviceProviderId}",method = RequestMethod.POST)
