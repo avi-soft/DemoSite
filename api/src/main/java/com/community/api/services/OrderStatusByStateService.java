@@ -54,7 +54,7 @@ public class OrderStatusByStateService {
     }
     public OrderStateRef getOrderStateById(Integer orderStateId) {
         try {
-            Query query = entityManager.createQuery("SELECT s.orderStateId FROM OrderStateRef s WHERE s.orderStatusId = :orderStatusId",Integer.class);
+            Query query = entityManager.createQuery("SELECT s.orderStateId FROM OrderStateRef s WHERE s.orderStateId = :orderStateId",Integer.class);
             query.setParameter("orderStateId", orderStateId);
             Integer id=(Integer)query.getSingleResult();
             OrderStateRef orderStateRef=entityManager.find(OrderStateRef.class,id);

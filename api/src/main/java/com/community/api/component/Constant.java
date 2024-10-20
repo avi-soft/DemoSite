@@ -146,17 +146,9 @@ public class Constant {
     public static final String GET_ALL_ORDERS_OF_ONE_CUSTOMER="SELECT o from blc_ ";
     public static final String GET_ORDERS_USING_CUSTOMER_ID = "SELECT CAST(o.order_id AS BIGINT) FROM blc_order o WHERE o.order_number LIKE :orderNumber";;
 
-    public static final CustomOrderState ORDER_STATE_COMPLETED = new CustomOrderState("COMPLETED", "Order Completed Successfully");
-    public static final CustomOrderState ORDER_STATE_NEW = new CustomOrderState("NEW", "New Order Generated");
-    public static final CustomOrderState ORDER_STATE_IN_REVIEW = new CustomOrderState("IN_REVIEW", "Order is under review");
-    public static final CustomOrderState ORDER_STATE_ASSIGNED = new CustomOrderState("ASSIGNED", "Order has been assigned");
-    public static final CustomOrderState ORDER_STATE_AUTO_ASSIGNED = new CustomOrderState("AUTO_ASSIGNED", "Order has been auto-assigned");
-    public static final CustomOrderState ORDER_STATE_IN_PROGRESS = new CustomOrderState("IN_PROGRESS", "Order is in progress");
-    public static final CustomOrderState ORDER_STATE_IN_CART = new CustomOrderState("IN_CART", "Order yet to be placed");
-    public static final CustomOrderState ORDER_STATE_UNASSIGNED = new CustomOrderState("UNASSIGNED", "Order is unassigned");
     public static final String GET_ALL_ORDERS="SELECT o.order_id FROM blc_order o WHERE o.order_status <> 'IN_PROCESS'";
-    public static final String SEARCH_ORDER_QUERY="SELECT o.order_id FROM order_state o WHERE o.order_state =:orderState";
-    public static final String GET_NEW_ORDERS="SELECT o.order_id FROM order_state o WHERE o.order_state = 'NEW'";
+    public static final String SEARCH_ORDER_QUERY="SELECT o.order_id FROM order_state o WHERE o.order_state_id =:orderStateId";
+    public static final String GET_NEW_ORDERS="SELECT o.order_id FROM order_state o WHERE o.order_state_id = 1";
     public static final String GET_SP_ORDER_REQUEST="SELECT o.order_request_id FROM SP_orders_requests o WHERE o.order_id = :orderId AND o.service_provider_id = :serviceProviderId ";
     public static final String GET_ONE_SP_ORDER_REQUEST="SELECT o.order_request_id FROM SP_orders_requests o WHERE o.service_provider_id = :serviceProviderId AND o.request_Status = :requestStatus";
     public static final String GET_ONE_SP_ALL_ORDER_REQUEST="SELECT o.order_request_id FROM SP_orders_requests o WHERE o.service_provider_id = :serviceProviderId" ;
@@ -171,5 +163,14 @@ public class Constant {
     public static final OrderStatus ORDER_STATUS_AUTO_ASSIGNED = new OrderStatus("AUTO_ASSIGNED", "AUTO_ASSIGNED", true);
     public static final OrderStatus ORDER_STATUS_IN_PROGRESS = new OrderStatus("IN_PROGRESS", "IN_PROGRESS", true);
     public static final OrderStatus ORDER_STATUS_IN_CART = new OrderStatus("IN_PROCESS", "IN_PROCESS", true);
+
     public static final OrderStatus ORDER_STATUS_UNASSIGNED = new OrderStatus("UNASSIGNED", "UNASSIGNED", true);
+    public static final CustomOrderState ORDER_STATE_COMPLETED = new CustomOrderState(7);
+    public static final CustomOrderState ORDER_STATE_NEW = new CustomOrderState(1);
+    public static final CustomOrderState ORDER_STATE_IN_REVIEW = new CustomOrderState(8);
+    public static final CustomOrderState ORDER_STATE_ASSIGNED = new CustomOrderState(4);
+    public static final CustomOrderState ORDER_STATE_AUTO_ASSIGNED = new CustomOrderState(2);
+    public static final CustomOrderState ORDER_STATE_IN_PROGRESS = new CustomOrderState(6);
+    public static final CustomOrderState ORDER_STATE_UNASSIGNED = new CustomOrderState(3);
+    public static final CustomOrderState ORDER_STATE_RETURNED = new CustomOrderState(5);
 }

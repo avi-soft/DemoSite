@@ -27,6 +27,6 @@ public class OrderDTO
     private String customerEmail;
     private Long customerId;
     private Money subTotal;
-    private String orderState;
+    private Integer orderStateId;
 }
 

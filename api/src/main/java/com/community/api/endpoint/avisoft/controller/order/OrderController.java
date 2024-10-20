@@ -26,12 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
@@ -115,7 +110,7 @@ public class OrderController
                         order.getEmailAddress(),
                         order.getCustomer().getId(),
                         order.getSubTotal(),
-                        orderState.getOrderState())
+                        orderState.getOrderStateId())
                       ;
             }
             OrderItem orderItem = order.getOrderItems().get(0);
@@ -140,17 +135,16 @@ public class OrderController
         }
     }
   @RequestMapping(value = "show-all-orders",method = RequestMethod.GET)
-    public ResponseEntity<?> showClubbedOrders( @RequestParam(defaultValue = "all") String orderState,
+    public ResponseEntity<?> showClubbedOrders( @RequestParam(defaultValue = "all") String orderStateId,
                                                 @RequestParam(defaultValue = "oldest-to-latest")String sort,
                                                 @RequestParam(defaultValue = "0")int page,
                                                @RequestParam(defaultValue = "5")int limit) {
         try {
-            String orderSearchQuery = "SELECT o.order_id FROM order_state o WHERE o.order_state =:orderState";
             sort = sort.toLowerCase();
             int startPosition = page * limit;
             List<BigInteger> orderIds = null;
             Query query = null;
-            if (orderState.equals("all")) {
+            if (orderStateId.equals("all")) {
                 query = entityManager.createNativeQuery(Constant.GET_ALL_ORDERS);
                 query.setFirstResult(startPosition);
                 query.setMaxResults(limit);
@@ -159,24 +153,24 @@ public class OrderController
                 query = entityManager.createNativeQuery(Constant.SEARCH_ORDER_QUERY);
                 query.setFirstResult(startPosition);
                 query.setMaxResults(limit);
-                switch (orderState) {
+                switch (orderStateId) {
                     case "completed":
-                        query.setParameter("orderState", Constant.ORDER_STATE_COMPLETED.getOrderState());
+                        query.setParameter("orderStateId", Constant.ORDER_STATE_COMPLETED.getOrderStateId());
                         break;
                     case "in-review":
-                        query.setParameter("orderState", Constant.ORDER_STATE_IN_REVIEW.getOrderState());
+                        query.setParameter("orderStateId", Constant.ORDER_STATE_IN_REVIEW.getOrderStateId());
                         break;
                     case "in-progress":
-                        query.setParameter("orderState", Constant.ORDER_STATE_IN_PROGRESS.getOrderState());
+                        query.setParameter("orderStateId", Constant.ORDER_STATE_IN_PROGRESS.getOrderStateId());
                         break;
                     case "auto-assigned":
-                        query.setParameter("orderState", Constant.ORDER_STATE_AUTO_ASSIGNED.getOrderState());
+                        query.setParameter("orderStateId", Constant.ORDER_STATE_AUTO_ASSIGNED.getOrderStateId());
                         break;
                     case "unassigned":
-                        query.setParameter("orderState", Constant.ORDER_STATE_UNASSIGNED.getOrderState());
+                        query.setParameter("orderStateId", Constant.ORDER_STATE_UNASSIGNED.getOrderStateId());
                         break;
                     case "new":
-                        query.setParameter("orderState", Constant.ORDER_STATE_NEW.getOrderState());
+                        query.setParameter("orderStateId", Constant.ORDER_STATE_NEW.getOrderStateId());
                         break;
                     default:
                         return ResponseService.generateErrorResponse("Wrong search filter", HttpStatus.BAD_REQUEST);
@@ -220,7 +214,7 @@ public class OrderController
                         order.getEmailAddress(),
                         order.getCustomer().getId(),
                         order.getSubTotal(),
-                        orderState.getOrderState()
+                        orderState.getOrderStateId()
                 );
 
             }
@@ -258,8 +252,8 @@ public class OrderController
             if(order==null)
                 return ResponseService.generateErrorResponse("Order not found",HttpStatus.NOT_FOUND);
             CustomOrderState customOrderState=entityManager.find(CustomOrderState.class,order.getId());
-            if(!customOrderState.getOrderState().equals(Constant.ORDER_STATE_UNASSIGNED.getOrderState()))
-                return ResponseService.generateErrorResponse("Cannot assign this order manually as its status is : "+customOrderState.getOrderState(),HttpStatus.UNPROCESSABLE_ENTITY);
+            if(!customOrderState.getOrderStateId().equals(Constant.ORDER_STATE_UNASSIGNED.getOrderStateId()))
+                return ResponseService.generateErrorResponse("Cannot assign this order manually as its status is : "+orderStatusByStateService.getOrderStateById(customOrderState.getOrderStateId()).getOrderStateName(),HttpStatus.UNPROCESSABLE_ENTITY);
             if (order == null)
                 return ResponseService.generateErrorResponse("Order with the provided id not found", HttpStatus.NOT_FOUND);
             ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
@@ -282,8 +276,9 @@ public class OrderController
             entityManager.persist(orderRequest);
             serviceProvider.getOrderRequests().add(orderRequest);
             order.setStatus(Constant.ORDER_STATUS_ASSIGNED);
-            customOrderState.setOrderState(Constant.ORDER_STATE_ASSIGNED.getOrderState());
-            customOrderState.setOrderStateDescription(Constant.ORDER_STATE_ASSIGNED.getOrderStateDescription());
+            Integer orderStatusId=orderStatusByStateService.getOrderStatusByOrderStateId(Constant.ORDER_STATE_ASSIGNED.getOrderStateId()).get(0).getOrderStatusId();
+            customOrderState.setOrderStatusId(orderStatusId);
+            customOrderState.setOrderStateId(Constant.ORDER_STATE_ASSIGNED.getOrderStateId());
             entityManager.merge(customOrderState);
             entityManager.merge(order);
             entityManager.merge(serviceProvider);
