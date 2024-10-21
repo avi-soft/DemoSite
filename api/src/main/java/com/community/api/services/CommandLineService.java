@@ -19,6 +19,7 @@ import com.community.api.entity.StateCode;
 import com.community.api.entity.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import javax.persistence.EntityManager;
@@ -34,6 +35,9 @@ public class CommandLineService implements CommandLineRunner {
 
     @Autowired
     private EntityManager entityManager;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Override
     @Transactional
@@ -410,6 +414,14 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(new ServiceProviderRank(6L, "2b", "The INDIVIDUAL service provider's score is between 50-75 points", now, now, "SUPER_ADMIN", 3, 13));
             entityManager.persist(new ServiceProviderRank(7L, "2c", "The INDIVIDUAL service provider's score is between 25-50 points", now, now, "SUPER_ADMIN", 2, 8));
             entityManager.persist(new ServiceProviderRank(8L, "2d", "The INDIVIDUAL service provider's score is between 0-25 points", now, now, "SUPER_ADMIN", 2, 6));
+        }
+
+        count= entityManager.createQuery("SELECT count(e) FROM CustomAdmin e", Long.class).getSingleResult();
+        if(count==0)
+        {
+            entityManager.merge(new CustomAdmin(1L,2,passwordEncoder.encode("1234"),"Admin#01","7740066387","+91",0,now,"SUPER_ADMIN"));
+            entityManager.merge(new CustomAdmin(2L,1,passwordEncoder.encode("1234"),"SuperAdmin#1357","9872548680","+91",0,now,"SUPER_ADMIN"));
+            entityManager.merge(new CustomAdmin(3L,3,passwordEncoder.encode("1234"),"AdminServiceProvider#02","7710393096","+91",0,now,"SUPER_ADMIN"));
         }
 
          count = entityManager.createQuery("SELECT count(e) FROM ScoringCriteria e", Long.class).getSingleResult();

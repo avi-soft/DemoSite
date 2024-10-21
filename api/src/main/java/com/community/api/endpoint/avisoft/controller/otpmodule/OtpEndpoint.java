@@ -7,6 +7,7 @@ import com.community.api.endpoint.serviceProvider.ServiceProviderStatus;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.ServiceProviderTestStatus;
 import com.community.api.services.*;
+import com.community.api.services.Admin.AdminService;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.twilio.Twilio;
@@ -79,6 +80,8 @@ public class OtpEndpoint {
 
     @Value("${twilio.accountSid}")
     private String accountSid;
+    @Autowired
+    private AdminService adminService;
 
     @PostMapping("/send-otp")
     public ResponseEntity<?> sendOtp(@RequestBody CustomCustomer customerDetails, HttpSession session) throws UnsupportedEncodingException {
@@ -208,7 +211,12 @@ public class OtpEndpoint {
                 }
             } else if (roleService.findRoleName(role).equals(Constant.roleServiceProvider)) {
                 return serviceProviderService.verifyOtp(loginDetails, session, request);
-            } else {
+            }
+
+            else if(roleService.findRoleName(role).equals(Constant.ADMIN) ||roleService.findRoleName(role).equals(Constant.SUPER_ADMIN) ||roleService.findRoleName(role).equals(Constant.roleAdminServiceProvider)) {
+                return adminService.verifyOtpForAdmin(loginDetails,session,request);
+            }
+            else {
                 return responseService.generateErrorResponse(ApiConstants.INVALID_ROLE, HttpStatus.BAD_REQUEST);
             }
         } catch (Exception e) {

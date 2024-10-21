@@ -625,9 +625,11 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
             if(existingServiceProvider.getType().equalsIgnoreCase("PROFESSIONAL"))
             {
+
                 totalScore=existingServiceProvider.getBusinessUnitInfraScore()+existingServiceProvider.getWorkExperienceScore()+existingServiceProvider.getTechnicalExpertiseScore()+ existingServiceProvider.getQualificationScore()+ existingServiceProvider.getStaffScore();
             }
             else {
+                existingServiceProvider.setBusinessUnitInfraScore(0);
                 totalScore=existingServiceProvider.getInfraScore()+existingServiceProvider.getWorkExperienceScore()+existingServiceProvider.getTechnicalExpertiseScore()+existingServiceProvider.getQualificationScore()+existingServiceProvider.getPartTimeOrFullTimeScore();
             }
             if(existingServiceProvider.getWrittenTestScore()!=null)
@@ -642,8 +644,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             existingServiceProvider.setTotalScore(totalScore);
             assignRank(existingServiceProvider,totalScore);
 
-
-        return responseService.generateSuccessResponse("Service Provider Updated Successfully", existingServiceProvider, HttpStatus.OK);
+            Map<String,Object> serviceProviderMap=sharedUtilityService.serviceProviderDetailsMap(existingServiceProvider);
+        return responseService.generateSuccessResponse("Service Provider Updated Successfully", serviceProviderMap, HttpStatus.OK);
     }catch (NoSuchFieldException e)
         {
             return ResponseService.generateErrorResponse("No such field present :"+e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -1237,7 +1239,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
     @Transactional
 
-    public Object searchServiceProviderBasedOnGivenFields(String state,String district,String first_name,String last_name,String mobileNumber) {
+    public Object searchServiceProviderBasedOnGivenFields(String state,String district,String first_name,String last_name,String mobileNumber, Long test_status_id) {
 
         Map<String, Character> alias = new HashMap<>();
         first_name=first_name.trim();
@@ -1246,6 +1248,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         alias.put("district", 'a');
         alias.put("first_name", 's');
         alias.put("last_name", 's');
+        alias.put("test_status_id", 's');
         String generalizedQuery = "SELECT s.*\n" +
                 "FROM service_provider s\n" +
                 "JOIN custom_service_provider_address a ON s.service_provider_id = a.service_provider_id\n" +
@@ -1259,8 +1262,13 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                     .findFirst()
                     .orElse(null);
         }
-        String[] fieldsNames = {"state", "district", "first_name", "last_name"};
-        String[] fields = {state, district, first_name, last_name};
+
+        if(test_status_id!=null)
+        {
+            generalizedQuery = generalizedQuery + alias.get("test_status_id") + "." + "test_status_id" + " =" + test_status_id + " AND ";
+        }
+        String[] fieldsNames = {"state", "district", "first_name","last_name"};
+        Object[] fields = {state, district, first_name,last_name};
         for (int i = 0; i < fields.length; i++) {
             if (fields[i] != null) {
                 if (fieldsNames[i].equals("first_name") || fieldsNames[i].equals("last_name")) {
@@ -1275,6 +1283,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         generalizedQuery = generalizedQuery.trim();
         int lastSpaceIndex = generalizedQuery.lastIndexOf(" ");
         generalizedQuery = generalizedQuery.substring(0, lastSpaceIndex);
+        System.out.println("-------------------------" + generalizedQuery);
         Query query;
         query = entityManager.createNativeQuery(generalizedQuery, ServiceProviderEntity.class);
         for (int i = 0; i < fields.length; i++) {

@@ -46,6 +46,11 @@ public class ServiceProviderRankService {
     @Transactional
     public Map<String, Integer>  getScoreCard(Long serviceProviderId)
     {
+
+        if(!(serviceProviderId instanceof Long))
+        {
+            throw new IllegalArgumentException("Service Provider Id must be a Long");
+        }
         ServiceProviderEntity serviceProviderEntity = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
         if (serviceProviderEntity == null) {
             throw new IllegalArgumentException("The service provider with id " + serviceProviderId + " does not exist");

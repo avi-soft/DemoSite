@@ -30,6 +30,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
+import javax.validation.constraints.Size;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.text.ParseException;
@@ -65,13 +66,8 @@ public class SharedUtilityService {
     @Autowired
     public OrderService orderService;
 
-
-
     @Autowired
     public ExceptionHandlingImplement exceptionHandling;
-
-
-
     @Autowired
     public void setProductReserveCategoryFeePostRefService(ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService) {
         this.productReserveCategoryFeePostRefService = productReserveCategoryFeePostRefService;
@@ -153,6 +149,7 @@ public class SharedUtilityService {
         customerDetails.put("cookied", customer.isCookied());
         customerDetails.put("loggedIn", customer.isLoggedIn());
         customerDetails.put("transientProperties", customer.getTransientProperties());
+
         CustomCustomer customCustomer=entityManager.find(CustomCustomer.class,customer.getId());
         Order cart=orderService.findCartForCustomer(customer);
         if(cart!=null)
@@ -162,7 +159,12 @@ public class SharedUtilityService {
         customerDetails.put("mobileNumber", customCustomer.getMobileNumber());
         customerDetails.put("secondaryMobileNumber", customCustomer.getSecondaryMobileNumber());
         customerDetails.put("whatsappNumber", customCustomer.getWhatsappNumber());
-
+        List<ServiceProviderEntity>refSp=new ArrayList<>();
+        for(CustomerReferrer customerReferrer:customCustomer.getMyReferrer())
+        {
+            refSp.add(customerReferrer.getServiceProvider());
+        }
+        customerDetails.put("referres",refSp);
         customerDetails.put("countryCode", customCustomer.getCountryCode());
         customerDetails.put("otp", customCustomer.getOtp());
         customerDetails.put("fathersName", customCustomer.getFathersName());
@@ -443,6 +445,7 @@ public class SharedUtilityService {
                 }).collect(Collectors.toList());
     }
 
+
     public boolean isFutureDate(String dateStr) {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
         sdf.setLenient(false);
@@ -455,6 +458,31 @@ public class SharedUtilityService {
             return false;
         }
     }
+    public Map<String,Object> adminDetailsMap(CustomAdmin customAdmin)
+    {
+        Map<String,Object>customAdminDetails=new HashMap<>();
+        if(customAdmin.getRole()==2)
+        {
+            customAdminDetails.put("admin_id",customAdmin.getAdmin_id());
+        }
+        else if(customAdmin.getRole()==1)
+        {
+            customAdminDetails.put("super_admin_id",customAdmin.getAdmin_id());
+        }
+        else if(customAdmin.getRole()==3)
+        {
+            customAdminDetails.put("admin_service_provider_id",customAdmin.getAdmin_id());
+        }
+
+        customAdminDetails.put("role_id", customAdmin.getRole());
+        customAdminDetails.put("user_name", customAdmin.getUser_name());
+        customAdminDetails.put("password", customAdmin.getPassword());
+        customAdminDetails.put("otp", customAdmin.getOtp());
+        customAdminDetails.put("mobile_number",customAdmin.getMobileNumber());
+        customAdminDetails.put("country_code", customAdmin.getCountry_code());
+        return customAdminDetails;
+    }
+
 
 }
 
