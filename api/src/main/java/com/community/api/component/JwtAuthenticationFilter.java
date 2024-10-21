@@ -225,11 +225,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (!response.isCommitted()) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/json");
-//            response.getWriter().write("{\"status\":401,\"message\":\"" + message + "\"}");
             response.getWriter().write("{\"status\":\"UNAUTHORIZED\",\"status_code\":401,\"message\":\"" + message + "\"}");
-
-
-
             response.getWriter().flush();
         }
     }
@@ -238,9 +234,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (!response.isCommitted()) {
             response.setStatus(statusCode);
             response.setContentType("application/json");
-//            response.getWriter().write("{\"status\":" + statusCode + ",\"message\":\"" + message + "\"}");
-            response.getWriter().write("{\"status\":\"" + (statusCode == HttpServletResponse.SC_UNAUTHORIZED ? "UNAUTHORIZED" : "ERROR") + "\",\"status_code\":" + statusCode + ",\"message\":\"" + message + "\"}");
 
+            String status;
+            if (statusCode == HttpServletResponse.SC_BAD_REQUEST) {
+                status = "BAD_REQUEST";
+            } else if (statusCode == HttpServletResponse.SC_UNAUTHORIZED) {
+                status = "UNAUTHORIZED";
+            } else {
+                status = "ERROR";
+            }
+
+            String jsonResponse = String.format(
+                    "{\"status\":\"%s\",\"status_code\":%d,\"message\":\"%s\"}",
+                    status,
+                    statusCode,
+                    message
+            );
+            response.getWriter().write(jsonResponse);
             response.getWriter().flush();
         }
     }
