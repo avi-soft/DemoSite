@@ -26,6 +26,11 @@ public class ServiceProviderRank
     private String rank_description;
     private String created_at,updated_at,created_by;
 
+    @Column(name="maximum_ticket_size")
+    private Integer maximumTicketSize;
+
+    @Column(name="maximum_binding_size")
+    private Integer maximumBindingSize;
 
 }
 
