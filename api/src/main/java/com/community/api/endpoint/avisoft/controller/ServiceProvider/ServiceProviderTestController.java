@@ -46,6 +46,7 @@ public class ServiceProviderTestController {
         }
         catch (Exception e)
         {
+            exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Something went wrong",HttpStatus.BAD_REQUEST);
         }
     }
@@ -71,6 +72,7 @@ public class ServiceProviderTestController {
         }
         catch (Exception e)
         {
+            exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Something went wrong",HttpStatus.BAD_REQUEST);
         }
     }

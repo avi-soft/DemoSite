@@ -616,9 +616,11 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
             if(existingServiceProvider.getType().equalsIgnoreCase("PROFESSIONAL"))
             {
+
                 totalScore=existingServiceProvider.getBusinessUnitInfraScore()+existingServiceProvider.getWorkExperienceScore()+existingServiceProvider.getTechnicalExpertiseScore()+ existingServiceProvider.getQualificationScore()+ existingServiceProvider.getStaffScore();
             }
             else {
+                existingServiceProvider.setBusinessUnitInfraScore(0);
                 totalScore=existingServiceProvider.getInfraScore()+existingServiceProvider.getWorkExperienceScore()+existingServiceProvider.getTechnicalExpertiseScore()+existingServiceProvider.getQualificationScore()+existingServiceProvider.getPartTimeOrFullTimeScore();
             }
             if(existingServiceProvider.getWrittenTestScore()!=null)

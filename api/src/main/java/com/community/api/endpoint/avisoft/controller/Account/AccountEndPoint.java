@@ -2,20 +2,13 @@ package com.community.api.endpoint.avisoft.controller.Account;
 
 import com.community.api.component.Constant;
 import com.community.api.component.JwtUtil;
-import com.community.api.endpoint.avisoft.controller.Customer.CustomerEndpoint;
 import com.community.api.endpoint.avisoft.controller.otpmodule.OtpEndpoint;
 import com.community.api.entity.CustomCustomer;
 
-import com.community.api.services.ApiConstants;
-import com.community.api.services.CustomCustomerService;
-import com.community.api.services.ResponseService;
-import com.community.api.services.RoleService;
-import com.community.api.services.SanitizerService;
+import com.community.api.services.*;
+import com.community.api.services.Admin.AdminService;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
-import com.community.api.services.SharedUtilityService;
-import com.community.api.services.TwilioService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
-import io.swagger.models.auth.In;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +46,7 @@ public class AccountEndPoint {
     private TwilioService twilioService;
     private CustomCustomerService customCustomerService;
     private PasswordEncoder passwordEncoder;
+    private AdminService adminService;
 
     @Autowired
     private SharedUtilityService sharedUtilityService;
@@ -102,6 +96,12 @@ public class AccountEndPoint {
         this.passwordEncoder = passwordEncoder;
     }
 
+    @Autowired
+    public void setAdminService(AdminService adminService)
+    {
+        this.adminService=adminService;
+    }
+
 
     @PostMapping("/login-with-otp")
     @ResponseBody
@@ -142,7 +142,52 @@ public class AccountEndPoint {
         }
     }
 
+    @PostMapping("/admin-login-with-otp")
+    @ResponseBody
+    public ResponseEntity<?> verifyAndLoginAdmin(@RequestBody Map<String, Object> loginDetails, HttpSession session)
+    {
+        try {
+            if(!sharedUtilityService.validateInputMap(loginDetails).equals(SharedUtilityService.ValidationResult.SUCCESS))
+            {
+                return ResponseService.generateErrorResponse("Invalid Request Body",HttpStatus.UNPROCESSABLE_ENTITY);
+            }
+            String roleName=roleService.findRoleName((Integer) loginDetails.get("role"));
+            if(roleName.equals("EMPTY"))
+                return ResponseService.generateErrorResponse("Role not found",HttpStatus.NOT_FOUND);
+            //validating input map
+
+            loginDetails=sanitizerService. sanitizeInputMap(loginDetails);//@TODO-Need to sanitize this too
+            String mobile_number = (String) loginDetails.get("mobileNumber");
+            //}
+            if (mobile_number != null) {
+
+                int i=0;
+                for(;i<mobile_number.length();i++)
+                {
+                    if(mobile_number.charAt(i)!='0')
+                        break;
+                }
+
+                mobile_number = mobile_number.substring(i);
+                loginDetails.put("mobileNumber", mobile_number);
+                if (customCustomerService.isValidMobileNumber(mobile_number) && isNumeric(mobile_number)) {
+                    return loginWithPhoneOtp(loginDetails, session);
+
+                } else {
+                    return responseService.generateErrorResponse(ApiConstants.INVALID_MOBILE_NUMBER, HttpStatus.BAD_REQUEST);
+                }
+            } else {
+                return loginWithUsernameOtp(loginDetails, session);
+            }
+        } catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return responseService.generateErrorResponse(ApiConstants.SOME_EXCEPTION_OCCURRED + e.getMessage(), HttpStatus.BAD_REQUEST);
+
+        }
+    }
+
     @Transactional
+
     @PostMapping("/login-with-password")
     @ResponseBody
     public ResponseEntity<?> loginWithPassword(@RequestBody Map<String, Object> loginDetails, HttpSession session, HttpServletRequest request) {
@@ -239,7 +284,22 @@ public class AccountEndPoint {
                     return responseService.generateErrorResponse(ApiConstants.NO_RECORDS_FOUND, HttpStatus.NOT_FOUND);
                 }
 
-            } else {
+            }
+            else if (roleService.findRoleName(role).equals(Constant.ADMIN)|| roleService.findRoleName(role).equals(Constant.SUPER_ADMIN) || roleService.findRoleName(role).equals(Constant.roleAdminServiceProvider))
+            {
+                if(adminService.findAdminByPhone(mobileNumber, countryCode) != null)
+                {
+                    if (adminService.findAdminByPhone(mobileNumber, countryCode).getOtp() != null) {
+                        responseService.generateErrorResponse(ApiConstants.NO_RECORDS_FOUND, HttpStatus.NOT_FOUND);
+                    }
+                    return adminService.sendOtpForAdmin(mobileNumber, countryCode, session);
+                }
+                else {
+                    return responseService.generateErrorResponse(ApiConstants.NO_RECORDS_FOUND, HttpStatus.NOT_FOUND);
+                }
+            }
+
+            else {
                 responseService.generateErrorResponse(ApiConstants.ROLE_EMPTY, HttpStatus.BAD_REQUEST);
 
             }
@@ -266,7 +326,7 @@ public class AccountEndPoint {
             Integer role = (Integer) loginDetails.get("role");
 
             if (username == null || password == null || role == null) {
-                return responseService.generateErrorResponse("username/password number cannot be empty", HttpStatus.BAD_REQUEST);
+                return responseService.generateErrorResponse("username or password or role cannot be empty", HttpStatus.BAD_REQUEST);
             }
             if (roleService.findRoleName(role).equals(Constant.roleUser)) {
                 if (customerService == null) {
@@ -302,7 +362,12 @@ public class AccountEndPoint {
                 }
             } else if (roleService.findRoleName(role).equals(Constant.roleServiceProvider)) {
                 return serviceProviderService.loginWithPassword(loginDetails, request,session);
-            } else {
+            }
+            else if(roleService.findRoleName(role).equals(Constant.ADMIN)|| roleService.findRoleName(role).equals(Constant.SUPER_ADMIN) || roleService.findRoleName(role).equals(Constant.roleAdminServiceProvider))
+            {
+                return adminService.loginWithPasswordForAdmin(loginDetails, request,session);
+            }
+            else {
                 return responseService.generateErrorResponse(ApiConstants.INVALID_ROLE, HttpStatus.BAD_REQUEST);
 
             }
