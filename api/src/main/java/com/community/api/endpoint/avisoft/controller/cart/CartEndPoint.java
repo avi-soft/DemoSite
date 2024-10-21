@@ -6,11 +6,7 @@ import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.CustomOrderState;
 import com.community.api.entity.CustomProduct;
 import com.community.api.entity.ErrorResponse;
-import com.community.api.services.CartService;
-import com.community.api.services.ProductReserveCategoryFeePostRefService;
-import com.community.api.services.ReserveCategoryService;
-import com.community.api.services.ResponseService;
-import com.community.api.services.SharedUtilityService;
+import com.community.api.services.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import org.broadleafcommerce.common.money.Money;
@@ -102,7 +98,8 @@ public class CartEndPoint extends BaseEndpoint {
     public void setOrderService(OrderService orderService) {
         this.orderService = orderService;
     }
-
+    @Autowired
+    private OrderStatusByStateService orderStatusByStateService;
     @Autowired
     public void setCatalogService(CatalogService catalogService) {
         this.catalogService = catalogService;
@@ -493,9 +490,11 @@ public class CartEndPoint extends BaseEndpoint {
                     individualOrder.setSubmitDate(date);
                     entityManager.merge(individualOrder);
                     CustomOrderState orderState=new CustomOrderState();
-                    orderState.setOrderState((ORDER_STATE_NEW.getOrderState()));
-                    orderState.setOrderStateDescription((ORDER_STATE_NEW.getOrderStateDescription()));
+                    orderState.setOrderStateId((ORDER_STATE_NEW.getOrderStateId()));
                     orderState.setOrderId(individualOrder.getId());
+                    Integer orderStatusId=orderStatusByStateService.getOrderStatusByOrderStateId(ORDER_STATE_NEW.getOrderStateId()).get(0).getOrderStatusId();
+                    orderState.setOrderStatusId(orderStatusId);
+                    orderState.setOrderStatusId(orderStatusId);
                     entityManager.persist(orderState);
                     individualOrders.add(individualOrder);
                 }

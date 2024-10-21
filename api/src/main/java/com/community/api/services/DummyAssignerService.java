@@ -23,6 +23,8 @@ public class DummyAssignerService {
     private EntityManager entityManager;
     @Autowired
     private ExceptionHandlingImplement exceptionHandling;
+    @Autowired
+    private OrderStatusByStateService orderStatusByStateService;
 
         @Transactional
         @Scheduled(fixedRate = 120000) // 120000 milliseconds = 2 minutes
@@ -48,19 +50,26 @@ public class DummyAssignerService {
                 System.err.println("Error Auto Assigning: " + e.getMessage());
             }
         }
-
         public void dummyAssigner(Order order) {
             Random random = new Random();
             CustomOrderState orderState=entityManager.find(CustomOrderState.class,order.getId());
             int randomNumber = random.nextInt(2);
             if (randomNumber == 1) {
-                order.setStatus(Constant.ORDER_STATUS_AUTO_ASSIGNED);
-                orderState.setOrderState(Constant.ORDER_STATE_AUTO_ASSIGNED.getOrderState());
-                orderState.setOrderStateDescription(Constant.ORDER_STATE_AUTO_ASSIGNED.getOrderStateDescription());
+                if (orderState.getOrderStateId().equals(Constant.ORDER_STATE_RETURNED.getOrderStateId())) {
+                    orderState.setOrderStateId(Constant.ORDER_STATE_ASSIGNED.getOrderStateId());
+                    Integer orderStatusId = orderStatusByStateService.getOrderStatusByOrderStateId(Constant.ORDER_STATE_ASSIGNED.getOrderStateId()).get(1).getOrderStatusId();
+                    orderState.setOrderStatusId(orderStatusId);
+                } else {
+                    order.setStatus(Constant.ORDER_STATUS_AUTO_ASSIGNED);
+                    orderState.setOrderStateId(Constant.ORDER_STATE_AUTO_ASSIGNED.getOrderStateId());
+                    Integer orderStatusId = orderStatusByStateService.getOrderStatusByOrderStateId(Constant.ORDER_STATE_AUTO_ASSIGNED.getOrderStateId()).get(0).getOrderStatusId();
+                    orderState.setOrderStatusId(orderStatusId);
+                }
             } else {
                 order.setStatus(Constant.ORDER_STATUS_UNASSIGNED);
-                orderState.setOrderState(Constant.ORDER_STATE_UNASSIGNED.getOrderState());
-                orderState.setOrderStateDescription(Constant.ORDER_STATE_UNASSIGNED.getOrderStateDescription());
+                orderState.setOrderStateId(Constant.ORDER_STATE_UNASSIGNED.getOrderStateId());
+                Integer orderStatusId=orderStatusByStateService.getOrderStatusByOrderStateId(Constant.ORDER_STATE_UNASSIGNED.getOrderStateId()).get(0).getOrderStatusId();
+                orderState.setOrderStatusId(orderStatusId);
             }
             entityManager.merge(orderState);
             entityManager.merge(order);

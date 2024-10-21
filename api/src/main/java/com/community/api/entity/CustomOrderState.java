@@ -1,5 +1,6 @@
 package com.community.api.entity;
 
+import io.swagger.models.auth.In;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,15 +23,14 @@ import javax.persistence.Table;
 @Getter
 @Setter
 public class CustomOrderState {
-    @Column(name = "order_state")
-    private String orderState;
-    @Column(name = "order_state_description")
-    private String orderStateDescription;
+    @Column(name = "order_state_id")
+    private Integer orderStateId;
+    @Column(name = "order_status_id")
+    private Integer orderStatusId;
     @Id
     @Column(name = "order_id")
     private Long orderId;
-    public CustomOrderState(String orderState, String orderStateDescription) {
-        this.orderState=orderState;
-        this.orderStateDescription=orderStateDescription;
+    public CustomOrderState(Integer orderStateId) {
+        this.orderStateId=orderStateId;
     }
 }
