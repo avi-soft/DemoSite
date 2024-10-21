@@ -61,7 +61,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Autowired
     private EntityManager entityManager;
 
-    @Override
+  /* @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws IOException, ServletException {
         if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
@@ -114,7 +114,59 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             exceptionHandling.handleException(e);
             logger.error("Exception caught: {}", e.getMessage());
         }
+    }*/
+  @Override
+  protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
+          throws IOException, ServletException {
+      if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+          response.setStatus(HttpServletResponse.SC_OK);
+          return;
+      }
+      try {
+
+          String requestURI = request.getRequestURI();
+          if (isUnsecuredUri(requestURI) || bypassimages(requestURI)) {
+              chain.doFilter(request, response);
+              return;
+          }
+          if (isApiKeyRequiredUri(request) && validateApiKey(request)) {
+              chain.doFilter(request, response);
+              return;
+          }
+
+          boolean responseHandled = authenticateUser(request, response);
+          if (!responseHandled) {
+              chain.doFilter(request, response);
+          }else{
+              return;
+          }
+
+      } catch (ExpiredJwtException e) {
+          handleException(response, HttpServletResponse.SC_UNAUTHORIZED, "JWT token is expired");
+          logger.error("ExpiredJwtException caught: {}", e.getMessage());
+      } catch (MalformedJwtException e) {
+          handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Invalid JWT token");
+          exceptionHandling.handleException(e);
+          logger.error("MalformedJwtException caught: {}", e.getMessage());
+      } catch (Exception e) {
+          handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
+          exceptionHandling.handleException(e);
+
+          logger.error("Exception caught: {}", e.getMessage());
+      }
+
+  }
+
+    private String extractRequestBody(HttpServletRequest request) throws IOException {
+        StringBuilder requestBody = new StringBuilder();
+        BufferedReader reader = request.getReader();
+        String line;
+        while ((line = reader.readLine()) != null) {
+            requestBody.append(line);
+        }
+        return requestBody.toString();
     }
+
 
 
     private boolean bypassimages(String requestURI) {

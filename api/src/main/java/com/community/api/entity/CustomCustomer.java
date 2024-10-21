@@ -73,30 +73,31 @@ public class CustomCustomer extends CustomerImpl {
     @Column(name = "hide_phone_number")
     private Boolean hidePhoneNumber=false;
 
+    @Nullable
     @Column(name = "category_issue_date", insertable = false, updatable = false)
     private String categoryIssueDate;
-
+    @Nullable
     @Column(name = "height_cms")
     private String heightCms;
-
+    @Nullable
     @Column(name = "weight_kgs")
     private String weightKgs;
-
+    @Nullable
     @Column(name = "chest_size_cms")
     private String chestSizeCms;
-
+    @Nullable
     @Column(name = "shoe_size_inches")
     private String shoeSizeInches;
-
+    @Nullable
     @Column(name = "waist_size_cms")
     private String waistSizeCms;
-
+    @Nullable
     @Column(name = "can_swim")
     private Boolean canSwim; // Yes/No
-
+    @Nullable
     @Column(name = "proficiency_in_sports_national_level")
     private Boolean proficiencyInSportsNationalLevel; // Yes/No
-
+    @Nullable
     @Column(name = "first_choice_exam_city")
     private String firstChoiceExamCity;
 
@@ -115,10 +116,10 @@ public class CustomCustomer extends CustomerImpl {
     @Column(name = "number_of_attempts")
     private Integer numberOfAttempts;
 
-
+    @Nullable
     @Column(name = "work_experience")
     private String workExperience; // State level/Centre level, Govt./Private
-
+    @Nullable
     @Column(name = "category_issue_date")
     private String categoryValidUpto;
 
