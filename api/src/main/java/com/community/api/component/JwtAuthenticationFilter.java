@@ -1,18 +1,22 @@
 package com.community.api.component;
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
+import com.community.api.entity.CustomAdmin;
+import com.community.api.entity.CustomCustomer;
+import com.community.api.entity.ServiceProviderInfra;
 import com.community.api.services.CustomCustomerService;
-import com.community.api.services.SanitizerService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.services.RoleService;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
+import org.apache.solr.client.solrj.io.stream.SolrStream;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -23,11 +27,11 @@ import javax.persistence.EntityManager;
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
-
 import javax.servlet.http.HttpServletResponse;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Pattern;
 
 @Component
@@ -56,11 +60,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private ExceptionHandlingImplement exceptionHandling;
 
     @Autowired
-    private SanitizerService sanitizerService;
-
-    @Autowired
     private EntityManager entityManager;
-
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws IOException, ServletException {
@@ -68,38 +68,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             response.setStatus(HttpServletResponse.SC_OK);
             return;
         }
-
         try {
-            StringBuilder requestBody = new StringBuilder();
-            BufferedReader reader = request.getReader();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                requestBody.append(line);
-            }
 
-            String requestBodyStr = requestBody.toString();
-
-            if (sanitizerService.isMalicious(requestBodyStr)) {
-                handleException(response, HttpServletResponse.SC_BAD_REQUEST, "Invalid request: Malicious content detected.");
-                return;
-            }
-
-            BufferedRequestWrapper wrappedRequest = new BufferedRequestWrapper(request, requestBodyStr);
-            String requestURI = wrappedRequest.getRequestURI();
-
+            String requestURI = request.getRequestURI();
             if (isUnsecuredUri(requestURI) || bypassimages(requestURI)) {
-                chain.doFilter(wrappedRequest, response);
+                chain.doFilter(request, response);
+                return;
+            }
+            if (isApiKeyRequiredUri(request) && validateApiKey(request)) {
+                chain.doFilter(request, response);
                 return;
             }
 
-            if (isApiKeyRequiredUri(wrappedRequest) && validateApiKey(wrappedRequest)) {
-                chain.doFilter(wrappedRequest, response);
-                return;
-            }
-
-            boolean responseHandled = authenticateUser(wrappedRequest, response);
+            boolean responseHandled = authenticateUser(request, response);
             if (!responseHandled) {
-                chain.doFilter(wrappedRequest, response);
+                chain.doFilter(request, response);
+            }else{
+                return;
             }
 
         } catch (ExpiredJwtException e) {
@@ -112,10 +97,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         } catch (Exception e) {
             handleException(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
             exceptionHandling.handleException(e);
+
             logger.error("Exception caught: {}", e.getMessage());
         }
-    }
 
+    }
 
     private boolean bypassimages(String requestURI) {
         return UNSECURED_URI_PATTERN.matcher(requestURI).matches();
@@ -190,6 +176,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         Customer customCustomer = null;
         ServiceProviderEntity serviceProvider = null;
+        CustomAdmin customAdmin=null;
         if (id != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             if (roleService.findRoleName(jwtUtil.extractRoleId(jwt)).equals(Constant.roleUser)) {
                 customCustomer = CustomerService.readCustomerById(id);
@@ -213,6 +200,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     return false;
                 } else {
                     respondWithUnauthorized(response, "Invalid data provided for this customer");
+                    return true;
+                }
+            }
+
+            else if (roleService.findRoleName(jwtUtil.extractRoleId(jwt)).equals(Constant.ADMIN) || roleService.findRoleName(jwtUtil.extractRoleId(jwt)).equals(Constant.SUPER_ADMIN) || roleService.findRoleName(jwtUtil.extractRoleId(jwt)).equals(Constant.roleAdminServiceProvider)) {
+                customAdmin=entityManager.find(CustomAdmin.class,id);
+                if (customAdmin != null && jwtUtil.validateToken(jwt, ipAdress, User_Agent)) {
+                    UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                            customAdmin.getAdmin_id(), null, new ArrayList<>());
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    return false;
+                } else {
+                    respondWithUnauthorized(response, "Invalid data provided for this user");
                     return true;
                 }
             }
@@ -253,5 +254,4 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             response.getWriter().flush();
         }
     }
-
 }

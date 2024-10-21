@@ -46,6 +46,7 @@ public class ServiceProviderRankService {
     @Transactional
     public Map<String, Integer>  getScoreCard(Long serviceProviderId)
     {
+
         if(!(serviceProviderId instanceof Long))
         {
             throw new IllegalArgumentException("Service Provider Id must be a Long");

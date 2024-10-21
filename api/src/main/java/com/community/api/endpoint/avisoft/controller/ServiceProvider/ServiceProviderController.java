@@ -12,7 +12,6 @@ import com.community.api.entity.Skill;
 import com.community.api.services.*;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
 import com.community.api.services.exception.ExceptionHandlingImplement;
-import com.community.api.utils.Document;
 import com.community.api.utils.ServiceProviderDocument;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
@@ -228,6 +227,8 @@ public class ServiceProviderController {
             {
                 resultOfSp.add(sharedUtilityService.serviceProviderDetailsMap(serviceProvider));
             }
+
+
             return ResponseService.generateSuccessResponse("List of service providers: ", resultOfSp, HttpStatus.OK);
         } catch (IllegalArgumentException e) {
             return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.BAD_REQUEST);
