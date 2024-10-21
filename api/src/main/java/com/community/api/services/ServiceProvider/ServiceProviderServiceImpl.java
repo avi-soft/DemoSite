@@ -29,8 +29,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.client.HttpClientErrorException;
-
-
+import javax.persistence.Column;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 import javax.persistence.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -404,6 +407,12 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         updates.remove("language_list");
 
 
+        if(updates.containsKey("date_of_birth"))
+        {
+            String dob=(String)updates.get("date_of_birth");
+            if(sharedUtilityService.isFutureDate(dob))
+                errorMessages.add("DOB cannot be in future");
+        }
         // Update only the fields that are present in the map using reflections
         for (Map.Entry<String, Object> entry : updates.entrySet()) {
             String fieldName = entry.getKey();
@@ -1233,6 +1242,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     public Object searchServiceProviderBasedOnGivenFields(String state,String district,String first_name,String last_name,String mobileNumber, Long test_status_id) {
 
         Map<String, Character> alias = new HashMap<>();
+        first_name=first_name.trim();
+        first_name=first_name.toLowerCase();
         alias.put("state", 'a');
         alias.put("district", 'a');
         alias.put("first_name", 's');
@@ -1251,16 +1262,22 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                     .findFirst()
                     .orElse(null);
         }
+
         if(test_status_id!=null)
         {
-            System.out.println("FUIHWEUHFOIHSODIFHIDHF");
             generalizedQuery = generalizedQuery + alias.get("test_status_id") + "." + "test_status_id" + " =" + test_status_id + " AND ";
         }
         String[] fieldsNames = {"state", "district", "first_name","last_name"};
         Object[] fields = {state, district, first_name,last_name};
         for (int i = 0; i < fields.length; i++) {
             if (fields[i] != null) {
-                generalizedQuery = generalizedQuery + alias.get(fieldsNames[i]) + "." + fieldsNames[i] + " =:" + fieldsNames[i] + " AND ";
+                if (fieldsNames[i].equals("first_name") || fieldsNames[i].equals("last_name")) {
+                    generalizedQuery += "LOWER(" + alias.get(fieldsNames[i]) + "." + fieldsNames[i] + ") = LOWER(:" + fieldsNames[i] +")"+ " AND ";
+                }
+                else
+                {
+                    generalizedQuery +=  alias.get(fieldsNames[i]) + "." + fieldsNames[i] + " = :" + fieldsNames[i]+ " AND ";
+                }
             }
         }
         generalizedQuery = generalizedQuery.trim();
@@ -1280,5 +1297,15 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
            response.add(sharedUtilityService.serviceProviderDetailsMap(serviceProvider));
         }
         return response;
+    }
+    public List<ServiceProviderEntity> getAllSp(int page,int limit) {
+        int startPosition = page * limit;
+        // Create the query
+        TypedQuery<ServiceProviderEntity> query = entityManager.createQuery(Constant.GET_ALL_SERVICE_PROVIDERS, ServiceProviderEntity.class);
+        // Apply pagination
+        query.setFirstResult(startPosition);
+        query.setMaxResults(limit);
+        List<ServiceProviderEntity> results = query.getResultList();
+        return results;
     }
 }

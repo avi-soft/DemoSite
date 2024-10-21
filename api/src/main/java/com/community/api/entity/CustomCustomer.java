@@ -2,6 +2,7 @@ package com.community.api.entity;
 
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.utils.Document;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.micrometer.core.lang.Nullable;
@@ -225,6 +226,7 @@ public class CustomCustomer extends CustomerImpl {
     @Column(name = "visible_identification_mark_2")
     private String identificationMark2;
 
+    @JsonBackReference
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CustomerReferrer> myReferrer = new ArrayList<>();
 

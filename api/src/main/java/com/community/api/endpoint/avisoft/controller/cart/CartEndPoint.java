@@ -3,12 +3,10 @@ package com.community.api.endpoint.avisoft.controller.cart;
 import com.broadleafcommerce.rest.api.endpoint.BaseEndpoint;
 import com.community.api.component.Constant;
 import com.community.api.entity.CustomCustomer;
+import com.community.api.entity.CustomOrderState;
 import com.community.api.entity.CustomProduct;
-import com.community.api.services.CartService;
-import com.community.api.services.ProductReserveCategoryFeePostRefService;
-import com.community.api.services.ReserveCategoryService;
-import com.community.api.services.ResponseService;
-import com.community.api.services.SharedUtilityService;
+import com.community.api.entity.ErrorResponse;
+import com.community.api.services.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import org.broadleafcommerce.common.money.Money;
@@ -23,6 +21,7 @@ import org.broadleafcommerce.core.order.service.call.OrderItemRequest;
 import org.broadleafcommerce.core.order.service.type.OrderStatus;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.service.CustomerService;
+import org.hibernate.validator.constraints.Currency;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -35,7 +34,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import javax.transaction.Transactional;
+import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
@@ -45,6 +46,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import static com.community.api.component.Constant.ORDER_STATE_NEW;
+
 import static com.community.api.services.ServiceProvider.ServiceProviderServiceImpl.getLongList;
 
 @RestController
@@ -95,7 +98,8 @@ public class CartEndPoint extends BaseEndpoint {
     public void setOrderService(OrderService orderService) {
         this.orderService = orderService;
     }
-
+    @Autowired
+    private OrderStatusByStateService orderStatusByStateService;
     @Autowired
     public void setCatalogService(CatalogService catalogService) {
         this.catalogService = catalogService;
@@ -120,7 +124,6 @@ public class CartEndPoint extends BaseEndpoint {
     public void setCartService(CartService cartService) {
         this.cartService = cartService;
     }
-
 
     @Transactional
     @RequestMapping(value = "empty/{customerId}", method = RequestMethod.DELETE)
@@ -204,6 +207,8 @@ public class CartEndPoint extends BaseEndpoint {
             Order cart = orderService.findCartForCustomer(customer);
             if (cart == null) {
                 cart = orderService.createNewCartForCustomer(customer);
+                cart.setOrderNumber("C-"+customerId);
+              /*  cart.setName("CART-"+customerId);*/
                 }
             Product product = catalogService.findProductById(productId);
             if (product == null) {
@@ -405,7 +410,6 @@ public class CartEndPoint extends BaseEndpoint {
             return ResponseService.generateErrorResponse("Error deleting", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
     @Transactional
     @RequestMapping(value = "place-order/{customerId}", method = RequestMethod.POST)
     public ResponseEntity<?> placeOrder(@PathVariable long customerId,@RequestBody Map<String,Object>map) {
@@ -428,8 +432,14 @@ public class CartEndPoint extends BaseEndpoint {
                 return ResponseService.generateErrorResponse("Cart is empty",HttpStatus.NOT_FOUND);
             List<Long>cartItemIds=new ArrayList<>();
             List<String>errors=new ArrayList<>();
-            int batchNumber=customCustomer.getNumberOfOrders();
-            ++batchNumber;
+            int batchNumber=0;
+            if(customCustomer.getNumberOfOrders()==null)
+                batchNumber=1;
+            else
+            {
+                batchNumber=customCustomer.getNumberOfOrders();
+                ++batchNumber;
+            }
             for(OrderItem orderItem : cart.getOrderItems())
             {
                 cartItemIds.add(orderItem.getId());
@@ -444,6 +454,7 @@ public class CartEndPoint extends BaseEndpoint {
                     errors.add("Order Item Id : "+orderItemId+" does not belong to cart");
                 }
             }
+            List<Order>newOrders=new ArrayList<>();
             if(!errors.isEmpty())
                 return ResponseService.generateErrorResponse("Error Placing order : "+errors.toString(),HttpStatus.BAD_REQUEST);
             for (OrderItem orderItem : cart.getOrderItems()) {
@@ -451,12 +462,14 @@ public class CartEndPoint extends BaseEndpoint {
                     Product product = findProductFromItemAttribute(orderItem);
                     if(product!=null)
                         customProduct=entityManager.find(CustomProduct.class,product.getId());
+
                     Order individualOrder = orderService.createNamedOrderForCustomer(orderItem.getName(), customer);
                     individualOrder.setCustomer(customer);
                     individualOrder.setEmailAddress(customer.getEmailAddress());
-                    individualOrder.setStatus(new OrderStatus("ORDER_PLACED", "order placed"));
+                    individualOrder.setStatus(Constant.ORDER_STATUS_NEW);
                     OrderItemRequest orderItemRequest = new OrderItemRequest();
                     orderItemRequest.setProduct(product);
+                    individualOrder.setCustomer(customer);
                     orderItemRequest.setOrder(individualOrder);
                     orderItemRequest.setQuantity(1);
                     orderItemRequest.setCategory(product.getCategory());
@@ -475,7 +488,14 @@ public class CartEndPoint extends BaseEndpoint {
                     Date date = Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
                     individualOrder.setSubmitDate(date);
                     individualOrder.setSubmitDate(date);
-                    entityManager.persist(individualOrder);
+                    entityManager.merge(individualOrder);
+                    CustomOrderState orderState=new CustomOrderState();
+                    orderState.setOrderStateId((ORDER_STATE_NEW.getOrderStateId()));
+                    orderState.setOrderId(individualOrder.getId());
+                    Integer orderStatusId=orderStatusByStateService.getOrderStatusByOrderStateId(ORDER_STATE_NEW.getOrderStateId()).get(0).getOrderStatusId();
+                    orderState.setOrderStatusId(orderStatusId);
+                    orderState.setOrderStatusId(orderStatusId);
+                    entityManager.persist(orderState);
                     individualOrders.add(individualOrder);
                 }
             }
@@ -536,7 +556,6 @@ public class CartEndPoint extends BaseEndpoint {
         Product product = catalogService.findProductById(productId);
         return product;
     }
-    public class OrderRequest {
-        private List<Long> orderItemIds;
+
     }
-}
+

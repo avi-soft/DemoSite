@@ -817,6 +817,7 @@ public class CustomerEndpoint {
                     em.merge(customer);
                     return ResponseService.generateSuccessResponse("Password Created", sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK);
                 }
+                System.out.println(password+","+customer.getPassword());
                 if (!passwordEncoder.matches(password, customer.getPassword())) {
 
                     customer.setPassword(passwordEncoder.encode(password));

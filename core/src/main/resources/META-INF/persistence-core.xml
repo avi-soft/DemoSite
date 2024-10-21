@@ -59,7 +59,11 @@
         <class>com.community.api.entity.CustomSubject</class>
         <class>com.community.api.entity.CustomSector</class>
         <class>com.community.api.entity.CustomerReferrer</class>
-
+        <class>com.community.api.entity.OrderRequest</class>
+        <class>com.community.api.entity.ServiceProviderAcceptedOrders</class>
+        <class>com.community.api.entity.CustomOrderState</class>
+        <class>com.community.api.entity.OrderStateRef</class>
+        <class>com.community.api.entity.CustomOrderStatus</class>
         <exclude-unlisted-classes/>
     </persistence-unit>
 
