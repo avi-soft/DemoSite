@@ -260,6 +260,12 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         updates.remove("district");
         updates.remove("pincode");
 
+        if(updates.containsKey("date_of_birth"))
+        {
+            String dob=(String)updates.get("date_of_birth");
+            if(sharedUtilityService.isFutureDate(dob))
+                errorMessages.add("DOB cannot be in future");
+        }
         // Update only the fields that are present in the map using reflections
         for (Map.Entry<String, Object> entry : updates.entrySet()) {
             String fieldName = entry.getKey();
@@ -901,6 +907,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
     public Object searchServiceProviderBasedOnGivenFields(String state,String district,String first_name,String last_name,String mobileNumber) {
 
         Map<String, Character> alias = new HashMap<>();
+        first_name=first_name.trim();
+        first_name=first_name.toLowerCase();
         alias.put("state", 'a');
         alias.put("district", 'a');
         alias.put("first_name", 's');
@@ -918,11 +926,17 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                     .findFirst()
                     .orElse(null);
         }
-        String[] fieldsNames = {"state", "district", "first_name","last_name"};
-        String[] fields = {state, district, first_name,last_name};
+        String[] fieldsNames = {"state", "district", "first_name", "last_name"};
+        String[] fields = {state, district, first_name, last_name};
         for (int i = 0; i < fields.length; i++) {
             if (fields[i] != null) {
-                generalizedQuery = generalizedQuery + alias.get(fieldsNames[i]) + "." + fieldsNames[i] + " =:" + fieldsNames[i] + " AND ";
+                if (fieldsNames[i].equals("first_name") || fieldsNames[i].equals("last_name")) {
+                    generalizedQuery += "LOWER(" + alias.get(fieldsNames[i]) + "." + fieldsNames[i] + ") = LOWER(:" + fieldsNames[i] +")"+ " AND ";
+                }
+                else
+                {
+                    generalizedQuery +=  alias.get(fieldsNames[i]) + "." + fieldsNames[i] + " = :" + fieldsNames[i]+ " AND ";
+                }
             }
         }
         generalizedQuery = generalizedQuery.trim();

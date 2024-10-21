@@ -4,6 +4,7 @@ import com.community.api.component.Constant;
 import com.community.api.endpoint.customer.AddressDTO;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.*;
+import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.utils.Document;
 import com.community.api.utils.DocumentType;
 import com.community.api.utils.ServiceProviderDocument;
@@ -31,9 +32,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +62,9 @@ public class SharedUtilityService {
 
     @Autowired
     public  FileService fileService;
+
+    @Autowired
+    public ExceptionHandlingImplement exceptionHandling;
 
     @Autowired
     public HttpServletRequest request;
@@ -426,7 +433,18 @@ public class SharedUtilityService {
                 }).collect(Collectors.toList());
     }
 
-
+    public boolean isFutureDate(String dateStr) {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        sdf.setLenient(false);
+        try {
+            Date inputDate = sdf.parse(dateStr);
+            Date currentDate = new Date();
+            return inputDate.after(currentDate);
+        }  catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return false;
+        }
+    }
 
 }
 
