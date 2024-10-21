@@ -395,30 +395,28 @@ public class ServiceProviderController {
     @PostMapping("/{serviceProviderId}/order-requests/{orderRequestId}")
     public ResponseEntity<?> orderRequestAction(@PathVariable Long serviceProviderId,@PathVariable Long orderRequestId,@RequestParam String action,@RequestParam(required = false) Integer statusId) {
         try {
-            action=action.toUpperCase();
+            action = action.toUpperCase();
             OrderRequest orderRequest = entityManager.find(OrderRequest.class, orderRequestId);
-            if(orderRequest==null)
-                return ResponseService.generateErrorResponse("Order Request Not found",HttpStatus.BAD_REQUEST);
+            if (orderRequest == null)
+                return ResponseService.generateErrorResponse("Order Request Not found", HttpStatus.BAD_REQUEST);
             Order order = orderService.findOrderById(orderRequest.getOrderId());
             if (order == null)
                 return ResponseService.generateErrorResponse("Order not found", HttpStatus.NOT_FOUND);
-            if(!action.equals(Constant.SP_REQUEST_ACTION_VIEW)&&!action.equals(Constant.SP_REQUEST_ACTION_ACCEPT)&&!action.equals(Constant.SP_REQUEST_ACTION_RETURN))
-                return ResponseService.generateErrorResponse("Invalid Action", HttpStatus.BAD_REQUEST);
+            CustomOrderState customOrderState=entityManager.find(CustomOrderState.class,orderRequest.getOrderId());
             ServiceProviderEntity serviceProvider = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
-            if(!orderRequest.getServiceProvider().equals(serviceProvider))
-                return ResponseService.generateErrorResponse("Order Request does not belong to the specified SP,Check again",HttpStatus.BAD_REQUEST);
+            if (!orderRequest.getServiceProvider().equals(serviceProvider))
+                return ResponseService.generateErrorResponse("Order Request does not belong to the specified SP,Check again", HttpStatus.BAD_REQUEST);
             if (serviceProvider == null)
                 return ResponseService.generateErrorResponse("Service Provider not found", HttpStatus.NOT_FOUND);
-            CustomOrderState orderState=entityManager.find(CustomOrderState.class,orderRequest.getOrderId());
-            if (!orderRequest.getRequestStatus().equals("GENERATED")) {
+            CustomOrderState orderState = entityManager.find(CustomOrderState.class, orderRequest.getOrderId());
+            if (!customOrderState.getOrderStateId().equals(Constant.ORDER_STATE_ASSIGNED.getOrderStateId())) {
                 return ResponseService.generateErrorResponse("Order already Accepted/Returned ", HttpStatus.UNPROCESSABLE_ENTITY);
             }
-            if(action.equals(Constant.SP_REQUEST_ACTION_VIEW))
-            {
-                Long productId=Long.parseLong(order.getOrderItems().get(0).getOrderItemAttributes().get("productId").getValue());
-                CustomProduct customProduct=entityManager.find(CustomProduct.class,productId);
-                Map<String,Object>orderRequestDetail=new HashMap<>();
-                OrderDTO orderDTO=new OrderDTO(
+            if (action.equals(Constant.SP_REQUEST_ACTION_VIEW)) {
+                Long productId = Long.parseLong(order.getOrderItems().get(0).getOrderItemAttributes().get("productId").getValue());
+                CustomProduct customProduct = entityManager.find(CustomProduct.class, productId);
+                Map<String, Object> orderRequestDetail = new HashMap<>();
+                OrderDTO orderDTO = new OrderDTO(
                         order.getId(),
                         order.getName(),
                         order.getTotal(),
@@ -435,17 +433,16 @@ public class ServiceProviderController {
                 List<ReserveCategoryDto> reserveCategoryDtoList = reserveCategoryDtoService.getReserveCategoryDto(productId);
                 List<PhysicalRequirementDto> physicalRequirementDtoList = physicalRequirementDtoService.getPhysicalRequirementDto(productId);
                 customProductWrapper.wrapDetails(customProduct, reserveCategoryDtoList, physicalRequirementDtoList);
-                orderRequestDetail.put("order_request_details",orderRequest);
-                orderRequestDetail.put("order_details",orderDTO);
-                orderRequestDetail.put("ordered_product_details",customProductWrapper);
-                return ResponseService.generateSuccessResponse("Order Request Details :",orderRequestDetail,HttpStatus.OK);
-            }
-            else if (action.equals(Constant.SP_REQUEST_ACTION_ACCEPT)) {
+                orderRequestDetail.put("order_request_details", orderRequest);
+                orderRequestDetail.put("order_details", orderDTO);
+                orderRequestDetail.put("ordered_product_details", customProductWrapper);
+                return ResponseService.generateSuccessResponse("Order Request Details :", orderRequestDetail, HttpStatus.OK);
+            } else if (action.equals(Constant.SP_REQUEST_ACTION_ACCEPT)) {
                 order.setStatus(Constant.ORDER_STATUS_IN_PROGRESS);
                 ServiceProviderAcceptedOrders serviceProviderAcceptedOrders = new ServiceProviderAcceptedOrders();
                 orderRequest.setRequestStatus("ACCEPTED");
                 orderState.setOrderStateId(Constant.ORDER_STATE_IN_PROGRESS.getOrderStateId());
-                Integer orderStatusId=orderStatusByStateService.getOrderStatusByOrderStateId(Constant.ORDER_STATE_IN_PROGRESS.getOrderStateId()).get(0).getOrderStatusId();
+                Integer orderStatusId = orderStatusByStateService.getOrderStatusByOrderStateId(Constant.ORDER_STATE_IN_PROGRESS.getOrderStateId()).get(0).getOrderStatusId();
                 orderState.setOrderStatusId(orderStatusId);
                 orderRequest.setUpdatedAt(LocalDateTime.now());
                 entityManager.merge(orderRequest);
@@ -458,24 +455,19 @@ public class ServiceProviderController {
                 entityManager.merge(orderState);
                 entityManager.merge(serviceProvider);
                 return ResponseService.generateSuccessResponse("Order Accepted", null, HttpStatus.OK);
-            } else  {
+            } else if (action.equals(Constant.SP_REQUEST_ACTION_RETURN)) {
                 orderRequest.setRequestStatus("RETURNED");
                 order.setStatus(Constant.ORDER_STATUS_UNASSIGNED);
-                if(statusId!=null)
-                {
-                    CustomOrderStatus customOrderStatus=entityManager.find(CustomOrderStatus.class,statusId);
-                    if(customOrderStatus==null)
-                    {
-                        return ResponseService.generateErrorResponse("Invalid Order Status selected",HttpStatus.BAD_REQUEST);
+                if (statusId != null) {
+                    CustomOrderStatus customOrderStatus = entityManager.find(CustomOrderStatus.class, statusId);
+                    if (customOrderStatus == null) {
+                        return ResponseService.generateErrorResponse("Invalid Order Status selected", HttpStatus.BAD_REQUEST);
                     }
-                    if(!orderStatusByStateService.getOrderStatusByOrderStateId(Constant.ORDER_STATE_RETURNED.getOrderStateId()).contains(customOrderStatus))
-                    {
-                       return ResponseService.generateErrorResponse("Selected order Status does not belong to this action",HttpStatus.BAD_REQUEST);
+                    if (!orderStatusByStateService.getOrderStatusByOrderStateId(Constant.ORDER_STATE_RETURNED.getOrderStateId()).contains(customOrderStatus)) {
+                        return ResponseService.generateErrorResponse("Selected order Status does not belong to this action", HttpStatus.BAD_REQUEST);
                     }
-                    orderState.setOrderStatusId(statusId);
-                }
-                else
-                    return ResponseService.generateErrorResponse("Need to provide return status",HttpStatus.BAD_REQUEST);
+                } else
+                    return ResponseService.generateErrorResponse("Need to provide return status", HttpStatus.BAD_REQUEST);
                 orderState.setOrderStatusId(statusId);
                 orderState.setOrderStateId(Constant.ORDER_STATE_RETURNED.getOrderStateId());
                 /*entityManager.merge(order);*/
@@ -484,6 +476,8 @@ public class ServiceProviderController {
                 dummyAssignerService.dummyAssigner(order);
                 return ResponseService.generateSuccessResponse("Order Returned", null, HttpStatus.OK);
             }
+            else
+            return ResponseService.generateErrorResponse("Invalid Action",HttpStatus.BAD_REQUEST);
         }catch (Exception e) {
             exceptionHandling.handleException(e);
             return ResponseService.generateErrorResponse("Some issue in fetching order Requests: " + e.getMessage(), HttpStatus.BAD_REQUEST);

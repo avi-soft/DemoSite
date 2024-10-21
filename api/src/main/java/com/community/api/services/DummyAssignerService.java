@@ -56,8 +56,7 @@ public class DummyAssignerService {
             int randomNumber = random.nextInt(2);
             if (randomNumber == 1) {
                 if (orderState.getOrderStateId().equals(Constant.ORDER_STATE_RETURNED.getOrderStateId())) {
-                    orderState.setOrderStatusId(Constant.ORDER_STATE_ASSIGNED.getOrderStatusId());
-                    orderState.setOrderStatusId(Constant.ORDER_STATE_ASSIGNED.getOrderStateId());
+                    orderState.setOrderStateId(Constant.ORDER_STATE_ASSIGNED.getOrderStateId());
                     Integer orderStatusId = orderStatusByStateService.getOrderStatusByOrderStateId(Constant.ORDER_STATE_ASSIGNED.getOrderStateId()).get(1).getOrderStatusId();
                     orderState.setOrderStatusId(orderStatusId);
                 } else {
