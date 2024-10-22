@@ -57,6 +57,19 @@ public class TicketController {
     EntityManager entityManager;
 
     @Transactional
+    @PostMapping("/auto-assigner")
+    public ResponseEntity<?> autoAssigner() {
+        try{
+            serviceProviderTicketService.randomBindingTicketAllocation();
+            return ResponseService.generateSuccessResponse("DONE TILL HERE",null, HttpStatus.OK);
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            return ResponseService.generateErrorResponse(Constant.SOME_EXCEPTION_OCCURRED + ": " + exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+    @Transactional
     @PostMapping("/add")
     public ResponseEntity<?> createTicket(@RequestBody CreateTicketDto createTicketDto, @RequestHeader(value = "Authorization") String authHeader) {
 

@@ -2,7 +2,10 @@ package com.community.api.services;
 
 import com.community.api.component.Constant;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
+import com.community.api.entity.CustomOrderState;
+import com.community.api.entity.OrderStateRef;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
+import com.community.api.services.exception.ExceptionHandlingImplement;
 import org.broadleafcommerce.core.order.domain.Order;
 import org.broadleafcommerce.core.order.service.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +23,17 @@ public class CustomOrderService {
     private OrderService orderService;
     private EntityManager entityManager;
     private ServiceProviderServiceImpl serviceProviderService;
+    private OrderStateRefService orderStateRefService;
+    private ExceptionHandlingImplement exceptionHandling;
+
+    @Autowired
+    public void setExceptionHandling(ExceptionHandlingImplement exceptionHandling) {
+        this.exceptionHandling = exceptionHandling;
+    }
+    @Autowired
+    public void setOrderStateRefService(OrderStateRefService orderStateRefService) {
+        this.orderStateRefService = orderStateRefService;
+    }
     @Autowired
     public void setOrderService(OrderService orderService)
     {
@@ -50,5 +64,22 @@ public class CustomOrderService {
                 allSp.remove(serviceProvider);
         }
         return allSp;
+    }
+
+    @Transactional
+    public List<CustomOrderState> getCustomOrdersByOrderStateId(Integer orderStateId) throws Exception {
+        try{
+            OrderStateRef orderStateRef = orderStateRefService.getOrderStateByOrderStateId(1);
+
+            Query query = entityManager.createQuery(Constant.GET_ORDERS_BY_ORDER_STATE_ID, CustomOrderState.class);
+            query.setParameter("orderStateId", orderStateRef.getOrderStateId());
+            List<CustomOrderState> orderState = query.getResultList();
+
+            return orderState;
+
+        } catch (Exception exception) {
+            exceptionHandling.handleException(exception);
+            throw new Exception(exception.getMessage());
+        }
     }
 }
