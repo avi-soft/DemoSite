@@ -56,6 +56,7 @@ public class CategoryController extends CatalogEndpoint {
         this.categoryService = categoryService;
     }
 
+
     @PostMapping("/add")
     public ResponseEntity<?> addCategory(HttpServletRequest request, @RequestBody AddCategoryDto addCategoryDto) {
         try {

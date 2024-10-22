@@ -121,7 +121,6 @@ private String secretKeyString = "DASYWgfhMLL0np41rKFAGminD1zb5DlwDzE1WwnP8es=";
                 throw new IllegalArgumentException("Token is required");
             }
 
-
             if (isTokenExpired(token)) {
                 throw new ExpiredJwtException(null, null, "Token is expired");
 
@@ -147,7 +146,6 @@ private String secretKeyString = "DASYWgfhMLL0np41rKFAGminD1zb5DlwDzE1WwnP8es=";
 
             if (isTokenExpired(token)) {
                 throw new IllegalArgumentException("Token is expired");
-
             }
 
             Long id = extractId(token);

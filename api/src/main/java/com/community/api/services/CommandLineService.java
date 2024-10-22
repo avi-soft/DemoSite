@@ -17,6 +17,7 @@ import com.community.api.entity.ServiceProviderLanguage;
 import com.community.api.entity.Skill;
 import com.community.api.entity.StateCode;
 import com.community.api.entity.*;
+import com.community.api.utils.DocumentType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -46,6 +47,40 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.persist(new CustomProductState(4L, "REJECTED", "Rejected State."));
             entityManager.persist(new CustomProductState(5L, "LIVE", "Live State."));
             entityManager.persist(new CustomProductState(6L, "EXPIRED", "Expired State."));
+        }
+
+        //document type should not be changed
+        if (entityManager.createQuery("SELECT COUNT(d) FROM DocumentType d", Long.class).getSingleResult() == 0) {
+            entityManager.persist(new DocumentType(1, "Aadhaar Card", "A government-issued ID card in India."));
+            entityManager.persist(new DocumentType(2, "PAN Card", "A permanent account number card for tax purposes in India."));
+            entityManager.persist(new DocumentType(3, "Passport Size Photo", "A small photo typically used for official documents."));
+            entityManager.persist(new DocumentType(4, "Signature", "A handwritten sign used to authenticate documents."));
+            entityManager.persist(new DocumentType(5, "EWS_CERTIFICATE", "Certificate for individuals and families below a certain income threshold to access various benefits and concessions."));
+            entityManager.persist(new DocumentType(6, "DIPLOMA", "Official academic certificate awarded upon completion of an undergraduate or vocational course, certifying knowledge and skills in a specific field."));
+            entityManager.persist(new DocumentType(7, "GRADUATION", "Awarded upon completion of a degree program, signifying fulfillment of academic requirements in a specific discipline."));
+            entityManager.persist(new DocumentType(8, "POST_GRADUATION", "Issued after completing a postgraduate degree, acknowledging advanced training in a specialized field."));
+            entityManager.persist(new DocumentType(9, "CASTE_CERTIFICATE", "Certifies an individual's caste for reservations and benefits in education and employment."));
+            entityManager.persist(new DocumentType(10, "ADDRESS_CERTIFICATE", "Verifies an individual’s residential address for identity verification and other purposes."));
+            entityManager.persist(new DocumentType(11, "INCOME_CERTIFICATE", "Confirms an individual’s or family’s annual income for applying for government benefits and financial assistance."));
+            entityManager.persist(new DocumentType(12, "DRIVING_LICENSE", "Authorizes an individual to operate motor vehicles, confirming knowledge of traffic laws and vehicle operation skills."));
+            entityManager.persist(new DocumentType(13, "OTHERS", "Includes other document types not listed above, tailored to specific needs or contexts."));
+            entityManager.persist(new DocumentType(14, "MATRICULATION", "Completed secondary education or equivalent."));
+            entityManager.persist(new DocumentType(15, "INTERMEDIATE", "Completed higher secondary education or equivalent."));
+            entityManager.persist(new DocumentType(16, "BACHELORS", "Completed undergraduate degree program education."));
+            entityManager.persist(new DocumentType(17, "MASTERS", "Completed postgraduate degree program education."));
+            entityManager.persist(new DocumentType(18, "DOCTORATE", "Completed doctoral degree program education."));
+            entityManager.persist(new DocumentType(19, "DOMICILE", "The permanent home or principal residence of a person."));
+            entityManager.persist(new DocumentType(20, "HANDICAPED", "An outdated term for individuals with physical or mental disabilities; 'person with a disability' is preferred today."));
+            entityManager.persist(new DocumentType(21, "C-FORM-PHOTO", "A C Form photo is a standardized ID photo for official documents."));
+            entityManager.persist(new DocumentType(23, "BUSSINESS_PHOTO", "A Standard proof of Running Bussiness."));
+            entityManager.persist(new DocumentType(24, "PERSONAL_PHOTO", "A Personal Photograph of SP."));
+            entityManager.persist(new DocumentType(25, "NCC CERTIFICATE A", "NCC CERTIFICATE A."));
+            entityManager.persist(new DocumentType(26, "NCC CERTIFICATE B", "NCC CERTIFICATE B."));
+            entityManager.persist(new DocumentType(27, "NCC CERTIFICATE C", "NCC CERTIFICATE C."));
+            entityManager.persist(new DocumentType(28, "NSS CERTIFICATE", "NSS CERTIFICATE."));
+            entityManager.persist(new DocumentType(29, "SPORTS CERTIFICATE - STATE", "SPORTS CERTIFICATE FOR STATE LEVEL."));
+            entityManager.persist(new DocumentType(30, "SPORTS CERTIFICATE - CENTRE", "SPORTS CERTIFICATE FOR CENTRE LEVEL."));
+
         }
 
         if(entityManager.createQuery("SELECT COUNT(c) FROM CustomJobGroup c", Long.class).getSingleResult() == 0) {
@@ -127,6 +162,16 @@ public class CommandLineService implements CommandLineRunner {
             entityManager.merge(new Role(4, "SERVICE_PROVIDER", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
             entityManager.merge(new Role(5, "CUSTOMER", CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, "SUPER_ADMIN"));
         }
+
+        if (entityManager.createQuery("SELECT COUNT(t) FROM TypingText t", Long.class).getSingleResult() == 0) {
+            entityManager.merge(new TypingText(1L, "The sun sets over the horizon, painting the sky with vibrant hues of orange and pink. Birds fly home, and the world quietly transitions into the peaceful calm of evening."));
+            entityManager.merge(new TypingText(2L, "A gentle breeze rustles the leaves, carrying the sweet scent of blooming flowers through the air. The world feels alive and at peace."));
+            entityManager.merge(new TypingText(3L, "The mountain stood tall, its peak covered in snow, contrasting sharply with the clear blue sky above. Nature's beauty was on full display."));
+            entityManager.merge(new TypingText(4L, "Waves crash against the shore, their rhythmic motion soothing to the soul. The ocean stretches endlessly, its mysteries hidden beneath the surface."));
+            entityManager.merge(new TypingText(5L, "In the heart of the forest, sunlight filters through the canopy, casting dappled shadows on the ground. A sense of tranquility fills the air."));
+        }
+
+
 
         Long count = entityManager.createQuery("SELECT COUNT(d) FROM Districts d", Long.class).getSingleResult();
 

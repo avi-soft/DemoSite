@@ -282,7 +282,7 @@ public class AccountEndPoint {
 
                     String tokenKey = "authToken_" + customCustomer.getMobileNumber();
                     String existingToken = customCustomer.getToken();
-                    String ipAddress = request.getRemoteAddr();
+                    String ipAddress = customCustomerService.getClientIp(request);
                     String userAgent = request.getHeader("User-Agent");
                     if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {
                         OtpEndpoint.ApiResponse response = new OtpEndpoint.ApiResponse(existingToken, sharedUtilityService.breakReferenceForCustomer(customer), HttpStatus.OK.value(), HttpStatus.OK.name(),"User has been signed in");
@@ -401,7 +401,7 @@ public class AccountEndPoint {
                     if (passwordEncoder.matches(password, existingCustomer.getPassword())) {
                         String tokenKey = "authToken_" + mobileNumber;
                         String existingToken = existingCustomer.getToken();
-                        String ipAddress = request.getRemoteAddr();
+                        String ipAddress = customCustomerService.getClientIp(request);
                         String userAgent = request.getHeader("User-Agent");
 
                         if (existingToken != null && jwtUtil.validateToken(existingToken, ipAddress, userAgent)) {

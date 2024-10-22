@@ -83,6 +83,8 @@ public class DocumentEndpoint {
                 }
             }
 
+
+
             if (accessGrant) {
 
                 if (documentType.getDescription() == null || documentType.getDocument_type_name() == null) {
@@ -214,7 +216,7 @@ public class DocumentEndpoint {
     public ResponseEntity<?> downloadFile(@RequestBody Map<String, Object> loginDetails, HttpServletRequest request, HttpServletResponse response) {
         try {
             String filePath = (String) loginDetails.get("filePath");
-            String fileUrl = fileService.getDownloadFileUrl(filePath, request); // No encoding here
+            String fileUrl = fileService.getDownloadFileUrl(filePath, request);
 
             URI uri = URI.create(fileUrl);
             URL url = uri.toURL();
