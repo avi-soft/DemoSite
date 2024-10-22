@@ -70,6 +70,7 @@ public class Constant {
     public static String GET_PRODUCT_STATE_BY_ID = "SELECT c FROM CustomProductState c WHERE c.productStateId = :productStateId";
     public static String GET_PRODUCT_STATE_BY_NAME = "SELECT c FROM CustomProductState c WHERE c.productState = :productStateName";
     public static String PRODUCT_STATE_NEW = "NEW";
+    public static String PRODUCT_STATE_DRAFT="DRAFT";
     public static String PRODUCT_STATE_MODIFIED = "MODIFIED";
     public static String PRODUCT_STATE_LIVE = "LIVE";
     public static String PRODUCT_STATE_APPROVED = "APPROVED";

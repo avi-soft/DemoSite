@@ -788,6 +788,162 @@ public class ProductService {
         }
     }
 
+    public boolean addProductDtoWithoutValidation(AddProductDto addProductDto) throws Exception {
+        try {
+            if (addProductDto.getQuantity() != null) {
+                addProductDto.setQuantity(Constant.DEFAULT_QUANTITY);
+            }
+
+            if (addProductDto.getPlatformFee() != null) {
+                addProductDto.setPlatformFee(DEFAULT_PLATFORM_FEE);
+            }
+
+            if (addProductDto.getNotifyingAuthority() == null || addProductDto.getNotifyingAuthority().trim().isEmpty()) {
+                throw new IllegalArgumentException("Notifying authority cannot be null");
+            } else {
+                addProductDto.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
+            }
+
+            if (addProductDto.getPriorityLevel() != null) {
+                if (addProductDto.getPriorityLevel() <= 0 || addProductDto.getPriorityLevel() > 5) {
+//                    throw new IllegalArgumentException("Priority level must lie between 1-5.");
+                    addProductDto.setPriorityLevel(DEFAULT_PRIORITY_LEVEL);
+
+                }
+            }
+
+            if (addProductDto.getMetaTitle() == null || addProductDto.getMetaTitle().trim().isEmpty()) {
+                throw new IllegalArgumentException(PRODUCTTITLENOTGIVEN);
+            } else {
+                addProductDto.setPostName(addProductDto.getMetaTitle().trim());
+                addProductDto.setMetaTitle(addProductDto.getMetaTitle().trim());
+            }
+
+            if (addProductDto.getDisplayTemplate() == null || addProductDto.getDisplayTemplate().trim().isEmpty()) {
+                addProductDto.setDisplayTemplate(addProductDto.getMetaTitle());
+            } else {
+                addProductDto.setDisplayTemplate(addProductDto.getDisplayTemplate().trim());
+            }
+
+            if (addProductDto.getMetaDescription() == null || addProductDto.getMetaDescription().trim().isEmpty()) {
+                throw new IllegalArgumentException("Description cannot be null or empty.");
+            } else {
+                addProductDto.setMetaDescription(addProductDto.getMetaDescription().trim());
+            }
+
+            if(addProductDto.getPostName() == null || addProductDto.getPostName().trim().isEmpty()) {
+                throw new IllegalArgumentException("Post Name cannot be null or empty.");
+            } else {
+                addProductDto.setPostName(addProductDto.getPostName().trim());
+            }
+
+            String formattedDate = dateFormat.format(new Date());
+            Date activeStartDate = dateFormat.parse(formattedDate); // Convert formatted date string back to Date
+
+            if (addProductDto.getActiveEndDate() == null || addProductDto.getGoLiveDate() == null || addProductDto.getActiveStartDate() == null) {
+                throw new IllegalArgumentException("Active start date, active end date, and go live date cannot be empty.");
+            }
+            dateFormat.parse(dateFormat.format(addProductDto.getActiveStartDate()));
+            dateFormat.parse(dateFormat.format(addProductDto.getActiveEndDate()));
+            dateFormat.parse(dateFormat.format(addProductDto.getGoLiveDate()));
+
+            if (!addProductDto.getActiveEndDate().after(activeStartDate)) {
+                throw new IllegalArgumentException("Expiration date cannot be before or equal of current date.");
+            } else if (!addProductDto.getGoLiveDate().before(addProductDto.getActiveEndDate())) {
+                throw new IllegalArgumentException("Go live date cannot be after or equal of active end date.");
+            } else if (!addProductDto.getActiveStartDate().before(addProductDto.getActiveEndDate())) {
+                throw new IllegalArgumentException("Active start date cannot be after or equal of active end date.");
+            } else if (addProductDto.getGoLiveDate().before(new Date())) {
+                throw new IllegalArgumentException("Go live date cannot be past of current date.");
+            }
+
+            if (addProductDto.getExamDateFrom() == null && addProductDto.getExamDateTo() == null) {
+                throw new IllegalArgumentException("Both tentative examination date from-to cannot be null.");
+            }
+            if (addProductDto.getExamDateFrom() != null && addProductDto.getExamDateTo() == null) {
+                addProductDto.setExamDateTo(addProductDto.getExamDateFrom());
+            }
+            if (addProductDto.getExamDateTo() != null && addProductDto.getExamDateFrom() == null) {
+                addProductDto.setExamDateFrom(addProductDto.getExamDateTo());
+            }
+
+            dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
+            dateFormat.parse(dateFormat.format(addProductDto.getExamDateTo()));
+
+            if (!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate()) || !addProductDto.getExamDateTo().after(addProductDto.getActiveEndDate())) {
+                throw new IllegalArgumentException(TENTATIVEDATEAFTERACTIVEENDDATE);
+            } else if (addProductDto.getExamDateTo().before(addProductDto.getExamDateFrom())) {
+                throw new IllegalArgumentException(TENTATIVEEXAMDATETOAFTEREXAMDATEFROM);
+            }
+
+            if (addProductDto.getJobGroup() == null || addProductDto.getJobGroup() <= 0) {
+                throw new IllegalArgumentException("Job group cannot be null or <= 0.");
+            }
+
+            CustomJobGroup jobGroup = jobGroupService.getJobGroupById(addProductDto.getJobGroup());
+            if (jobGroup == null) {
+                throw new NoSuchElementException("Job group not found.");
+            }
+
+            if (addProductDto.getAdvertiserUrl() == null || addProductDto.getAdvertiserUrl().trim().isEmpty()) {
+                throw new IllegalArgumentException("Advertiser url cannot be null or empty.");
+            }
+            addProductDto.setAdvertiserUrl(addProductDto.getAdvertiserUrl().trim());
+
+            if (addProductDto.getApplicationScope() == null || addProductDto.getApplicationScope() <= 0) {
+                throw new IllegalArgumentException("Application scope cannot be null or <= 0.");
+            }
+
+            CustomApplicationScope applicationScope = applicationScopeService.getApplicationScopeById(addProductDto.getApplicationScope());
+            if (applicationScope == null) {
+                throw new NoSuchElementException("application scope not found.");
+            }
+
+            if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_CENTER)) {
+
+                if (addProductDto.getState() != null) {
+                    throw new IllegalArgumentException("State cannot be given if application scope " + applicationScope.getApplicationScope());
+                }
+                if (addProductDto.getDomicileRequired() != null && addProductDto.getDomicileRequired()) {
+                    throw new IllegalArgumentException("Domicile required cannot be true if application scope " + applicationScope.getApplicationScope());
+                }
+                addProductDto.setDomicileRequired(false);
+
+            } else if (applicationScope.getApplicationScope().equals(APPLICATION_SCOPE_STATE)) {
+                if (addProductDto.getDomicileRequired() == null || addProductDto.getState() == null) {
+                    throw new IllegalArgumentException("For application scope: " + applicationScope.getApplicationScope() + " domicile and state cannot be null.");
+                }
+
+                if (addProductDto.getState() <= 0) {
+                    throw new IllegalArgumentException("State cannot be <= 0.");
+                }
+
+                StateCode state = districtService.getStateByStateId(addProductDto.getState());
+                if (state == null) {
+                    throw new NoSuchElementException("State not found.");
+                }
+            }
+
+            if (addProductDto.getReservedCategory() == null || addProductDto.getReservedCategory().isEmpty()) {
+                throw new IllegalArgumentException("Reserve category must not be null or empty.");
+            }
+
+            return true;
+        } catch (IllegalArgumentException illegalArgumentException) {
+            exceptionHandlingService.handleException(illegalArgumentException);
+            throw new IllegalArgumentException(illegalArgumentException.getMessage() + "\n");
+        } catch (NoSuchElementException noSuchElementException) {
+            exceptionHandlingService.handleException(noSuchElementException);
+            throw new IllegalArgumentException(noSuchElementException.getMessage() + "\n");
+        } catch (ParseException parseException) {
+            exceptionHandlingService.handleException(parseException);
+            throw new ParseException(parseException.getMessage() + "\n", parseException.getErrorOffset());
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            throw new Exception(exception.getMessage() + "\n");
+        }
+    }
+
     public CustomJobGroup validateCustomJobGroup(Long customJobGroupId) throws Exception {
         try {
             CustomJobGroup jobGroup = jobGroupService.getJobGroupById(customJobGroupId);
