@@ -46,31 +46,32 @@ public class ServiceProviderRankService {
     @Transactional
     public Map<String, Integer>  getScoreCard(Long serviceProviderId)
     {
-            if(!(serviceProviderId instanceof Long))
-            {
-                throw new IllegalArgumentException("Service Provider Id must be a Long");
-            }
-            ServiceProviderEntity serviceProviderEntity = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
-            if (serviceProviderEntity == null) {
-                throw new IllegalArgumentException("The service provider with id " + serviceProviderId + " does not exist");
-            }
-            Map<String,Integer> scoreCard = new HashMap<>();
-            scoreCard.put("qualificationScore",serviceProviderEntity.getQualificationScore());
-            scoreCard.put("workExperienceScore",serviceProviderEntity.getWorkExperienceScore());
-            scoreCard.put("technicalExpertiseScore",serviceProviderEntity.getTechnicalExpertiseScore());
-            scoreCard.put("writtenTestScore",serviceProviderEntity.getWrittenTestScore());
-            scoreCard.put("imageUploadScore",serviceProviderEntity.getImageUploadScore());
-            if(serviceProviderEntity.getType().equalsIgnoreCase("PROFESSIONAL"))
-            {
-                scoreCard.put("businessUnitScore",serviceProviderEntity.getBusinessUnitInfraScore());
-                scoreCard.put("staffScore",serviceProviderEntity.getStaffScore());
-            }
-            else {
-                scoreCard.put("InfraScore",serviceProviderEntity.getInfraScore());
-                scoreCard.put("partTimeOrFullTimeScore",serviceProviderEntity.getStaffScore());
-            }
-            scoreCard.put("totalScore",serviceProviderEntity.getTotalScore());
-            return scoreCard;
+
+        if(!(serviceProviderId instanceof Long))
+        {
+            throw new IllegalArgumentException("Service Provider Id must be a Long");
         }
+        ServiceProviderEntity serviceProviderEntity = entityManager.find(ServiceProviderEntity.class, serviceProviderId);
+        if (serviceProviderEntity == null) {
+            throw new IllegalArgumentException("The service provider with id " + serviceProviderId + " does not exist");
+        }
+        Map<String,Integer> scoreCard = new HashMap<>();
+        scoreCard.put("qualificationScore",serviceProviderEntity.getQualificationScore());
+        scoreCard.put("workExperienceScore",serviceProviderEntity.getWorkExperienceScore());
+        scoreCard.put("technicalExpertiseScore",serviceProviderEntity.getTechnicalExpertiseScore());
+        scoreCard.put("writtenTestScore",serviceProviderEntity.getWrittenTestScore());
+        scoreCard.put("imageUploadScore",serviceProviderEntity.getImageUploadScore());
+        if(serviceProviderEntity.getType().equalsIgnoreCase("PROFESSIONAL"))
+        {
+            scoreCard.put("businessUnitScore",serviceProviderEntity.getBusinessUnitInfraScore());
+            scoreCard.put("staffScore",serviceProviderEntity.getStaffScore());
+        }
+        else {
+            scoreCard.put("InfraScore",serviceProviderEntity.getInfraScore());
+            scoreCard.put("partTimeOrFullTimeScore",serviceProviderEntity.getStaffScore());
+        }
+        scoreCard.put("totalScore",serviceProviderEntity.getTotalScore());
+        return scoreCard;
+    }
 }
 

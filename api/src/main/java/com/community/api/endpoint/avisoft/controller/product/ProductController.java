@@ -615,7 +615,7 @@ public class ProductController extends CatalogEndpoint {
     }
 
     @GetMapping("/get-all")
-    public ResponseEntity<?> getAllProducts(
+    public ResponseEntity<?> getAllProductsByServiceProvider(
             @RequestHeader(value = "Authorization") String authHeader,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int limit) {
