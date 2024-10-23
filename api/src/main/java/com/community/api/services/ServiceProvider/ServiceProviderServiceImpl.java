@@ -508,6 +508,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         }
         entityManager.merge(existingServiceProvider);
 
+
             if(updates.containsKey("work_experience_in_months"))
             {
                 if(existingServiceProvider.getWorkExperienceScore()!=null && existingServiceProvider.getWork_experience_in_months()<12)
@@ -652,6 +653,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             assignRank(existingServiceProvider,totalScore);
 
             Map<String,Object> serviceProviderMap=sharedUtilityService.serviceProviderDetailsMap(existingServiceProvider);
+
         return responseService.generateSuccessResponse("Service Provider Updated Successfully", serviceProviderMap, HttpStatus.OK);
     }catch (NoSuchFieldException e)
         {
