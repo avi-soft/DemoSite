@@ -59,7 +59,6 @@ public class FileService {
                 encodedFilePath.append(encodedSegment);
             }
 
-//        return fileServerUrl + "/" + encodedFilePath.toString();
 
             return   this.getFileUrl(encodedFilePath.toString());
         }catch (Exception e){
@@ -68,21 +67,16 @@ public class FileService {
         }
     }
 
-/*    public String getFileUrl(String filename) {
-            try{
-                String fileUrlApi = fileServerUrl + "/files/file-url";
-                RestTemplate restTemplate = new RestTemplate();
-                String fileUrl = restTemplate.getForObject(fileUrlApi + filename, String.class);
-                return fileUrl;
-            }catch (Exception e){
-            exceptionHandling.handleException(e);
-            return "Error fetching urls:  " + e.getMessage();
-        }
-    }*/
-
     public String getFileUrl(String fullFilePath) {
         try {
-            String fileUrlApi = fileServerUrl + "/file-url?filePath=" + URLEncoder.encode(fullFilePath, StandardCharsets.UTF_8);
+            String formattedPath = fullFilePath.replace("\\", "/");
+
+            String encodedPath = URLEncoder.encode(formattedPath, StandardCharsets.UTF_8.toString());
+
+            String fileUrlApi = fileServerUrl + "/files/file-url?filePath=" + encodedPath;
+
+            System.out.println("Calling API: " + fileUrlApi);
+
             RestTemplate restTemplate = new RestTemplate();
             String fileUrl = restTemplate.getForObject(fileUrlApi, String.class);
             return fileUrl;
@@ -90,6 +84,8 @@ public class FileService {
             exceptionHandling.handleException(e);
             return "Error fetching URLs: " + e.getMessage();
         }
+
     }
+
 
 }

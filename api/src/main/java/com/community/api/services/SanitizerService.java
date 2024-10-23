@@ -17,23 +17,27 @@ import java.util.regex.Pattern;
 public class SanitizerService {
     private static final Logger logger = LoggerFactory.getLogger(SanitizerService.class);
     private final Sanitizer sanitizer = new Sanitizer();
-/*    private static final Pattern SQL_INJECTION_PATTERN = Pattern.compile(
+   /* private static final Pattern SQL_INJECTION_PATTERN = Pattern.compile(
             ".*(select|insert|update|delete|union|drop|exec|create|alter|truncate|--|\\b'or\\b|\\b1=1\\b|\\b'\\s*or\\b|\\b'\\s*and\\b).*",
             Pattern.CASE_INSENSITIVE
     );*/
-        private static final Pattern SQL_INJECTION_PATTERN = Pattern.compile(
-                ".*\\b(select|insert|update|delete|union|drop|exec|create|alter|truncate)\\b.*",
-                Pattern.CASE_INSENSITIVE
-        );
+
+    private static final Pattern SQL_INJECTION_PATTERN = Pattern.compile(
+            ".*\\b(select|insert|update|delete|union|drop|exec|create|alter|truncate)\\b.*",
+            Pattern.CASE_INSENSITIVE
+    );
+
     private static final Pattern FILE_INCLUSION_PATTERN = Pattern.compile(
             ".*(file://|php://|ftp://|http://|https://|jar://|zip://|dict://|gopher://|ws://|wss://|mailto:|data:|javascript:).*",
             Pattern.CASE_INSENSITIVE
     );
 
+
     private static final Pattern HTML_INJECTION_PATTERN = Pattern.compile(
             ".*(<[^>]*>).*",
             Pattern.CASE_INSENSITIVE
     );
+
 
     private static final Pattern XSS_PATTERN = Pattern.compile(
             ".*(<script|<img|onerror|javascript:|data:text/html|<iframe|<object|<embed).*",

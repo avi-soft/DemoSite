@@ -29,8 +29,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.client.HttpClientErrorException;
-
-
+import javax.persistence.Column;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 import javax.persistence.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -46,6 +49,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -152,7 +158,62 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                 existingServiceProvider.setPartTimeOrFullTime(partTimeOrFullTimeStr.toUpperCase());
             }
 
+            String mobileNumber = (String) updates.get("mobileNumber");
+            String secondaryMobileNumber = (String) updates.get("secondary_mobile_number");
 
+            if (mobileNumber != null && secondaryMobileNumber != null) {
+                if (mobileNumber.equalsIgnoreCase(secondaryMobileNumber)) {
+                    errorMessages.add("Primary and Secondary Mobile Numbers cannot be the same");
+                }
+            }
+            if (mobileNumber != null && secondaryMobileNumber==null && mobileNumber.equalsIgnoreCase(existingServiceProvider.getSecondary_mobile_number())) {
+                return ResponseService.generateErrorResponse("Primary and Secondary Mobile Numbers cannot be the same", HttpStatus.BAD_REQUEST);
+            }
+            if (secondaryMobileNumber != null && mobileNumber==null && secondaryMobileNumber.equalsIgnoreCase(existingServiceProvider.getMobileNumber())) {
+                return ResponseService.generateErrorResponse("Primary and Secondary Mobile Numbers cannot be the same", HttpStatus.BAD_REQUEST);
+            }
+
+            if(updates.containsKey("district")&&updates.containsKey("state")/*&&updates.containsKey("city")*/&&updates.containsKey("pincode")&&updates.containsKey("residential_address"))
+            {
+                if(validateAddressFields(updates).isEmpty()) {
+                    if (existingServiceProvider.getSpAddresses().isEmpty()) {
+                        ServiceProviderAddress serviceProviderAddress = new ServiceProviderAddress();
+                        serviceProviderAddress.setAddress_type_id(findAddressName("CURRENT_ADDRESS").getAddress_type_Id());
+                        serviceProviderAddress.setPincode((String) updates.get("pincode"));
+                        serviceProviderAddress.setDistrict((String) updates.get("district"));
+                        serviceProviderAddress.setState((String) updates.get("state"));
+                        /*serviceProviderAddress.setCity((String) updates.get("city"));*/
+                        serviceProviderAddress.setAddress_line((String) updates.get("residential_address"));
+                        if (serviceProviderAddress.getAddress_line() != null /*|| serviceProviderAddress.getCity() != null*/ || serviceProviderAddress.getDistrict() != null || serviceProviderAddress.getState() != null || serviceProviderAddress.getPincode() != null) {
+                            addAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress);
+                        }
+                    } else {
+                        ServiceProviderAddress serviceProviderAddress = existingServiceProvider.getSpAddresses().get(0);
+                        ServiceProviderAddress serviceProviderAddressDTO = new ServiceProviderAddress();
+                        serviceProviderAddressDTO.setAddress_type_id(serviceProviderAddress.getAddress_type_id());
+                        serviceProviderAddressDTO.setAddress_id(serviceProviderAddress.getAddress_id());
+                        serviceProviderAddressDTO.setState((String) updates.get("state"));
+                        serviceProviderAddressDTO.setDistrict((String) updates.get("district"));
+                        serviceProviderAddressDTO.setAddress_line((String) updates.get("residential_address"));
+                        serviceProviderAddressDTO.setPincode((String) updates.get("pincode"));
+                        serviceProviderAddressDTO.setServiceProviderEntity(existingServiceProvider);
+                        /*serviceProviderAddressDTO.setCity((String) updates.get("city"));*/
+                        for (String error : updateAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress, serviceProviderAddressDTO)) {
+                            errorMessages.add(error);
+                        }
+                    }
+                }else
+                {
+                    errorMessages.addAll(validateAddressFields(updates));
+                }
+            }
+
+            //removing key for address
+            updates.remove("residential_address");
+            updates.remove("city");
+            updates.remove("state");
+            updates.remove("district");
+            updates.remove("pincode");
         // Validate and check for unique constraints
         ServiceProviderEntity existingSPByUsername = null;
         ServiceProviderEntity existingSPByEmail = null;
@@ -203,36 +264,38 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
             Integer totalScore=0;
             ScoringCriteria scoringCriteriaToMap =null;
-            if(updates.containsKey("skill_list"))
-            {
-                List<Skill> skills=existingServiceProvider.getSkills();
-                int totalSkills=skills.size();
-                if(totalSkills<=4)
+
+            if (updates.containsKey("has_technical_knowledge")) {
+                if (updates.containsKey("skill_list") && updates.get("has_technical_knowledge").equals(true))
                 {
-                    scoringCriteriaToMap=traverseListOfScoringCriteria(8L,scoringCriteriaList,existingServiceProvider);
-                    if(scoringCriteriaToMap==null)
-                    {
-                        return ResponseService.generateErrorResponse("Scoring Criteria is not found for Technical Expertise Score", HttpStatus.BAD_REQUEST);
+                    List<Integer> skillListToGet = getIntegerList(updates, "skill_list");
+                    int totalSkills = skillListToGet.size();
+                    if (totalSkills <= 4) {
+                        scoringCriteriaToMap = traverseListOfScoringCriteria(8L, scoringCriteriaList, existingServiceProvider);
+                        if (scoringCriteriaToMap == null) {
+                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for Technical Expertise Score", HttpStatus.BAD_REQUEST);
+                        } else {
+                            Integer totalTechnicalScores = totalSkills * scoringCriteriaToMap.getScore();
+                            existingServiceProvider.setTechnicalExpertiseScore(totalTechnicalScores);
+                            scoringCriteriaToMap = null;
+                        }
                     }
-                    else {
-                        Integer totalTechnicalScores=totalSkills * scoringCriteriaToMap.getScore();
-                        existingServiceProvider.setTechnicalExpertiseScore(totalTechnicalScores);
-                        scoringCriteriaToMap=null;
+                    if (totalSkills >= 5) {
+                        scoringCriteriaToMap = traverseListOfScoringCriteria(9L, scoringCriteriaList, existingServiceProvider);
+                        if (scoringCriteriaToMap == null) {
+                            return ResponseService.generateErrorResponse("Scoring Criteria is not found for Technical Expertise Score", HttpStatus.BAD_REQUEST);
+                        } else {
+                            existingServiceProvider.setTechnicalExpertiseScore(scoringCriteriaToMap.getScore());
+                            scoringCriteriaToMap = null;
+                        }
                     }
                 }
-                if(totalSkills>=5)
+                else if(updates.containsKey("skill_list") && updates.get("has_technical_knowledge").equals(false))
                 {
-                    scoringCriteriaToMap=traverseListOfScoringCriteria(9L,scoringCriteriaList,existingServiceProvider);
-                    if(scoringCriteriaToMap==null)
-                    {
-                        return ResponseService.generateErrorResponse("Scoring Criteria is not found for Technical Expertise Score", HttpStatus.BAD_REQUEST);
-                    }
-                    else {
-                        existingServiceProvider.setTechnicalExpertiseScore(scoringCriteriaToMap.getScore());
-                        scoringCriteriaToMap=null;
-                    }
+                    existingServiceProvider.setTechnicalExpertiseScore(0);
                 }
             }
+
         if (!infraList.isEmpty()) {
             for (int infra_id : infraList) {
                 ServiceProviderInfra serviceProviderInfrastructure = entityManager.find(ServiceProviderInfra.class, infra_id);
@@ -342,48 +405,14 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         updates.remove("skill_list");
         updates.remove("infra_list");
         updates.remove("language_list");
-        if(updates.containsKey("district")&&updates.containsKey("state")/*&&updates.containsKey("city")*/&&updates.containsKey("pincode")&&updates.containsKey("residential_address"))
+
+
+        if(updates.containsKey("date_of_birth"))
         {
-            if(validateAddressFields(updates).isEmpty()) {
-                if (existingServiceProvider.getSpAddresses().isEmpty()) {
-                    ServiceProviderAddress serviceProviderAddress = new ServiceProviderAddress();
-                    serviceProviderAddress.setAddress_type_id(findAddressName("CURRENT_ADDRESS").getAddress_type_Id());
-                    serviceProviderAddress.setPincode((String) updates.get("pincode"));
-                    serviceProviderAddress.setDistrict((String) updates.get("district"));
-                    serviceProviderAddress.setState((String) updates.get("state"));
-                    /*serviceProviderAddress.setCity((String) updates.get("city"));*/
-                    serviceProviderAddress.setAddress_line((String) updates.get("residential_address"));
-                    if (serviceProviderAddress.getAddress_line() != null /*|| serviceProviderAddress.getCity() != null*/ || serviceProviderAddress.getDistrict() != null || serviceProviderAddress.getState() != null || serviceProviderAddress.getPincode() != null) {
-                        addAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress);
-                    }
-                } else {
-                    ServiceProviderAddress serviceProviderAddress = existingServiceProvider.getSpAddresses().get(0);
-                    ServiceProviderAddress serviceProviderAddressDTO = new ServiceProviderAddress();
-                    serviceProviderAddressDTO.setAddress_type_id(serviceProviderAddress.getAddress_type_id());
-                    serviceProviderAddressDTO.setAddress_id(serviceProviderAddress.getAddress_id());
-                    serviceProviderAddressDTO.setState((String) updates.get("state"));
-                    serviceProviderAddressDTO.setDistrict((String) updates.get("district"));
-                    serviceProviderAddressDTO.setAddress_line((String) updates.get("residential_address"));
-                    serviceProviderAddressDTO.setPincode((String) updates.get("pincode"));
-                    serviceProviderAddressDTO.setServiceProviderEntity(existingServiceProvider);
-                    /*serviceProviderAddressDTO.setCity((String) updates.get("city"));*/
-                    for (String error : updateAddress(existingServiceProvider.getService_provider_id(), serviceProviderAddress, serviceProviderAddressDTO)) {
-                        errorMessages.add(error);
-                    }
-                }
-            }else
-            {
-                errorMessages.addAll(validateAddressFields(updates));
-            }
+            String dob=(String)updates.get("date_of_birth");
+            if(sharedUtilityService.isFutureDate(dob))
+                errorMessages.add("DOB cannot be in future");
         }
-
-        //removing key for address
-        updates.remove("residential_address");
-        updates.remove("city");
-        updates.remove("state");
-        updates.remove("district");
-        updates.remove("pincode");
-
         // Update only the fields that are present in the map using reflections
         for (Map.Entry<String, Object> entry : updates.entrySet()) {
             String fieldName = entry.getKey();
@@ -441,6 +470,19 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                             continue;
                         }
                     }
+
+                    if (fieldName.equals("date_of_birth")) {
+                        String dobString = (String) newValue;
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+                        try {
+                            LocalDate dob = LocalDate.parse(dobString, formatter);
+                            if (dob.isAfter(LocalDate.now())) {
+                                errorMessages.add("Date of birth cannot be in the future");
+                            }
+                        } catch (DateTimeParseException e) {
+                            errorMessages.add("Invalid date format for " + fieldName + ". Expected format is DD-MM-YYYY.");
+                        }
+                    }
                 }
                 field.setAccessible(true);
                 // Optionally, check for type compatibility before setting the value
@@ -451,6 +493,7 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
         if(!errorMessages.isEmpty())
             return ResponseService.generateErrorResponse(errorMessages.toString(),HttpStatus.BAD_REQUEST);
             // Merge the updated entity
+
         entityManager.merge(existingServiceProvider);
         if (existingServiceProvider.getUser_name() == null && !existingServiceProvider.getSpAddresses().isEmpty() ) {
             String username = generateUsernameForServiceProvider(existingServiceProvider);
@@ -582,9 +625,11 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
             if(existingServiceProvider.getType().equalsIgnoreCase("PROFESSIONAL"))
             {
+
                 totalScore=existingServiceProvider.getBusinessUnitInfraScore()+existingServiceProvider.getWorkExperienceScore()+existingServiceProvider.getTechnicalExpertiseScore()+ existingServiceProvider.getQualificationScore()+ existingServiceProvider.getStaffScore();
             }
             else {
+                existingServiceProvider.setBusinessUnitInfraScore(0);
                 totalScore=existingServiceProvider.getInfraScore()+existingServiceProvider.getWorkExperienceScore()+existingServiceProvider.getTechnicalExpertiseScore()+existingServiceProvider.getQualificationScore()+existingServiceProvider.getPartTimeOrFullTimeScore();
             }
             if(existingServiceProvider.getWrittenTestScore()!=null)
@@ -599,8 +644,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             existingServiceProvider.setTotalScore(totalScore);
             assignRank(existingServiceProvider,totalScore);
 
-
-        return responseService.generateSuccessResponse("Service Provider Updated Successfully", existingServiceProvider, HttpStatus.OK);
+            Map<String,Object> serviceProviderMap=sharedUtilityService.serviceProviderDetailsMap(existingServiceProvider);
+        return responseService.generateSuccessResponse("Service Provider Updated Successfully", serviceProviderMap, HttpStatus.OK);
     }catch (NoSuchFieldException e)
         {
             return ResponseService.generateErrorResponse("No such field present :"+e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
@@ -1194,13 +1239,16 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
 
     @Transactional
 
-    public Object searchServiceProviderBasedOnGivenFields(String state,String district,String first_name,String last_name,String mobileNumber) {
+    public Object searchServiceProviderBasedOnGivenFields(String state,String district,String first_name,String last_name,String mobileNumber, Long test_status_id) {
 
         Map<String, Character> alias = new HashMap<>();
+        first_name=first_name.trim();
+        first_name=first_name.toLowerCase();
         alias.put("state", 'a');
         alias.put("district", 'a');
         alias.put("first_name", 's');
         alias.put("last_name", 's');
+        alias.put("test_status_id", 's');
         String generalizedQuery = "SELECT s.*\n" +
                 "FROM service_provider s\n" +
                 "JOIN custom_service_provider_address a ON s.service_provider_id = a.service_provider_id\n" +
@@ -1214,16 +1262,28 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                     .findFirst()
                     .orElse(null);
         }
+
+        if(test_status_id!=null)
+        {
+            generalizedQuery = generalizedQuery + alias.get("test_status_id") + "." + "test_status_id" + " =" + test_status_id + " AND ";
+        }
         String[] fieldsNames = {"state", "district", "first_name","last_name"};
-        String[] fields = {state, district, first_name,last_name};
+        Object[] fields = {state, district, first_name,last_name};
         for (int i = 0; i < fields.length; i++) {
             if (fields[i] != null) {
-                generalizedQuery = generalizedQuery + alias.get(fieldsNames[i]) + "." + fieldsNames[i] + " =:" + fieldsNames[i] + " AND ";
+                if (fieldsNames[i].equals("first_name") || fieldsNames[i].equals("last_name")) {
+                    generalizedQuery += "LOWER(" + alias.get(fieldsNames[i]) + "." + fieldsNames[i] + ") = LOWER(:" + fieldsNames[i] +")"+ " AND ";
+                }
+                else
+                {
+                    generalizedQuery +=  alias.get(fieldsNames[i]) + "." + fieldsNames[i] + " = :" + fieldsNames[i]+ " AND ";
+                }
             }
         }
         generalizedQuery = generalizedQuery.trim();
         int lastSpaceIndex = generalizedQuery.lastIndexOf(" ");
         generalizedQuery = generalizedQuery.substring(0, lastSpaceIndex);
+        System.out.println("-------------------------" + generalizedQuery);
         Query query;
         query = entityManager.createNativeQuery(generalizedQuery, ServiceProviderEntity.class);
         for (int i = 0; i < fields.length; i++) {
@@ -1237,5 +1297,15 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
            response.add(sharedUtilityService.serviceProviderDetailsMap(serviceProvider));
         }
         return response;
+    }
+    public List<ServiceProviderEntity> getAllSp(int page,int limit) {
+        int startPosition = page * limit;
+        // Create the query
+        TypedQuery<ServiceProviderEntity> query = entityManager.createQuery(Constant.GET_ALL_SERVICE_PROVIDERS, ServiceProviderEntity.class);
+        // Apply pagination
+        query.setFirstResult(startPosition);
+        query.setMaxResults(limit);
+        List<ServiceProviderEntity> results = query.getResultList();
+        return results;
     }
 }

@@ -18,7 +18,7 @@ public class BufferedServletInputStream extends ServletInputStream {
 
     @Override
     public boolean isReady() {
-        return true;
+        return true; // Or implement logic based on your needs
     }
 
     @Override

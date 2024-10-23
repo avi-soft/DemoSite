@@ -4,6 +4,7 @@ import com.community.api.component.Constant;
 import com.community.api.endpoint.customer.AddressDTO;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.*;
+import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.utils.Document;
 import com.community.api.utils.DocumentType;
 import com.community.api.utils.ServiceProviderDocument;
@@ -29,11 +30,15 @@ import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
+import javax.validation.constraints.Size;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,6 +66,8 @@ public class SharedUtilityService {
     @Autowired
     public OrderService orderService;
 
+    @Autowired
+    public ExceptionHandlingImplement exceptionHandling;
     @Autowired
     public void setProductReserveCategoryFeePostRefService(ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService) {
         this.productReserveCategoryFeePostRefService = productReserveCategoryFeePostRefService;
@@ -94,8 +101,13 @@ public class SharedUtilityService {
         productDetails.put("sku_description", product.getDefaultSku().getDescription());
         productDetails.put("long_description", product.getDefaultSku().getLongDescription());
         productDetails.put("active_start_date", product.getDefaultSku().getActiveStartDate());
+        Double fee=productReserveCategoryFeePostRefService.getCustomProductReserveCategoryFeePostRefByProductIdAndReserveCategoryId(product.getId(),reserveCategoryService.getCategoryByName(customer.getCategory()).getReserveCategoryId()).getFee();
+        if(fee==null)
+        {
+            fee=10.0; //@TODO - make it constant free
+        }
         //@TODO-Fee is dependent on category
-        productDetails.put("fee",productReserveCategoryFeePostRefService.getCustomProductReserveCategoryFeePostRefByProductIdAndReserveCategoryId(product.getId(),reserveCategoryService.getCategoryByName(customer.getCategory()).getReserveCategoryId()).getFee());//this is dummy data
+        productDetails.put("fee",fee);//this is dummy data
         productDetails.put("category_id",product.getDefaultCategory().getId());
         productDetails.put("active_end_date", product.getDefaultSku().getActiveEndDate());
         return productDetails;
@@ -137,16 +149,22 @@ public class SharedUtilityService {
         customerDetails.put("cookied", customer.isCookied());
         customerDetails.put("loggedIn", customer.isLoggedIn());
         customerDetails.put("transientProperties", customer.getTransientProperties());
+
         CustomCustomer customCustomer=entityManager.find(CustomCustomer.class,customer.getId());
         Order cart=orderService.findCartForCustomer(customer);
         if(cart!=null)
-        customerDetails.put("orderId",cart.getId());
+            customerDetails.put("orderId",cart.getId());
         else
             customerDetails.put("orderId",null);
         customerDetails.put("mobileNumber", customCustomer.getMobileNumber());
         customerDetails.put("secondaryMobileNumber", customCustomer.getSecondaryMobileNumber());
         customerDetails.put("whatsappNumber", customCustomer.getWhatsappNumber());
-
+        List<ServiceProviderEntity>refSp=new ArrayList<>();
+        for(CustomerReferrer customerReferrer:customCustomer.getMyReferrer())
+        {
+            refSp.add(customerReferrer.getServiceProvider());
+        }
+        customerDetails.put("referres",refSp);
         customerDetails.put("countryCode", customCustomer.getCountryCode());
         customerDetails.put("otp", customCustomer.getOtp());
         customerDetails.put("fathersName", customCustomer.getFathersName());
@@ -227,7 +245,7 @@ public class SharedUtilityService {
         }
 
         customerDetails.put("savedForms",listOfSavedProducts);*/
-            List<CustomerAddressDTO>addresses=new ArrayList<>();
+        List<CustomerAddressDTO>addresses=new ArrayList<>();
         for(CustomerAddress customerAddress:customer.getCustomerAddresses())
         {
             CustomerAddressDTO addressDTO=new CustomerAddressDTO();
@@ -272,26 +290,26 @@ public class SharedUtilityService {
     }
     public ValidationResult validateInputMap(Map<String,Object>inputMap)
     {
-            if(inputMap.keySet().size()>Constant.MAX_REQUEST_SIZE)
-                return ValidationResult.EXCEEDS_MAX_SIZE;
+        if(inputMap.keySet().size()>Constant.MAX_REQUEST_SIZE)
+            return ValidationResult.EXCEEDS_MAX_SIZE;
 
-            // Iterate through the map entries to check for nested maps
-            for (Map.Entry<String, Object> entry : inputMap.entrySet()) {
-                Object value = entry.getValue();
+        // Iterate through the map entries to check for nested maps
+        for (Map.Entry<String, Object> entry : inputMap.entrySet()) {
+            Object value = entry.getValue();
 
-                // Check if the value is a nested map
-                if (value instanceof Map) {
-                    Map<?, ?> nestedMap = (Map<?, ?>) value;
+            // Check if the value is a nested map
+            if (value instanceof Map) {
+                Map<?, ?> nestedMap = (Map<?, ?>) value;
 
-                    // Check the size of the nested map's key set
-                    if (nestedMap.keySet().size() > Constant.MAX_NESTED_KEY_SIZE) {
-                        return ValidationResult.EXCEEDS_NESTED_SIZE;
-                    }
+                // Check the size of the nested map's key set
+                if (nestedMap.keySet().size() > Constant.MAX_NESTED_KEY_SIZE) {
+                    return ValidationResult.EXCEEDS_NESTED_SIZE;
                 }
             }
-            return ValidationResult.SUCCESS;
-
         }
+        return ValidationResult.SUCCESS;
+
+    }
 
     public Map<String,Object> serviceProviderDetailsMap(ServiceProviderEntity serviceProvider)
     {
@@ -326,6 +344,12 @@ public class SharedUtilityService {
         serviceProviderDetails.put("service_provider_status",serviceProvider.getTestStatus());
         serviceProviderDetails.put("rank", serviceProvider.getRanking());
         serviceProviderDetails.put("signedUp", serviceProvider.getSignedUp());
+
+        /* serviceProviderDetails.put("skills", serviceProvider.getSkills());*/
+       /* serviceProviderDetails.put("infra", serviceProvider.getInfra());
+        serviceProviderDetails.put("languages", serviceProvider.getLanguages());*/
+/*        serviceProviderDetails.put("privileges", serviceProvider.getPrivileges());
+        serviceProviderDetails.put("spAddresses", serviceProvider.getSpAddresses());*/
         serviceProviderDetails.put("business_unit_infra_score",serviceProvider.getBusinessUnitInfraScore());
         serviceProviderDetails.put("qualification_score",serviceProvider.getQualificationScore());
         serviceProviderDetails.put("technical_expertise_score",serviceProvider.getTechnicalExpertiseScore());
@@ -408,6 +432,7 @@ public class SharedUtilityService {
                     qualificationInfo.put("grade_or_percentage_value", qualificationDetail.getGrade_or_percentage_value());
                     qualificationInfo.put("marks_total", qualificationDetail.getTotal_marks());
                     qualificationInfo.put("marks_obtained", qualificationDetail.getMarks_obtained());
+                    qualificationInfo.put("qualification_id",qualificationDetail.getQualification_id());
 
                     // Replace the qualification_id with qualification_name
                     if (qualification != null) {
@@ -420,6 +445,43 @@ public class SharedUtilityService {
                 }).collect(Collectors.toList());
     }
 
+
+    public boolean isFutureDate(String dateStr) {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        sdf.setLenient(false);
+        try {
+            Date inputDate = sdf.parse(dateStr);
+            Date currentDate = new Date();
+            return inputDate.after(currentDate);
+        }  catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return false;
+        }
+    }
+    public Map<String,Object> adminDetailsMap(CustomAdmin customAdmin)
+    {
+        Map<String,Object>customAdminDetails=new HashMap<>();
+        if(customAdmin.getRole()==2)
+        {
+            customAdminDetails.put("admin_id",customAdmin.getAdmin_id());
+        }
+        else if(customAdmin.getRole()==1)
+        {
+            customAdminDetails.put("super_admin_id",customAdmin.getAdmin_id());
+        }
+        else if(customAdmin.getRole()==3)
+        {
+            customAdminDetails.put("admin_service_provider_id",customAdmin.getAdmin_id());
+        }
+
+        customAdminDetails.put("role_id", customAdmin.getRole());
+        customAdminDetails.put("user_name", customAdmin.getUser_name());
+        customAdminDetails.put("password", customAdmin.getPassword());
+        customAdminDetails.put("otp", customAdmin.getOtp());
+        customAdminDetails.put("mobile_number",customAdmin.getMobileNumber());
+        customAdminDetails.put("country_code", customAdmin.getCountry_code());
+        return customAdminDetails;
+    }
 
 
 }
