@@ -52,7 +52,7 @@ public class ServiceProviderEntity  {
     @Column
     private String type="PROFESSIONAL";
 
-    private Integer totalScore;
+    private Integer totalScore=0;
 
     private String user_name;
 
@@ -132,16 +132,17 @@ public class ServiceProviderEntity  {
     @Nullable
     private String registration_number;
 
-    private String partTimeOrFullTime;
+    @Nullable
+    private String partTimeOrFullTime="PART TIME";
 
-    private Integer businessUnitInfraScore;
-    private Integer workExperienceScore;
-    private Integer qualificationScore;
-    private Integer technicalExpertiseScore;
-    private Integer staffScore;
+    private Integer businessUnitInfraScore=0;
+    private Integer workExperienceScore=0;
+    private Integer qualificationScore=0;
+    private Integer technicalExpertiseScore=0;
+    private Integer staffScore=0;
     private Integer writtenTestScore;
     private Integer imageUploadScore;
-    private Integer partTimeOrFullTimeScore;
+    private Integer partTimeOrFullTimeScore=0;
     private Integer infraScore=0;
     @ManyToMany
     @JoinTable(
@@ -222,18 +223,36 @@ public class ServiceProviderEntity  {
     @Column
     private Integer totalSkillTestPoints;
 
+    @JsonIgnore
+    @JsonBackReference
     @OneToMany(mappedBy = "serviceProvider", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CustomerReferrer> myReferrals = new ArrayList<>();
-
 
     @OneToMany(mappedBy = "serviceProviderEntity", cascade = CascadeType.ALL, orphanRemoval = true,fetch = FetchType.EAGER)
     @Fetch(FetchMode.SUBSELECT)
     private List<ServiceProviderDocument> documents;
 
+
     @Nullable
     @JsonManagedReference
     @OneToMany(mappedBy = "service_provider", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<QualificationDetails> qualificationDetailsList;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "serviceProvider", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<OrderRequest> orderRequests;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "serviceProvider", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ServiceProviderAcceptedOrders> acceptedOrders;
+    @Column(name="is_active")
+    private Boolean isActive;
+
+    @Column(name="maximum_ticket_size")
+    private Integer maximumTicketSize;
+
+    @Column(name="maximum_binding_size")
+    private Integer maximumBindingSize;
 
 }
 

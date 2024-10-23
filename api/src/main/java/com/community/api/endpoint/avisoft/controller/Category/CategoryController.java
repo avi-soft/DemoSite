@@ -56,6 +56,7 @@ public class CategoryController extends CatalogEndpoint {
         this.categoryService = categoryService;
     }
 
+
     @PostMapping("/add")
     public ResponseEntity<?> addCategory(HttpServletRequest request, @RequestBody AddCategoryDto addCategoryDto) {
         try {
@@ -214,7 +215,15 @@ public class CategoryController extends CatalogEndpoint {
             Category category = this.catalogService.findCategoryById(categoryId);
 
             if (category != null && ((Status)category).getArchived() != 'Y') {
+                List<BigInteger> productIdList = categoryService.getAllProductsByCategoryId(categoryId);
 
+                for (BigInteger productId : productIdList) {
+                    CustomProduct customProduct = entityManager.find(CustomProduct.class, productId.longValue());
+
+                    if (customProduct != null && (((Status) customProduct).getArchived() != 'Y' && customProduct.getDefaultSku().getActiveEndDate().after(new Date()))) {
+                        catalogService.removeProduct(customProduct.getDefaultSku().getDefaultProduct());
+                    }
+                }
                 catalogService.removeCategory(category);
                 return ResponseService.generateSuccessResponse("CATEGORY DELETED SUCCESSFULLY", "DELETED", HttpStatus.OK);
 

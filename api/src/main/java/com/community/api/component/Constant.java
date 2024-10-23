@@ -1,5 +1,10 @@
 package com.community.api.component;
 
+import com.community.api.entity.CustomOrderState;
+import org.broadleafcommerce.common.currency.domain.BroadleafCurrency;
+import org.broadleafcommerce.common.currency.domain.BroadleafCurrencyImpl;
+import org.broadleafcommerce.core.order.service.type.OrderStatus;
+
 public class Constant {
 
     public static final long MAX_FILE_SIZE = 1 * 1024 * 1024;
@@ -12,8 +17,11 @@ public class Constant {
     public static final String FIND_ALL_SERVICE_PROVIDER_TEST_RANK_QUERY= "SELECT q FROM ServiceProviderRank q";
     public static final String GET_ALL_RANDOM_IMAGES="SELECT q FROM Image q";
     public static final String GET_ALL_RANDOM_TYPING_TEXT="SELECT q FROM TypingText q";
+    public static final String GET_ALL_SCORING_CRITERIA="SELECT q FROM ScoringCriteria q";
     public static String PHONE_QUERY_SERVICE_PROVIDER = "SELECT c FROM ServiceProviderEntity c WHERE c.mobileNumber = :mobileNumber AND c.country_code = :country_code";
+    public static String PHONE_QUERY_ADMIN="SELECT c FROM CustomAdmin c WHERE c.mobileNumber = :mobileNumber AND c.country_code = :country_code";
     public static String USERNAME_QUERY_SERVICE_PROVIDER = "SELECT c FROM ServiceProviderEntity c WHERE c.user_name = :username";
+    public static String USERNAME_QUERY_CUSTOM_ADMIN = "SELECT c FROM CustomAdmin c WHERE c.user_name = :username";
     public static final String ADMIN = "ADMIN";
     public static final String SUPER_ADMIN = "SUPER_ADMIN";
     public static final String SERVICE_PROVIDER = "SERVICE_PROVIDER";
@@ -32,6 +40,7 @@ public class Constant {
     public static String FIND_STATE = "SELECT s.state_name from StateCode s where s.state_id = :state_id";
     public static String FETCH_ROLE = "SELECT r.role_name FROM Role r WHERE r.role_id = :role_id";
     public static String roleUser = "CUSTOMER";
+    public static String roleAdminServiceProvider="ADMIN_SERVICE_PROVIDER";
     public static String roleServiceProvider = "SERVICE_PROVIDER";
     public static String GET_SKILLS_COUNT = "SELECT COUNT(*) FROM Skill";
     public static String GET_ALL_SKILLS = "SELECT s FROM Skill s";
@@ -138,4 +147,34 @@ public class Constant {
     public static final String PINCODE_REGEXP="^\\d{6}$";
     public static final String CITY_REGEXP="^[A-Za-z\\\\s]+$";
     public static final String EMAIL_REGEXP="^[\\w-\\.]+@[\\w-]+\\.[a-zA-Z]{2,}$";
+    public static final String GET_ALL_ORDERS_OF_ONE_CUSTOMER="SELECT o from blc_ ";
+    public static final String GET_ORDERS_USING_CUSTOMER_ID = "SELECT CAST(o.order_id AS BIGINT) FROM blc_order o WHERE o.order_number LIKE :orderNumber";;
+
+    public static final String GET_ALL_ORDERS="SELECT o.order_id FROM blc_order o WHERE o.order_status <> 'IN_PROCESS'";
+    public static final String SEARCH_ORDER_QUERY="SELECT o.order_id FROM order_state o WHERE o.order_state_id =:orderStateId";
+    public static final String GET_NEW_ORDERS="SELECT o.order_id FROM order_state o WHERE o.order_state_id = 1";
+    public static final String GET_SP_ORDER_REQUEST="SELECT o.order_request_id FROM SP_orders_requests o WHERE o.order_id = :orderId AND o.service_provider_id = :serviceProviderId ";
+    public static final String GET_ONE_SP_ORDER_REQUEST="SELECT o.order_request_id FROM SP_orders_requests o WHERE o.service_provider_id = :serviceProviderId AND o.request_Status = :requestStatus";
+    public static final String GET_ONE_SP_ALL_ORDER_REQUEST="SELECT o.order_request_id FROM SP_orders_requests o WHERE o.service_provider_id = :serviceProviderId" ;
+    public static final String SP_REQUEST_ACTION_ACCEPT="ACCEPT";
+    public static final String SP_REQUEST_ACTION_RETURN="RETURN";
+    public static final String SP_REQUEST_ACTION_VIEW="VIEW";
+    public static final String NOT_ELIGIBLE_SP="SELECT s.service_provider_id FROM sp_orders_requests s WHERE order_id = :orderId AND request_status ='RETURNED'";
+    public static final OrderStatus ORDER_STATUS_NEW = new OrderStatus("NEW", "NEW", true);
+    public static final OrderStatus ORDER_STATUS_COMPLETED = new OrderStatus("COMPLETED", "COMPLETED", true);
+    public static final OrderStatus ORDER_STATUS_IN_REVIEW = new OrderStatus("IN_REVIEW", "IN_REVIEW", true);
+    public static final OrderStatus ORDER_STATUS_ASSIGNED = new OrderStatus("ASSIGNED", "ASSIGNED", true);
+    public static final OrderStatus ORDER_STATUS_AUTO_ASSIGNED = new OrderStatus("AUTO_ASSIGNED", "AUTO_ASSIGNED", true);
+    public static final OrderStatus ORDER_STATUS_IN_PROGRESS = new OrderStatus("IN_PROGRESS", "IN_PROGRESS", true);
+    public static final OrderStatus ORDER_STATUS_IN_CART = new OrderStatus("IN_PROCESS", "IN_PROCESS", true);
+
+    public static final OrderStatus ORDER_STATUS_UNASSIGNED = new OrderStatus("UNASSIGNED", "UNASSIGNED", true);
+    public static final CustomOrderState ORDER_STATE_COMPLETED = new CustomOrderState(7);
+    public static final CustomOrderState ORDER_STATE_NEW = new CustomOrderState(1);
+    public static final CustomOrderState ORDER_STATE_IN_REVIEW = new CustomOrderState(8);
+    public static final CustomOrderState ORDER_STATE_ASSIGNED = new CustomOrderState(4);
+    public static final CustomOrderState ORDER_STATE_AUTO_ASSIGNED = new CustomOrderState(2);
+    public static final CustomOrderState ORDER_STATE_IN_PROGRESS = new CustomOrderState(6);
+    public static final CustomOrderState ORDER_STATE_UNASSIGNED = new CustomOrderState(3);
+    public static final CustomOrderState ORDER_STATE_RETURNED = new CustomOrderState(5);
 }

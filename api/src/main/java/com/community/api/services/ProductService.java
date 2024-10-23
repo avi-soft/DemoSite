@@ -851,7 +851,7 @@ public class ProductService {
                     throw new IllegalArgumentException("Reserve category not found with id: " + addProductDto.getReservedCategory().get(reserveCategoryIndex).getReserveCategory());
                 }
 
-                if (addProductDto.getReservedCategory().get(reserveCategoryIndex).getFee() == null || addProductDto.getReservedCategory().get(reserveCategoryIndex).getFee() <= 0) {
+                if (addProductDto.getReservedCategory().get(reserveCategoryIndex).getFee() == null || addProductDto.getReservedCategory().get(reserveCategoryIndex).getFee() < 0) {
                     throw new IllegalArgumentException("Fee cannot be null or <= 0.");
                 }
 
@@ -1074,15 +1074,18 @@ public class ProductService {
                 }
             }
 
+
             if (addProductDto.getState() != null) {
                 CustomSector customSector = sectorService.getSectorBySectorId(addProductDto.getSector());
                 customProduct.setSector(customSector);
             }
 
+
             if (addProductDto.getQualification() != null) {
                 Qualification qualification = qualificationService.getQualificationByQualificationId(addProductDto.getQualification());
                 customProduct.setQualification(qualification);
             }
+
 
             if (addProductDto.getStream() != null) {
                 CustomStream customStream = streamService.getStreamByStreamId(addProductDto.getStream());
@@ -1423,9 +1426,11 @@ public class ProductService {
             } else if (addProductDto.getAdmitCardDateFrom() != null) {
                 dateFormat.parse(dateFormat.format(addProductDto.getAdmitCardDateFrom()));
                 addProductDto.setAdmitCardDateTo(addProductDto.getAdmitCardDateFrom());
+
             } else if (addProductDto.getAdmitCardDateTo() != null) {
                 dateFormat.parse(dateFormat.format(addProductDto.getAdmitCardDateTo()));
                 if (customProduct.getAdmitCardDateFrom() != null) {
+
                     addProductDto.setAdmitCardDateFrom(customProduct.getAdmitCardDateFrom());
                 } else {
                     addProductDto.setAdmitCardDateFrom(addProductDto.getAdmitCardDateTo());

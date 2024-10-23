@@ -1,6 +1,7 @@
 package com.community.api.component;
 
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
+import com.community.api.entity.CustomAdmin;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.services.RoleService;
 import com.community.api.services.exception.ExceptionHandlingImplement;
@@ -121,7 +122,6 @@ private String secretKeyString = "DASYWgfhMLL0np41rKFAGminD1zb5DlwDzE1WwnP8es=";
                 throw new IllegalArgumentException("Token is required");
             }
 
-
             if (isTokenExpired(token)) {
                 throw new ExpiredJwtException(null, null, "Token is expired");
 
@@ -147,7 +147,6 @@ private String secretKeyString = "DASYWgfhMLL0np41rKFAGminD1zb5DlwDzE1WwnP8es=";
 
             if (isTokenExpired(token)) {
                 throw new IllegalArgumentException("Token is expired");
-
             }
 
             Long id = extractId(token);
@@ -163,6 +162,7 @@ private String secretKeyString = "DASYWgfhMLL0np41rKFAGminD1zb5DlwDzE1WwnP8es=";
             int role=extractRoleId(token);
             Customer existingCustomer=null;
             ServiceProviderEntity existingServiceProvider=null;
+            CustomAdmin existingAdmin=null;
             if(roleService.findRoleName(role).equals(Constant.roleUser)){
                 existingCustomer = customerService.readCustomerById(id);
                 if (existingCustomer == null) {
@@ -173,6 +173,14 @@ private String secretKeyString = "DASYWgfhMLL0np41rKFAGminD1zb5DlwDzE1WwnP8es=";
                 existingServiceProvider = entityManager.find(ServiceProviderEntity.class, id);
                 if(existingServiceProvider==null)
                     return false;
+            }
+            else if(roleService.findRoleName(role).equals(Constant.ADMIN) || roleService.findRoleName(role).equals(Constant.SERVICE_PROVIDER) || roleService.findRoleName(role).equals(Constant.roleAdminServiceProvider))
+            {
+                existingAdmin= entityManager.find(CustomAdmin.class, id);
+                if(existingAdmin==null)
+                {
+                    return false;
+                }
             }
 
             String storedIpAddress = claims.get("ipAddress", String.class);
