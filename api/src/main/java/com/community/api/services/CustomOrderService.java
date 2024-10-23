@@ -69,7 +69,7 @@ public class CustomOrderService {
     @Transactional
     public List<CustomOrderState> getCustomOrdersByOrderStateId(Integer orderStateId) throws Exception {
         try{
-            OrderStateRef orderStateRef = orderStateRefService.getOrderStateByOrderStateId(1);
+            OrderStateRef orderStateRef = orderStateRefService.getOrderStateByOrderStateId(orderStateId);
 
             Query query = entityManager.createQuery(Constant.GET_ORDERS_BY_ORDER_STATE_ID, CustomOrderState.class);
             query.setParameter("orderStateId", orderStateRef.getOrderStateId());
