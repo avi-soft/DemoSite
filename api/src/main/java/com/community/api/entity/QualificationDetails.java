@@ -36,11 +36,12 @@ public class QualificationDetails {
     @Column(name = "board_or_university", nullable = false)
     private String board_or_university;
 
-    //    @NotNull(message = "Examination Role Number is required")
+
+//    @NotNull(message = "Examination Role Number is required")
     @Column(name = "examination_role_number",nullable = true)
     private Long examination_role_number;
 
-    //    @NotNull(message = "Examination Registration Number is required")
+//    @NotNull(message = "Examination Registration Number is required")
     @Column(name = "examination_registration_number",nullable = true)
     private Long examination_registration_number;
 
@@ -92,5 +93,4 @@ public class QualificationDetails {
     @ManyToOne
     @JoinColumn(name = "service_provider_id")
     private ServiceProviderEntity service_provider;
-
 }

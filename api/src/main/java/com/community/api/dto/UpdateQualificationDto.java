@@ -53,6 +53,7 @@ public class UpdateQualificationDto
     @Min(value = 0, message = "Marks obtained cannot be negative")
     private Long marks_obtained;
 
+    @NotNull(message = "Qualification id is required")
     private Integer qualification_id;
 
     @AssertTrue(message = "Total marks cannot be less than marks obtained")

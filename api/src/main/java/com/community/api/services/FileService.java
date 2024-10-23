@@ -12,6 +12,9 @@ import java.nio.charset.StandardCharsets;
 @Service
 public class FileService {
 
+    @Value("${file.server.url}")
+    private String fileServerUrl;
+
     /**
      * Generates a public URL for the file.
      *
@@ -20,13 +23,9 @@ public class FileService {
      */
 
 
-    private static String baseURL = "http://192.168.0.187:8645";
-
     public String getFileUrl(String filePath, HttpServletRequest request) {
         String normalizedFilePath = filePath.replace("\\", "/");
-        String encodedFilePath = URLEncoder.encode(normalizedFilePath, StandardCharsets.UTF_8);
-
-        return baseURL + "/"  + normalizedFilePath;
+        return fileServerUrl + "/"  + normalizedFilePath;
     }
 
     public String getDownloadFileUrl(String filePath, HttpServletRequest request) {
@@ -42,11 +41,8 @@ public class FileService {
             String encodedSegment = URLEncoder.encode(segment, StandardCharsets.UTF_8).replace("+", "%20");
             encodedFilePath.append(encodedSegment);
         }
-
-        return baseURL + "/" + encodedFilePath.toString();
+        return fileServerUrl + "/" + encodedFilePath.toString();
     }
-
-
 
 
 }

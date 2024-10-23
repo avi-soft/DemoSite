@@ -15,7 +15,6 @@ import javax.persistence.*;
 public class TypingText
 {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name = "text",nullable = false, columnDefinition = "TEXT")
