@@ -177,10 +177,10 @@ public class ProductController extends CatalogEndpoint {
             sku.setActiveEndDate(addProductDto.getActiveEndDate());
             sku.setDefaultProduct(product);
 
-                CustomJobGroup customJobGroup = productService.validateCustomJobGroup(addProductDto.getJobGroup());
-                if (customJobGroup == null) {
-                    return ResponseService.generateErrorResponse("Custom job group not found.", HttpStatus.NOT_FOUND);
-                }
+            CustomJobGroup customJobGroup = productService.validateCustomJobGroup(addProductDto.getJobGroup());
+            if (customJobGroup == null) {
+                return ResponseService.generateErrorResponse("Custom job group not found.", HttpStatus.NOT_FOUND);
+            }
 
             CustomProductState customProductState=null;
                 if(!saveDraft)
@@ -200,13 +200,24 @@ public class ProductController extends CatalogEndpoint {
                     }
                 }
 
-            product.setDefaultSku(sku);
-                productService.validateReserveCategory(addProductDto);
+                product.setDefaultSku(sku);
+
+                if(!saveDraft)
+                {
+                    productService.validateReserveCategory(addProductDto);
+                }
+                else if(saveDraft)
+                {
+                    if(addProductDto.getReservedCategory()!=null)
+                    {
+                        productService.validateReserveCategory(addProductDto);
+                    }
+                }
                 CustomGender customGender = productService.validateGenderSpecificField(addProductDto);
                 CustomSector customSector = productService.validateSector(addProductDto);
 
                 productService.validateSelectionCriteria(addProductDto);
-                Qualification qualification  = productService.validateQualification(addProductDto);
+                Qualification  qualification  = productService.validateQualification(addProductDto);
                 CustomStream customStream = productService.validateStream(addProductDto);
                 CustomSubject customSubject = productService.validateSubject(addProductDto);
 
@@ -214,16 +225,49 @@ public class ProductController extends CatalogEndpoint {
                 productService.validateModificationDates(addProductDto);
                 productService.validateLastDateToPayFee(addProductDto);
 
-                productService.validateLinks(addProductDto);
-                productService.validateFormComplexity(addProductDto);
+                if(!saveDraft)
+                {
+                    productService.validateLinks(addProductDto);
+                }
+                else if(saveDraft)
+                {
+                    if(addProductDto.getDownloadNotificationLink()!=null)
+                    {
+                        if (addProductDto.getDownloadNotificationLink().trim().isEmpty()) {
+                            throw new IllegalArgumentException("Notification download link cannot be empty");
+                        }
+                        addProductDto.setDownloadNotificationLink(addProductDto.getDownloadNotificationLink().trim());
+                    }
+                    if(addProductDto.getDownloadSyllabusLink()!=null)
+                    {
+                        if (addProductDto.getDownloadSyllabusLink().trim().isEmpty()) {
+                            throw new IllegalArgumentException("Syllabus download link cannot be empty.");
+                        }
+                        addProductDto.setDownloadSyllabusLink(addProductDto.getDownloadSyllabusLink().trim());
+                    }
+                }
+
+            productService.validateFormComplexity(addProductDto);
 
             Role role = productService.getRoleByToken(authHeader);
             Long creatorUserId = productService.getUserIdByToken(authHeader);
 
             productService.saveCustomProduct(product, addProductDto, customProductState, role, creatorUserId, product.getActiveStartDate(), currentDate);
 
-            productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getReservedCategory(), product);
-            productReserveCategoryBornBeforeAfterRefService.saveBornBeforeAndBornAfter(addProductDto.getReservedCategory(), product);
+            if(!saveDraft)
+            {
+                productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getReservedCategory(), product);
+                productReserveCategoryBornBeforeAfterRefService.saveBornBeforeAndBornAfter(addProductDto.getReservedCategory(), product);
+            }
+            else if(saveDraft)
+
+            {
+                if(addProductDto.getReservedCategory()!=null)
+                {
+                    productReserveCategoryFeePostRefService.saveFeeAndPost(addProductDto.getReservedCategory(), product);
+                    productReserveCategoryBornBeforeAfterRefService.saveBornBeforeAndBornAfter(addProductDto.getReservedCategory(), product);
+                }
+            }
 
             CustomJobGroup jobGroup = jobGroupService.getJobGroupById(addProductDto.getJobGroup());
             CustomApplicationScope applicationScope = applicationScopeService.getApplicationScopeById(addProductDto.getApplicationScope());
@@ -233,10 +277,27 @@ public class ProductController extends CatalogEndpoint {
                 notifyingAuthority = districtService.getStateByStateId(addProductDto.getState());
             }
 
+            CustomProductWrapper wrapper = new CustomProductWrapper();
+            if(!saveDraft)
+            {
                 productService.validatePhysicalRequirement(addProductDto, null);
                 productGenderPhysicalRequirementService.savePhysicalRequirement(addProductDto.getPhysicalRequirement(), product);
-            CustomProductWrapper wrapper = new CustomProductWrapper();
-            wrapper.wrapDetailsAddProduct(product, addProductDto, jobGroup, customProductState, applicationScope, creatorUserId, role, reserveCategoryService, notifyingAuthority, customGender, customSector, qualification, customStream, customSubject, currentDate);
+                wrapper.wrapDetailsAddProduct(product, addProductDto, jobGroup, customProductState, applicationScope, creatorUserId, role, reserveCategoryService, notifyingAuthority, customGender, customSector, qualification, customStream, customSubject, currentDate);
+            }
+            else if(saveDraft)
+            {
+                if(addProductDto.getPhysicalRequirement()!=null)
+                {
+                    productService.validatePhysicalRequirement(addProductDto, null);
+                    productGenderPhysicalRequirementService.savePhysicalRequirement(addProductDto.getPhysicalRequirement(), product);
+                }
+                if(reserveCategoryService!=null)
+                {
+                    wrapper.wrapDetailsAddProduct(product, addProductDto, jobGroup, customProductState, applicationScope, creatorUserId, role, reserveCategoryService, notifyingAuthority, customGender, customSector, qualification, customStream, customSubject, currentDate);
+                }else{
+                    wrapper.wrapDetailsAddProduct(product, addProductDto, jobGroup, customProductState, applicationScope, creatorUserId, role, null, notifyingAuthority, customGender, customSector, qualification, customStream, customSubject, currentDate);
+                }
+            }
             return ResponseService.generateSuccessResponse("PRODUCT ADDED SUCCESSFULLY", wrapper, HttpStatus.OK);
 
         } catch (NumberFormatException numberFormatException) {

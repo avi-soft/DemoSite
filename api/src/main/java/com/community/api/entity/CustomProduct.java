@@ -151,4 +151,7 @@ public class CustomProduct extends ProductImpl {
     @Column(name = "post_name")
     protected String postName;
 
+    @Column(name = "is_review_required")
+    protected Boolean isReviewRequired;
+
 }
