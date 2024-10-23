@@ -310,7 +310,7 @@ public class SharedUtilityService {
         return ValidationResult.SUCCESS;
 
     }
-
+    @Transactional
     public Map<String,Object> serviceProviderDetailsMap(ServiceProviderEntity serviceProvider)
     {
         Map<String,Object>serviceProviderDetails=new HashMap<>();
