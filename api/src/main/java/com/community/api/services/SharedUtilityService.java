@@ -4,11 +4,16 @@ import com.community.api.component.Constant;
 import com.community.api.endpoint.customer.AddressDTO;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.entity.*;
+import com.community.api.services.exception.ExceptionHandlingImplement;
+import com.community.api.utils.Document;
 import com.community.api.utils.DocumentType;
+import com.community.api.utils.ServiceProviderDocument;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import org.broadleafcommerce.core.catalog.domain.Product;
+import org.broadleafcommerce.core.order.domain.Order;
 import org.broadleafcommerce.core.order.domain.OrderItem;
+import org.broadleafcommerce.core.order.service.OrderService;
 import org.broadleafcommerce.profile.core.domain.Customer;
 import org.broadleafcommerce.profile.core.domain.CustomerAddress;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,18 +21,24 @@ import org.springframework.boot.actuate.endpoint.SanitizableData;
 import org.springframework.boot.actuate.endpoint.Sanitizer;
 import org.springframework.core.env.MapPropertySource;
 import org.springframework.core.env.PropertySource;
+import org.springframework.http.HttpRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
+import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
+import javax.validation.constraints.Size;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,13 +47,27 @@ import java.util.stream.Collectors;
 @Service
 public class SharedUtilityService {
     private EntityManager entityManager;
+    public ReserveCategoryService reserveCategoryService;
     private ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService;
+    @Autowired
+    FileService fileService;
 
+    @Autowired
+    HttpServletRequest request;
     @Autowired
     public void setEntityManager(EntityManager entityManager) {
         this.entityManager = entityManager;
     }
+    @Autowired
+    public void setReserveCategoryService(ReserveCategoryService reserveCategoryService)
+    {
+        this.reserveCategoryService=reserveCategoryService;
+    }
+    @Autowired
+    public OrderService orderService;
 
+    @Autowired
+    public ExceptionHandlingImplement exceptionHandling;
     @Autowired
     public void setProductReserveCategoryFeePostRefService(ProductReserveCategoryFeePostRefService productReserveCategoryFeePostRefService) {
         this.productReserveCategoryFeePostRefService = productReserveCategoryFeePostRefService;
@@ -59,7 +84,7 @@ public class SharedUtilityService {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSXXX");
         return zonedDateTime.format(formatter);
     }
-    public Map<String,Object> createProductResponseMap(Product product, OrderItem orderItem)
+    public Map<String,Object> createProductResponseMap(Product product, OrderItem orderItem,CustomCustomer customer)
     {
         Map<String, Object> productDetails = new HashMap<>();
         CustomProduct customProduct=entityManager.find(CustomProduct.class,product.getId());
@@ -75,8 +100,14 @@ public class SharedUtilityService {
         productDetails.put("default_sku_name", product.getDefaultSku().getName());
         productDetails.put("sku_description", product.getDefaultSku().getDescription());
         productDetails.put("long_description", product.getDefaultSku().getLongDescription());
-        productDetails.put("active_start_date", product.getDefaultSku().getActiveStartDate());//@TODO-Fee is dependent on category
-        productDetails.put("fee",productReserveCategoryFeePostRefService.getCustomProductReserveCategoryFeePostRefByProductIdAndReserveCategoryId(product.getId(),1L).getFee());//this is dummy data
+        productDetails.put("active_start_date", product.getDefaultSku().getActiveStartDate());
+        Double fee=productReserveCategoryFeePostRefService.getCustomProductReserveCategoryFeePostRefByProductIdAndReserveCategoryId(product.getId(),reserveCategoryService.getCategoryByName(customer.getCategory()).getReserveCategoryId()).getFee();
+        if(fee==null)
+        {
+            fee=10.0; //@TODO - make it constant free
+        }
+        //@TODO-Fee is dependent on category
+        productDetails.put("fee",fee);//this is dummy data
         productDetails.put("category_id",product.getDefaultCategory().getId());
         productDetails.put("active_end_date", product.getDefaultSku().getActiveEndDate());
         return productDetails;
@@ -102,6 +133,7 @@ public class SharedUtilityService {
         customerDetails.put("emailAddress", customer.getEmailAddress());
         customerDetails.put("firstName", customer.getFirstName());
         customerDetails.put("lastName", customer.getLastName());
+        customerDetails.put("fullName",customer.getFirstName()+" "+customer.getLastName());
         customerDetails.put("externalId", customer.getExternalId());
         customerDetails.put("challengeQuestion", customer.getChallengeQuestion());
         customerDetails.put("challengeAnswer", customer.getChallengeAnswer());
@@ -117,12 +149,22 @@ public class SharedUtilityService {
         customerDetails.put("cookied", customer.isCookied());
         customerDetails.put("loggedIn", customer.isLoggedIn());
         customerDetails.put("transientProperties", customer.getTransientProperties());
+
         CustomCustomer customCustomer=entityManager.find(CustomCustomer.class,customer.getId());
-
-            customerDetails.put("mobileNumber", customCustomer.getMobileNumber());
-            customerDetails.put("secondaryMobileNumber", customCustomer.getSecondaryMobileNumber());
-            customerDetails.put("whatsappNumber", customCustomer.getWhatsappNumber());
-
+        Order cart=orderService.findCartForCustomer(customer);
+        if(cart!=null)
+            customerDetails.put("orderId",cart.getId());
+        else
+            customerDetails.put("orderId",null);
+        customerDetails.put("mobileNumber", customCustomer.getMobileNumber());
+        customerDetails.put("secondaryMobileNumber", customCustomer.getSecondaryMobileNumber());
+        customerDetails.put("whatsappNumber", customCustomer.getWhatsappNumber());
+        List<ServiceProviderEntity>refSp=new ArrayList<>();
+        for(CustomerReferrer customerReferrer:customCustomer.getMyReferrer())
+        {
+            refSp.add(customerReferrer.getServiceProvider());
+        }
+        customerDetails.put("referres",refSp);
         customerDetails.put("countryCode", customCustomer.getCountryCode());
         customerDetails.put("otp", customCustomer.getOtp());
         customerDetails.put("fathersName", customCustomer.getFathersName());
@@ -139,7 +181,6 @@ public class SharedUtilityService {
         customerDetails.put("secondaryEmail", customCustomer.getSecondaryEmail());
         customerDetails.put("mothers_name", customCustomer.getMothersName());
         customerDetails.put("date_of_birth", customCustomer.getDob());
-        customerDetails.put("adhar_number", customCustomer.getAdharNumber());
         customerDetails.put("category_issue_date", customCustomer.getCategoryIssueDate());
         customerDetails.put("height_cms", customCustomer.getHeightCms());
         customerDetails.put("weight_kgs", customCustomer.getWeightKgs());
@@ -199,12 +240,12 @@ public class SharedUtilityService {
         List<Map<String,Object>>listOfSavedProducts=new ArrayList<>();*/
     /*    if(!customCustomer.getSavedForms().isEmpty()) {
             for (Product product : customCustomer.getSavedForms()) {
-                listOfSavedProducts.add(createProductResponseMap(product, null));
+                listOfSavedProducts.add(createProductResponseMap(product, null,customCustomer));
             }
         }
 
         customerDetails.put("savedForms",listOfSavedProducts);*/
-            List<CustomerAddressDTO>addresses=new ArrayList<>();
+        List<CustomerAddressDTO>addresses=new ArrayList<>();
         for(CustomerAddress customerAddress:customer.getCustomerAddresses())
         {
             CustomerAddressDTO addressDTO=new CustomerAddressDTO();
@@ -219,39 +260,66 @@ public class SharedUtilityService {
         }
         customerDetails.put("addresses",addresses);
 
+        List<QualificationDetails> qualificationDetails= customCustomer.getQualificationDetailsList();
+        List<Map<String, Object>> qualificationsWithNames = mapQualifications(qualificationDetails);
+        customerDetails.put("qualificationDetails", qualificationsWithNames);
+
+        List<Map<String, Object>> filteredDocuments = new ArrayList<>();
+
+        for (Document document : customCustomer.getDocuments()) {
+            if (document.getFilePath() != null && document.getDocumentType() != null) {
+                Map<String, Object> documentDetails = new HashMap<>();
+                documentDetails.put("documentId", document.getDocumentId());
+                documentDetails.put("name", document.getName());
+                documentDetails.put("filePath", document.getFilePath());
+
+
+                String fileUrl = fileService.getFileUrl(document.getFilePath(), request);
+                documentDetails.put("fileUrl", fileUrl);
+
+                documentDetails.put("documentType", document.getDocumentType());
+                filteredDocuments.add(documentDetails);
+            }
+        }
+
+        if (!filteredDocuments.isEmpty()) {
+            customerDetails.put("documents", filteredDocuments);
+        }
+
         return customerDetails;
     }
     public ValidationResult validateInputMap(Map<String,Object>inputMap)
     {
-            if(inputMap.keySet().size()>Constant.MAX_REQUEST_SIZE)
-                return ValidationResult.EXCEEDS_MAX_SIZE;
+        if(inputMap.keySet().size()>Constant.MAX_REQUEST_SIZE)
+            return ValidationResult.EXCEEDS_MAX_SIZE;
 
-            // Iterate through the map entries to check for nested maps
-            for (Map.Entry<String, Object> entry : inputMap.entrySet()) {
-                Object value = entry.getValue();
+        // Iterate through the map entries to check for nested maps
+        for (Map.Entry<String, Object> entry : inputMap.entrySet()) {
+            Object value = entry.getValue();
 
-                // Check if the value is a nested map
-                if (value instanceof Map) {
-                    Map<?, ?> nestedMap = (Map<?, ?>) value;
+            // Check if the value is a nested map
+            if (value instanceof Map) {
+                Map<?, ?> nestedMap = (Map<?, ?>) value;
 
-                    // Check the size of the nested map's key set
-                    if (nestedMap.keySet().size() > Constant.MAX_NESTED_KEY_SIZE) {
-                        return ValidationResult.EXCEEDS_NESTED_SIZE;
-                    }
+                // Check the size of the nested map's key set
+                if (nestedMap.keySet().size() > Constant.MAX_NESTED_KEY_SIZE) {
+                    return ValidationResult.EXCEEDS_NESTED_SIZE;
                 }
             }
-            return ValidationResult.SUCCESS;
-
         }
+        return ValidationResult.SUCCESS;
 
+    }
+    @Transactional
     public Map<String,Object> serviceProviderDetailsMap(ServiceProviderEntity serviceProvider)
     {
         Map<String,Object>serviceProviderDetails=new HashMap<>();
-        serviceProviderDetails.put("id", serviceProvider.getService_provider_id());
+        serviceProviderDetails.put("type",serviceProvider.getType());
         serviceProviderDetails.put("service_provider_id", serviceProvider.getService_provider_id());
         serviceProviderDetails.put("user_name", serviceProvider.getUser_name());
         serviceProviderDetails.put("first_name", serviceProvider.getFirst_name());
         serviceProviderDetails.put("last_name", serviceProvider.getLast_name());
+        serviceProviderDetails.put("full_name",serviceProvider.getFirst_name()+" "+serviceProvider.getLast_name());
         serviceProviderDetails.put("country_code", serviceProvider.getCountry_code());
         serviceProviderDetails.put("father_name", serviceProvider.getFather_name());
         serviceProviderDetails.put("date_of_birth", serviceProvider.getDate_of_birth());
@@ -271,22 +339,63 @@ public class SharedUtilityService {
         serviceProviderDetails.put("number_of_employees", serviceProvider.getNumber_of_employees());
         serviceProviderDetails.put("has_technical_knowledge", serviceProvider.getHas_technical_knowledge());
         serviceProviderDetails.put("work_experience_in_months", serviceProvider.getWork_experience_in_months());
-        serviceProviderDetails.put("highest_qualification", serviceProvider.getHighest_qualification());
-        serviceProviderDetails.put("name_of_institute", serviceProvider.getName_of_institute());
-        serviceProviderDetails.put("year_of_passing", serviceProvider.getYear_of_passing());
-        serviceProviderDetails.put("board_or_university", serviceProvider.getBoard_or_university());
-        serviceProviderDetails.put("total_marks", serviceProvider.getTotal_marks());
-        serviceProviderDetails.put("marks_obtained", serviceProvider.getMarks_obtained());
-        serviceProviderDetails.put("cgpa", serviceProvider.getCgpa());
         serviceProviderDetails.put("latitude", serviceProvider.getLatitude());
         serviceProviderDetails.put("longitude", serviceProvider.getLongitude());
+        serviceProviderDetails.put("service_provider_status",serviceProvider.getTestStatus());
         serviceProviderDetails.put("rank", serviceProvider.getRanking());
         serviceProviderDetails.put("signedUp", serviceProvider.getSignedUp());
-       /* serviceProviderDetails.put("skills", serviceProvider.getSkills());*/
+
+        /* serviceProviderDetails.put("skills", serviceProvider.getSkills());*/
        /* serviceProviderDetails.put("infra", serviceProvider.getInfra());
         serviceProviderDetails.put("languages", serviceProvider.getLanguages());*/
 /*        serviceProviderDetails.put("privileges", serviceProvider.getPrivileges());
         serviceProviderDetails.put("spAddresses", serviceProvider.getSpAddresses());*/
+        serviceProviderDetails.put("business_unit_infra_score",serviceProvider.getBusinessUnitInfraScore());
+        serviceProviderDetails.put("qualification_score",serviceProvider.getQualificationScore());
+        serviceProviderDetails.put("technical_expertise_score",serviceProvider.getTechnicalExpertiseScore());
+        serviceProviderDetails.put("work_experience_score",serviceProvider.getWorkExperienceScore());
+        serviceProviderDetails.put("written_test_score",serviceProvider.getWrittenTestScore());
+        serviceProviderDetails.put("image_upload_score",serviceProvider.getImageUploadScore());
+        serviceProviderDetails.put("total_score",serviceProvider.getTotalScore());
+        if(serviceProvider.getType().equalsIgnoreCase("PROFESSIONAL"))
+        {
+            serviceProviderDetails.put("number_of_employees",serviceProvider.getNumber_of_employees());
+            serviceProviderDetails.put("staff_score",serviceProvider.getStaffScore());
+        }
+        else {
+            serviceProviderDetails.put("part_time_or_full_time",serviceProvider.getPartTimeOrFullTime());
+            serviceProviderDetails.put("part_time_or_full_time_score",serviceProvider.getPartTimeOrFullTimeScore());
+        }
+        serviceProviderDetails.put("skills", serviceProvider.getSkills());
+        serviceProviderDetails.put("infra", serviceProvider.getInfra());
+        serviceProviderDetails.put("languages", serviceProvider.getLanguages());
+        serviceProviderDetails.put("privileges", serviceProvider.getPrivileges());
+        serviceProviderDetails.put("spAddresses", serviceProvider.getSpAddresses());
+        List<QualificationDetails> qualificationDetails = serviceProvider.getQualificationDetailsList();
+        List<Map<String, Object>> qualificationsWithNames = mapQualifications(qualificationDetails);
+        serviceProviderDetails.put("qualificationDetails", qualificationsWithNames);
+
+        List<Map<String, Object>> filteredDocuments = new ArrayList<>();
+
+        for (ServiceProviderDocument document : serviceProvider.getDocuments()) {
+            if (document.getFilePath() != null && document.getDocumentType() != null) {
+                Map<String, Object> documentDetails = new HashMap<>();
+                documentDetails.put("documentId", document.getDocumentId());
+                documentDetails.put("name", document.getName());
+                documentDetails.put("filePath", document.getFilePath());
+
+
+                String fileUrl = fileService.getFileUrl(document.getFilePath(), request);
+                documentDetails.put("fileUrl", fileUrl);
+
+                documentDetails.put("documentType", document.getDocumentType());
+                filteredDocuments.add(documentDetails);
+            }
+        }
+
+        if (!filteredDocuments.isEmpty()) {
+            serviceProviderDetails.put("documents", filteredDocuments);
+        }
         return serviceProviderDetails;
     }
 
@@ -323,6 +432,7 @@ public class SharedUtilityService {
                     qualificationInfo.put("grade_or_percentage_value", qualificationDetail.getGrade_or_percentage_value());
                     qualificationInfo.put("marks_total", qualificationDetail.getTotal_marks());
                     qualificationInfo.put("marks_obtained", qualificationDetail.getMarks_obtained());
+                    qualificationInfo.put("qualification_id",qualificationDetail.getQualification_id());
 
                     // Replace the qualification_id with qualification_name
                     if (qualification != null) {
@@ -335,6 +445,43 @@ public class SharedUtilityService {
                 }).collect(Collectors.toList());
     }
 
+
+    public boolean isFutureDate(String dateStr) {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+        sdf.setLenient(false);
+        try {
+            Date inputDate = sdf.parse(dateStr);
+            Date currentDate = new Date();
+            return inputDate.after(currentDate);
+        }  catch (Exception e) {
+            exceptionHandling.handleException(e);
+            return false;
+        }
+    }
+    public Map<String,Object> adminDetailsMap(CustomAdmin customAdmin)
+    {
+        Map<String,Object>customAdminDetails=new HashMap<>();
+        if(customAdmin.getRole()==2)
+        {
+            customAdminDetails.put("admin_id",customAdmin.getAdmin_id());
+        }
+        else if(customAdmin.getRole()==1)
+        {
+            customAdminDetails.put("super_admin_id",customAdmin.getAdmin_id());
+        }
+        else if(customAdmin.getRole()==3)
+        {
+            customAdminDetails.put("admin_service_provider_id",customAdmin.getAdmin_id());
+        }
+
+        customAdminDetails.put("role_id", customAdmin.getRole());
+        customAdminDetails.put("user_name", customAdmin.getUser_name());
+        customAdminDetails.put("password", customAdmin.getPassword());
+        customAdminDetails.put("otp", customAdmin.getOtp());
+        customAdminDetails.put("mobile_number",customAdmin.getMobileNumber());
+        customAdminDetails.put("country_code", customAdmin.getCountry_code());
+        return customAdminDetails;
+    }
 
 
 }

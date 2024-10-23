@@ -2,6 +2,7 @@ package com.community.api.entity;
 
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.utils.Document;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import io.micrometer.core.lang.Nullable;
@@ -12,6 +13,7 @@ import lombok.Setter;
 import org.broadleafcommerce.profile.core.domain.CustomerImpl;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -72,30 +74,31 @@ public class CustomCustomer extends CustomerImpl {
     @Column(name = "hide_phone_number")
     private Boolean hidePhoneNumber=false;
 
+    @Nullable
     @Column(name = "category_issue_date", insertable = false, updatable = false)
     private String categoryIssueDate;
-
+    @Nullable
     @Column(name = "height_cms")
     private String heightCms;
-
+    @Nullable
     @Column(name = "weight_kgs")
     private String weightKgs;
-
+    @Nullable
     @Column(name = "chest_size_cms")
     private String chestSizeCms;
-
+    @Nullable
     @Column(name = "shoe_size_inches")
     private String shoeSizeInches;
-
+    @Nullable
     @Column(name = "waist_size_cms")
     private String waistSizeCms;
-
+    @Nullable
     @Column(name = "can_swim")
     private Boolean canSwim; // Yes/No
-
+    @Nullable
     @Column(name = "proficiency_in_sports_national_level")
     private Boolean proficiencyInSportsNationalLevel; // Yes/No
-
+    @Nullable
     @Column(name = "first_choice_exam_city")
     private String firstChoiceExamCity;
 
@@ -114,10 +117,10 @@ public class CustomCustomer extends CustomerImpl {
     @Column(name = "number_of_attempts")
     private Integer numberOfAttempts;
 
-
+    @Nullable
     @Column(name = "work_experience")
     private String workExperience; // State level/Centre level, Govt./Private
-
+    @Nullable
     @Column(name = "category_issue_date")
     private String categoryValidUpto;
 
@@ -204,6 +207,13 @@ public class CustomCustomer extends CustomerImpl {
     @Column(name = "disability_handicapped")
     private Boolean disability=false;
 
+
+ @Column(name = "disability_type")
+    private String disabilityType;
+
+    @Column(name="percentage_of_disability")
+    private Double disabilityPercentage=0.0;
+
     @Column(name = "is_ex_service_man")
     private Boolean exService=false;
 
@@ -216,14 +226,11 @@ public class CustomCustomer extends CustomerImpl {
     @Column(name = "visible_identification_mark_2")
     private String identificationMark2;
 
-    @Nullable
-//    @JsonManagedReference("referrerServiceProvider-customer")
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "customer_referrer",
-            joinColumns = @JoinColumn(name = "customer_id"),
-            inverseJoinColumns = @JoinColumn(name = "service_provider_id"))
-    private ServiceProviderEntity ReferrerServiceProvider;
+    @JsonBackReference
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CustomerReferrer> myReferrer = new ArrayList<>();
 
 
+    @Column(name = "order_count")
+    private Integer numberOfOrders;
 }
