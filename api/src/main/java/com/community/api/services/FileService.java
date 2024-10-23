@@ -13,7 +13,14 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 @Service
 public class FileService {
 
@@ -66,26 +73,52 @@ public class FileService {
             return "Error fetching urls:  " + e.getMessage();
         }
     }
-
     public String getFileUrl(String fullFilePath) {
         try {
             String formattedPath = fullFilePath.replace("\\", "/");
-
             String encodedPath = URLEncoder.encode(formattedPath, StandardCharsets.UTF_8.toString());
-
+    
             String fileUrlApi = fileServerUrl + "/files/file-url?filePath=" + encodedPath;
-
-            System.out.println("Calling API: " + fileUrlApi);
-
+    
+    
             RestTemplate restTemplate = new RestTemplate();
-            String fileUrl = restTemplate.getForObject(fileUrlApi, String.class);
-            return fileUrl;
+    
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("ngrok-skip-browser-warning", "true");
+    
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+    
+            ResponseEntity<String> response = restTemplate.exchange(fileUrlApi, HttpMethod.GET, entity, String.class);
+    
+            if (response.getStatusCode().is2xxSuccessful()) {
+                return response.getBody();
+            } else {
+                return "Error fetching URL: " + response.getStatusCode() + " - " + response.getBody();
+            }
         } catch (Exception e) {
             exceptionHandling.handleException(e);
             return "Error fetching URLs: " + e.getMessage();
         }
-
     }
+    // public String getFileUrl(String fullFilePath) {
+    //     try {
+    //         String formattedPath = fullFilePath.replace("\\", "/");
+
+    //         String encodedPath = URLEncoder.encode(formattedPath, StandardCharsets.UTF_8.toString());
+
+    //         String fileUrlApi = fileServerUrl + "/files/file-url?filePath=" + encodedPath;
+
+    //         System.out.println("Calling API: " + fileUrlApi);
+
+    //         RestTemplate restTemplate = new RestTemplate();
+    //         String fileUrl = restTemplate.getForObject(fileUrlApi, String.class);
+    //         return fileUrl;
+    //     } catch (Exception e) {
+    //         exceptionHandling.handleException(e);
+    //         return "Error fetching URLs: " + e.getMessage();
+    //     }
+
+    // }
 
 
 }

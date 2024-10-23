@@ -251,8 +251,15 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                     }
                 }
             }
-        } else
-            existingServiceProvider.setSkills(null);
+        } else {
+            if(!existingServiceProvider.getSkills().isEmpty())
+            {
+                serviceProviderSkills=existingServiceProvider.getSkills();
+
+            }
+            else
+                serviceProviderSkills=null;
+        }
             TypedQuery<ScoringCriteria> typedQuery=  entityManager.createQuery(Constant.GET_ALL_SCORING_CRITERIA,ScoringCriteria.class);
             List<ScoringCriteria> scoringCriteriaList = typedQuery.getResultList();
 
@@ -298,6 +305,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                         serviceProviderInfras.add(serviceProviderInfrastructure);
                 }
             }
+        }else {
+            serviceProviderInfras=existingServiceProvider.getInfra();
         }
         if (!languageList.isEmpty()) {
             for (int language_id : languageList) {
@@ -307,6 +316,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
                         serviceProviderLanguages.add(serviceProviderLanguage);
                 }
             }
+        }else {
+            serviceProviderLanguages=existingServiceProvider.getLanguages();
         }
         existingServiceProvider.setInfra(serviceProviderInfras);
         existingServiceProvider.setSkills(serviceProviderSkills);

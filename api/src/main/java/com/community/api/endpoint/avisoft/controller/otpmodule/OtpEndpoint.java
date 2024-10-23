@@ -178,7 +178,8 @@ public class OtpEndpoint {
                 }
 
                 String storedOtp = existingCustomer.getOtp();
-                String ipAddress = customCustomerService.getClientIp(request);
+                String ipAddress = request.getRemoteAddr();
+
                 String userAgent = request.getHeader("User-Agent");
                 String tokenKey = "authToken_" + mobileNumber;
                 Customer customer = customerService.readCustomerById(existingCustomer.getId());
