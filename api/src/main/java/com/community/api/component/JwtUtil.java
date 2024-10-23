@@ -93,7 +93,8 @@ private String secretKeyString = "DASYWgfhMLL0np41rKFAGminD1zb5DlwDzE1WwnP8es=";
                     .claim("role", role)
                     .claim("ipAddress", ipAddress)
                     .setIssuedAt(new Date())
-                    .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 *10))
+                    .setExpiration(new Date(System.currentTimeMillis() + 1000 * 30 * 60 ))
+                    //1000 * 60 * 60 *10
                     .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                     .compact();
         } catch (Exception e) {
@@ -122,7 +123,6 @@ private String secretKeyString = "DASYWgfhMLL0np41rKFAGminD1zb5DlwDzE1WwnP8es=";
                 throw new IllegalArgumentException("Token is required");
             }
 
-
             if (isTokenExpired(token)) {
                 throw new ExpiredJwtException(null, null, "Token is expired");
 
@@ -148,7 +148,6 @@ private String secretKeyString = "DASYWgfhMLL0np41rKFAGminD1zb5DlwDzE1WwnP8es=";
 
             if (isTokenExpired(token)) {
                 throw new IllegalArgumentException("Token is expired");
-
             }
 
             Long id = extractId(token);

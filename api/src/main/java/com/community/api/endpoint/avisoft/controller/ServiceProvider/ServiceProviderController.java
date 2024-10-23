@@ -519,7 +519,7 @@ public class ServiceProviderController {
                 {
                     return ResponseService.generateErrorResponse("Selected order Status does not belong to this action",HttpStatus.BAD_REQUEST);
                 }
-                customOrderState.setOrderStatusId(Constant.ORDER_STATE_COMPLETED.getOrderStatusId());
+                customOrderState.setOrderStateId(Constant.ORDER_STATE_COMPLETED.getOrderStateId());
                 customOrderState.setOrderStatusId(statusId);
                 entityManager.merge(customOrderState);
                 Map<String,Object>response=new HashMap<>();

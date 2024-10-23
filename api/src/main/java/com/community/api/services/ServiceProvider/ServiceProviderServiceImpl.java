@@ -5,12 +5,6 @@ import com.community.api.component.JwtUtil;
 import com.community.api.entity.*;
 import com.community.api.endpoint.serviceProvider.ServiceProviderEntity;
 import com.community.api.endpoint.serviceProvider.ServiceProviderStatus;
-import com.community.api.entity.ServiceProviderAddress;
-import com.community.api.entity.ServiceProviderAddressRef;
-import com.community.api.entity.ServiceProviderInfra;
-import com.community.api.entity.ServiceProviderLanguage;
-import com.community.api.entity.Skill;
-import com.community.api.entity.StateCode;
 import com.community.api.services.*;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.community.api.utils.DocumentType;
@@ -413,6 +407,8 @@ public class ServiceProviderServiceImpl implements ServiceProviderService {
             if(sharedUtilityService.isFutureDate(dob))
                 errorMessages.add("DOB cannot be in future");
         }
+        if(updates.containsKey("pan_number")&&((String)updates.get("pan_number")).isEmpty())
+            errorMessages.add("pan number cannot be empty");
         // Update only the fields that are present in the map using reflections
         for (Map.Entry<String, Object> entry : updates.entrySet()) {
             String fieldName = entry.getKey();

@@ -129,6 +129,7 @@ public class ServiceProviderEntity  {
 
     @Nullable
     private Boolean isCFormAvailable;
+    @Nullable
     private String registration_number;
 
     @Nullable

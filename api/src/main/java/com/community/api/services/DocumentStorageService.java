@@ -115,7 +115,6 @@ public class DocumentStorageService {
             String currentDir = System.getProperty("user.dir");
 
             String testDirPath = currentDir + "/../test/";
-//        String testResourcesPath = testDirPath + "src/main/resources/";
 
             File avisoftDir = new File(testDirPath + "avisoftdocument");
             if (!avisoftDir.exists()) {

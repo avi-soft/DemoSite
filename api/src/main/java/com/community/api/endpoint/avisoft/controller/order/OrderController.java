@@ -19,6 +19,9 @@ import com.community.api.services.ReserveCategoryDtoService;
 import com.community.api.services.ResponseService;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
 import com.community.api.services.exception.ExceptionHandlingImplement;
+
+import javassist.NotFoundException;
+
 import org.broadleafcommerce.core.order.domain.Order;
 import org.broadleafcommerce.core.order.domain.OrderItem;
 import org.broadleafcommerce.core.order.service.OrderService;
@@ -72,7 +75,7 @@ public class OrderController
         try{
             CustomCustomer customCustomer=entityManager.find(CustomCustomer.class,customerId);
             if (customCustomer==null)
-                return ResponseService.generateErrorResponse("Customer with the provided Id not found", HttpStatus.NOT_FOUND);
+                throw new NotFoundException("Customer with the provided Id not found");
             if(customCustomer.getNumberOfOrders()==0)
                 return ResponseService.generateErrorResponse("Order History Empty - No Orders placed", HttpStatus.OK);
             String orderNumber = "O-"+customerId+"%"; // Use % for wildcard search
@@ -83,10 +86,14 @@ public class OrderController
             query.setParameter("orderNumber", orderNumber);
             List<BigInteger> orders = query.getResultList();
             return generateCombinedDTO(orders,sort);
-        } catch (Exception e)
+        }catch(NotFoundException e)
+        {
+            return ResponseService.generateErrorResponse(e.getMessage(), HttpStatus.NOT_FOUND);
+        } 
+        catch (Exception e)
         {
             exceptionHandling.handleException(e);
-            return ResponseService.generateErrorResponse("Error assigning Request to Service Provider", HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseService.generateErrorResponse("Error fetching order list", HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
     @RequestMapping(value = "details/{orderId}",method = RequestMethod.GET)
@@ -135,7 +142,7 @@ public class OrderController
         }
     }
     @RequestMapping(value = "show-all-orders",method = RequestMethod.GET)
-    public ResponseEntity<?> showClubbedOrders( @RequestParam(defaultValue = "all") String orderStateId,
+    public ResponseEntity<?> showClubbedOrders( @RequestParam(defaultValue = "all") String orderState,
                                                 @RequestParam(defaultValue = "oldest-to-latest")String sort,
                                                 @RequestParam(defaultValue = "0")int page,
                                                 @RequestParam(defaultValue = "5")int limit) {
@@ -144,7 +151,7 @@ public class OrderController
             int startPosition = page * limit;
             List<BigInteger> orderIds = null;
             Query query = null;
-            if (orderStateId.equals("all")) {
+            if (orderState.equals("all")) {
                 query = entityManager.createNativeQuery(Constant.GET_ALL_ORDERS);
                 query.setFirstResult(startPosition);
                 query.setMaxResults(limit);
@@ -153,7 +160,7 @@ public class OrderController
                 query = entityManager.createNativeQuery(Constant.SEARCH_ORDER_QUERY);
                 query.setFirstResult(startPosition);
                 query.setMaxResults(limit);
-                switch (orderStateId) {
+                switch (orderState) {
                     case "completed":
                         query.setParameter("orderStateId", Constant.ORDER_STATE_COMPLETED.getOrderStateId());
                         break;
