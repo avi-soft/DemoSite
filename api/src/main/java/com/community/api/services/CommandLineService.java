@@ -1,3 +1,4 @@
+
 package com.community.api.services;
 
 import com.community.api.endpoint.serviceProvider.ServiceProviderStatus;
@@ -19,6 +20,7 @@ import com.community.api.entity.StateCode;
 import com.community.api.entity.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import javax.persistence.EntityManager;
@@ -35,10 +37,13 @@ public class CommandLineService implements CommandLineRunner {
     @Autowired
     private EntityManager entityManager;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        // Check if data already exists to avoid duplication
+
         if (entityManager.createQuery("SELECT COUNT(c) FROM CustomProductState c", Long.class).getSingleResult() == 0) {
             entityManager.persist(new CustomProductState(1L, "NEW", "New State."));
             entityManager.persist(new CustomProductState(2L, "MODIFIED", "Modified State."));
@@ -349,14 +354,70 @@ public class CommandLineService implements CommandLineRunner {
         count = entityManager.createQuery("SELECT count(e) FROM ServiceProviderRank e", Long.class).getSingleResult();
 
         if (count == 0) {
-            entityManager.persist(new ServiceProviderRank(1L, "1a", "The PROFESSIONAL service provider's score is between 75-100 points", now, now, "SUPER_ADMIN"));
-            entityManager.persist(new ServiceProviderRank(2L, "1b", "The PROFESSIONAL service provider's score is between 50-75 points", now, now, "SUPER_ADMIN"));
-            entityManager.persist(new ServiceProviderRank(3L, "1c", "The PROFESSIONAL service provider's score is between 25-50 points", now, now, "SUPER_ADMIN"));
-            entityManager.persist(new ServiceProviderRank(4L, "1d", "The PROFESSIONAL service provider's score is between 0-25 points", now, now, "SUPER_ADMIN"));
-            entityManager.persist(new ServiceProviderRank(5L, "2a", "The INDIVIDUAL service provider's score is between 75-100 points", now, now, "SUPER_ADMIN"));
-            entityManager.persist(new ServiceProviderRank(6L, "2b", "The INDIVIDUAL service provider's score is between 50-75 points", now, now, "SUPER_ADMIN"));
-            entityManager.persist(new ServiceProviderRank(7L, "2c", "The INDIVIDUAL service provider's score is between 25-50 points", now, now, "SUPER_ADMIN"));
-            entityManager.persist(new ServiceProviderRank(8L, "2d", "The INDIVIDUAL service provider's score is between 0-25 points", now, now, "SUPER_ADMIN"));
+            entityManager.persist(new ServiceProviderRank(1L, "1a", "The PROFESSIONAL service provider's score is between 75-100 points", now, now, "SUPER_ADMIN", 12, 50));
+            entityManager.persist(new ServiceProviderRank(2L, "1b", "The PROFESSIONAL service provider's score is between 50-75 points", now, now, "SUPER_ADMIN", 6, 25));
+            entityManager.persist(new ServiceProviderRank(3L, "1c", "The PROFESSIONAL service provider's score is between 25-50 points", now, now, "SUPER_ADMIN", 4,17));
+            entityManager.persist(new ServiceProviderRank(4L, "1d", "The PROFESSIONAL service provider's score is between 0-25 points", now, now, "SUPER_ADMIN", 3, 13));
+            entityManager.persist(new ServiceProviderRank(5L, "2a", "The INDIVIDUAL service provider's score is between 75-100 points", now, now, "SUPER_ADMIN", 6, 25));
+            entityManager.persist(new ServiceProviderRank(6L, "2b", "The INDIVIDUAL service provider's score is between 50-75 points", now, now, "SUPER_ADMIN", 3, 13));
+            entityManager.persist(new ServiceProviderRank(7L, "2c", "The INDIVIDUAL service provider's score is between 25-50 points", now, now, "SUPER_ADMIN", 2, 8));
+            entityManager.persist(new ServiceProviderRank(8L, "2d", "The INDIVIDUAL service provider's score is between 0-25 points", now, now, "SUPER_ADMIN", 2, 6));
+        }
+
+        count= entityManager.createQuery("SELECT count(e) FROM CustomAdmin e", Long.class).getSingleResult();
+        if(count==0)
+        {
+            entityManager.merge(new CustomAdmin(1L,2,passwordEncoder.encode("Admin#01"),"admin","7740066387","+91",0,now,"SUPER_ADMIN"));
+            entityManager.merge(new CustomAdmin(2L,1,passwordEncoder.encode("SuperAdmin#1357"),"superadmin","9872548680","+91",0,now,"SUPER_ADMIN"));
+            entityManager.merge(new CustomAdmin(3L,3,passwordEncoder.encode("AdminServiceProvider#02"),"adminserviceprovider","7710393096","+91",0,now,"SUPER_ADMIN"));
+        }
+
+        count = entityManager.createQuery("SELECT count(e) FROM ScoringCriteria e", Long.class).getSingleResult();
+
+        if (count == 0) {
+
+            // Business Unit / Infrastructure Scoring
+            entityManager.merge(new ScoringCriteria(1L, "Business Unit / Infrastructure", "If it's a Business Unit: 20 points", 20));
+
+            // Work Experience Scoring
+            entityManager.merge(new ScoringCriteria(2L, "Work Experience", "1 year work experience", 5));
+            entityManager.merge(new ScoringCriteria(3L, "Work Experience", "2 years work experience", 10));
+            entityManager.merge(new ScoringCriteria(4L, "Work Experience", "3 years work experience", 15));
+            entityManager.merge(new ScoringCriteria(5L, "Work Experience", "5 or more years work experience", 20));
+
+            // Qualification Scoring
+            entityManager.merge(new ScoringCriteria(6L, "Qualification", "Service Provider is graduated or above qualified", 10));
+            entityManager.merge(new ScoringCriteria(7L, "Qualification", "Service Provider is 12th passed", 5));
+
+            // Technical Expertise Scoring
+            entityManager.merge(new ScoringCriteria(8L, "Technical Expertise", "Each skill will score 2 points", 2));
+            entityManager.merge(new ScoringCriteria(9L, "Technical Expertise", "Service Provider having equal to or more than 5 skills", 10));
+
+            // Staff Scoring
+            entityManager.merge(new ScoringCriteria(10L, "Staff", "More than 4 staff members", 10));
+            entityManager.merge(new ScoringCriteria(11L, "Staff", "2 staff members", 5));
+            entityManager.merge(new ScoringCriteria(12L, "Staff", "Individual (no staff)", 0));
+
+            //Infra Scoring (For individual)
+            entityManager.merge(new ScoringCriteria(13L, "Infrastructure", "Service Provider having Equal to 5 or more than 5 infrastructures", 20));
+            entityManager.merge(new ScoringCriteria(14L, "Infrastructure", "Service Provider having between 2 and 4 infrastructures", 10));
+            entityManager.merge(new ScoringCriteria(15L, "Infrastructure", "Service Provider having 1 infrastructure", 5));
+            entityManager.merge(new ScoringCriteria(16L, "Infrastructure", "Service Provider having 0 infrastructure", 0));
+
+            //PartTimeOrFullTime Scoring (For Individual)
+            entityManager.merge(new ScoringCriteria(17L, "PartTimeOrFullTime", "Service Provider who is Full time", 10));
+            entityManager.merge(new ScoringCriteria(18L, "PartTimeOrFullTime", "Service Provider who is Part time", 0));
+        }
+
+        if (entityManager.createQuery("SELECT COUNT(o) FROM OrderStateRef o", Long.class).getSingleResult() == 0) {
+            entityManager.persist(new OrderStateRef(1, "NEW", "Order is generated"));
+            entityManager.persist(new OrderStateRef(2, "AUTO_ASSIGNED", "Order automatically assigned."));
+            entityManager.persist(new OrderStateRef(3, "UNASSIGNED", "Order is unassigned."));
+            entityManager.persist(new OrderStateRef(4, "ASSIGNED", "Order assigned."));
+            entityManager.persist(new OrderStateRef(5, "RETURNED", "Order returned."));
+            entityManager.persist(new OrderStateRef(6, "IN_PROGRESS", "Order is in progress."));
+            entityManager.persist(new OrderStateRef(7, "COMPLETED", "Order completed."));
+            entityManager.persist(new OrderStateRef(8, "IN_REVIEW", "Order is in review."));
         }
     }
 }

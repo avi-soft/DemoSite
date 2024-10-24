@@ -7,6 +7,7 @@ import com.community.api.endpoint.serviceProvider.ServiceProviderStatus;
 import com.community.api.entity.CustomCustomer;
 import com.community.api.entity.ServiceProviderTestStatus;
 import com.community.api.services.*;
+import com.community.api.services.Admin.AdminService;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
 import com.community.api.services.exception.ExceptionHandlingImplement;
 import com.twilio.Twilio;
@@ -69,6 +70,9 @@ public class OtpEndpoint {
     private RoleService roleService;
 
     @Autowired
+    private SanitizerService sanitizerService;
+
+    @Autowired
     private ResponseService responseService;
 
     @Value("${twilio.authToken}")
@@ -76,6 +80,8 @@ public class OtpEndpoint {
 
     @Value("${twilio.accountSid}")
     private String accountSid;
+    @Autowired
+    private AdminService adminService;
 
     @PostMapping("/send-otp")
     public ResponseEntity<?> sendOtp(@RequestBody CustomCustomer customerDetails, HttpSession session) throws UnsupportedEncodingException {
@@ -87,7 +93,6 @@ public class OtpEndpoint {
             String mobileNumber = customerDetails.getMobileNumber().startsWith("0")
                     ? customerDetails.getMobileNumber().substring(1)
                     : customerDetails.getMobileNumber();
-
             String countryCode = customerDetails.getCountryCode() == null || customerDetails.getCountryCode().isEmpty()
                     ? Constant.COUNTRY_CODE
                     : customerDetails.getCountryCode();
@@ -125,6 +130,8 @@ public class OtpEndpoint {
     @PostMapping("/verify-otp")
     public ResponseEntity<?> verifyOTP(@RequestBody Map<String, Object> loginDetails, HttpSession session, HttpServletRequest request) {
         try {
+            loginDetails=sanitizerService.sanitizeInputMap(loginDetails);
+
             if (loginDetails == null) {
                 return responseService.generateErrorResponse(ApiConstants.INVALID_DATA, HttpStatus.BAD_REQUEST);
             }
@@ -172,6 +179,7 @@ public class OtpEndpoint {
 
                 String storedOtp = existingCustomer.getOtp();
                 String ipAddress = request.getRemoteAddr();
+
                 String userAgent = request.getHeader("User-Agent");
                 String tokenKey = "authToken_" + mobileNumber;
                 Customer customer = customerService.readCustomerById(existingCustomer.getId());
@@ -204,7 +212,12 @@ public class OtpEndpoint {
                 }
             } else if (roleService.findRoleName(role).equals(Constant.roleServiceProvider)) {
                 return serviceProviderService.verifyOtp(loginDetails, session, request);
-            } else {
+            }
+
+            else if(roleService.findRoleName(role).equals(Constant.ADMIN) ||roleService.findRoleName(role).equals(Constant.SUPER_ADMIN) ||roleService.findRoleName(role).equals(Constant.roleAdminServiceProvider)) {
+                return adminService.verifyOtpForAdmin(loginDetails,session,request);
+            }
+            else {
                 return responseService.generateErrorResponse(ApiConstants.INVALID_ROLE, HttpStatus.BAD_REQUEST);
             }
         } catch (Exception e) {
@@ -217,8 +230,10 @@ public class OtpEndpoint {
     @PostMapping("/service-provider-signup")
     public ResponseEntity<?> sendOtpToMobile(@RequestBody Map<String, Object> signupDetails) {
         try {
+            signupDetails=sanitizerService.sanitizeInputMap(signupDetails);
             String mobileNumber = (String) signupDetails.get("mobileNumber");
             String countryCode = (String) signupDetails.get("countryCode");
+
 
             mobileNumber = mobileNumber.startsWith("0") ? mobileNumber.substring(1) : mobileNumber;
             if (customCustomerService.findCustomCustomerByPhone(mobileNumber, countryCode) != null) {
@@ -258,7 +273,7 @@ public class OtpEndpoint {
             Map<String, Object> details = new HashMap<>();
             String maskedNumber = twilioService.genereateMaskednumber(mobileNumber);
             details.put("otp", otp);
-            return responseService.generateSuccessResponse(ApiConstants.OTP_SENT_SUCCESSFULLY + " on " +maskedNumber, details, HttpStatus.OK);
+            return responseService.generateSuccessResponse(ApiConstants.OTP_SENT_SUCCESSFULLY + " on " +maskedNumber, otp, HttpStatus.OK);
 
         } catch (HttpClientErrorException e) {
             if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {

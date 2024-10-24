@@ -167,87 +167,20 @@ public class TestController {
        return ResponseService.generateSuccessResponse("Sanitized map",sanitizerService.sanitizeInputMap(map),HttpStatus.OK);
 
     }
-    @GetMapping("/download-file-test")
-    public void downloadFile( HttpServletRequest request, HttpServletResponse response) {
 
-        try {
-            String fileUrl = "http://192.168.0.138:8080/avisoftdocument/service_provider/RandomImages/pexels-fotios-photos-1540258.jpg";
+    @PostMapping("/sanitize")
+    public Map<String, Object> testSanitize(@RequestBody Map<String, Object> requestBody) {
+        System.out.println("Received request: " + requestBody);
 
-            URL url = new URL(fileUrl);
-            System.out.println("Downloading file: " + fileUrl);
+        // Sanitize the incoming request body
+        Map<String, Object> sanitizedData = sanitizerService.sanitizeInputMap(requestBody);
 
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("GET");
+        // Log sanitized data
+        System.out.println("Sanitized request: " + sanitizedData);
 
-            int responseCode = connection.getResponseCode();
-
-
-
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                response.setContentType("application/octet-stream");
-
-                // Extract the file name from the URL
-                String fileName = url.getPath().substring(url.getPath().lastIndexOf('/') + 1);
-
-                response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
-                response.setContentLength(connection.getContentLength());
-
-                try (InputStream inputStream = connection.getInputStream();
-                     OutputStream outputStream = response.getOutputStream()) {
-                    IOUtils.copy(inputStream, outputStream);
-                    outputStream.flush(); // Ensure all data is sent
-                }
-            } else {
-                System.out.println("Error: " + connection.getResponseMessage());
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+        return sanitizedData;
     }
-    @GetMapping("/download-file")
-    public void downloadFileNew(@RequestParam("filePath") String filePath, HttpServletRequest request, HttpServletResponse response) {
-        try {
-            URL url = new URL(filePath);
 
-            // Use URI to handle special characters
-
-//            URL url = uri.toURL();
-
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-
-
-            connection.setRequestMethod("GET");
-
-            int responseCode = connection.getResponseCode();
-
-            if (responseCode == HttpURLConnection.HTTP_OK) {
-                response.setContentType("application/octet-stream");
-
-                // Extract the file name from the URL
-                String fileName = url.getPath().substring(url.getPath().lastIndexOf('/') + 1);
-
-                response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
-                response.setContentLength(connection.getContentLength());
-
-                try (InputStream inputStream = connection.getInputStream();
-                     OutputStream outputStream = response.getOutputStream()) {
-                    IOUtils.copy(inputStream, outputStream);
-                    outputStream.flush(); // Ensure all data is sent
-                }
-            } else {
-
-            }
-        } catch (IOException e) {
-            exceptionHandling.handleException(e);
-
-        }catch (Exception e) {
-            exceptionHandling.handleException(e);
-
-        }
-
-    }
     @PostMapping("/altercolumnDocument")
     @Transactional
     public String altercolumnDocument() {

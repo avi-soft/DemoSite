@@ -6,6 +6,7 @@ import org.broadleafcommerce.profile.core.domain.Customer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import javax.persistence.EntityManager;
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -66,15 +67,14 @@ public class CustomCustomerService {
                 .orElse(null);
     }
 
-    public String formatDate(String dateString) {
-
-        DateTimeFormatter inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS");
-
-        DateTimeFormatter outputFormatter = DateTimeFormatter.ofPattern("dd MMMM yyyy");
-
-        LocalDateTime dateTime = LocalDateTime.parse(dateString, inputFormatter);
-
-        return dateTime.format(outputFormatter);
+    public String getClientIp(HttpServletRequest request) {
+        String ipAddress = request.getHeader("X-Forwarded-For");
+        if (ipAddress == null || ipAddress.isEmpty()) {
+            ipAddress = request.getRemoteAddr();
+        } else {
+            ipAddress = ipAddress.split(",")[0];
+        }
+        return ipAddress;
     }
 
 }
