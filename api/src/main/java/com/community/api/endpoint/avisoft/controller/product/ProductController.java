@@ -297,6 +297,7 @@ public class ProductController extends CatalogEndpoint {
                 }else{
                     wrapper.wrapDetailsAddProduct(product, addProductDto, jobGroup, customProductState, applicationScope, creatorUserId, role, null, notifyingAuthority, customGender, customSector, qualification, customStream, customSubject, currentDate);
                 }
+                return ResponseService.generateSuccessResponse("PRODUCT ADDED AS DRAFT SUCCESSFULLY", wrapper, HttpStatus.OK);
             }
             return ResponseService.generateSuccessResponse("PRODUCT ADDED SUCCESSFULLY", wrapper, HttpStatus.OK);
 
