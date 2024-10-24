@@ -313,7 +313,6 @@ public class ProductController extends CatalogEndpoint {
         }
     }
 
-
     @Transactional
     @PutMapping("/update/{productId}")
     public ResponseEntity<?> updateProduct(HttpServletRequest request, @RequestBody AddProductDto addProductDto, @PathVariable Long productId, @RequestHeader(value = "Authorization") String authHeader) {
