@@ -366,9 +366,9 @@ public class CommandLineService implements CommandLineRunner {
         count= entityManager.createQuery("SELECT count(e) FROM CustomAdmin e", Long.class).getSingleResult();
         if(count==0)
         {
-            entityManager.merge(new CustomAdmin(1L,2,passwordEncoder.encode("1234"),"Admin#01","7740066387","+91",0,now,"SUPER_ADMIN"));
-            entityManager.merge(new CustomAdmin(2L,1,passwordEncoder.encode("1234"),"SuperAdmin#1357","9872548680","+91",0,now,"SUPER_ADMIN"));
-            entityManager.merge(new CustomAdmin(3L,3,passwordEncoder.encode("1234"),"AdminServiceProvider#02","7710393096","+91",0,now,"SUPER_ADMIN"));
+            entityManager.merge(new CustomAdmin(1L,2,passwordEncoder.encode("Admin#01"),"admin","7740066387","+91",0,now,"SUPER_ADMIN"));
+            entityManager.merge(new CustomAdmin(2L,1,passwordEncoder.encode("SuperAdmin#1357"),"superadmin","9872548680","+91",0,now,"SUPER_ADMIN"));
+            entityManager.merge(new CustomAdmin(3L,3,passwordEncoder.encode("AdminServiceProvider#02"),"adminserviceprovider","7710393096","+91",0,now,"SUPER_ADMIN"));
         }
 
         count = entityManager.createQuery("SELECT count(e) FROM ScoringCriteria e", Long.class).getSingleResult();
