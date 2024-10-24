@@ -13,6 +13,7 @@ import com.community.api.entity.CustomTicketType;
 import com.community.api.entity.CustomerReferrer;
 import com.community.api.entity.OrderStateRef;
 import com.community.api.services.ServiceProvider.ServiceProviderServiceImpl;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.broadleafcommerce.core.order.domain.Order;
 import org.broadleafcommerce.core.order.service.OrderService;
 import org.broadleafcommerce.profile.core.domain.Customer;
@@ -24,6 +25,7 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+import javax.transaction.Transactional;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -54,23 +56,33 @@ public class ServiceProviderTicketService {
         try{
             // we are fetching SP who are in approved state (later we will do only active)
             List<Map<String,Object>> availableServiceProvider = (List<Map<String, Object>>) serviceProviderService.searchServiceProviderBasedOnGivenFields(null,null,null,null,null, 1L);
-//            logger.info(serviceProvider.toString());
 
+            // later will do order which are in particular state. (write now just fetching which are in state 2).
             OrderStateRef orderStateRef = orderStateRefService.getOrderStateByOrderStateId(2);
             List<CustomOrderState> customOrders = customOrderService.getCustomOrdersByOrderStateId(orderStateRef.getOrderStateId());
-            System.out.println(customOrders.size()+"____________________________");
+            logger.info("Total Orders at the moments are: " + customOrders.size());
 
             List<Order> orders = new ArrayList<>();
             for(CustomOrderState customOrderState: customOrders) {
+
+                ObjectMapper objectMapper = new ObjectMapper();
+                String jsonString = objectMapper.writeValueAsString(customOrderState);
+                logger.info(jsonString);
+
                 Order order = orderService.findOrderById(customOrderState.getOrderId());
                 CustomCustomer customer = entityManager.find(CustomCustomer.class, order.getCustomer().getId());
+                String customerString = objectMapper.writeValueAsString(customer);
+                logger.info(customerString);
 
 //                Query query = entityManager.createQuery(Constant.GET_ORDERS_BY_ORDER_STATE_ID, CustomOrderState.class);
 //                query.setParameter("orderStateId", orderStateRef.getOrderStateId());
 //                List<CustomOrderState> orderState = query.getResultList();
                 List<CustomerReferrer> referrers = customer.getMyReferrer();
+                System.out.println("Referrer list:" + referrers.size());
                 for(CustomerReferrer refferer: referrers) {
                     ServiceProviderEntity serviceProvider = refferer.getServiceProvider();
+                    System.out.println("REFFEREER ID: " + serviceProvider.getService_provider_id());
+
                     if(serviceProvider.getIsActive() ) {
                         // create a entry in serviceProvider tickets tables where the info about which serviceProvider is linked with which ticket is stored.
                         CreateTicketDto createTicketDto = new CreateTicketDto();
@@ -80,14 +92,12 @@ public class ServiceProviderTicketService {
                         createTicketDto.setAssignTo(serviceProvider.getService_provider_id());
                         CustomServiceProviderTicket serviceProviderTicket = createTicket(createTicketDto);
                     }
+
                 }
 
                 Long pid= Long.valueOf(order.getOrderItems().get(0).getOrderItemAttributes().get("productId").getValue());
-                System.out.println("11");
                 CustomProduct customProduct= entityManager.find(CustomProduct.class, pid);
-                System.out.println(customProduct.getName());
 
-                System.out.println("HELLO");
             }
 
         } catch (Exception exception) {
@@ -95,6 +105,7 @@ public class ServiceProviderTicketService {
         }
     }
 
+    @Transactional
     public CustomServiceProviderTicket createTicket(CreateTicketDto createTicketDto) throws Exception {
         try{
             CustomServiceProviderTicket customServiceProviderTicket = new CustomServiceProviderTicket();
