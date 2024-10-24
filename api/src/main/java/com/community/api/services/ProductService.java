@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 import java.io.UnsupportedEncodingException;
@@ -227,6 +228,11 @@ public class ProductService {
                 sql.append(", job_group_id");
                 values.append(", :jobGroup");
             }
+            if(addProductDto.getIsReviewRequired()!=null)
+            {
+                sql.append(", is_review_required");
+                values.append(", :isReviewRequired");
+            }
 
             // Complete the SQL statement
             sql.append(") ").append(values).append(")");
@@ -336,6 +342,10 @@ public class ProductService {
 
             if (addProductDto.getSubject() != null) {
                 query.setParameter("subjectId", addProductDto.getSubject());
+            }
+            if(addProductDto.getIsReviewRequired()!=null)
+            {
+                query.setParameter("isReviewRequired",addProductDto.getIsReviewRequired());
             }
 
             // Execute the update
@@ -770,6 +780,171 @@ public class ProductService {
 
             if (addProductDto.getReservedCategory() == null || addProductDto.getReservedCategory().isEmpty()) {
                 throw new IllegalArgumentException("Reserve category must not be null or empty.");
+            }
+
+            if(addProductDto.getIsReviewRequired()==null)
+            {
+                addProductDto.setIsReviewRequired(true);
+            }
+
+            return true;
+        } catch (IllegalArgumentException illegalArgumentException) {
+            exceptionHandlingService.handleException(illegalArgumentException);
+            throw new IllegalArgumentException(illegalArgumentException.getMessage() + "\n");
+        } catch (NoSuchElementException noSuchElementException) {
+            exceptionHandlingService.handleException(noSuchElementException);
+            throw new IllegalArgumentException(noSuchElementException.getMessage() + "\n");
+        } catch (ParseException parseException) {
+            exceptionHandlingService.handleException(parseException);
+            throw new ParseException(parseException.getMessage() + "\n", parseException.getErrorOffset());
+        } catch (Exception exception) {
+            exceptionHandlingService.handleException(exception);
+            throw new Exception(exception.getMessage() + "\n");
+        }
+    }
+
+    public boolean addProductDtoWithoutValidation(AddProductDto addProductDto) throws Exception {
+        try {
+            if (addProductDto.getQuantity() != null) {
+                if (addProductDto.getQuantity() <= 0) {
+                    throw new IllegalArgumentException("Quantity cannot be <= 0.");
+                }
+            } else {
+                addProductDto.setQuantity(Constant.DEFAULT_QUANTITY);
+            }
+
+            if (addProductDto.getPlatformFee() != null) {
+                if (addProductDto.getPlatformFee() <= 0) {
+                    throw new IllegalArgumentException("Platform fee cannot be <= 0.");
+                }
+            } else {
+                addProductDto.setPlatformFee(DEFAULT_PLATFORM_FEE);
+            }
+            if(addProductDto.getNotifyingAuthority()!=null)
+            {
+                addProductDto.setNotifyingAuthority(addProductDto.getNotifyingAuthority().trim());
+            }
+
+            if (addProductDto.getPriorityLevel() != null) {
+                if (addProductDto.getPriorityLevel() <= 0 || addProductDto.getPriorityLevel() > 5) {
+                    throw new IllegalArgumentException("Priority level must lie between 1-5.");
+                }
+            } else {
+                addProductDto.setPriorityLevel(DEFAULT_PRIORITY_LEVEL);
+            }
+
+            if (addProductDto.getMetaTitle() == null || addProductDto.getMetaTitle().trim().isEmpty()) {
+                throw new IllegalArgumentException(PRODUCTTITLENOTGIVEN);
+            } else {
+                addProductDto.setPostName(addProductDto.getMetaTitle().trim());
+                addProductDto.setMetaTitle(addProductDto.getMetaTitle().trim());
+            }
+
+            if(addProductDto.getDisplayTemplate()!=null)
+            {
+                addProductDto.setDisplayTemplate(addProductDto.getDisplayTemplate().trim());
+            }
+
+            if (addProductDto.getMetaDescription() == null || addProductDto.getMetaDescription().trim().isEmpty()) {
+                throw new IllegalArgumentException("Description cannot be null or empty.");
+            } else {
+                addProductDto.setMetaDescription(addProductDto.getMetaDescription().trim());
+            }
+
+            if(addProductDto.getPostName()!=null)
+            {
+                addProductDto.setPostName(addProductDto.getPostName().trim());
+            }
+            String formattedDate = dateFormat.format(new Date());
+            Date activeStartDate = dateFormat.parse(formattedDate); // Convert formatted date string back to Date
+
+            if (addProductDto.getActiveEndDate() == null || addProductDto.getGoLiveDate() == null || addProductDto.getActiveStartDate() == null) {
+                throw new IllegalArgumentException("Active start date, active end date, and go live date cannot be empty.");
+            }
+            dateFormat.parse(dateFormat.format(addProductDto.getActiveStartDate()));
+            dateFormat.parse(dateFormat.format(addProductDto.getActiveEndDate()));
+            dateFormat.parse(dateFormat.format(addProductDto.getGoLiveDate()));
+
+            if (!addProductDto.getActiveEndDate().after(activeStartDate)) {
+                throw new IllegalArgumentException("Expiration date cannot be before or equal of current date.");
+            } else if (!addProductDto.getGoLiveDate().before(addProductDto.getActiveEndDate())) {
+                throw new IllegalArgumentException("Go live date cannot be after or equal of active end date.");
+            } else if (!addProductDto.getActiveStartDate().before(addProductDto.getActiveEndDate())) {
+                throw new IllegalArgumentException("Active start date cannot be after or equal of active end date.");
+            } else if (addProductDto.getGoLiveDate().before(new Date())) {
+                throw new IllegalArgumentException("Go live date cannot be past of current date.");
+            }
+            if (addProductDto.getExamDateFrom() != null && addProductDto.getExamDateTo() == null) {
+                addProductDto.setExamDateTo(addProductDto.getExamDateFrom());
+            }
+            if (addProductDto.getExamDateTo() != null && addProductDto.getExamDateFrom() == null) {
+                addProductDto.setExamDateFrom(addProductDto.getExamDateTo());
+            }
+            if(addProductDto.getExamDateFrom()!=null)
+            {
+                dateFormat.parse(dateFormat.format(addProductDto.getExamDateFrom()));
+            }
+            if(addProductDto.getExamDateTo()!=null)
+            {
+                dateFormat.parse(dateFormat.format(addProductDto.getExamDateTo()));
+            }
+
+            if(addProductDto.getExamDateFrom()!=null && addProductDto.getExamDateFrom()!=null)
+            {
+                if (!addProductDto.getExamDateFrom().after(addProductDto.getActiveEndDate()) || !addProductDto.getExamDateTo().after(addProductDto.getActiveEndDate())) {
+                    throw new IllegalArgumentException(TENTATIVEDATEAFTERACTIVEENDDATE);
+                } else if (addProductDto.getExamDateTo().before(addProductDto.getExamDateFrom())) {
+                    throw new IllegalArgumentException(TENTATIVEEXAMDATETOAFTEREXAMDATEFROM);
+                }
+            }
+            if (addProductDto.getJobGroup() == null || addProductDto.getJobGroup() <= 0) {
+                throw new IllegalArgumentException("Job group cannot be null or <= 0.");
+            }
+
+            CustomJobGroup jobGroup = jobGroupService.getJobGroupById(addProductDto.getJobGroup());
+            if (jobGroup == null) {
+                throw new NoSuchElementException("Job group not found.");
+            }
+
+            if (addProductDto.getAdvertiserUrl() == null || addProductDto.getAdvertiserUrl().trim().isEmpty()) {
+                throw new IllegalArgumentException("Advertiser url cannot be null or empty.");
+            }
+            addProductDto.setAdvertiserUrl(addProductDto.getAdvertiserUrl().trim());
+
+            if (addProductDto.getApplicationScope() !=null) {
+                CustomApplicationScope applicationScope = applicationScopeService.getApplicationScopeById(addProductDto.getApplicationScope());
+                if (applicationScope == null) {
+                    throw new NoSuchElementException("application scope not found.");
+                }
+
+                if (applicationScope.getApplicationScope().equals(Constant.APPLICATION_SCOPE_CENTER)) {
+
+                    if (addProductDto.getState() != null) {
+                        throw new IllegalArgumentException("State cannot be given if application scope " + applicationScope.getApplicationScope());
+                    }
+                    if (addProductDto.getDomicileRequired() != null && addProductDto.getDomicileRequired()) {
+                        throw new IllegalArgumentException("Domicile required cannot be true if application scope " + applicationScope.getApplicationScope());
+                    }
+                    addProductDto.setDomicileRequired(false);
+
+                } else if (applicationScope.getApplicationScope().equals(APPLICATION_SCOPE_STATE)) {
+                    if (addProductDto.getDomicileRequired() == null || addProductDto.getState() == null) {
+                        throw new IllegalArgumentException("For application scope: " + applicationScope.getApplicationScope() + " domicile and state cannot be null.");
+                    }
+
+                    if (addProductDto.getState() <= 0) {
+                        throw new IllegalArgumentException("State cannot be <= 0.");
+                    }
+
+                    StateCode state = districtService.getStateByStateId(addProductDto.getState());
+                    if (state == null) {
+                        throw new NoSuchElementException("State not found.");
+                    }
+                }
+            }
+            if(addProductDto.getIsReviewRequired()==null)
+            {
+                addProductDto.setIsReviewRequired(true);
             }
 
             return true;

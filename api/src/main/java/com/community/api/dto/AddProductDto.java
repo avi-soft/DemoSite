@@ -115,4 +115,7 @@ public class AddProductDto {
     @JsonProperty("post_name")
     String postName;
 
+    @JsonProperty("is_review_required")
+    Boolean isReviewRequired;
+
 }
